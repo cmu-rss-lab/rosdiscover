@@ -1,0 +1,16 @@
+$schema: "http://json-schema.org/draft-06/schema#"
+
+definitions:
+  node:
+    type: object
+    properties:
+      name:
+        type: string
+
+type: object
+properties:
+  nodes:
+    type: array
+    items:
+      $ref: '#/definitions/node'
+    default: []
