@@ -1,16 +1,38 @@
 $schema: "http://json-schema.org/draft-06/schema#"
 
 definitions:
-  node:
+  Topic:
     type: object
     properties:
       name:
         type: string
+      format:
+        type: string
+
+  Node:
+    type: object
+    properties:
+      name:
+        type: string
+      package:
+        type: string
+      source:
+        type: string
+      publishes:
+        type: array
+        items:
+          $ref: '#/definitions/Topic'
+        default: []
+      subscribes:
+        type: array
+        items:
+          $ref: '#/definitions/Topic'
+        default: []
 
 type: object
 properties:
   nodes:
     type: array
     items:
-      $ref: '#/definitions/node'
+      $ref: '#/definitions/Node'
     default: []
