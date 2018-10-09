@@ -85,6 +85,31 @@ def find_node_handles(rbs: rooibos.Client,
     return handles
 
 
+def find_subs(rbs: rooibos.Client,
+              sources: Dict[str, str]
+              ) -> Set[str]:
+    MATCH_SUBSCRIBER = ':[fcall](:[name], :[size], :[callback], :[obj]);'
+    R_FUNCTION_CALL = r'^\w+\.subscribe(<.+>)?$'
+
+    subs = set()
+    for filename, source in sources.items():
+        logger.debug("finding subs in file: %s", filename)
+        for match in rbs.matches(source, MATCH_SUBSCRIBER):
+            if 'fcall' not in match.environment:
+                continue
+            fcall = re.match(R_FUNCTION_CALL, match['fcall'].fragment)
+            if fcall is None:
+                continue
+
+            # fmt = fcall.group('fmt')
+            fmt = "UNKNOWN"
+            name = match['name'].fragment
+            # frmt = match['format'].fragment
+            logger.debug("found subscriber: %s [%s]", name, fmt)
+            subs.add(name)
+    return subs
+
+
 def find_pubs(rbs: rooibos.Client,
               sources: Dict[str, str]
               ) -> Set[str]:
@@ -123,20 +148,20 @@ def find_nodes(rbs: rooibos.Client,
 def main():
     # enable logging
     log_to_stdout = logging.StreamHandler()
-    log_to_stdout.setLevel(logging.INFO)
+    log_to_stdout.setLevel(logging.DEBUG)
     logger.addHandler(log_to_stdout)
 
     # get the contents of all of the files
     sources = obtain_sources('/home/chris/brass/examples')
     with rooibos.ephemeral_server(verbose=False) as rbs:
-        # SRC = 'nh.advertise<geometry_msgs::Twist>("cmd_vel", 1);'
-        # assert list(rbs.matches(SRC, MATCH_PUBLISHER)) != []
-
+        subs = find_subs(rbs, sources)
         params = find_parameters(rbs, sources)
         pubs = find_pubs(rbs, sources)
         handles = find_node_handles(rbs, sources)
         nodes = find_nodes(rbs, sources)
 
+    logger.info("Found subscribers: %s",
+                ', '.join(sorted(s for s in subs)))
     logger.info("Found publishers: %s",
                 ', '.join(sorted(p for p in pubs)))
     logger.info("Found nodes: %s",
