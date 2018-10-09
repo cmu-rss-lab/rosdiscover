@@ -9,6 +9,12 @@ definitions:
       format:
         type: string
 
+    Parameter:
+      type: object
+      properties:
+        name:
+          type: string
+
   Node:
     type: object
     properties:
@@ -27,6 +33,11 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/Topic'
+        default: []
+      parameters:
+        type: array
+        items:
+          $ref: '#/definitions/Parameter'
         default: []
 
 type: object
