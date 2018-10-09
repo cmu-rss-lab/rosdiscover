@@ -1,0 +1,8 @@
+Dynamic topic name:
+
+https://github.com/yujinrobot/yujin_ocs/blob/devel/yocs_keyop/launch/keyop.launch
+
+
+Can we perform partial evaluation?
+
+- we can find all parameter statements and pub/subs
