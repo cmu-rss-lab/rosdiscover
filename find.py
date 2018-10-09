@@ -61,14 +61,15 @@ def obtain_sources(dirname: str) -> Dict[str, str]:
 
 def find_parameters(rbs: rooibos.Client,
                     sources: Dict[str, str]
-                    ) -> Set[str]:
-    params = set()
+                    ) -> Set[Parameter]:
+    params = set()  # type: Set[Parameter]
     for filename, source in sources.items():
         logger.debug("finding parameters in file: %s", filename)
         for match in rbs.matches(source, MATCH_PARAM):
             name = match['name'].fragment
-            logger.debug("found parameter: %s", name)
-            params.add(name)
+            param = Parameter(name)
+            logger.debug("found parameter: %s", param)
+            params.add(param)
     return params
 
 
@@ -167,7 +168,7 @@ def main():
     logger.info("Found nodes: %s",
                 ', '.join(sorted(n for n in nodes)))
     logger.info("Found parameters: %s",
-                ', '.join(sorted(p for p in params)))
+                ', '.join(sorted(p.name for p in params)))
 
 
 if __name__ == '__main__':
