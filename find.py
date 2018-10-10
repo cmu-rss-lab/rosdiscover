@@ -26,12 +26,22 @@ class Parameter(object):
 @attr.s(frozen=True)
 class Node(object):
     name = attr.ib(type=str)
+    package = attr.ib(type=str)
+    defined_in_file = attr.ib(type=str)
 
 
 def unwrap(s: str) -> str:
     q = ['"', "'"]
     if s[0] in q and s[-1] in q:
         return s[1:-1]
+
+
+def package_for_file(fn: str) -> str:
+    d = os.path.dirname(fn)
+    if os.path.exists(os.path.join(d, 'package.xml')):
+        return os.path.basename(d)
+    else:
+        return package_for_file(d)
 
 
 def find_cpp_files(dirname: str) -> Set[str]:
@@ -151,11 +161,14 @@ def find_nodes(rbs: rooibos.Client,
                ) -> Set[Node]:
     nodes = set()  # type: Set[Node]
     for filename, source in sources.items():
+        package = package_for_file(filename)
         logger.debug("finding nodes in file: %s", filename)
         for match in rbs.matches(source, MATCH_INIT):
             name = match['name'].fragment
             # frmt = match['format'].fragment
-            node = Node(name)
+            node = Node(name=name,
+                        package=package,
+                        defined_in_file=filename)
             logger.debug("found node: %s", node)
             nodes.add(node)
     return nodes
