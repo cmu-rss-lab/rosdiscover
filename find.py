@@ -23,6 +23,11 @@ class Parameter(object):
     name = attr.ib(type=str)
 
 
+@attr.s(frozen=True)
+class Node(object):
+    name = attr.ib(type=str)
+
+
 def unwrap(s: str) -> str:
     q = ['"', "'"]
     if s[0] in q and s[-1] in q:
@@ -55,7 +60,16 @@ def obtain_sources(dirname: str) -> Dict[str, str]:
     # ]
 
     # FIXME bad files
-    cpp_files -= {'/home/chris/brass/examples/yujin_ocs/yocs_cmd_vel_mux/src/cmd_vel_subscribers.cpp'}
+    cpp_files -= {
+        '/home/chris/brass/examples/yujin_ocs/yocs_cmd_vel_mux/src/cmd_vel_subscribers.cpp',
+        '/home/chris/brass/examples/rospack/src/rospack.cpp',
+        '/home/chris/brass/examples/ros_comm/xmlrpcpp/test/Validator.cpp',
+        '/home/chris/brass/examples/ecl_core/ecl_command_line/src/test/command_line.cpp',
+        '/home/chris/brass/examples/orocos_kinematics_dynamics/orocos_kdl/tests/serialchaintest.cpp',
+        '/home/chris/brass/examples/ros_comm/xmlrpcpp/test/TestXml.cpp',
+        '/home/chris/brass/examples/ros_comm/xmlrpcpp/src/XmlRpcUtil.cpp',
+        '/home/chris/brass/examples/geometry/tf/test/tf_unittest.cpp'
+    }
     return read_files(cpp_files)
 
 
@@ -134,15 +148,16 @@ def find_pubs(rbs: rooibos.Client,
 
 def find_nodes(rbs: rooibos.Client,
                sources: Dict[str, str]
-               ) -> Set[str]:
-    nodes = set()
+               ) -> Set[Node]:
+    nodes = set()  # type: Set[Node]
     for filename, source in sources.items():
         logger.debug("finding nodes in file: %s", filename)
         for match in rbs.matches(source, MATCH_INIT):
             name = match['name'].fragment
             # frmt = match['format'].fragment
-            logger.debug("found node: %s", name)
-            nodes.add(name)
+            node = Node(name)
+            logger.debug("found node: %s", node)
+            nodes.add(node)
     return nodes
 
 
@@ -155,10 +170,10 @@ def main():
     # get the contents of all of the files
     sources = obtain_sources('/home/chris/brass/examples')
     with rooibos.ephemeral_server(verbose=False) as rbs:
-        subs = find_subs(rbs, sources)
-        params = find_parameters(rbs, sources)
-        pubs = find_pubs(rbs, sources)
-        handles = find_node_handles(rbs, sources)
+        # subs = find_subs(rbs, sources)
+        # params = find_parameters(rbs, sources)
+        # pubs = find_pubs(rbs, sources)
+        # handles = find_node_handles(rbs, sources)
         nodes = find_nodes(rbs, sources)
 
     logger.info("Found subscribers: %s",
