@@ -10,6 +10,7 @@ import rooibos
 from .version import __version__
 from .workspace import obtain_sources, package_for_file
 from .decls import NodeInit, ParamRead
+from .extract import Extractor
 
 
 # this has no effect?!
@@ -35,20 +36,6 @@ def find_param_reads(rbs: rooibos.Client,
                           defined_in_file=fn)
         logger.debug("found parameter: %s", param)
         params.add(param)
-    return extract(rbs, sources, template, extractor)
-
-
-def find_node_inits(rbs: rooibos.Client,
-                    sources: Dict[str, str]
-                    ) -> Set[NodeInit]:
-    template = 'ros::init(:[argc], :[argv], :[name]);'
-    def extractor(fn: str, m: rooibos.Match) -> NodeInit:
-        # frmt = match['format'].fragment
-        node = NodeInit(name=m['name'].fragment,
-                        package=package_for_file(fn),
-                        defined_in_file=fn)
-        logger.debug("found node: %s", node)
-        return node
     return extract(rbs, sources, template, extractor)
 
 
@@ -133,26 +120,13 @@ def main():
     # enable logging
     log_to_stdout = logging.StreamHandler()
     log_to_stdout.setLevel(logging.DEBUG)
-    logger.addHandler(log_to_stdout)
+    logging.getLogger('rosdiscover').addHandler(log_to_stdout)
 
     # get the contents of all of the files
     sources = obtain_sources('/home/chris/brass/examples')
-    with rooibos.ephemeral_server(verbose=False) as rbs:
-        # subs = find_subs(rbs, sources)
-        # params = ParamRead.find_all(rbs, sources)
-        # pubs = find_pubs(rbs, sources)
-        # handles = find_node_handles(rbs, sources)
-        nodes = find_node_inits(rbs, sources)
 
-    logger.info("Found subscribers: %s",
-                ', '.join(sorted(s for s in subs)))
-    logger.info("Found publishers: %s",
-                ', '.join(sorted(p for p in pubs)))
-    logger.info("Found nodes: %s",
-                ', '.join(sorted(n for n in nodes)))
-    logger.info("Found parameters: %s",
-                ', '.join(sorted(p.name for p in params)))
-
+    extractor = Extractor(sources, threads=8)
+    extractor.extract()
 
 if __name__ == '__main__':
     main()
