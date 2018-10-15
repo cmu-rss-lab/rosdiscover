@@ -47,6 +47,14 @@ class Extractor(object):
             logger.debug('found node: %s', node)
             node_inits.add(node)
 
+        # TODO find nearest node handle
+        tpl = ':[nh].getParam(:[name], :[var]);'
+        for m in rbs.matches(self.__workspace[filename], tpl):
+            read = ParamRead(name=m['name'].fragment,
+                             defined_in_file=filename)
+            logger.debug("found parameter: %s", param)
+            param_reads.add(read)
+
         return FileDeclarations(filename=filename,
                                 node_inits=node_inits,
                                 param_reads=param_reads)
