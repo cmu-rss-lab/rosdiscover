@@ -9,6 +9,7 @@ import rooibos
 
 from .version import __version__
 from .workspace import obtain_sources, package_for_file
+from .decls import NodeInit, ParamRead
 
 
 # this has no effect?!
@@ -23,46 +24,32 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
-@attr.s(frozen=True)
-class ParamRead(object):
-    name = attr.ib(type=str)
-    package = attr.ib(type=str)
-    defined_in_file = attr.ib(type=str)
-
-    @staticmethod
-    def find_all(rbs: rooibos.Client,
-                 sources: Dict[str, str]
-                 ) -> Set['Node']:
-        # TODO find nearest node handle
-        template = ':[nh].getParam(:[name], :[var]);'
-        def extractor(fn: str, m: rooibos.Match) -> ParamRead:
-            param = ParamRead(name=m['name'].fragment,
-                              package=package_for_file(fn),
-                              defined_in_file=fn)
-            logger.debug("found parameter: %s", param)
-            params.add(param)
-        return extract(rbs, sources, template, extractor)
+def find_param_reads(rbs: rooibos.Client,
+                     sources: Dict[str, str]
+                     ) -> Set[ParamRead]:
+    # TODO find nearest node handle
+    template = ':[nh].getParam(:[name], :[var]);'
+    def extractor(fn: str, m: rooibos.Match) -> ParamRead:
+        param = ParamRead(name=m['name'].fragment,
+                          package=package_for_file(fn),
+                          defined_in_file=fn)
+        logger.debug("found parameter: %s", param)
+        params.add(param)
+    return extract(rbs, sources, template, extractor)
 
 
-@attr.s(frozen=True)
-class NodeInit(object):
-    name = attr.ib(type=str)
-    package = attr.ib(type=str)
-    defined_in_file = attr.ib(type=str)
-
-    @staticmethod
-    def find_all(rbs: rooibos.Client,
-                 sources: Dict[str, str]
-                 ) -> Set['NodeInit']:
-        template = 'ros::init(:[argc], :[argv], :[name]);'
-        def extractor(fn: str, m: rooibos.Match) -> NodeInit:
-            # frmt = match['format'].fragment
-            node = NodeInit(name=m['name'].fragment,
-                            package=package_for_file(fn),
-                            defined_in_file=fn)
-            logger.debug("found node: %s", node)
-            return node
-        return extract(rbs, sources, template, extractor)
+def find_node_inits(rbs: rooibos.Client,
+                    sources: Dict[str, str]
+                    ) -> Set[NodeInit]:
+    template = 'ros::init(:[argc], :[argv], :[name]);'
+    def extractor(fn: str, m: rooibos.Match) -> NodeInit:
+        # frmt = match['format'].fragment
+        node = NodeInit(name=m['name'].fragment,
+                        package=package_for_file(fn),
+                        defined_in_file=fn)
+        logger.debug("found node: %s", node)
+        return node
+    return extract(rbs, sources, template, extractor)
 
 
 def find_node_handles(rbs: rooibos.Client,
@@ -155,7 +142,7 @@ def main():
         # params = ParamRead.find_all(rbs, sources)
         # pubs = find_pubs(rbs, sources)
         # handles = find_node_handles(rbs, sources)
-        nodes = NodeInit.find_all(rbs, sources)
+        nodes = find_node_inits(rbs, sources)
 
     logger.info("Found subscribers: %s",
                 ', '.join(sorted(s for s in subs)))
