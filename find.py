@@ -1,10 +1,15 @@
-from typing import Set, Dict, List, Iterable
+from typing import Set, Dict, List, Iterable, Any, Callable
 import re
 import os
 import logging
+from concurrent.futures import ThreadPoolExecutor
 
 import attr
 import rooibos
+
+
+# this has no effect?!
+NUM_THREADS = 8
 
 MATCH_INIT = 'ros::init(:[argc], :[argv], :[name]);'
 # TODO is public or private?
@@ -18,9 +23,12 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
+# ParameterAccess?
 @attr.s(frozen=True)
 class Parameter(object):
     name = attr.ib(type=str)
+    package = attr.ib(type=str)
+    defined_in_file = attr.ib(type=str)
 
 
 @attr.s(frozen=True)
@@ -29,11 +37,20 @@ class Node(object):
     package = attr.ib(type=str)
     defined_in_file = attr.ib(type=str)
 
-
-def unwrap(s: str) -> str:
-    q = ['"', "'"]
-    if s[0] in q and s[-1] in q:
-        return s[1:-1]
+    @staticmethod
+    def find_all(rbs: rooibos.Client,
+                 sources: Dict[str, str]
+                 ) -> Set['Node']:
+        template = 'ros::init(:[argc], :[argv], :[name]);'
+        def extractor(fn: str, m: rooibos.Match) -> Node:
+            name = m['name'].fragment
+            # frmt = match['format'].fragment
+            node = Node(name=name,
+                        package=package_for_file(fn),
+                        defined_in_file=fn)
+            logger.debug("found node: %s", node)
+            return node
+        return extract(rbs, sources, template, extractor)
 
 
 def package_for_file(fn: str) -> str:
@@ -88,10 +105,13 @@ def find_parameters(rbs: rooibos.Client,
                     ) -> Set[Parameter]:
     params = set()  # type: Set[Parameter]
     for filename, source in sources.items():
+        package = package_for_file(filename)
         logger.debug("finding parameters in file: %s", filename)
         for match in rbs.matches(source, MATCH_PARAM):
             name = match['name'].fragment
-            param = Parameter(name)
+            param = Parameter(name=name,
+                              package=package,
+                              defined_in_file=filename)
             logger.debug("found parameter: %s", param)
             params.add(param)
     return params
@@ -156,22 +176,22 @@ def find_pubs(rbs: rooibos.Client,
             pubs.add(name)
     return pubs
 
-def find_nodes(rbs: rooibos.Client,
-               sources: Dict[str, str]
-               ) -> Set[Node]:
-    nodes = set()  # type: Set[Node]
-    for filename, source in sources.items():
-        package = package_for_file(filename)
-        logger.debug("finding nodes in file: %s", filename)
-        for match in rbs.matches(source, MATCH_INIT):
-            name = match['name'].fragment
-            # frmt = match['format'].fragment
-            node = Node(name=name,
-                        package=package,
-                        defined_in_file=filename)
-            logger.debug("found node: %s", node)
-            nodes.add(node)
-    return nodes
+
+def extract(rbs: rooibos.Client,
+            sources: Dict[str, str],
+            tpl: str,
+            extractor: Callable[[str, rooibos.Match, Set[Any]], None]
+            ) -> Set[Any]:
+    def process(fn: str) -> Set[Any]:
+        return set(extractor(fn, m) for m in rbs.matches(sources[fn], tpl))
+
+    with ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:
+        matches = executor.map(process, sources.keys())
+
+    s = set()
+    for m in matches:
+        s = s | m
+    return s
 
 
 def main():
@@ -187,7 +207,7 @@ def main():
         # params = find_parameters(rbs, sources)
         # pubs = find_pubs(rbs, sources)
         # handles = find_node_handles(rbs, sources)
-        nodes = find_nodes(rbs, sources)
+        nodes = Node.find_all(rbs, sources)
 
     logger.info("Found subscribers: %s",
                 ', '.join(sorted(s for s in subs)))
