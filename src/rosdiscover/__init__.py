@@ -8,7 +8,7 @@ import attr
 import rooibos
 
 from .version import __version__
-from .workspace import obtain_sources
+from .workspace import obtain_sources, package_for_file
 
 
 # this has no effect?!
