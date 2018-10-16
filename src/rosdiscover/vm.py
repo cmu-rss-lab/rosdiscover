@@ -3,6 +3,8 @@
 from typing import Dict, Iterator, Any, Optional, Tuple, Callable
 import logging
 
+import roslaunch
+
 from .workspace import Workspace
 
 logger = logging.getLogger(__name__)  # type: logging.Logger
@@ -13,12 +15,23 @@ class ParameterServer(object):
     def __init__(self) -> None:
         self.__contents = {}  # type: Dict[str, Any]
 
+    def __getitem__(self, key: str) -> Any:
+        return self.__contents[key]
+
+    def __contains__(self, key: str) -> bool:
+        return key in self.__contents
+
+    def __setitem__(self, key: str, val: Any) -> None:
+        self.__contents[key] = val
+
 
 class NodeContext(object):
     def __init__(self,
-                 name: str
+                 name: str,
+                 params: ParameterServer
                  ) -> None:
         self.__name = name
+        self.__params = params
 
     def provide(self,
                 service: str,
@@ -122,12 +135,28 @@ class VM(object):
                  workspace: Workspace
                  ) -> None:
         self.__workspace = workspace
+        self.__params = ParameterServer()
+
+    @property
+    def parameters(self) -> ParameterServer:
+        return self.__params
 
     # def topics(self) -> Iterator[Topic]:
     #     return
 
     # def nodes(self) -> Iterator[Node]:
     #     return
+
+    def launch(self, fn: str) -> None:
+        """
+        Simulates the effects of `roslaunch` using a given launch file.
+        """
+        config = roslaunch.config.ROSLaunchConfig()
+        loader = roslaunch.xmlloader.XmlLoader()
+        loader.load(fn, config)
+
+        for node in config.nodes:
+            logger.debug("launching node: %s", node)
 
     def load(self,
              pkg: str,
@@ -145,4 +174,4 @@ class VM(object):
             raise Exception(m)
 
         ctx = NodeContext(name)
-        model.eval(ctx)
+        model.eval(ctx, self.__params)
