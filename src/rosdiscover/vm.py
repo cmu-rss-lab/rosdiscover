@@ -20,6 +20,16 @@ class NodeContext(object):
                  ) -> None:
         self.__name = name
 
+    def provide(self,
+                service: str,
+                fmt: str
+                ) -> None:
+        """
+        Instructs the node to provide a service.
+        """
+        logger.debug("node [%s] provides service [%s] using format [%s]",
+                     self.__name, service, fmt)
+
     def sub(self,
             topic: str,
             fmt: str
