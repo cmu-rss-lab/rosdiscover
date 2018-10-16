@@ -61,9 +61,21 @@ def obtain_sources(dirname: str) -> Dict[str, str]:
         '/home/chris/brass/examples/orocos_kinematics_dynamics/orocos_kdl/tests/serialchaintest.cpp',
         '/home/chris/brass/examples/ros_comm/xmlrpcpp/test/TestXml.cpp',
         '/home/chris/brass/examples/ros_comm/xmlrpcpp/src/XmlRpcUtil.cpp',
-        '/home/chris/brass/examples/geometry/tf/test/tf_unittest.cpp'
+        '/home/chris/brass/examples/geometry/tf/test/tf_unittest.cpp',
+
+        '/home/chris/brass/examples/orocos_kinematics_dynamics/orocos_kdl/src/jntarray.cpp',
+        '/home/chris/brass/examples/ros_comm/roscpp/src/libros/subscriber.cpp',
+        '/home/chris/brass/examples/orocos_kinematics_dynamics/orocos_kdl/models/kukaLWRtestHCG.cpp',
     }
     py_files -= {
-        '/home/chris/brass/examples/rocon_tools/rocon_python_wifi/src/rocon_python_wifi/flags.py'
+        '/home/chris/brass/examples/rocon_tools/rocon_python_wifi/src/rocon_python_wifi/flags.py',
+        '/home/chris/brass/examples/rocon_multimaster/rocon_hub/src/rocon_hub/watcher.py',
+        '/home/chris/brass/examples/rocon_multimaster/rocon_gateway/src/rocon_gateway/graph.py',
+        '/home/chris/brass/examples/ros_comm/rosgraph/test/test_rosgraph_masterapi_offline.py',
+        '/home/chris/brass/examples/ros_comm/rosbag/scripts/fix_md5sums.py',
+
+        '/home/chris/brass/examples/rocon_multimaster/rocon_gateway/src/rocon_gateway/public_interface.py',
+        '/home/chris/brass/examples/rocon_tools/rocon_ebnf/examples/sqs7.py'
     }
-    return read_files(cpp_files | py_files)
+    return read_files(py_files)
+    # return read_files(cpp_files | py_files)
