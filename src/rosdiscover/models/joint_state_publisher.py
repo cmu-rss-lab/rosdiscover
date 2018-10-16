@@ -8,7 +8,7 @@ def joint_state_publisher(c):
     # joint_state_publisher#L33
     def get_param(name, value=None):
         private = "~{}".format(name)
-        return c.read(private, read(name, value))
+        return c.read(private, c.read(name, value))
 
     get_param("robot_description")
     get_param("dependent_joints", {})
