@@ -1,6 +1,6 @@
 # for now, we need to include prebaked modules
 # - a node may be composed of multiple components
-from typing import Dict, Iterator, Any, Optional, Tuple, Callable, Set
+from typing import Dict, Iterator, Any, Optional, Tuple, Callable, Set, FrozenSet
 import logging
 
 import attr
@@ -28,22 +28,27 @@ class ParameterServer(object):
         self.__contents[key] = val
 
 
-@attr.s
-class Topic(object):
+@attr.s(frozen=True)
+class NodeSummary(object):
     name = attr.ib(type=str)
-    publishers = attr.ib(type=Set[str], default=set())
-    subscribers = attr.ib(type=Set[str], default=set())
+    pubs = attr.ib(type=FrozenSet[FullName], converter=frozenset)
+    subs = attr.ib(type=FrozenSet[FullName], converter=frozenset)
 
 
 class NodeContext(object):
     def __init__(self,
                  name: str,
-                 params: ParameterServer,
-                 topics: Dict[str, Topic]
+                 params: ParameterServer
                  ) -> None:
         self.__name = name
         self.__params = params
-        self.__topics = topics
+        self.__subs = set()
+        self.__pubs = set()
+
+    def summarize(self) -> NodeSummary:
+        return NodeSummary(name=self.__name,
+                           pubs=self.__pubs,
+                           subs=self.__subs)
 
     def resolve(self, name: str) -> FullName:
         """
@@ -55,10 +60,10 @@ class NodeContext(object):
         if name[0] == '/':
             return name
         elif name[0] == '~':
-            return '/{}/{}'.join(self.__name, name)
+            return '/{}/{}'.format(self.__name, name)
         # FIXME
         else:
-            return name
+            return '/{}'.format(name)
 
     def provide(self,
                 service: str,
@@ -71,7 +76,7 @@ class NodeContext(object):
                      self.__name, service, fmt)
 
     def sub(self,
-            topic: str,
+            topic_name: str,
             fmt: str
             ) -> None:
         """
@@ -81,15 +86,13 @@ class NodeContext(object):
             topic: the unqualified name of the topic.
             fmt: the message format used by the topic.
         """
+        topic_name_full = self.resolve(topic_name)
         logger.debug("node [%s] subscribes to topic [%s] with format [%s]",
-                     self.__name, topic, fmt)
-        qualified_topic = self.resolve(topic)
-        if qualified_topic not in self.__topics:
-            self.__topics[qualified_topic] = Topic(qualified_topic)
-        self.__topics[qualified_topic].subscribers.add(self.__name)
+                     self.__name, topic_name, fmt)
+        self.__subs.add(topic_name_full)
 
     def pub(self,
-            topic: str,
+            topic_name: str,
             fmt: str
             ) -> None:
         """
@@ -99,8 +102,10 @@ class NodeContext(object):
             topic: the unqualified name of the topic.
             fmt: the message format used by the topic.
         """
+        topic_name_full = self.resolve(topic_name)
         logger.debug("node [%s] publishes to topic [%s] with format [%s]",
-                     self.__name, topic, fmt)
+                     self.__name, topic_name, fmt)
+        self.__pubs.add(topic_name_full)
 
     def read(self,
              param: str,
@@ -168,18 +173,19 @@ class VM(object):
                  ) -> None:
         self.__workspace = workspace
         self.__params = ParameterServer()
-        self.__topics = {}  # type: Dict[str, Topic]
+        self.__nodes = set()  # type: Set[NodeSummary]
 
     @property
     def parameters(self) -> ParameterServer:
         return self.__params
 
-    @property
-    def topics(self) -> Iterator[Topic]:
-        yield from self.__topics.values()
+    # @property
+    # def topics(self) -> Iterator[Topic]:
+    #     yield from []
 
-    # def nodes(self) -> Iterator[Node]:
-    #     return
+    @property
+    def nodes(self) -> Iterator[NodeSummary]:
+        yield from self.__nodes
 
     def launch(self, fn: str) -> None:
         """
@@ -207,5 +213,6 @@ class VM(object):
             m = m.format(nodetype, pkg)
             raise Exception(m)
 
-        ctx = NodeContext(name, self.__params, self.__topics)
+        ctx = NodeContext(name, self.__params)
         model.eval(ctx)
+        self.__nodes.add(ctx.summarize())
