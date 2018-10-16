@@ -1,8 +1,12 @@
 # for now, we need to include prebaked modules
 # - a node may be composed of multiple components
-from typing import Dict, Iterator, Any, Optional, Tuple
+from typing import Dict, Iterator, Any, Optional, Tuple, Callable
+import logging
 
 from .workspace import Workspace
+
+logger = logging.getLogger(__name__)  # type: logging.Logger
+logger.setLevel(logging.DEBUG)
 
 
 class NodeContext(object):
@@ -40,6 +44,8 @@ class Model(object):
             m.format(name, package)
             raise Exception(m)
         models[key] = Model(package, name, definition)
+        logger.debug("registered model [%s] for package [%s]",
+                     name, package)
 
     @staticmethod
     def find(package: str, name: str) -> 'Model':
@@ -58,17 +64,24 @@ class Model(object):
         return self.__definition(context)
 
 
+def model(package: str, name: str):
+    def register(m: Callable[[NodeContext], None]):
+        Model.register(package, name, m)
+        return m
+    return register
+
+
 class VM(object):
     def __init__(self,
                  workspace: Workspace
                  ) -> None:
-        pass
+        self.__workspace = workspace
 
-    def topics(self) -> Iterator[Topic]:
-        return
+    # def topics(self) -> Iterator[Topic]:
+    #     return
 
-    def nodes(self) -> Iterator[Node]:
-        return
+    # def nodes(self) -> Iterator[Node]:
+    #     return
 
     def load(self,
              pkg: str,
