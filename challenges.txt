@@ -1,6 +1,25 @@
 Dynamic topic name:
 
 https://github.com/yujinrobot/yujin_ocs/blob/devel/yocs_keyop/launch/keyop.launch
+/home/chris/brass/examples/ros_comm/topic_tools/src/throttle.cpp
+
+  found node: topic_name + string("_throttle"),
+              ros::init_options::AnonymousName
+
+  finding nodes in file: /home/chris/brass/examples/nodelet_core/nodelet/src/nodelet.cpp
+    found node: "nodelet"
+    found node: "nodelet"
+    found node: arg_parser.getDefaultName (
+
+finding parameters in file: /home/chris/brass/examples/diagnostics/diagnostic_aggregator/src/analyzer_group.cpp
+found parameter: Parameter(name='""', package='diagnostic_aggregator', defined_in_file='/home/chris/brass/examples/diagnostics/diagnostic_aggregator/src/analyzer_group.cpp')
+
+=============================
+HOW DO WE DEAL WITH NODELETS?
+=============================
+
+finding parameters in file: /home/chris/brass/examples/nodelet_core/nodelet/src/nodelet.cpp
+found parameter: Parameter(name='node_name', package='nodelet', defined_in_file='/home/chris/brass/examples/nodelet_core/nodelet/src/nodelet.cpp')
 
 
 Can we perform partial evaluation?
