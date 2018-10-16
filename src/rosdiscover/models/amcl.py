@@ -53,6 +53,6 @@ def amcl(c):
     c.sub('map', 'nav_msgs::OccupancyGrid')
     c.sub('initialpose', 'geometry_msgs/PoseWithCovarianceStamped')
 
-    c.advertise_service('global_localization', 'std_srvs/Empty'),
-    c.advertise_service('request_nomotion_update', 'std_srvs/Empty'),
-    c.advertise_service('set_map', 'nav_msgs/SetMap')
+    c.provide('global_localization', 'std_srvs/Empty'),
+    c.provide('request_nomotion_update', 'std_srvs/Empty'),
+    c.provide('set_map', 'nav_msgs/SetMap')
