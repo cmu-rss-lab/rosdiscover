@@ -34,6 +34,20 @@ class NodeContext(object):
         logger.debug("node [%s] subscribes to topic [%s] with format [%s]",
                      self.__name, topic, fmt)
 
+    def pub(self,
+            topic: str,
+            fmt: str
+            ) -> None:
+        """
+        Instructs the node to publish to a given topic.
+
+        Parameters:
+            topic: the unqualified name of the topic.
+            fmt: the message format used by the topic.
+        """
+        logger.debug("node [%s] publishes to topic [%s] with format [%s]",
+                     self.__name, topic, fmt)
+
     def read(self,
              param: str,
              default: Optional[Any]
