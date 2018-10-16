@@ -1,14 +1,17 @@
 # for now, we need to include prebaked modules
 # - a node may be composed of multiple components
-from typing import Dict, Iterator, Any, Optional, Tuple, Callable
+from typing import Dict, Iterator, Any, Optional, Tuple, Callable, Set
 import logging
 
-import roslaunch
+import attr
+# import roslaunch
 
 from .workspace import Workspace
 
 logger = logging.getLogger(__name__)  # type: logging.Logger
 logger.setLevel(logging.DEBUG)
+
+FullName = str
 
 
 class ParameterServer(object):
@@ -25,13 +28,37 @@ class ParameterServer(object):
         self.__contents[key] = val
 
 
+@attr.s
+class Topic(object):
+    name = attr.ib(type=str)
+    publishers = attr.ib(type=Set[str], default=set())
+    subscribers = attr.ib(type=Set[str], default=set())
+
+
 class NodeContext(object):
     def __init__(self,
                  name: str,
-                 params: ParameterServer
+                 params: ParameterServer,
+                 topics: Dict[str, Topic]
                  ) -> None:
         self.__name = name
         self.__params = params
+        self.__topics = topics
+
+    def resolve(self, name: str) -> FullName:
+        """
+        Resolves a given name within the context of this node.
+
+        Returns:
+            the fully qualified form of a given name.
+        """
+        if name[0] == '/':
+            return name
+        elif name[0] == '~':
+            return '/{}/{}'.join(self.__name, name)
+        # FIXME
+        else:
+            return name
 
     def provide(self,
                 service: str,
@@ -56,6 +83,10 @@ class NodeContext(object):
         """
         logger.debug("node [%s] subscribes to topic [%s] with format [%s]",
                      self.__name, topic, fmt)
+        qualified_topic = self.resolve(topic)
+        if qualified_topic not in self.__topics:
+            self.__topics[qualified_topic] = Topic(qualified_topic)
+        self.__topics[qualified_topic].subscribers.add(self.__name)
 
     def pub(self,
             topic: str,
@@ -81,6 +112,7 @@ class NodeContext(object):
         """
         logger.debug("node [%s] reads parameter [%s]",
                      self.__name, param)
+
         # FIXME
         return default
 
@@ -136,13 +168,15 @@ class VM(object):
                  ) -> None:
         self.__workspace = workspace
         self.__params = ParameterServer()
+        self.__topics = {}  # type: Dict[str, Topic]
 
     @property
     def parameters(self) -> ParameterServer:
         return self.__params
 
-    # def topics(self) -> Iterator[Topic]:
-    #     return
+    @property
+    def topics(self) -> Iterator[Topic]:
+        yield from self.__topics.values()
 
     # def nodes(self) -> Iterator[Node]:
     #     return
@@ -173,5 +207,5 @@ class VM(object):
             m = m.format(nodetype, pkg)
             raise Exception(m)
 
-        ctx = NodeContext(name)
-        model.eval(ctx, self.__params)
+        ctx = NodeContext(name, self.__params, self.__topics)
+        model.eval(ctx)
