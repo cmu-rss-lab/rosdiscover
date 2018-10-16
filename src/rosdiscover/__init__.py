@@ -25,20 +25,6 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
-def find_param_reads(rbs: rooibos.Client,
-                     sources: Dict[str, str]
-                     ) -> Set[ParamRead]:
-    # TODO find nearest node handle
-    template = ':[nh].getParam(:[name], :[var]);'
-    def extractor(fn: str, m: rooibos.Match) -> ParamRead:
-        param = ParamRead(name=m['name'].fragment,
-                          package=package_for_file(fn),
-                          defined_in_file=fn)
-        logger.debug("found parameter: %s", param)
-        params.add(param)
-    return extract(rbs, sources, template, extractor)
-
-
 def find_node_handles(rbs: rooibos.Client,
                       sources: Dict[str, str]
                       ) -> Set[str]:
@@ -99,23 +85,6 @@ def find_pubs(rbs: rooibos.Client,
     return pubs
 
 
-def extract(rbs: rooibos.Client,
-            sources: Dict[str, str],
-            tpl: str,
-            extractor: Callable[[str, rooibos.Match, Set[Any]], None]
-            ) -> Set[Any]:
-    def process(fn: str) -> Set[Any]:
-        return set(extractor(fn, m) for m in rbs.matches(sources[fn], tpl))
-
-    with ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:
-        matches = executor.map(process, sources.keys())
-
-    s = set()
-    for m in matches:
-        s = s | m
-    return s
-
-
 def main():
     # enable logging
     log_to_stdout = logging.StreamHandler()
@@ -123,7 +92,7 @@ def main():
     logging.getLogger('rosdiscover').addHandler(log_to_stdout)
 
     # get the contents of all of the files
-    sources = obtain_sources('/home/chris/brass/examples')
+    sources = obtain_sources('/home/chris/brass/examples/rocon_multimaster/rocon_gateway')
 
     extractor = Extractor(sources, threads=8)
     extractor.extract()
