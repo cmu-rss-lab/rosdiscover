@@ -9,11 +9,30 @@ logger = logging.getLogger(__name__)  # type: logging.Logger
 logger.setLevel(logging.DEBUG)
 
 
+class ParameterServer(object):
+    def __init__(self) -> None:
+        self.__contents = {}  # type: Dict[str, Any]
+
+
 class NodeContext(object):
     def __init__(self,
                  name: str
                  ) -> None:
         self.__name = name
+
+    def sub(self,
+            topic: str,
+            fmt: str
+            ) -> None:
+        """
+        Subscribes the node to a given topic.
+
+        Parameters:
+            topic: the unqualified name of the topic.
+            fmt: the message format used by the topic.
+        """
+        logger.debug("node [%s] subscribes to topic [%s] with format [%s]",
+                     self.__name, topic, fmt)
 
     def read(self,
              param: str,
@@ -23,7 +42,10 @@ class NodeContext(object):
         Obtains the value of a given parameter from the parameter
         server.
         """
-        raise NotImplementedError
+        logger.debug("node [%s] reads parameter [%s]",
+                     self.__name, param)
+        # FIXME
+        return default
 
 
 class Model(object):
@@ -60,7 +82,7 @@ class Model(object):
         self.__name = name
         self.__definition = definition
 
-    def eval(context: NodeContext) -> None:
+    def eval(self, context: NodeContext) -> None:
         return self.__definition(context)
 
 
