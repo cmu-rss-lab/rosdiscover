@@ -39,32 +39,6 @@ def turtlebot():
     load('rviz')  # ???
 
 
-@definition('joint_state_publisher')
-def joint_state_publisher(c: NodeContext) -> None:
-    # https://github.com/ros/joint_state_publisher/blob/kinetic-devel/joint_state_publisher/joint_state_publisher/joint_state_publisher
-
-    # joint_state_publisher#L33
-    def get_param(name, value=None):
-        private = "~{}".format(name)
-        return c.read(private, read(name, value))
-
-    get_param("robot_description")
-    get_param("dependent_joints", {})
-    get_param("use_mimic_tags", True)
-    get_param("use_smallest_joint_limits", True)
-    get_param("zeros")
-
-    get_param("publish_default_positions", True)
-    get_param("publish_default_velocities", False)
-    get_param("publish_default_efforts", False)
-    get_param("use_gui", False)
-
-    for source in get_param("source_list", []):
-        c.sub(source, 'sensor_msgs/JointState')
-
-    c.pub('joint_states', 'sensor_msgs/JointState')
-
-
 def move_base():
     # navigation/map_server/src/main.cpp
     name = 'move_base_node'
@@ -119,88 +93,6 @@ def move_base():
 
     load_recovery('conservative_reset')
     load_recovery('aggressive')
-
-
-def map_server(argv: List[str]):
-    # navigation/map_server/src/main.cpp
-    # anonymous: yes
-    arg_map = argv[1]
-    arg_resolution = argv[2]
-    reads += [
-        ('~frame_id', 'map'),
-        ('~negate', 0),
-        ('~occupied_thresh', 0.65),
-        ('~free_thresh', 0.196)
-    ]
-    services += [
-        ('static_map', 'nav_msgs/GetMap')
-    ]
-    pubs += [
-        ('map_metadata', 'nav_msgs/MapMetaData'),
-        ('map', 'nav_msgs/OccupancyGrid')
-    ]
-
-
-def amcl():
-    # navigation/amcl/src/amcl_node.cpp
-    reads += [
-        ('~use_map_topic', False),
-        ('~first_map_only', False),
-        ('~gui_publish_rate', -1.0),
-        ('~save_pose_rate', 0.5),
-        ("~gui_publish_rate", -1.0),
-        ("~save_pose_rate", 0.5),
-        ("~laser_min_range", -1.0),
-        ("~laser_max_range", -1.0),
-        ("~laser_max_beams", 30),
-        ("~min_particles", 100),
-        ("~max_particles", 5000),
-        ("~kld_err", 0.01),
-        ("~kld_z", 0.99),
-        ("~odom_alpha1", 0.2),
-        ("~odom_alpha2", 0.2),
-        ("~odom_alpha3", 0.2),
-        ("~odom_alpha4", 0.2),
-        ("~odom_alpha5", 0.2),
-        ("~do_beamskip", False),
-        ("~beam_skip_distance", 0.5),
-        ("~beam_skip_threshold", 0.3),
-        ("~beam_skip_error_threshold_", 0.9),
-        ("~laser_z_hit", 0.95),
-        ("~laser_z_short", 0.1),
-        ("~laser_z_max", 0.05),
-        ("~laser_z_rand", 0.05),
-        ("~laser_sigma_hit", 0.2),
-        ("~laser_lambda_short", 0.1),
-        ("~laser_likelihood_max_dist", 2.0),
-        ("~laser_model_type", "likelihood_field"),
-        ("~odom_model_type", "diff"),
-        ("~update_min_d", 0.2),
-        ("~update_min_a", M_PI/6.0),  # FIXME
-        ("~odom_frame_id", "odom"),
-        ("~base_frame_id", "base_link"),
-        ("~global_frame_id", "map"),
-        ("~resample_interval", 2),
-        ("~transform_tolerance", 0.1),
-        ("~recovery_alpha_slow", 0.001),
-        ("~recovery_alpha_fast", 0.1),
-        ("~tf_broadcast", True),
-        ("~bag_scan_period", -1.0)
-    ]
-    pubs += [
-        ('amcl_pose', 'geometry_msgs/PoseWithCovarianceStamped'),
-        ('particlecloud', 'geometry_msgs/PoseArray')
-    ]
-    subs += [
-        ('scan', 'sensor_msgs/LaserScan')
-        ('map', 'nav_msgs::OccupancyGrid'),
-        ('initialpose', 'geometry_msgs/PoseWithCovarianceStamped'),
-    ]
-    services += [
-        ('global_localization', 'std_srvs/Empty'),
-        ('request_nomotion_update', 'std_srvs/Empty'),
-        ('set_map', 'nav_msgs/SetMap')
-    ]
 
 
 # actionlib/src/actionlib/action_client.py
