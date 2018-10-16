@@ -1,12 +1,13 @@
 from typing import List, Tuple, Callable, Dict
 from concurrent.futures import ThreadPoolExecutor
 import concurrent.futures
+import re
 import logging
 
 import rooibos
 from rooibos import Match
 
-from .decls import FileDeclarations, NodeInit
+from .decls import FileDeclarations, NodeInit, ParamRead
 from .workspace import package_for_file
 
 logger = logging.getLogger(__name__)
@@ -29,9 +30,15 @@ class Extractor(object):
         """
         Finds all declarations in a given file.
         """
-        if filename.endswith('.py'):
-            return self.extract_from_python_file(rbs, filename)
-        return self.extract_from_cxx_file(rbs, filename)
+        logger.debug("extracting declarations from file [%s]", filename)
+        try:
+            if filename.endswith('.py'):
+                return self.extract_from_python_file(rbs, filename)
+            return self.extract_from_cxx_file(rbs, filename)
+        except Exception:
+            logger.error("failed to extract declarations from file [%s]",
+                         filename)
+            raise
 
     def extract_from_cxx_file(self,
                               rbs: rooibos.Client,
@@ -48,21 +55,37 @@ class Extractor(object):
             node_inits.add(node)
 
         # TODO find nearest node handle
-        tpl = ':[nh].getParam(:[name], :[var]);'
-        for m in rbs.matches(self.__workspace[filename], tpl):
-            read = ParamRead(name=m['name'].fragment,
-                             defined_in_file=filename)
-            logger.debug("found parameter: %s", param)
-            param_reads.add(read)
+        # FIXME SLOWWW. needs narrowest match
+        #tpl = ':[nh].getParam(:[name], :[var]);'
+        #for m in rbs.matches(self.__workspace[filename], tpl):
+        #    read = ParamRead(name=m['name'].fragment,
+        #                     defined_in_file=filename)
+        #    logger.debug("found parameter: %s", param)
+        #    param_reads.add(read)
 
         return FileDeclarations(filename=filename,
                                 node_inits=node_inits,
                                 param_reads=param_reads)
 
     def extract_from_python_file(self,
+                                 rbs: rooibos.Client,
                                  filename: str
                                  ) -> FileDeclarations:
-        raise NotImplementedError
+        source = self.__workspace[filename]
+        node_inits = set()
+        param_reads = set()
+
+        tpl = r'rospy.init_node\(([^\)]+)\)'
+        for m in re.finditer(tpl, source):
+            name = m.group(1)
+            node = NodeInit(name=name,
+                            defined_in_file=filename)
+            logger.debug('found node: %s', node)
+            node_inits.add(node)
+
+        return FileDeclarations(filename=filename,
+                                node_inits=node_inits,
+                                param_reads=param_reads)
 
     def extract(self) -> None:
         with rooibos.ephemeral_server(verbose=False) as rbs:
