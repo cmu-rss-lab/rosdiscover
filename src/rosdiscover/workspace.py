@@ -54,9 +54,10 @@ class Workspace(object):
             '/home/chris/brass/examples/rocon_multimaster/rocon_gateway/src/rocon_gateway/graph.py',
             '/home/chris/brass/examples/ros_comm/rosgraph/test/test_rosgraph_masterapi_offline.py',
             '/home/chris/brass/examples/ros_comm/rosbag/scripts/fix_md5sums.py',
-
             '/home/chris/brass/examples/rocon_multimaster/rocon_gateway/src/rocon_gateway/public_interface.py',
-            '/home/chris/brass/examples/rocon_tools/rocon_ebnf/examples/sqs7.py'
+            '/home/chris/brass/examples/rocon_tools/rocon_ebnf/examples/sqs7.py',
+
+            '/home/chris/brass/tbot/rocon_tools/rocon_python_wifi/src/rocon_python_wifi/flags.py'
         }
 
         filenames = cpp_files | py_files
