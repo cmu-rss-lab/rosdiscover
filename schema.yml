@@ -1,49 +1,116 @@
 $schema: "http://json-schema.org/draft-06/schema#"
 
 definitions:
-  Topic:
+  Package:
     type: object
     properties:
       name:
         type: string
+
+      nodes:
+        type: array
+        items:
+          $ref: '#/definitions/Node'
+        default: []
+
+      services:
+        type: array
+        items:
+          $ref: '#/definitions/Service'
+        default: []
+
+      parameters:
+        type: object
+        properties:
+          reads:
+            type: array
+            items:
+              $ref: '#/definitions/ParamRead'
+            default: []
+          writes:
+            type: array
+            items:
+              $ref: '#/definitions/ParamWrite'
+            default: []
+
+      subscribers:
+        type: array
+        items:
+          $ref: '#/definitions/Subscriber'
+        default: []
+
+      publishers:
+        type: array
+        items:
+          $ref: '#/definitions/Publisher'
+        default: []
+
+  ParamRead:
+    type: object
+    properties:
+      name:
+        type: string
+        required: yes
+      location:
+        $ref: '#/definitions/Location'
+      default:
+        oneOf:
+          - type: int
+          - type: string
+          - type: bool
+          - type: float
+
+  ParamWrite:
+    type: object
+    properties:
+      name:
+        type: string
+        required: yes
+      location:
+        $ref: '#/definitions/Location'
+
+  Subscriber:
+    type: object
+    properties:
+      name:
+        type: string
+        required: yes
       format:
         type: string
+        required: yes
+      location:
+        $ref: '#/definitions/Location'
+        required: yes
 
-    Parameter:
-      type: object
-      properties:
-        name:
-          type: string
+  Publisher:
+    type: object
+    properties:
+      name:
+        type: string
+        required: yes
+      format:
+        type: string
+        required: yes
+      location:
+        $ref: '#/definitions/Location'
+
+  Location:
+    type: string
+    required: yes
 
   Node:
     type: object
     properties:
       name:
         type: string
-      package:
-        type: string
-      source:
-        type: string
-      publishes:
-        type: array
-        items:
-          $ref: '#/definitions/Topic'
-        default: []
-      subscribes:
-        type: array
-        items:
-          $ref: '#/definitions/Topic'
-        default: []
-      parameters:
-        type: array
-        items:
-          $ref: '#/definitions/Parameter'
-        default: []
+        required: yes
+      location:
+        $ref: '#/definitions/Location'
 
 type: object
 properties:
-  nodes:
+  packages:
     type: array
     items:
-      $ref: '#/definitions/Node'
+      $ref: '#/definitions/Package'
     default: []
