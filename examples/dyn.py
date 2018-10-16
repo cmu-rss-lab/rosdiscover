@@ -16,7 +16,7 @@
 def turtlebot():
     load('stage_ros')
     # $(find turtlebot_bringup)/launch/includes/robot.launch.xml
-    load('joint_state_publisher')  # https://github.com/ros/joint_state_publisher/blob/kinetic-devel/joint_state    _publisher/joint_state_publisher/joint_state_publisher
+    load('joint_state_publisher')  # https://github.com/ros/joint_state_publisher/blob/kinetic-devel/joint_state_publisher/joint_state_publisher/joint_state_publisher
 
     load_nodelet('mobile_base_nodelet_manager', args='manager')
     load_nodelet('cmd_vel_mux', args='load yocs_cmd_vel_mux/CmdVelMuxNodelet mobile_base_nodelet_manager')
@@ -30,12 +30,95 @@ def turtlebot():
     load_nodelet('kobuki_safety_controller',
                  args='load kobuki_safety_controller/SafetyControllerNodelet mobile_base_nodelet_manager')
 
-    load('map_server')  # navigation/map_server/src/main.cpp
+    # DONE
+    load('map_server')
 
     # $(find turtlebot_navigation)/launch/includes/amcl/amcl.launch.xml
     load('amcl')
 
     load('rviz')  # ???
+
+
+@definition('joint_state_publisher')
+def joint_state_publisher(c: NodeContext) -> None:
+    # https://github.com/ros/joint_state_publisher/blob/kinetic-devel/joint_state_publisher/joint_state_publisher/joint_state_publisher
+
+    # joint_state_publisher#L33
+    def get_param(name, value=None):
+        private = "~{}".format(name)
+        return c.read(private, read(name, value))
+
+    get_param("robot_description")
+    get_param("dependent_joints", {})
+    get_param("use_mimic_tags", True)
+    get_param("use_smallest_joint_limits", True)
+    get_param("zeros")
+
+    get_param("publish_default_positions", True)
+    get_param("publish_default_velocities", False)
+    get_param("publish_default_efforts", False)
+    get_param("use_gui", False)
+
+    for source in get_param("source_list", []):
+        c.sub(source, 'sensor_msgs/JointState')
+
+    c.pub('joint_states', 'sensor_msgs/JointState')
+
+
+def move_base():
+    # navigation/map_server/src/main.cpp
+    name = 'move_base_node'
+
+    # launches an action server: move_base
+    read("~base_global_planner", "navfn/NavfnROS")
+    read("~base_local_planner", "base_local_planner/TrajectoryPlannerROS")
+    read("~global_costmap/robot_base_frame", "base_link")
+    read("~global_costmap/global_frame", "/map")
+    read("~planner_frequency", 0.0)
+    read("~controller_frequency", 20.0)
+    read("~planner_patience", 5.0)
+    read("~controller_patience", 15.0)
+    read("~max_planning_retries", -1)
+    read("~oscillation_timeout", 0.0)
+    read("~oscillation_distance", 0.5)
+
+    pub("cmd_vel", "geometry_msgs/Twist")
+    pub("~current_goal", "geometry_msgs/PoseStamped")
+    pub("move_base/goal", "move_base_msgs/MoveBaseActionGoal")
+
+    sub("move_base_simple/goal", "geometry_msgs/PoseStamped")
+
+    read("~local_costmap/inscribed_radius", 0.325)
+    read("~local_costmap/circumscribed_radius", 0.46)
+    read("~clearing_radius", P["~local_costmap/circumscribed_radius"])
+    read("~conservative_reset_dist", 3.0)
+    read("~shutdown_costmaps", False)
+    read("~clearing_rotation_allowed", True)
+    read("~recovery_behavior_enabled", True)
+
+    # LOAD: nav_core::BaseGlobalPlanner
+    load_plugin('nav_core', 'nav_core/BaseGlobalPlanner')
+
+    # controller_costmap_ros_ = new costmap_2d::Costmap2DROS("local_costmap", tf_);
+    load_plugin('nav_core', 'nav_core/BaseLocalPlanner')
+
+    advertise_service("make_plan", 'nav_msgs/GetPlan')  # FIXME
+    advertise_service("clear_costmaps", ____)  # FIXME
+
+    # move_base/src/move_base.cpp:1054
+    # load_plugin('', 'clear_costmap_recovery/ClearCostmapRecovery') [conservative_reset]
+    def load_recovery(name: str) -> None:
+        nh_p = "~{}".format(name)
+        nh_blp = "~TrajectoryPlannerROS"
+        read("{}/sim_granularity".format(nh_p), 0.017)
+        read("{}/frequency".format(nh_p), 20.0)
+        read("{}/acc_lim_th".format(nh_blp), 3.2)
+        read("{}/max_rotational_vel".format(nh_blp), 1.0)
+        read("{}/min_in_place_rotational_vel".format(nh_blp), 0.4)
+        read("{}/yaw_goal_tolerance".format(nh_blp), 0.10)
+
+    load_recovery('conservative_reset')
+    load_recovery('aggressive')
 
 
 def map_server(argv: List[str]):
