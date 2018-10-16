@@ -8,15 +8,15 @@ import rooibos
 from rooibos import Match
 
 from .decls import FileDeclarations, NodeInit, ParamRead
-from .workspace import package_for_file
+from .workspace import Workspace
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)  # type: logging.Logger
 logger.setLevel(logging.DEBUG)
 
 
 class Extractor(object):
     def __init__(self,
-                 workspace: Dict[str, str],
+                 workspace: Workspace,
                  *,
                  threads: int = 8
                  ) -> None:
@@ -90,8 +90,7 @@ class Extractor(object):
     def extract(self) -> None:
         with rooibos.ephemeral_server(verbose=False) as rbs:
             with ThreadPoolExecutor(max_workers=self.__workers) as executor:
-                filenames = self.__workspace.keys()
                 decls = executor.map(lambda fn: self.extract_from_file(rbs, fn),
-                                     filenames)
+                                     self.__workspace)
                 file_to_decls = {d.filename: d for d in decls}
             logger.info("%s", file_to_decls)

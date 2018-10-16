@@ -8,7 +8,7 @@ import attr
 import rooibos
 
 from .version import __version__
-from .workspace import obtain_sources, package_for_file
+from .workspace import Workspace
 from .decls import NodeInit, ParamRead
 from .extract import Extractor
 
@@ -26,10 +26,11 @@ logger.setLevel(logging.DEBUG)
 
 
 def find_node_handles(rbs: rooibos.Client,
-                      sources: Dict[str, str]
+                      sources: Workspace
                       ) -> Set[str]:
     handles = set()
-    for filename, source in sources.items():
+    for filename in sources:
+        source = sources[filename]
         logger.debug("finding node handles in file: %s", filename)
         for match in rbs.matches(source, MATCH_NODE_HANDLE):
             name = match['name'].fragment
@@ -39,13 +40,14 @@ def find_node_handles(rbs: rooibos.Client,
 
 
 def find_subs(rbs: rooibos.Client,
-              sources: Dict[str, str]
+              sources: Workspace
               ) -> Set[str]:
     MATCH_SUBSCRIBER = ':[fcall](:[name], :[size], :[callback], :[obj]);'
     R_FUNCTION_CALL = r'^\w+\.subscribe(<.+>)?$'
 
     subs = set()
-    for filename, source in sources.items():
+    for filename in sources:
+        source = sources[filename]
         logger.debug("finding subs in file: %s", filename)
         for match in rbs.matches(source, MATCH_SUBSCRIBER):
             if 'fcall' not in match.environment:
@@ -67,7 +69,8 @@ def find_pubs(rbs: rooibos.Client,
               sources: Dict[str, str]
               ) -> Set[str]:
     pubs = set()
-    for filename, source in sources.items():
+    for filename in sources:
+        source = sources[filename]
         logger.debug("finding pubs in file: %s", filename)
         for match in rbs.matches(source, MATCH_PUBLISHER):
             if 'fcall' not in match.environment:
@@ -92,9 +95,9 @@ def main():
     logging.getLogger('rosdiscover').addHandler(log_to_stdout)
 
     # get the contents of all of the files
-    sources = obtain_sources('/home/chris/brass/examples/rocon_multimaster/rocon_gateway')
+    ws = Workspace('/home/chris/brass/examples/rocon_multimaster/rocon_gateway')
 
-    extractor = Extractor(sources, threads=8)
+    extractor = Extractor(ws, threads=8)
     extractor.extract()
 
 if __name__ == '__main__':
