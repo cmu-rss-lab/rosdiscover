@@ -1,0 +1,62 @@
+packages:
+  - name: stage_ros
+    nodes:
+      - name: stageros
+        location: 'src/stageros.cpp:743'
+    services:
+      - name: reset_positions
+        format: StageNode/cb_reset_srv
+        locations: 'src/stageros.cpp:388'
+    parameters:
+      writes:
+        - name: /use_sim_time
+          location: 'src/stageros.cpp:325'
+      reads:
+        - name: base_watchdog_timeout
+          default: 0.2
+          location: 'src/stageros.cpp:276'
+        - name: is_depth_canonical
+          default: true
+          location: 'src/stageros.cpp:280'
+    publishers:
+      - name: /clock
+        format: rosgraph_msgs/Clock
+        location: 'src/stageros.cpp:385'
+
+      # DYNAMIC!
+      - name: 'mapName(ODOM, r, static_cast<Stg::Model*>(new_robot->positionmodel))'
+        format: nav_msgs/Odometry
+        location: 'src/stageros.cpp:354'
+      - name: 'mapName(BASE_POSE_GROUND_TRUTH, r, static_cast<Stg::Model*>(new_robot->positionmodel))'
+        format: nav_msgs/Odometry
+        location: 'src/stageros.cpp:355'
+      - name: 'mapName(CMD_VEL, r, static_cast<Stg::Model*>(new_robot->positionmodel))'
+        format: geometry_msgs/Twist
+        location: 'src/stageros.cpp:356'
+
+      - name: 'mapName(BASE_SCAN, r, static_cast<Stg::Model*>(new_robot->positionmodel))'
+        format: sensor_msgs/LaserScan
+        location: 'src/stageros.cpp:361'
+      - name: 'n_.advertise<sensor_msgs::LaserScan>(mapName(BASE_SCAN, r, s, static_cast<Stg::Model*>(new_robot->positionmodel))'
+        format: sensor_msgs/LaserScan
+        location: 'src/stageros.cpp:363'
+
+      - name: 'mapName(IMAGE, r, static_cast<Stg::Model*>(new_robot->positionmodel))'
+        format: sensor_msgs/Image
+        location: 'src/stageros.cpp:371'
+      - name: 'mapName(DEPTH, r, static_cast<Stg::Model*>(new_robot->positionmodel))'
+        format: sensor_msgs/Image
+        location: 'src/stageros.cpp:372'
+      - name: 'mapName(CAMERA_INFO, r, static_cast<Stg::Model*>(new_robot->positionmodel))'
+        format: sensor_msgs/CameraInfo
+        location: 'src/stageros.cpp:373'
+
+      - name: 'mapName(IMAGE, r, s, static_cast<Stg::Model*>(new_robot->positionmodel))'
+        format: sensor_msgs/Image
+        location: 'src/stageros.cpp:377'
+      - name: 'mapName(DEPTH, r, s, static_cast<Stg::Model*>(new_robot->positionmodel))'
+        format: sensor_msgs/Image
+        location: 'src/stageros.cpp:378'
+      - name: 'mapName(CAMERA_INFO, r, s, static_cast<Stg::Model*>(new_robot->positionmodel))'
+        format: sensor_msgs/CameraInfo
+        location: 'src/stageros.cpp:379'
