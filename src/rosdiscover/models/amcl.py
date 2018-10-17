@@ -37,7 +37,7 @@ def amcl(c):
     c.read("~laser_model_type", "likelihood_field")
     c.read("~odom_model_type", "diff")
     c.read("~update_min_d", 0.2)
-    c.read("~update_min_a", M_PI/6.0),  # FIXME
+    c.read("~update_min_a", M_PI/6.0)
     c.read("~odom_frame_id", "odom")
     c.read("~base_frame_id", "base_link")
     c.read("~global_frame_id", "map")
@@ -48,13 +48,13 @@ def amcl(c):
     c.read("~tf_broadcast", True)
     c.read("~bag_scan_period", -1.0)
 
-    c.pub('amcl_pose', 'geometry_msgs/PoseWithCovarianceStamped'),
+    c.pub('amcl_pose', 'geometry_msgs/PoseWithCovarianceStamped')
     c.pub('particlecloud', 'geometry_msgs/PoseArray')
 
     c.sub('scan', 'sensor_msgs/LaserScan')
     c.sub('map', 'nav_msgs::OccupancyGrid')
     c.sub('initialpose', 'geometry_msgs/PoseWithCovarianceStamped')
 
-    c.provide('global_localization', 'std_srvs/Empty'),
-    c.provide('request_nomotion_update', 'std_srvs/Empty'),
+    c.provide('global_localization', 'std_srvs/Empty')
+    c.provide('request_nomotion_update', 'std_srvs/Empty')
     c.provide('set_map', 'nav_msgs/SetMap')
