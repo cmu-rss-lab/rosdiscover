@@ -34,6 +34,11 @@ class NodeSummary(object):
     pubs = attr.ib(type=FrozenSet[FullName], converter=frozenset)
     subs = attr.ib(type=FrozenSet[FullName], converter=frozenset)
 
+    def to_dict(self) -> Dict[str, Any]:
+        return {'name': self.name,
+                'pubs': list(self.pubs),
+                'subs': list(self.subs)}
+
 
 class NodeContext(object):
     def __init__(self,
