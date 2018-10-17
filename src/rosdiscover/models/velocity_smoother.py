@@ -1,7 +1,7 @@
 from ..vm import model
 
 
-@model('velocity_smoother', 'velocity_smoother')
+@model('yocs_velocity_smoother', 'velocity_smoother')
 def velocity_smoother(c):
     # FIXME how to private node handle?
 
@@ -9,10 +9,11 @@ def velocity_smoother(c):
     c.read("decel_factor", 1.0)
     c.read("robot_feedback", 0)
 
-    c.read("speed_lim_v")
-    c.read("speed_lim_w")
-    c.read("accel_lim_v")
-    c.read("accel_lim_w")
+    # FIXME must be present!
+    # c.read("speed_lim_v")
+    # c.read("speed_lim_w")
+    # c.read("accel_lim_v")
+    # c.read("accel_lim_w")
 
     c.sub("odometry", 'nav_msgs/Odometry')
     c.sub("robot_cmd_vel", 'geometry_msgs/Twist')
