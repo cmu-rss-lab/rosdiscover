@@ -121,6 +121,10 @@ class NodeContext(object):
         # FIXME
         return default
 
+    def write(self, param: str, val: Any) -> None:
+        logger.debug("node [%s] writes [%s] to parameter [%s]",
+                     self.__name, val, param)
+
 
 class Model(object):
     """
