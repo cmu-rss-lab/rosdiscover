@@ -18,7 +18,8 @@ setup(
     license='mit',
     python_requires='>=3.5',
     install_requires=[
-        'rooibos>=0.3.0'
+        'rooibos>=0.3.0',
+        'cement>=3.0.0'
     ],
     include_package_data=True,
     packages=find_packages('src'),
@@ -34,7 +35,7 @@ setup(
     ],
     entry_points = {
         'console_scripts': [
-            'rosdiscover = rosdiscover:main'
+            'rosdiscover = rosdiscover.cli:main',
         ]
     }
 )
