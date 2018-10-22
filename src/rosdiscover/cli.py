@@ -31,4 +31,4 @@ def main():
     parser.add_argument('filename', type=str, help='a ROS launch file')
     parser.add_argument('--workspace', type=str, default='/ros_ws')
     args = parser.parse_args()
-    launch(args.filename)
+    launch(args.filename, args.workspace)

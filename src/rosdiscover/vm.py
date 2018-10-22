@@ -4,7 +4,7 @@ from typing import Dict, Iterator, Any, Optional, Tuple, Callable, Set, FrozenSe
 import logging
 
 import attr
-# import roslaunch
+import roslaunch
 
 from .workspace import Workspace
 
