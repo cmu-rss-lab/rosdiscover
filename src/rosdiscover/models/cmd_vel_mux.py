@@ -1,8 +1,7 @@
 from ..vm import model
 
 
-# FIXME nodelet
-@model('yocs_cmd_vel_mux', 'cmd_vel_mux')
+@model('yocs_cmd_vel_mux', 'CmdVelMuxNodelet')
 def cmd_vel_mux(c):
     # FIXME handle IO
     c.read("~yaml_cfg_file")
