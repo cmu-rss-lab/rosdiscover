@@ -229,18 +229,40 @@ class VM(object):
                 self.load(pkg=node.package,
                           nodetype=node.type,
                           name=node.name,
-                          namespace=node.namespace)  # FIXME
+                          namespace=node.namespace,  # FIXME
+                          args=node.args)
             except Exception:
                 logger.exception("failed to launch node: %s", node.name)
 
+    def create_nodelet_manager(self, name):
+        # type: (str) -> None
+        logger.info('launched nodelet manager: %s', name)
+
+    def load_nodelet(self,
+                     pkg,           # type: str
+                     nodetype,      # type: str
+                     name,          # type: str
+                     namespace,     # type: str
+                     manager        # type: str
+                     ):             # type: (...) -> None
+        logger.info('launching nodelet [%s] inside manager [%s]',
+                    name, manager)
+        return self.load(pkg, nodetype, name, namespace, '')
+
     def load(self,
-             pkg,       # type: str
-             nodetype,  # type: str
-             name,      # type: str
-             namespace  # type: str
-             ):         # type: (...) -> None
+             pkg,           # type: str
+             nodetype,      # type: str
+             name,          # type: str
+             namespace,     # type: str
+             args           # type: str
+             ):             # type: (...) -> None
         if nodetype == 'nodelet':
-            raise Exception('nodelets are not currently supported.')
+            if args == 'manager':
+                return self.create_nodelet_manager(name)
+            else:
+                load, pkg_and_nodetype, mgr = args.split(' ')
+                pkg, _, nodetype = pkg_and_nodetype.partition('/')
+                return self.load_nodelet(pkg, nodetype, name, namespace, mgr)
 
         try:
             model = Model.find(pkg, nodetype)
