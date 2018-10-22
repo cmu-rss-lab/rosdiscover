@@ -1,7 +1,7 @@
 from ..vm import model
 
 
-@model('stage_ros', 'stage_ros')
+@model('stage_ros', 'stageros')
 def stage_ros(c):
     c.write('/use_sim_time', True)
 
