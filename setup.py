@@ -16,9 +16,9 @@ setup(
     author_email='ctimperley@cmu.edu',
     url='https://github.com/ChrisTimperley/rosdiscover',
     license='mit',
-    python_requires='>=3.5',
+    python_requires='>=2.7',
     install_requires=[
-        'rooibos>=0.3.0',
+        'rooibos>=0.4.0',
         'cement>=3.0.0'
     ],
     include_package_data=True,
@@ -28,10 +28,11 @@ setup(
     classifiers=[
         'Natural Language :: English',
         'Programming Language :: Python',
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7'
+        'Programming Language :: Python :: 3.6'
     ],
     entry_points = {
         'console_scripts': [
