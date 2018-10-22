@@ -1,6 +1,6 @@
 import logging
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)  # type: logging.Logger
 logger.setLevel(logging.DEBUG)
 
 
