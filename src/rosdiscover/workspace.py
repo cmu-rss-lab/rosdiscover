@@ -8,7 +8,8 @@ logger.setLevel(logging.DEBUG)
 
 class Workspace(object):
     @staticmethod
-    def find_files_with_suffix(dirname: str, suffix: str) -> Set[str]:
+    def find_files_with_suffix(dirname, suffix):
+        # type: (str, str) -> Set[str]
         result = set()  # type: Set[str]
         for root, _, filenames in os.walk(dirname):
             for fn in filenames:
@@ -17,8 +18,11 @@ class Workspace(object):
                     result.add(fn)
         return result
 
-    def __init__(self, dir_root: str) -> None:
-        def read_file(fn: str) -> str:
+    def __init__(self, dir_root):
+        # type: (str) -> None
+
+        def read_file(fn):
+            # type: (str) -> str
             logger.debug("reading file: %s", fn)
             with open(fn, 'r') as f:
                 return f.read()
@@ -63,16 +67,21 @@ class Workspace(object):
         filenames = cpp_files | py_files
         self.__files = {fn: read_file(fn) for fn in filenames}
 
-    def __getitem__(self, fn: str) -> str:
+    def __getitem__(self, fn):
+        # type: (str) -> str
         return self.__files[fn]
 
-    def __iter__(self) -> Iterator[str]:
-        yield from self.__files.keys()
+    def __iter__(self):
+        # type: () -> Iterator[str]:
+        for fn in self.__files.keys():
+            yield fn
 
-    def filenames(self) -> Set[str]:
+    def filenames(self):
+        # type: () -> Set[str]
         return set(self)
 
-    def package_for_file(fn: str) -> str:
+    def package_for_file(fn):
+        # type: (str) -> str
         d = os.path.dirname(fn)
         if os.path.exists(os.path.join(d, 'package.xml')):
             return os.path.basename(d)
