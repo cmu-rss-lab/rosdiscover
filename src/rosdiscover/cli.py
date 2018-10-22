@@ -4,6 +4,8 @@ import argparse
 from .workspace import Workspace
 from .vm import VM
 
+from . import models
+
 DESC = 'discovery of ROS architectures'
 
 logger = logging.getLogger(__name__)  # type: logging.Logger
@@ -19,6 +21,9 @@ def launch(fn_launch, dir_workspace):
 
     vm = VM(workspace)
     vm.launch(fn_launch)
+
+    for node in vm.nodes:
+        logger.info("NODE: %s", node)
 
 
 def main():
