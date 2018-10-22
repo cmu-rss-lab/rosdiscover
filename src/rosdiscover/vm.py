@@ -31,11 +31,15 @@ class ParameterServer(object):
 @attr.s(frozen=True)
 class NodeSummary(object):
     name = attr.ib(type=str)
+    kind = attr.ib(type=str)
+    package = attr.ib(type=str)
     pubs = attr.ib(type=FrozenSet[FullName], converter=frozenset)
     subs = attr.ib(type=FrozenSet[FullName], converter=frozenset)
 
     def to_dict(self) -> Dict[str, Any]:
         return {'name': self.name,
+                'kind': self.kind,
+                'package': self.package,
                 'pubs': list(self.pubs),
                 'subs': list(self.subs)}
 
@@ -43,15 +47,21 @@ class NodeSummary(object):
 class NodeContext(object):
     def __init__(self,
                  name: str,
+                 kind: str,
+                 package: str,
                  params: ParameterServer
                  ) -> None:
         self.__name = name
+        self.__kind = kind
+        self.__package = package
         self.__params = params
         self.__subs = set()
         self.__pubs = set()
 
     def summarize(self) -> NodeSummary:
         return NodeSummary(name=self.__name,
+                           kind=self.__kind,
+                           package=self.__package,
                            pubs=self.__pubs,
                            subs=self.__subs)
 
