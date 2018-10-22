@@ -16,17 +16,16 @@ logger.setLevel(logging.DEBUG)
 
 class Extractor(object):
     def __init__(self,
-                 workspace: Workspace,
-                 *,
-                 threads: int = 8
-                 ) -> None:
+                 workspace, # type: Workspace
+                 threads=8  # type: int
+                 ):         # type: (...) -> None
         self.__workspace = workspace
         self.__workers = threads
 
     def extract_from_file(self,
-                          rbs: rooibos.Client,
-                          filename: str
-                          ) -> FileDeclarations:
+                          rbs,      # type: rooibos.Client
+                          filename  # type: str
+                          ):        # type: (...) -> FileDeclarations
         """
         Finds all declarations in a given file.
         """
@@ -41,9 +40,9 @@ class Extractor(object):
             raise
 
     def extract_from_cxx_file(self,
-                              rbs: rooibos.Client,
-                              filename: str
-                              ) -> FileDeclarations:
+                              rbs,      # type: rooibos.Client
+                              filename  # type: str
+                              ):        # type: (...) -> FileDeclarations
         node_inits = set()
         param_reads = set()
 
@@ -68,9 +67,9 @@ class Extractor(object):
                                 param_reads=param_reads)
 
     def extract_from_python_file(self,
-                                 rbs: rooibos.Client,
-                                 filename: str
-                                 ) -> FileDeclarations:
+                                 rbs,       # type: rooibos.Client
+                                 filename   # type: str
+                                 ):         # type: (...) -> FileDeclarations
         source = self.__workspace[filename]
         node_inits = set()
         param_reads = set()
@@ -87,7 +86,8 @@ class Extractor(object):
                                 node_inits=node_inits,
                                 param_reads=param_reads)
 
-    def extract(self) -> None:
+    def extract(self):
+        # type: () -> None
         with rooibos.ephemeral_server(verbose=False) as rbs:
             with ThreadPoolExecutor(max_workers=self.__workers) as executor:
                 decls = executor.map(lambda fn: self.extract_from_file(rbs, fn),

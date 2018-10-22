@@ -4,7 +4,7 @@ from typing import Dict, Iterator, Any, Optional, Tuple, Callable, Set, FrozenSe
 import logging
 
 import attr
-# import roslaunch
+import roslaunch
 
 from .workspace import Workspace
 
@@ -15,16 +15,20 @@ FullName = str
 
 
 class ParameterServer(object):
-    def __init__(self) -> None:
+    def __init__(self):
+        # type: () -> None
         self.__contents = {}  # type: Dict[str, Any]
 
-    def __getitem__(self, key: str) -> Any:
+    def __getitem__(self, key):
+        # type: (str) -> Any
         return self.__contents[key]
 
-    def __contains__(self, key: str) -> bool:
+    def __contains__(self, key):
+        # type: (str) -> bool
         return key in self.__contents
 
-    def __setitem__(self, key: str, val: Any) -> None:
+    def __setitem__(self, key, val):
+        # type: (str, Any) -> None
         self.__contents[key] = val
 
 
@@ -36,7 +40,8 @@ class NodeSummary(object):
     pubs = attr.ib(type=FrozenSet[FullName], converter=frozenset)
     subs = attr.ib(type=FrozenSet[FullName], converter=frozenset)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self):
+        # type: () -> Dict[str, Any]
         return {'name': self.name,
                 'kind': self.kind,
                 'package': self.package,
@@ -46,11 +51,11 @@ class NodeSummary(object):
 
 class NodeContext(object):
     def __init__(self,
-                 name: str,
-                 kind: str,
-                 package: str,
-                 params: ParameterServer
-                 ) -> None:
+                 name,      # type: str
+                 kind,      # type: str
+                 package,   # type: str
+                 params     # type: ParameterServer
+                 ):         # type: (...) -> None
         self.__name = name
         self.__kind = kind
         self.__package = package
@@ -58,14 +63,16 @@ class NodeContext(object):
         self.__subs = set()
         self.__pubs = set()
 
-    def summarize(self) -> NodeSummary:
+    def summarize(self):
+        # type: (...) -> NodeSummary
         return NodeSummary(name=self.__name,
                            kind=self.__kind,
                            package=self.__package,
                            pubs=self.__pubs,
                            subs=self.__subs)
 
-    def resolve(self, name: str) -> FullName:
+    def resolve(self, name):
+        # type: (str) -> FullName
         """
         Resolves a given name within the context of this node.
 
@@ -80,20 +87,16 @@ class NodeContext(object):
         else:
             return '/{}'.format(name)
 
-    def provide(self,
-                service: str,
-                fmt: str
-                ) -> None:
+    def provide(self, service, fmt):
+        # type: (str, str) -> None
         """
         Instructs the node to provide a service.
         """
         logger.debug("node [%s] provides service [%s] using format [%s]",
                      self.__name, service, fmt)
 
-    def sub(self,
-            topic_name: str,
-            fmt: str
-            ) -> None:
+    def sub(self, topic_name, fmt):
+        # type: (str, str) -> None
         """
         Subscribes the node to a given topic.
 
@@ -106,10 +109,8 @@ class NodeContext(object):
                      self.__name, topic_name, fmt)
         self.__subs.add(topic_name_full)
 
-    def pub(self,
-            topic_name: str,
-            fmt: str
-            ) -> None:
+    def pub(self, topic_name, fmt):
+        # type: (str, str) -> None
         """
         Instructs the node to publish to a given topic.
 
@@ -123,9 +124,9 @@ class NodeContext(object):
         self.__pubs.add(topic_name_full)
 
     def read(self,
-             param: str,
-             default: Optional[Any]
-             ) -> Any:
+             param,     # type: str
+             default    # type: Optional[Any]
+             ):         # type: (...) -> Any
         """
         Obtains the value of a given parameter from the parameter
         server.
@@ -136,7 +137,8 @@ class NodeContext(object):
         # FIXME
         return default
 
-    def write(self, param: str, val: Any) -> None:
+    def write(self, param, val):
+        # type: (str, Any) -> None
         logger.debug("node [%s] writes [%s] to parameter [%s]",
                      self.__name, val, param)
 
@@ -148,10 +150,10 @@ class Model(object):
     _models = {}  # type: Dict[Tuple[str, str], Model]
 
     @staticmethod
-    def register(package: str,
-                 name: str,
-                 definition: Callable[[NodeContext], None]
-                 ) -> None:
+    def register(package,       # type: str
+                 name,          # type: str
+                 definition     # type: Callable[[NodeContext], None]
+                 ):             # type: (...) -> None
         key = (package, name)
         models = Model._models
         if key in models:
@@ -163,50 +165,53 @@ class Model(object):
                      name, package)
 
     @staticmethod
-    def find(package: str, name: str) -> 'Model':
+    def find(package, name):
+        # type: (str, str) -> Model
         return Model._models[(package, name)]
 
     def __init__(self,
-                 package: str,
-                 name: str,
-                 definition: Callable[[NodeContext], None]
-                 ) -> None:
+                 package,       # type: str
+                 name,          # type: str
+                 definition     # type: Callable[[NodeContext], None]
+                 ):             # type: (...) -> None
         self.__package = package
         self.__name = name
         self.__definition = definition
 
-    def eval(self, context: NodeContext) -> None:
+    def eval(self, context):
+        # type: (NodeContext) -> None
         return self.__definition(context)
 
 
-def model(package: str, name: str):
-    def register(m: Callable[[NodeContext], None]):
+def model(package, name):
+    # type: (str, str) -> Any
+    def register(m):
+        # type: (Callable[[NodeContext], None]) -> Any
         Model.register(package, name, m)
         return m
     return register
 
 
 class VM(object):
-    def __init__(self,
-                 workspace: Workspace
-                 ) -> None:
+    def __init__(self, workspace):
+        # type: (Workspace) -> None
         self.__workspace = workspace
         self.__params = ParameterServer()
         self.__nodes = set()  # type: Set[NodeSummary]
 
     @property
-    def parameters(self) -> ParameterServer:
+    def parameters(self):
+        # type: () -> ParameterServer
         return self.__params
 
-    # @property
-    # def topics(self) -> Iterator[Topic]:
-    #     yield from []
-
     @property
-    def nodes(self) -> Iterator[NodeSummary]:
-        yield from self.__nodes
+    def nodes(self):
+        # type: () -> Iterator[NodeSummary]
+        for n in self.__nodes:
+            yield n
 
-    def launch(self, fn: str) -> None:
+    def launch(self, fn):
+        # type: (str) -> None
         """
         Simulates the effects of `roslaunch` using a given launch file.
         """
@@ -215,13 +220,21 @@ class VM(object):
         loader.load(fn, config)
 
         for node in config.nodes:
-            logger.debug("launching node: %s", node)
+            logger.debug("launching node: %s", node.name)
+            try:
+                self.load(pkg=node.package,
+                          nodetype=node.type,
+                          name=node.name,
+                          namespace=node.namespace)  # FIXME
+            except Exception:
+                logger.exception("failed to launch node: %s", node.name)
 
     def load(self,
-             pkg: str,
-             nodetype: str,
-             name: str
-             ) -> None:
+             pkg,       # type: str
+             nodetype,  # type: str
+             name,      # type: str
+             namespace  # type: str
+             ):         # type: (...) -> None
         if nodetype == 'nodelet':
             raise Exception('nodelets are not currently supported.')
 
@@ -232,6 +245,9 @@ class VM(object):
             m = m.format(nodetype, pkg)
             raise Exception(m)
 
-        ctx = NodeContext(name, self.__params)
+        ctx = NodeContext(name=name,
+                          kind=nodetype,
+                          package=pkg,
+                          params=self.__params)
         model.eval(ctx)
         self.__nodes.add(ctx.summarize())
