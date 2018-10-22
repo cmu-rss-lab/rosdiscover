@@ -43,7 +43,8 @@ def move_base(c):
 
     # move_base/src/move_base.cpp:1054
     # load_plugin('', 'clear_costmap_recovery/ClearCostmapRecovery') [conservative_reset]
-    def load_recovery(name: str) -> None:
+    def load_recovery(name):
+        # type: (str) -> None
         nh_p = "~{}".format(name)
         nh_blp = "~TrajectoryPlannerROS"
         c.read("{}/sim_granularity".format(nh_p), 0.017)
