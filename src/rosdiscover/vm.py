@@ -220,12 +220,20 @@ class VM(object):
         loader.load(fn, config)
 
         for node in config.nodes:
-            logger.debug("launching node: %s", node)
+            logger.debug("launching node: %s", node.name)
+            try:
+                self.load(pkg=node.package,
+                          nodetype=node.type,
+                          name=node.name,
+                          namespace=node.namespace)  # FIXME
+            except Exception:
+                logger.exception("failed to launch node: %s", node.name)
 
     def load(self,
              pkg,       # type: str
              nodetype,  # type: str
-             name       # type: str
+             name,      # type: str
+             namespace  # type: str
              ):         # type: (...) -> None
         if nodetype == 'nodelet':
             raise Exception('nodelets are not currently supported.')
@@ -237,6 +245,9 @@ class VM(object):
             m = m.format(nodetype, pkg)
             raise Exception(m)
 
-        ctx = NodeContext(name, self.__params)
+        ctx = NodeContext(name=name,
+                          kind=nodetype,
+                          package=pkg,
+                          params=self.__params)
         model.eval(ctx)
         self.__nodes.add(ctx.summarize())
