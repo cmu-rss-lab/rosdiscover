@@ -5,3 +5,4 @@ from . import move_base
 from . import stage_ros
 from . import velocity_smoother
 from . import kobuki_safety_controller
+from . import cmd_vel_mux
