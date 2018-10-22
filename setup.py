@@ -18,7 +18,8 @@ setup(
     license='mit',
     python_requires='>=2.7',
     install_requires=[
-        'rooibos>=0.4.0'
+        'rooibos>=0.4.1',
+        'typing>=3.6.6'
     ],
     include_package_data=True,
     packages=find_packages('src'),
