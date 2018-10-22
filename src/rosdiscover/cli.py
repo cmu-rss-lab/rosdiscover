@@ -1,9 +1,10 @@
 import logging
 import argparse
 
+import yaml
+
 from .workspace import Workspace
 from .vm import VM
-
 from . import models
 
 DESC = 'discovery of ROS architectures'
@@ -22,8 +23,8 @@ def launch(fn_launch, dir_workspace):
     vm = VM(workspace)
     vm.launch(fn_launch)
 
-    for node in vm.nodes:
-        logger.info("NODE: %s", node)
+    output = [n.to_dict() for n in vm.nodes]
+    print(yaml.dump(output))
 
 
 def main():

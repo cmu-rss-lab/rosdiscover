@@ -37,16 +37,20 @@ class NodeSummary(object):
     name = attr.ib(type=str)
     kind = attr.ib(type=str)
     package = attr.ib(type=str)
-    pubs = attr.ib(type=FrozenSet[FullName], converter=frozenset)
-    subs = attr.ib(type=FrozenSet[FullName], converter=frozenset)
+    pubs = attr.ib(type=FrozenSet[Tuple[FullName, str]],
+                   converter=frozenset)
+    subs = attr.ib(type=FrozenSet[Tuple[FullName, str]],
+                   converter=frozenset)
 
     def to_dict(self):
         # type: () -> Dict[str, Any]
-        return {'name': self.name,
-                'kind': self.kind,
-                'package': self.package,
-                'pubs': list(self.pubs),
-                'subs': list(self.subs)}
+        pubs = [{'name': str(n), 'format': str(f)} for (n, f) in self.pubs]
+        subs = [{'name': str(n), 'format': str(f)} for (n, f) in self.subs]
+        return {'name': str(self.name),
+                'kind': str(self.kind),
+                'package': str(self.package),
+                'pubs': pubs,
+                'subs': subs}
 
 
 class NodeContext(object):
@@ -60,8 +64,8 @@ class NodeContext(object):
         self.__kind = kind
         self.__package = package
         self.__params = params
-        self.__subs = set()
-        self.__pubs = set()
+        self.__subs = set()  # type: Set[Tuple[str, str]]
+        self.__pubs = set()  # type: Set[Tuple[str, str]]
 
     def summarize(self):
         # type: (...) -> NodeSummary
@@ -107,7 +111,7 @@ class NodeContext(object):
         topic_name_full = self.resolve(topic_name)
         logger.debug("node [%s] subscribes to topic [%s] with format [%s]",
                      self.__name, topic_name, fmt)
-        self.__subs.add(topic_name_full)
+        self.__subs.add((topic_name_full, fmt))
 
     def pub(self, topic_name, fmt):
         # type: (str, str) -> None
@@ -121,7 +125,7 @@ class NodeContext(object):
         topic_name_full = self.resolve(topic_name)
         logger.debug("node [%s] publishes to topic [%s] with format [%s]",
                      self.__name, topic_name, fmt)
-        self.__pubs.add(topic_name_full)
+        self.__pubs.add((topic_name_full, fmt))
 
     def read(self,
              param,     # type: str

@@ -20,7 +20,8 @@ setup(
     install_requires=[
         'rooibos>=0.4.1',
         'typing>=3.6.6',
-        'attrs>=18.2.0'
+        'attrs>=18.2.0',
+        'pyyaml'
     ],
     include_package_data=True,
     packages=find_packages('src'),
