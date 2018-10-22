@@ -1,9 +1,8 @@
 from ..vm import model
 
 
-@model('kobuki_safety_controller', 'kobuki_safety_controller')
+@model('kobuki_safety_controller', 'SafetyControllerNodelet')
 def safety_controller(c):
-    # FIXME private node handle
     c.read("~time_to_extend_bump_cliff_events", 0.0)
     c.sub("~enable", "std_msgs/Empty")
     c.sub("~disable", "std_msgs/Empty")
