@@ -35,6 +35,8 @@ class ParameterServer(object):
 @attr.s(frozen=True)
 class NodeSummary(object):
     name = attr.ib(type=str)
+    fullname = attr.ib(type=str)
+    namespace = attr.ib(type=str)
     kind = attr.ib(type=str)
     package = attr.ib(type=str)
     pubs = attr.ib(type=FrozenSet[Tuple[FullName, str]],
@@ -47,6 +49,8 @@ class NodeSummary(object):
         pubs = [{'name': str(n), 'format': str(f)} for (n, f) in self.pubs]
         subs = [{'name': str(n), 'format': str(f)} for (n, f) in self.subs]
         return {'name': str(self.name),
+                'fullname': str(self.fullname),
+                'namespace': str(self.namespace),
                 'kind': str(self.kind),
                 'package': str(self.package),
                 'pubs': pubs,
@@ -55,21 +59,33 @@ class NodeSummary(object):
 
 class NodeContext(object):
     def __init__(self,
-                 name,      # type: str
-                 kind,      # type: str
-                 package,   # type: str
-                 params     # type: ParameterServer
-                 ):         # type: (...) -> None
+                 name,          # type: str
+                 namespace,     # type: str
+                 kind,          # type: str
+                 package,       # type: str
+                 params         # type: ParameterServer
+                 ):             # type: (...) -> None
         self.__name = name
+        self.__namespace = namespace
         self.__kind = kind
         self.__package = package
         self.__params = params
         self.__subs = set()  # type: Set[Tuple[str, str]]
         self.__pubs = set()  # type: Set[Tuple[str, str]]
 
+    @property
+    def fullname(self):
+        # type: () -> str
+        ns = self.__namespace
+        if ns[-1] != '/':
+            ns += ' /'
+        return '{}{}'.format(ns, self.__name)
+
     def summarize(self):
         # type: (...) -> NodeSummary
         return NodeSummary(name=self.__name,
+                           fullname=self.fullname,
+                           namespace=self.__namespace,
                            kind=self.__kind,
                            package=self.__package,
                            pubs=self.__pubs,
@@ -86,7 +102,7 @@ class NodeContext(object):
         if name[0] == '/':
             return name
         elif name[0] == '~':
-            return '/{}/{}'.format(self.__name, name)
+            return '/{}/{}'.format(self.__name, name[1:])
         # FIXME
         else:
             return '/{}'.format(name)
@@ -280,6 +296,7 @@ class VM(object):
             raise Exception(m)
 
         ctx = NodeContext(name=name,
+                          namespace=namespace,
                           kind=nodetype,
                           package=pkg,
                           params=self.__params)
