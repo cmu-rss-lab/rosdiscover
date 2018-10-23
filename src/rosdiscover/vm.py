@@ -35,6 +35,8 @@ class ParameterServer(object):
 @attr.s(frozen=True)
 class NodeSummary(object):
     name = attr.ib(type=str)
+    fullname = attr.ib(type=str)
+    namespace = attr.ib(type=str)
     kind = attr.ib(type=str)
     package = attr.ib(type=str)
     pubs = attr.ib(type=FrozenSet[Tuple[FullName, str]],
@@ -47,6 +49,8 @@ class NodeSummary(object):
         pubs = [{'name': str(n), 'format': str(f)} for (n, f) in self.pubs]
         subs = [{'name': str(n), 'format': str(f)} for (n, f) in self.subs]
         return {'name': str(self.name),
+                'fullname': str(self.fullname),
+                'namespace': str(self.namespace),
                 'kind': str(self.kind),
                 'package': str(self.package),
                 'pubs': pubs,
@@ -55,21 +59,49 @@ class NodeSummary(object):
 
 class NodeContext(object):
     def __init__(self,
-                 name,      # type: str
-                 kind,      # type: str
-                 package,   # type: str
-                 params     # type: ParameterServer
-                 ):         # type: (...) -> None
+                 name,          # type: str
+                 namespace,     # type: str
+                 kind,          # type: str
+                 package,       # type: str
+                 remappings,    # type: Dict[str, str]
+                 params         # type: ParameterServer
+                 ):             # type: (...) -> None
         self.__name = name
+        self.__namespace = namespace
         self.__kind = kind
         self.__package = package
         self.__params = params
         self.__subs = set()  # type: Set[Tuple[str, str]]
         self.__pubs = set()  # type: Set[Tuple[str, str]]
 
+        self.__remappings = {
+            self.resolve(x): self.resolve(y)
+            for (x, y) in remappings.items()
+        }  # type: Dict[str, str]
+
+    @property
+    def fullname(self):
+        # type: () -> str
+        ns = self.__namespace
+        if ns[-1] != '/':
+            ns += ' /'
+        return '{}{}'.format(ns, self.__name)
+
+    def _remap(self, name):
+        # type: (str) -> str
+        if name in self.__remappings:
+            name_new = self.__remappings[name]
+            logger.info("applying remapping from [%s] to [%s]",
+                        name, name_new)
+            return name_new
+        else:
+            return name
+
     def summarize(self):
         # type: (...) -> NodeSummary
         return NodeSummary(name=self.__name,
+                           fullname=self.fullname,
+                           namespace=self.__namespace,
                            kind=self.__kind,
                            package=self.__package,
                            pubs=self.__pubs,
@@ -86,7 +118,7 @@ class NodeContext(object):
         if name[0] == '/':
             return name
         elif name[0] == '~':
-            return '/{}/{}'.format(self.__name, name)
+            return '/{}/{}'.format(self.__name, name[1:])
         # FIXME
         else:
             return '/{}'.format(name)
@@ -109,6 +141,7 @@ class NodeContext(object):
             fmt: the message format used by the topic.
         """
         topic_name_full = self.resolve(topic_name)
+        topic_name_full = self._remap(topic_name_full)
         logger.debug("node [%s] subscribes to topic [%s] with format [%s]",
                      self.__name, topic_name, fmt)
         self.__subs.add((topic_name_full, fmt))
@@ -123,6 +156,7 @@ class NodeContext(object):
             fmt: the message format used by the topic.
         """
         topic_name_full = self.resolve(topic_name)
+        topic_name_full = self._remap(topic_name_full)
         logger.debug("node [%s] publishes to topic [%s] with format [%s]",
                      self.__name, topic_name, fmt)
         self.__pubs.add((topic_name_full, fmt))
@@ -226,10 +260,13 @@ class VM(object):
         for node in config.nodes:
             logger.debug("launching node: %s", node.name)
             try:
+                remappings = {str(old): str(new)
+                              for (old, new) in node.remap_args}
                 self.load(pkg=node.package,
                           nodetype=node.type,
                           name=node.name,
                           namespace=node.namespace,  # FIXME
+                          remappings=remappings,
                           args=node.args)
             except Exception:
                 logger.exception("failed to launch node: %s", node.name)
@@ -243,17 +280,19 @@ class VM(object):
                      nodetype,      # type: str
                      name,          # type: str
                      namespace,     # type: str
+                     remappings,    # type: Dict[str, str]
                      manager        # type: str
                      ):             # type: (...) -> None
         logger.info('launching nodelet [%s] inside manager [%s]',
                     name, manager)
-        return self.load(pkg, nodetype, name, namespace, '')
+        return self.load(pkg, nodetype, name, namespace, remappings, '')
 
     def load(self,
              pkg,           # type: str
              nodetype,      # type: str
              name,          # type: str
              namespace,     # type: str
+             remappings,    # type: Dict[str, str]
              args           # type: str
              ):             # type: (...) -> None
         if nodetype == 'nodelet':
@@ -262,7 +301,10 @@ class VM(object):
             else:
                 load, pkg_and_nodetype, mgr = args.split(' ')
                 pkg, _, nodetype = pkg_and_nodetype.partition('/')
-                return self.load_nodelet(pkg, nodetype, name, namespace, mgr)
+                return self.load_nodelet(pkg, nodetype, name, namespace, remappings, mgr)
+
+        if remappings:
+            logger.info("using remappings: %s", remappings)
 
         try:
             model = Model.find(pkg, nodetype)
@@ -272,8 +314,10 @@ class VM(object):
             raise Exception(m)
 
         ctx = NodeContext(name=name,
+                          namespace=namespace,
                           kind=nodetype,
                           package=pkg,
+                          remappings=remappings,
                           params=self.__params)
         model.eval(ctx)
         self.__nodes.add(ctx.summarize())

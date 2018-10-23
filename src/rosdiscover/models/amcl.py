@@ -52,7 +52,7 @@ def amcl(c):
     c.pub('particlecloud', 'geometry_msgs/PoseArray')
 
     c.sub('scan', 'sensor_msgs/LaserScan')
-    c.sub('map', 'nav_msgs::OccupancyGrid')
+    c.sub('map', 'nav_msgs/OccupancyGrid')
     c.sub('initialpose', 'geometry_msgs/PoseWithCovarianceStamped')
 
     c.provide('global_localization', 'std_srvs/Empty')
