@@ -24,7 +24,7 @@ def launch(fn_launch, dir_workspace):
     vm.launch(fn_launch)
 
     output = [n.to_dict() for n in vm.nodes]
-    print(yaml.dump(output))
+    print(yaml.dump(output, default_flow_style=False))
 
 
 def main():
