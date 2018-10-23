@@ -4,7 +4,7 @@ from ..vm import model
 @model('yocs_cmd_vel_mux', 'CmdVelMuxNodelet')
 def cmd_vel_mux(c):
     # FIXME handle IO
-    c.read("~yaml_cfg_file")
+    # fn = c.read("~yaml_cfg_file")
 
     # TODO FILE MUST EXIST
 
@@ -29,3 +29,7 @@ def cmd_vel_mux(c):
     """
 
     c.pub("active", "std_msgs/String")
+
+    # dynamic reconfigure
+    c.pub('~parameter_descriptions', 'dynamic_reconfigure/ConfigDescription')
+    c.pub('~parameter_updates', 'dynamic_reconfigure/Config')
