@@ -58,3 +58,7 @@ def amcl(c):
     c.provide('global_localization', 'std_srvs/Empty')
     c.provide('request_nomotion_update', 'std_srvs/Empty')
     c.provide('set_map', 'nav_msgs/SetMap')
+
+    # TODO add dynamic reconfigure helper
+    c.pub('~parameter_descriptions', 'dynamic_reconfigure/ConfigDescription')
+    c.pub('~parameter_updates', 'dynamic_reconfigure/Config')
