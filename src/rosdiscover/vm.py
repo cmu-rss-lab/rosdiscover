@@ -226,10 +226,13 @@ class VM(object):
         for node in config.nodes:
             logger.debug("launching node: %s", node.name)
             try:
+                remappings = {str(old): str(new)
+                              for (old, new) in node.remap_args}
                 self.load(pkg=node.package,
                           nodetype=node.type,
                           name=node.name,
                           namespace=node.namespace,  # FIXME
+                          remappings=remappings,
                           args=node.args)
             except Exception:
                 logger.exception("failed to launch node: %s", node.name)
@@ -243,17 +246,19 @@ class VM(object):
                      nodetype,      # type: str
                      name,          # type: str
                      namespace,     # type: str
+                     remappings,    # type: Dict[str, str]
                      manager        # type: str
                      ):             # type: (...) -> None
         logger.info('launching nodelet [%s] inside manager [%s]',
                     name, manager)
-        return self.load(pkg, nodetype, name, namespace, '')
+        return self.load(pkg, nodetype, name, namespace, remappings, '')
 
     def load(self,
              pkg,           # type: str
              nodetype,      # type: str
              name,          # type: str
              namespace,     # type: str
+             remappings,    # type: Dict[str, str]
              args           # type: str
              ):             # type: (...) -> None
         if nodetype == 'nodelet':
@@ -262,7 +267,10 @@ class VM(object):
             else:
                 load, pkg_and_nodetype, mgr = args.split(' ')
                 pkg, _, nodetype = pkg_and_nodetype.partition('/')
-                return self.load_nodelet(pkg, nodetype, name, namespace, mgr)
+                return self.load_nodelet(pkg, nodetype, name, namespace, remappings, mgr)
+
+        if remappings:
+            logger.info("using remappings: %s", remappings)
 
         try:
             model = Model.find(pkg, nodetype)
