@@ -18,3 +18,7 @@ def velocity_smoother(c):
     c.sub("~raw_cmd_vel", 'geometry_msgs/Twist')
 
     c.pub("~smooth_cmd_vel", "geometry_msgs/Twist")
+
+    # dynamic reconfigure
+    c.pub('~parameter_descriptions', 'dynamic_reconfigure/ConfigDescription')
+    c.pub('~parameter_updates', 'dynamic_reconfigure/Config')
