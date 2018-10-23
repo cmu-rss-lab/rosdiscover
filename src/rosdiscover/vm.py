@@ -63,6 +63,7 @@ class NodeContext(object):
                  namespace,     # type: str
                  kind,          # type: str
                  package,       # type: str
+                 remappings,    # type: Dict[str, str]
                  params         # type: ParameterServer
                  ):             # type: (...) -> None
         self.__name = name
@@ -73,6 +74,11 @@ class NodeContext(object):
         self.__subs = set()  # type: Set[Tuple[str, str]]
         self.__pubs = set()  # type: Set[Tuple[str, str]]
 
+        self.__remappings = {
+            self.resolve(x): self.resolve(y)
+            for (x, y) in remappings.items()
+        }  # type: Dict[str, str]
+
     @property
     def fullname(self):
         # type: () -> str
@@ -80,6 +86,16 @@ class NodeContext(object):
         if ns[-1] != '/':
             ns += ' /'
         return '{}{}'.format(ns, self.__name)
+
+    def _remap(self, name):
+        # type: (str) -> str
+        if name in self.__remappings:
+            name_new = self.__remappings[name]
+            logger.info("applying remapping from [%s] to [%s]",
+                        name, name_new)
+            return name_new
+        else:
+            return name
 
     def summarize(self):
         # type: (...) -> NodeSummary
@@ -125,6 +141,7 @@ class NodeContext(object):
             fmt: the message format used by the topic.
         """
         topic_name_full = self.resolve(topic_name)
+        topic_name_full = self._remap(topic_name_full)
         logger.debug("node [%s] subscribes to topic [%s] with format [%s]",
                      self.__name, topic_name, fmt)
         self.__subs.add((topic_name_full, fmt))
@@ -139,6 +156,7 @@ class NodeContext(object):
             fmt: the message format used by the topic.
         """
         topic_name_full = self.resolve(topic_name)
+        topic_name_full = self._remap(topic_name_full)
         logger.debug("node [%s] publishes to topic [%s] with format [%s]",
                      self.__name, topic_name, fmt)
         self.__pubs.add((topic_name_full, fmt))
@@ -299,6 +317,7 @@ class VM(object):
                           namespace=namespace,
                           kind=nodetype,
                           package=pkg,
+                          remappings=remappings,
                           params=self.__params)
         model.eval(ctx)
         self.__nodes.add(ctx.summarize())
