@@ -5,7 +5,10 @@ from ..vm import model
 def stage_ros(c):
     c.write('/use_sim_time', True)
 
-    # FIXME
+    # FIXME implement mapName logic
+    # for now, this only supports a single robot and assumes that omitRobotID
+    # is true
+
     # n_.advertise<nav_msgs::Odometry>(mapName(ODOM, r, static_cast<Stg::Model*>(new_robot->positionmodel)), 10);
     c.pub('/odom', 'nav_msgs/Odometry')
     # n_.advertise<nav_msgs::Odometry>(mapName(BASE_POSE_GROUND_TRUTH, r, static_cast<Stg::Model*>(new_robot->positionmodel)), 10);
