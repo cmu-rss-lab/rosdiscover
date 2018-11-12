@@ -12,7 +12,7 @@ import logging
 import attr
 import roslaunch  # FIXME try to lose this dependency!
 
-from .workspace import Workspace
+from ..workspace import Workspace
 
 logger = logging.getLogger(__name__)  # type: logging.Logger
 logger.setLevel(logging.DEBUG)
