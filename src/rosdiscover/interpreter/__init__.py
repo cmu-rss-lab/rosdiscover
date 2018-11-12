@@ -245,11 +245,17 @@ class Interpreter(object):
 
     @property
     def parameters(self):
+        """
+        The simulated parameter server for this interpreter.
+        """
         # type: () -> ParameterServer
         return self.__params
 
     @property
     def nodes(self):
+        """
+        Returns an iterator over the summaries for each node on the ROS graph.
+        """
         # type: () -> Iterator[NodeSummary]
         for n in self.__nodes:
             yield n
