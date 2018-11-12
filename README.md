@@ -26,3 +26,13 @@ $ docker run --rm -it rosdiscover
     /ros_ws/src/turtlebot_simulator/turtlebot_stage/launch/turtlebot_in_stage.launch \
     --workspace /ros_ws
 ```
+
+To simulate the outcome of a `rostopic` call for a particular ROS architectural
+instance, given by a launch file within a workspace:
+
+```
+$ docker run --rm -it rosdiscover
+# rosdiscover rostopic \
+    /ros_ws/src/turtlebot_simulator/turtlebot_stage/launch/turtlebot_in_stage.launch \
+    --workspace /ros_ws
+```
