@@ -16,11 +16,12 @@ logger = logging.getLogger(__name__)  # type: logging.Logger
 logger.setLevel(logging.DEBUG)
 
 
-def launch(fn_launch, dir_workspace):
-    # type: (str, str) -> None:
+def launch(args):
     """
     Simulates the architectural effects of a `roslaunch` command.
     """
+    fn_launch = args.filename
+    dir_workspace = args.workspace
     logger.info("simulating launch [%s] inside workspace [%s]",
                 fn_launch, dir_workspace)
 
@@ -32,14 +33,32 @@ def launch(fn_launch, dir_workspace):
     print(yaml.dump(output, default_flow_style=False))
 
 
+def rostopic(args):
+    logger.info("cool!")
+
+
 def main():
     log_to_stdout = logging.StreamHandler()
     log_to_stdout.setLevel(logging.DEBUG)
     logging.getLogger('rosdiscover').addHandler(log_to_stdout)
 
-    # simulates the architectural effects of a ROS launch
     parser = argparse.ArgumentParser(description=DESC)
-    parser.add_argument('filename', type=str, help='a ROS launch file')
-    parser.add_argument('--workspace', type=str, default='/ros_ws')
+    subparsers = parser.add_subparsers()
+
+    p = subparsers.add_parser(
+        'launch',
+        help='simulates the effects of a roslaunch.')
+    p.add_argument('filename', type=str, help='a ROS launch file')
+    p.add_argument('--workspace', type=str, default='/ros_ws')
+    p.set_defaults(func=launch)
+
+    p = subparsers.add_parser(
+        'rostopic',
+        help='simulates the output of rostopic for a given configuration.')
+    p.add_argument('filename', type=str, help='a ROS launch file')
+    p.add_argument('--workspace', type=str, default='/ros_ws')
+    p.set_defaults(fun=rostopic)
+
     args = parser.parse_args()
-    launch(args.filename, args.workspace)
+    if 'func' in args:
+        args.func(args)
