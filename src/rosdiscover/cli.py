@@ -35,7 +35,7 @@ def launch(args):
     print(yaml.dump(output, default_flow_style=False))
 
 
-def rostopic(args):
+def rostopic_list(args):
     # simulates the list command
     interpreter = _launch(args.filename, args.workspace)
     topics = set()
@@ -64,7 +64,7 @@ def main():
         help='simulates the output of rostopic for a given configuration.')
     p.add_argument('filename', type=str, help='a ROS launch file')
     p.add_argument('--workspace', type=str, default='/ros_ws')
-    p.set_defaults(func=rostopic)
+    p.set_defaults(func=rostopic_list)
 
     args = parser.parse_args()
     if 'func' in args:
