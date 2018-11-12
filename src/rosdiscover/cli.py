@@ -1,3 +1,6 @@
+"""
+Provides a simple command-line interface.
+"""
 import logging
 import argparse
 
@@ -15,11 +18,13 @@ logger.setLevel(logging.DEBUG)
 
 def launch(fn_launch, dir_workspace):
     # type: (str, str) -> None:
+    """
+    Simulates the architectural effects of a `roslaunch` command.
+    """
     logger.info("simulating launch [%s] inside workspace [%s]",
                 fn_launch, dir_workspace)
 
     workspace = Workspace(dir_workspace)
-
     vm = VM(workspace)
     vm.launch(fn_launch)
 
