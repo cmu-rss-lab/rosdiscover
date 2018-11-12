@@ -22,7 +22,7 @@ To simulate the effects of a particular launch command, run the following:
 
 ```
 $ docker run --rm -it rosdiscover
-# rosdiscover \
+# rosdiscover launch \
     /ros_ws/src/turtlebot_simulator/turtlebot_stage/launch/turtlebot_in_stage.launch \
     --workspace /ros_ws
 ```
