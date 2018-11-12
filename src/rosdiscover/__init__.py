@@ -2,7 +2,7 @@ import logging
 
 from .version import __version__
 from .workspace import Workspace
-from .vm import Model, VM
+from .interpreter import Model, Interpreter
 from . import models
 
 logger = logging.getLogger(__name__)  # type: logging.Logger

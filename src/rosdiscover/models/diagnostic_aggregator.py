@@ -1,4 +1,4 @@
-from ..vm import model
+from ..interpreter import model
 
 
 @model('diagnostic_aggregator', 'aggregator_node')

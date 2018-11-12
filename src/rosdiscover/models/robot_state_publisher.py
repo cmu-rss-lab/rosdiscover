@@ -1,4 +1,4 @@
-from ..vm import model
+from ..interpreter import model
 
 
 @model('robot_state_publisher', 'robot_state_publisher')

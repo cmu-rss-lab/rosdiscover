@@ -1,6 +1,6 @@
 import yaml
 
-from ..vm import model
+from ..interpreter import model
 
 
 @model('yocs_cmd_vel_mux', 'CmdVelMuxNodelet')

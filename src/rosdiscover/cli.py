@@ -1,10 +1,13 @@
+"""
+Provides a simple command-line interface.
+"""
 import logging
 import argparse
 
 import yaml
 
 from .workspace import Workspace
-from .vm import VM
+from .interpreter import Interpreter
 from . import models
 
 DESC = 'discovery of ROS architectures'
@@ -15,15 +18,17 @@ logger.setLevel(logging.DEBUG)
 
 def launch(fn_launch, dir_workspace):
     # type: (str, str) -> None:
+    """
+    Simulates the architectural effects of a `roslaunch` command.
+    """
     logger.info("simulating launch [%s] inside workspace [%s]",
                 fn_launch, dir_workspace)
 
     workspace = Workspace(dir_workspace)
+    interpreter = Interpreter(workspace)
+    interpreter.launch(fn_launch)
 
-    vm = VM(workspace)
-    vm.launch(fn_launch)
-
-    output = [n.to_dict() for n in vm.nodes]
+    output = [n.to_dict() for n in interpreter.nodes]
     print(yaml.dump(output, default_flow_style=False))
 
 
