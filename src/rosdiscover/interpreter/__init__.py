@@ -1,12 +1,18 @@
-# for now, we need to include prebaked modules
-# - a node may be composed of multiple components
+"""
+This module is used to model the architectural consequences of particular
+ROS commands (e.g., launching a given :code:`.launch` file via
+:code:`roslaunch`).
+
+The main class within this module is :class:`Interpreter`, which acts as a
+model evaluator / virtual machine for a ROS architecture.
+"""
 from typing import Dict, Iterator, Any, Optional, Tuple, Callable, Set, FrozenSet
 import logging
 
 import attr
-import roslaunch
+import roslaunch  # FIXME try to lose this dependency!
 
-from .workspace import Workspace
+from ..workspace import Workspace
 
 logger = logging.getLogger(__name__)  # type: logging.Logger
 logger.setLevel(logging.DEBUG)
@@ -230,7 +236,7 @@ def model(package, name):
     return register
 
 
-class VM(object):
+class Interpreter(object):
     def __init__(self, workspace):
         # type: (Workspace) -> None
         self.__workspace = workspace
@@ -239,11 +245,17 @@ class VM(object):
 
     @property
     def parameters(self):
+        """
+        The simulated parameter server for this interpreter.
+        """
         # type: () -> ParameterServer
         return self.__params
 
     @property
     def nodes(self):
+        """
+        Returns an iterator over the summaries for each node on the ROS graph.
+        """
         # type: () -> Iterator[NodeSummary]
         for n in self.__nodes:
             yield n
@@ -273,6 +285,9 @@ class VM(object):
 
     def create_nodelet_manager(self, name):
         # type: (str) -> None
+        """
+        Creates a nodelet manager with a given name.
+        """
         logger.info('launched nodelet manager: %s', name)
 
     def load_nodelet(self,
@@ -283,6 +298,22 @@ class VM(object):
                      remappings,    # type: Dict[str, str]
                      manager        # type: str
                      ):             # type: (...) -> None
+        """
+        Loads a nodelet using the provided instructions.
+
+        Parameters:
+            pkg: the name of the package to which the nodelet belongs.
+            nodetype: the name of the type of nodelet that should be loaded.
+            name: the name that should be assigned to the nodelet.
+            namespace: the namespace into which the nodelet should be loaded.
+            remappings: a dictionary of name remappings that should be applied
+                to this nodelet, where keys correspond to old names and values
+                correspond to new names.
+            manager: the name of the manager for this nodelet.
+
+        Raises:
+            Exception: if there is no model for the given nodelet type.
+        """
         logger.info('launching nodelet [%s] inside manager [%s]',
                     name, manager)
         return self.load(pkg, nodetype, name, namespace, remappings, '')
@@ -295,6 +326,22 @@ class VM(object):
              remappings,    # type: Dict[str, str]
              args           # type: str
              ):             # type: (...) -> None
+        """
+        Loads a node using the provided instructions.
+
+        Parameters:
+            pkg: the name of the package to which the node belongs.
+            nodetype: the name of the type of node that should be loaded.
+            name: the name that should be assigned to the node.
+            namespace: the namespace into which the node should be loaded.
+            remappings: a dictionary of name remappings that should be applied
+                to this node, where keys correspond to old names and values
+                correspond to new names.
+            args: a string containing command-line arguments to the node.
+
+        Raises:
+            Exception: if there is no model for the given node type.
+        """
         if nodetype == 'nodelet':
             if args == 'manager':
                 return self.create_nodelet_manager(name)

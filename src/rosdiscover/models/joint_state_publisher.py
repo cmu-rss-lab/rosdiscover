@@ -1,4 +1,4 @@
-from ..vm import model
+from ..interpreter import model
 
 
 @model('joint_state_publisher', 'joint_state_publisher')
