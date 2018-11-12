@@ -7,7 +7,7 @@ import argparse
 import yaml
 
 from .workspace import Workspace
-from .vm import VM
+from .interpreter import Interpreter
 from . import models
 
 DESC = 'discovery of ROS architectures'
@@ -25,10 +25,10 @@ def launch(fn_launch, dir_workspace):
                 fn_launch, dir_workspace)
 
     workspace = Workspace(dir_workspace)
-    vm = VM(workspace)
-    vm.launch(fn_launch)
+    interpreter = Interpreter(workspace)
+    interpreter.launch(fn_launch)
 
-    output = [n.to_dict() for n in vm.nodes]
+    output = [n.to_dict() for n in interpreter.nodes]
     print(yaml.dump(output, default_flow_style=False))
 
 

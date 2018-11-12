@@ -1,10 +1,16 @@
-# for now, we need to include prebaked modules
-# - a node may be composed of multiple components
+"""
+This module is used to model the architectural consequences of particular
+ROS commands (e.g., launching a given :code:`.launch` file via
+:code:`roslaunch`).
+
+The main class within this module is :class:`Interpreter`, which acts as a
+model evaluator / virtual machine for a ROS architecture.
+"""
 from typing import Dict, Iterator, Any, Optional, Tuple, Callable, Set, FrozenSet
 import logging
 
 import attr
-import roslaunch
+import roslaunch  # FIXME try to lose this dependency!
 
 from .workspace import Workspace
 
@@ -230,7 +236,7 @@ def model(package, name):
     return register
 
 
-class VM(object):
+class Interpreter(object):
     def __init__(self, workspace):
         # type: (Workspace) -> None
         self.__workspace = workspace
