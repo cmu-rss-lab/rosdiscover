@@ -279,6 +279,9 @@ class Interpreter(object):
 
     def create_nodelet_manager(self, name):
         # type: (str) -> None
+        """
+        Creates a nodelet manager with a given name.
+        """
         logger.info('launched nodelet manager: %s', name)
 
     def load_nodelet(self,
@@ -289,6 +292,22 @@ class Interpreter(object):
                      remappings,    # type: Dict[str, str]
                      manager        # type: str
                      ):             # type: (...) -> None
+        """
+        Loads a nodelet using the provided instructions.
+
+        Parameters:
+            pkg: the name of the package to which the nodelet belongs.
+            nodetype: the name of the type of nodelet that should be loaded.
+            name: the name that should be assigned to the nodelet.
+            namespace: the namespace into which the nodelet should be loaded.
+            remappings: a dictionary of name remappings that should be applied
+                to this nodelet, where keys correspond to old names and values
+                correspond to new names.
+            manager: the name of the manager for this nodelet.
+
+        Raises:
+            Exception: if there is no model for the given nodelet type.
+        """
         logger.info('launching nodelet [%s] inside manager [%s]',
                     name, manager)
         return self.load(pkg, nodetype, name, namespace, remappings, '')
