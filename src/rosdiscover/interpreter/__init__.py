@@ -301,6 +301,22 @@ class Interpreter(object):
              remappings,    # type: Dict[str, str]
              args           # type: str
              ):             # type: (...) -> None
+        """
+        Loads a node using the provided instructions.
+
+        Parameters:
+            pkg: the name of the package to which the node belongs.
+            nodetype: the name of the type of node that should be loaded.
+            name: the name that should be assigned to the node.
+            namespace: the namespace into which the node should be loaded.
+            remappings: a dictionary of name remappings that should be applied
+                to this node, where keys correspond to old names and values
+                correspond to new names.
+            args: a string containing command-line arguments to the node.
+
+        Raises:
+            Exception: if there is no model for the given node type.
+        """
         if nodetype == 'nodelet':
             if args == 'manager':
                 return self.create_nodelet_manager(name)
