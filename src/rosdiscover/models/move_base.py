@@ -63,7 +63,7 @@ def move_base(c):
 
     # load the global planner plugin
     def plugin_navfn():
-        name = "global_planner"  # FIXME
+        name = "NavfnROS"
         c.pub("~{}/plan".format(name), "nav_msgs/Path")
         c.read("~{}/allow_unknown".format(name), True)
         c.read("~{}/planner_window_x".format(name), 0.0)
@@ -73,13 +73,66 @@ def move_base(c):
 
     type_global_planner = c.read("~base_global_planner", "navfn/NavfnROS")
     assert type_global_planner == 'navfn/NavfnROS'
-    name_global_planner = 'NavfnROS'
-
     plugin_navfn()
 
     # load the local planner plugin
+    def plugin_local_planner():
+        name = "TrajectoryPlannerROS"
+        c.pub("~{}/global_plan".format(name), "nav_msgs/Path")
+        c.pub("~{}/local_plan".format(name), "nav_msgs/Path")
+        c.pub("~{}/cost_cloud".format(name), "sensor_msgs/PointCloud2")
+        c.sub("odom", "sensor_msgs/PointCloud2")
+
+        c.read("~{}/acc_lim_x".format(name), 2.5)
+        c.read("~{}/acc_lim_y".format(name), 2.5)
+        c.read("~{}/acc_lim_theta".format(name), 2.5)
+        c.read("~{}/max_vel_x".format(name), 2.5)
+        c.read("~{}/min_vel_x".format(name), 2.5)
+        c.read("~{}/max_vel_theta".format(name), 2.5)
+        c.read("~{}/min_vel_theta".format(name), 2.5)
+        c.read("~{}/min_in_place_cel_theta".format(name), 0.4)
+
+        # replaces ~<name>/backup_vel since v1.3.1 of navigation stack
+        c.read("~{}/escape_vel".format(name), -0.1)
+
+        if c.read("~{}/holonomic_robot".format(name), True):
+            c.read("~{}/y_vels".format(name), [-0.3, -0.1, 0.1, 0.3])
+
+        c.read("~{}/yaw_goal_tolerance".format(name), 0.05)
+        c.read("~{}/xy_goal_tolerance".format(name), 0.10)
+        c.read("~{}/latch_xy_goal_tolerance".format(name), False)
+
+        c.read("~{}/sim_time".format(name), 1.0)
+        sim_granularity = c.read("~{}/sim_granularity".format(name), 0.025)
+        c.read("~{}/angular_sim_granularity".format(name), sim_granularity)
+
+        c.read("~{}/vx_samples".format(name), 3)
+        c.read("~{}/vtheta_samples".format(name), 20)
+
+        # FIXME see http://wiki.ros.org/base_local_planner?distro=melodic
+        # searches parent namespaces for controller_frequency if not present
+        # in private namespace
+        c.read("~{}/controller_frequency".format(name), 20.0)
+
+        c.read("~{}/meter_scoring".format(name), False)
+        c.read("~{}/pdist_scale".format(name), 0.6)
+        c.read("~{}/gdist_scale".format(name), 0.8)
+        c.read("~{}/occdist_scale".format(name), 0.01)
+        c.read("~{}/heading_lookahead".format(name), 0.325)
+        c.read("~{}/heading_scoring".format(name), False)
+        c.read("~{}/heading_scoring_timestep".format(name), 0.8)
+        c.read("~{}/dwa".format(name), True)
+        c.read("~{}/publish_cost_grid_pc".format(name), False)
+        c.read("~{}/global_frame_id".format(name), "odom")
+
+        c.read("~{}/oscillation_reset_dist", 0.05)
+
+        c.read("~{}/prune_plan", True)
+
     type_local_planner = c.read("~base_local_planner",
                                 "base_local_planner/TrajectoryPlannerROS")
+    assert type_local_planner == 'base_local_planner/TrajectoryPlannerROS'
+    plugin_local_planner()
 
     c.provide("make_plan", 'nav_msgs/GetPlan')
     c.provide("clear_unknown_space", 'std_srvs/Empty')
