@@ -37,6 +37,10 @@ class ParameterServer(object):
         # type: (str, Any) -> None
         self.__contents[key] = val
 
+    def get(self, key, default):
+        # type: (str, Any) -> Any
+        return self.__contents.get(key, default)
+
 
 @attr.s(frozen=True)
 class NodeSummary(object):
@@ -177,9 +181,8 @@ class NodeContext(object):
         """
         logger.debug("node [%s] reads parameter [%s]",
                      self.__name, param)
-
-        # FIXME
-        return default
+        param = self.resolve(param)
+        return self.__params.get(param, default)
 
     def write(self, param, val):
         # type: (str, Any) -> None
@@ -269,6 +272,9 @@ class Interpreter(object):
         loader = roslaunch.xmlloader.XmlLoader()
         loader.load(fn, config)
 
+        for param in config.params.values():
+            self.__params[param.key] = param.value
+
         for node in config.nodes:
             logger.debug("launching node: %s", node.name)
             try:
@@ -282,6 +288,7 @@ class Interpreter(object):
                           args=node.args)
             except Exception:
                 logger.exception("failed to launch node: %s", node.name)
+                raise
 
     def create_nodelet_manager(self, name):
         # type: (str) -> None
@@ -342,6 +349,7 @@ class Interpreter(object):
         Raises:
             Exception: if there is no model for the given node type.
         """
+        # logger.info("loading node: %s (%s)", name, nodetype)
         if nodetype == 'nodelet':
             if args == 'manager':
                 return self.create_nodelet_manager(name)
