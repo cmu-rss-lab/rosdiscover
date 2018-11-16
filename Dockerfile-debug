@@ -34,7 +34,7 @@ exec \"\$@\"" > "${ROS_WSPACE}/entrypoint.sh" \
 ENTRYPOINT ["/ros_ws/entrypoint.sh"]
 CMD ["/bin/bash"]
 
-RUN pip install catkin_tools
+RUN pip install catkin_tools typing attrs
 
 # build!
 RUN . /opt/ros/${ROS_DISTRO}/setup.sh \
@@ -45,17 +45,5 @@ ENV TURTLEBOT_STAGE_WORLD_FILE /ros_ws/src/turtlebot_simulator/turtlebot_stage/m
 
 # create a portable executable
 WORKDIR /opt/rosdiscover
-COPY . /tmp/discover
-RUN pip install /tmp/discover \
- && echo "\
-import attr\n\
-import rosdiscover.cli\n\
-if __name__ == '__main__':\n\
-  rosdiscover.cli.main()\
-" > /tmp/rd \
- && pyinstaller --clean -y /tmp/rd \
-      --name rosdiscover \
-      --distpath . \
-      --hidden-import rooibos \
-      --hidden-import attrs \
- && rm -rf /tmp/* *.spec build
+COPY . /opt/rosdiscover
+
