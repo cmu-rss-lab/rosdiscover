@@ -56,6 +56,7 @@ if __name__ == '__main__':\n\
  && pyinstaller --clean -y /tmp/rd \
       --name rosdiscover \
       --distpath . \
+      --onefile \
       --hidden-import rooibos \
       --hidden-import attrs \
  && rm -rf /tmp/* *.spec build
