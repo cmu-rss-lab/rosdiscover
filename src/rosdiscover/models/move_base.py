@@ -76,12 +76,62 @@ def move_base(c):
     plugin_navfn()
 
     # load the local planner plugin
-    def plugin_local_planner():
-        name = "TrajectoryPlannerROS"
+    def base_plugin_local(name):
+        # type: (str) -> None
         c.pub("~{}/global_plan".format(name), "nav_msgs/Path")
         c.pub("~{}/local_plan".format(name), "nav_msgs/Path")
-        c.pub("~{}/cost_cloud".format(name), "sensor_msgs/PointCloud2")
         c.sub("odom", "sensor_msgs/PointCloud2")
+
+    def plugin_DWAPlannerROS():
+        name = "DWAPlannerROS"
+        base_plugin_local(name)
+
+        c.read("~{}/acc_lim_x".format(name), 2.5)
+        c.read("~{}/acc_lim_y".format(name), 2.5)
+        c.read("~{}/acc_lim_th".format(name), 3.2)
+
+        c.read("~{}/min_trans_vel".format(name), 0.1)
+        c.read("~{}/max_trans_vel".format(name), 0.55)
+
+        c.read("~{}/max_vel_x".format(name), 0.55)
+        c.read("~{}/min_vel_x".format(name), 0.0)
+        c.read("~{}/max_vel_y".format(name), 0.1)
+        c.read("~{}/min_vel_y".format(name), -0.1)
+
+        c.read("~{}/max_rot_vel".format(name), 1.0)
+        c.read("~{}/min_rot_vel".format(name), 0.4)
+
+        c.read("~{}/yaw_goal_tolerance".format(name), 0.05)
+        c.read("~{}/xy_goal_tolerance".format(name), 0.10)
+        c.read("~{}/latch_xy_goal_tolerance".format(name), False)
+
+        c.read("~{}/sim_time".format(name), 1.7)
+        c.read("~{}/sim_granularity".format(name), 0.025)
+        c.read("~{}/vx_samples".format(name), 3)
+        c.read("~{}/vy_samples".format(name), 10)
+        c.read("~{}/vth_samples".format(name), 20)
+        c.read("~{}/controller_frequency".format(name), 20.0)
+
+        c.read("~{}/path_distance_bias".format(name), 32.0)
+        c.read("~{}/goal_distance_bias".format(name), 24.0)
+        c.read("~{}/occdist_scale".format(name), 0.01)
+        c.read("~{}/forward_point_distance".format(name), 0.325)
+        c.read("~{}/stop_time_buffer".format(name), 0.2)
+        c.read("~{}/scaling_speed".format(name), 0.25)
+        c.read("~{}/max_scaling_factor".format(name), 0.2)
+
+        if c.read("~{}/publish_cost_grid".format(name), False):
+            c.pub("~{}/cost_cloud".format(name), "sensor_msgs/PointCloud2")
+
+        c.read("~{}/oscillation_reset_dist".format(name), 0.05)
+        c.read("~{}/prune_plan".format(name), True)
+
+    def plugin_TrajectoryPlannerROS():
+        name = "TrajectoryPlannerROS"
+        base_plugin_local(name)
+
+        if c.read("~{}/publish_cost_grid_pc".format(name), False):
+            c.pub("~{}/cost_cloud".format(name), "sensor_msgs/PointCloud2")
 
         c.read("~{}/acc_lim_x".format(name), 2.5)
         c.read("~{}/acc_lim_y".format(name), 2.5)
@@ -122,7 +172,6 @@ def move_base(c):
         c.read("~{}/heading_scoring".format(name), False)
         c.read("~{}/heading_scoring_timestep".format(name), 0.8)
         c.read("~{}/dwa".format(name), True)
-        c.read("~{}/publish_cost_grid_pc".format(name), False)
         c.read("~{}/global_frame_id".format(name), "odom")
 
         c.read("~{}/oscillation_reset_dist", 0.05)
@@ -131,8 +180,13 @@ def move_base(c):
 
     type_local_planner = c.read("~base_local_planner",
                                 "base_local_planner/TrajectoryPlannerROS")
-    assert type_local_planner == 'base_local_planner/TrajectoryPlannerROS'
-    plugin_local_planner()
+    if type_local_planner == 'base_local_planner/TrajectoryPlannerROS':
+        plugin_TrajectoryPlannerROS()
+    elif type_local_planner == 'dwa_local_planner/DWAPlannerROS':
+        plugin_DWAPlannerROS()
+    else:
+        m = "unsupported local planner: {}".format(type_local_planner)
+        raise Exception(m)
 
     c.provide("make_plan", 'nav_msgs/GetPlan')
     c.provide("clear_unknown_space", 'std_srvs/Empty')
