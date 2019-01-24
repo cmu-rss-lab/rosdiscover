@@ -47,7 +47,9 @@ def rostopic_list(args):
 def rosservice_list(args):
     interpreter = _launch(args.filename, args.workspace)
     services = set()
-    print("Not implemented.")
+    for node in interpreter.nodes:
+        services |= set(s for (s, _) in node.provides)
+    print('\n'.join(sorted(services)))
 
 
 def main():
