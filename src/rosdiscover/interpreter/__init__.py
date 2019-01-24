@@ -121,7 +121,8 @@ class NodeContext(object):
                            kind=self.__kind,
                            package=self.__package,
                            pubs=self.__pubs,
-                           subs=self.__subs)
+                           subs=self.__subs,
+                           provides=self.__provides)
 
     def resolve(self, name):
         # type: (str) -> FullName
