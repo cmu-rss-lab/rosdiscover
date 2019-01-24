@@ -53,16 +53,21 @@ class NodeSummary(object):
                    converter=frozenset)
     subs = attr.ib(type=FrozenSet[Tuple[FullName, str]],
                    converter=frozenset)
+    provides = attr.ib(type=FrozenSet[Tuple[FullName, str]],
+                       converter=frozenset)
 
     def to_dict(self):
         # type: () -> Dict[str, Any]
         pubs = [{'name': str(n), 'format': str(f)} for (n, f) in self.pubs]
         subs = [{'name': str(n), 'format': str(f)} for (n, f) in self.subs]
+        provides = \
+            [{'name': str(n), 'format': str(f)} for (n, f) in self.provides]
         return {'name': str(self.name),
                 'fullname': str(self.fullname),
                 'namespace': str(self.namespace),
                 'kind': str(self.kind),
                 'package': str(self.package),
+                'provides': provides,
                 'pubs': pubs,
                 'subs': subs}
 
@@ -81,6 +86,7 @@ class NodeContext(object):
         self.__kind = kind
         self.__package = package
         self.__params = params
+        self.__provides = set()  # type: Set[Tuple[str, str]]
         self.__subs = set()  # type: Set[Tuple[str, str]]
         self.__pubs = set()  # type: Set[Tuple[str, str]]
 
@@ -140,6 +146,10 @@ class NodeContext(object):
         """
         logger.debug("node [%s] provides service [%s] using format [%s]",
                      self.__name, service, fmt)
+
+        service_name_full = self.resolve(service)
+        service_name_full = self._remap(service_name_full)
+        self.__provides.add((service_name_full, fmt))
 
     def sub(self, topic_name, fmt):
         # type: (str, str) -> None
