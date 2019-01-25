@@ -53,6 +53,10 @@ class NodeSummary(object):
                    converter=frozenset)
     subs = attr.ib(type=FrozenSet[Tuple[FullName, str]],
                    converter=frozenset)
+    reads = attr.ib(type=FrozenSet[FullName],
+                    converter=frozenset)
+    writes = attr.ib(type=FrozenSet[FullName],
+                    converter=frozenset)
 
     def to_dict(self):
         # type: () -> Dict[str, Any]
@@ -63,6 +67,8 @@ class NodeSummary(object):
                 'namespace': str(self.namespace),
                 'kind': str(self.kind),
                 'package': str(self.package),
+                'reads': list(self.reads),
+                'writes': list(self.writes),
                 'pubs': pubs,
                 'subs': subs}
 
@@ -83,6 +89,8 @@ class NodeContext(object):
         self.__params = params
         self.__subs = set()  # type: Set[Tuple[str, str]]
         self.__pubs = set()  # type: Set[Tuple[str, str]]
+        self.__reads = set()  # type: Set[str]
+        self.__writes = set()  # type: Set[str]
 
         self.__remappings = {
             self.resolve(x): self.resolve(y)
@@ -114,6 +122,8 @@ class NodeContext(object):
                            namespace=self.__namespace,
                            kind=self.__kind,
                            package=self.__package,
+                           reads=self.__reads,
+                           writes=self.__writes,
                            pubs=self.__pubs,
                            subs=self.__subs)
 
