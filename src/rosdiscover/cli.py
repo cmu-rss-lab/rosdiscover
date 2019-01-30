@@ -8,6 +8,7 @@ import yaml
 
 from .workspace import Workspace
 from .interpreter import Interpreter
+from .acme import AcmeGenerator
 from . import models
 
 DESC = 'discovery of ROS architectures'
@@ -33,6 +34,15 @@ def launch(args):
     interpreter = _launch(args.filename, args.workspace)
     output = [n.to_dict() for n in interpreter.nodes]
     print(yaml.dump(output, default_flow_style=False))
+
+def generate_acme(args):
+    """
+    Generates an Acme description from the launch file
+    """
+    interpreter = _launch(args.filename, args.workspace)
+    nodes = [n.to_dict for n in interpreter.nodes]
+    acme_gen = AcmeGenerator(nodes,args.filename)
+    print(acme_gen.generate_acme())
 
 
 def rostopic_list(args):
@@ -80,6 +90,8 @@ def main():
     p.add_argument('filename', type=str, help='a ROS launch file')
     p.add_argument('--workspace', type=str, default='/ros_ws')
     p.set_defaults(func=rosservice_list)
+
+
 
     args = parser.parse_args()
     if 'func' in args:
