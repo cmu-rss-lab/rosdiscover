@@ -91,7 +91,10 @@ def main():
     p.add_argument('--workspace', type=str, default='/ros_ws')
     p.set_defaults(func=rosservice_list)
 
-
+    p = subparsers.add_parser('acme', help='generates Acme from a source file')
+    p.add_argument('filename', type=str, help='a ROS launch file')
+    p.add_argument('--workspace', type=str, default='/ros_ws')
+    p.set_defaults(func=generate_acme)
 
     args = parser.parse_args()
     if 'func' in args:
