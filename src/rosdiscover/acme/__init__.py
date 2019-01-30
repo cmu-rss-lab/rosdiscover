@@ -5,8 +5,8 @@ from aa launch file.
 The main class within this module is :clas:`AcmeGenerator`
 """
 import logging
-import attr
 import copy
+import os
 
 logger = logging.getLogger(__name__) # type: logging.Logger
 logger.setLevel(logging.DEBUG)
@@ -61,13 +61,30 @@ class AcmeGenerator(object):
         components = []
         topics = {}
 
-        #for node in self.__nodes:
+        for node in self.__nodes:
+            for pub in node()['pubs']:
+                topic={}
+                if pub["name"] in topics:
+                    topic = topics[pub["name"]]
+                else:
+                    topic = {'details' : pub, "pubs" : [], "subs" : []}
+                    topics[pub["name"]] = topic
+                topic["pubs"].append(node()["name"])
+            for sub in node()['subs']:
+                topic={}
+                if sub["name"] in topics:
+                    topic = topics[sub["name"]]
+                else:
+                    topic = {'details' : sub, "pubs" : [], "subs" : []}
+                    topics[sub["name"]] = topic
+                topic["subs"].append(node()["name"])
 
-        return components,connectors
+            components.append(node())
+        return components,topics
 
 
     def generate_acme(self):
-        components, topics = self.get_components_and_connectors(config)
+        components, topics = self.get_components_and_connectors()
 
         system_name = os.path.basename(os.path.normpath(self.__launch_file)).split('.')[0]
 

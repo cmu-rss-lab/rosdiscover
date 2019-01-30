@@ -41,7 +41,7 @@ def generate_acme(args):
     """
     interpreter = _launch(args.filename, args.workspace)
     nodes = [n.to_dict for n in interpreter.nodes]
-    acme_gen = AcmeGenerattor(nodes)
+    acme_gen = AcmeGenerator(nodes,args.filename)
     print(acme_gen.generate_acme())
 
 

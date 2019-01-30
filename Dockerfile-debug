@@ -46,4 +46,11 @@ ENV TURTLEBOT_STAGE_WORLD_FILE /ros_ws/src/turtlebot_simulator/turtlebot_stage/m
 # create a portable executable
 WORKDIR /opt/rosdiscover
 COPY . /opt/rosdiscover
+RUN pip install .
+RUN echo "\
+import attr\n\
+import rosdiscover.cli\n\
+if __name__ == '__main__':\n\
+  rosdiscover.cli.main()\
+" > debugging.py
 
