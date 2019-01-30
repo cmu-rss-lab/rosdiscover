@@ -54,6 +54,14 @@ def rostopic_list(args):
     print('\n'.join(sorted(topics)))
 
 
+def rosservice_list(args):
+    interpreter = _launch(args.filename, args.workspace)
+    services = set()
+    for node in interpreter.nodes:
+        services |= set(s for (s, _) in node.provides)
+    print('\n'.join(sorted(services)))
+
+
 def main():
     # log_to_stdout = logging.StreamHandler()
     # log_to_stdout.setLevel(logging.DEBUG)
@@ -76,10 +84,14 @@ def main():
     p.add_argument('--workspace', type=str, default='/ros_ws')
     p.set_defaults(func=rostopic_list)
 
-    p = subparsers.add_parser('acme', help='generates Acme from a source file')
+    p = subparsers.add_parser(
+        'rosservice',
+        help='simulates the output of rosservice for a given configuration.')
     p.add_argument('filename', type=str, help='a ROS launch file')
     p.add_argument('--workspace', type=str, default='/ros_ws')
-    p.set_defaults(func=generate_acme)
+    p.set_defaults(func=rosservice_list)
+
+
 
     args = parser.parse_args()
     if 'func' in args:
