@@ -192,12 +192,15 @@ class NodeContext(object):
         logger.debug("node [%s] reads parameter [%s]",
                      self.__name, param)
         param = self.resolve(param)
+        self.__reads.add(param)
         return self.__params.get(param, default)
 
     def write(self, param, val):
         # type: (str, Any) -> None
         logger.debug("node [%s] writes [%s] to parameter [%s]",
                      self.__name, val, param)
+        param = self.resolve(param)
+        self.__writes.add(param)
 
 
 class Model(object):
