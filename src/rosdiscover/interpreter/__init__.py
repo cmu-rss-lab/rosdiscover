@@ -53,6 +53,10 @@ class NodeSummary(object):
                    converter=frozenset)
     subs = attr.ib(type=FrozenSet[Tuple[FullName, str]],
                    converter=frozenset)
+    reads = attr.ib(type=FrozenSet[FullName],
+                    converter=frozenset)
+    writes = attr.ib(type=FrozenSet[FullName],
+                    converter=frozenset)
     provides = attr.ib(type=FrozenSet[Tuple[FullName, str]],
                        converter=frozenset)
 
@@ -67,6 +71,8 @@ class NodeSummary(object):
                 'namespace': str(self.namespace),
                 'kind': str(self.kind),
                 'package': str(self.package),
+                'reads': list(self.reads),
+                'writes': list(self.writes),
                 'provides': provides,
                 'pubs': pubs,
                 'subs': subs}
@@ -89,6 +95,8 @@ class NodeContext(object):
         self.__provides = set()  # type: Set[Tuple[str, str]]
         self.__subs = set()  # type: Set[Tuple[str, str]]
         self.__pubs = set()  # type: Set[Tuple[str, str]]
+        self.__reads = set()  # type: Set[str]
+        self.__writes = set()  # type: Set[str]
 
         self.__remappings = {
             self.resolve(x): self.resolve(y)
@@ -120,6 +128,8 @@ class NodeContext(object):
                            namespace=self.__namespace,
                            kind=self.__kind,
                            package=self.__package,
+                           reads=self.__reads,
+                           writes=self.__writes,
                            pubs=self.__pubs,
                            subs=self.__subs,
                            provides=self.__provides)
@@ -193,12 +203,15 @@ class NodeContext(object):
         logger.debug("node [%s] reads parameter [%s]",
                      self.__name, param)
         param = self.resolve(param)
+        self.__reads.add(param)
         return self.__params.get(param, default)
 
     def write(self, param, val):
         # type: (str, Any) -> None
         logger.debug("node [%s] writes [%s] to parameter [%s]",
                      self.__name, val, param)
+        param = self.resolve(param)
+        self.__writes.add(param)
 
 
 class Model(object):
