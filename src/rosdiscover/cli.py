@@ -42,7 +42,12 @@ def generate_acme(args):
     interpreter = _launch(args.filename, args.workspace)
     nodes = [n.to_dict for n in interpreter.nodes]
     acme_gen = AcmeGenerator(nodes,args.filename)
-    print(acme_gen.generate_acme())
+    acme = acme_gen.generate_acme()
+    if args.acme is not None:
+        with open(args.acme,'w') as f:
+            f.write(acme)
+    else:
+        print(acme)
 
 
 def rostopic_list(args):
@@ -94,6 +99,7 @@ def main():
     p = subparsers.add_parser('acme', help='generates Acme from a source file')
     p.add_argument('filename', type=str, help='a ROS launch file')
     p.add_argument('--workspace', type=str, default='/ros_ws')
+    p.add_argument("--acme", type=str, help='Output to the named Acme file')
     p.set_defaults(func=generate_acme)
 
     args = parser.parse_args()
