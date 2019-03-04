@@ -12,34 +12,13 @@ import logging
 import attr
 import roslaunch  # FIXME try to lose this dependency!
 
+from .parameter import ParameterServer
 from ..workspace import Workspace
 
 logger = logging.getLogger(__name__)  # type: logging.Logger
 logger.setLevel(logging.DEBUG)
 
 FullName = str
-
-
-class ParameterServer(object):
-    def __init__(self):
-        # type: () -> None
-        self.__contents = {}  # type: Dict[str, Any]
-
-    def __getitem__(self, key):
-        # type: (str) -> Any
-        return self.__contents[key]
-
-    def __contains__(self, key):
-        # type: (str) -> bool
-        return key in self.__contents
-
-    def __setitem__(self, key, val):
-        # type: (str, Any) -> None
-        self.__contents[key] = val
-
-    def get(self, key, default):
-        # type: (str, Any) -> Any
-        return self.__contents.get(key, default)
 
 
 @attr.s(frozen=True)
