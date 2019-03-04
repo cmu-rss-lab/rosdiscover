@@ -22,6 +22,10 @@ class NodeSummary(object):
                     converter=frozenset)
     provides = attr.ib(type=FrozenSet[Tuple[str, str]],
                        converter=frozenset)
+    action_servers = attr.ib(type=FrozenSet[Tuple[str, str]],
+                             converter=frozenset)
+    action_clients = attr.ib(type=FrozenSet[Tuple[str, str]],
+                             converter=frozenset)
 
     def to_dict(self):
         # type: () -> Dict[str, Any]
@@ -29,6 +33,10 @@ class NodeSummary(object):
         subs = [{'name': str(n), 'format': str(f)} for (n, f) in self.subs]
         provides = \
             [{'name': str(n), 'format': str(f)} for (n, f) in self.provides]
+        action_servers = [{'name': str(n), 'format': str(f)}
+                          for (n, f) in self.action_servers]
+        action_clients = [{'name': str(n), 'format': str(f)}
+                          for (n, f) in self.action_clients]
         return {'name': str(self.name),
                 'fullname': str(self.fullname),
                 'namespace': str(self.namespace),
@@ -37,8 +45,7 @@ class NodeSummary(object):
                 'reads': list(self.reads),
                 'writes': list(self.writes),
                 'provides': provides,
+                'action-servers': action_servers,
+                'action-clients': action_clients,
                 'pubs': pubs,
                 'subs': subs}
-
-
-

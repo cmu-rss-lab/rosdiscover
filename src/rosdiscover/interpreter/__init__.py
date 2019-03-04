@@ -76,7 +76,9 @@ class NodeContext(object):
                            writes=self.__writes,
                            pubs=self.__pubs,
                            subs=self.__subs,
-                           provides=self.__provides)
+                           provides=self.__provides,
+                           action_servers=[],
+                           action_clients=[])
 
     def resolve(self, name):
         # type: (str) -> FullName
