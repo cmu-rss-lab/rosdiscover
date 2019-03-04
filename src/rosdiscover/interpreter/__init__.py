@@ -159,6 +159,17 @@ class NodeContext(object):
         param = self.resolve(param)
         self.__writes.add(param)
 
+    def action_server(self, ns, fmt):
+        # type: (str, str) -> None
+        """
+        Creates a new action server.
+
+        Parameters:
+            ns: the namespace of the action server.
+            format: the action format used by the server.
+        """
+        logger.debug("node [%s] provides action server [%s] with format [%s]",
+                     self.__name, ns, fmt)
 
 class Model(object):
     """

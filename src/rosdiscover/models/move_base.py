@@ -17,6 +17,7 @@ def move_base(c):
     c.read("~oscillation_distance", 0.5)
 
     # action server
+    c.action_server("move_base", "move_base_msgs/MoveBaseAction")
     c.sub("move_base/goal", "move_base_msgs/MoveBaseActionGoal")
     c.sub("move_base/cancel", "actionlib_msgs/GoalID")
     c.pub("move_base/feedback", "move_base_msgs/MoveBaseActionFeedback")
