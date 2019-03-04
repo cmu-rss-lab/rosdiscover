@@ -39,6 +39,8 @@ class NodeContext(object):
         self.__provides = set()  # type: Set[Tuple[str, str]]
         self.__subs = set()  # type: Set[Tuple[str, str]]
         self.__pubs = set()  # type: Set[Tuple[str, str]]
+        self.__action_servers = set()  # type: Set[Tuple[str, str]]
+        self.__action_clients = set()  # type: Set[Tuple[str, str]]
         self.__reads = set()  # type: Set[str]
         self.__writes = set()  # type: Set[str]
 
@@ -77,8 +79,8 @@ class NodeContext(object):
                            pubs=self.__pubs,
                            subs=self.__subs,
                            provides=self.__provides,
-                           action_servers=[],
-                           action_clients=[])
+                           action_servers=self.__action_servers,
+                           action_clients=self.__action_clients)
 
     def resolve(self, name):
         # type: (str) -> FullName
@@ -166,10 +168,20 @@ class NodeContext(object):
 
         Parameters:
             ns: the namespace of the action server.
-            format: the action format used by the server.
+            fmt: the name of the action format used by the server.
         """
         logger.debug("node [%s] provides action server [%s] with format [%s]",
                      self.__name, ns, fmt)
+
+        ns = self.resolve(ns)
+        self.__action_servers.add((ns, fmt))
+
+        self.sub('{}/goal'.format(ns), '{}Goal'.format(fmt))
+        self.sub('{}/cancel'.format(ns), 'actionlib_msgs/GoalID')
+        self.pub('{}/status'.format(ns), 'actionlib_msgs/GoalStatusArray')
+        self.pub('{}/feedback'.format(ns), '{}Feedback'.format(fmt))
+        self.pub('{}/result'.format(ns), '{}Result'.format(fmt))
+
 
 class Model(object):
     """

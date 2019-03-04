@@ -3,7 +3,6 @@ from ..interpreter import model
 
 @model('move_base', 'move_base')
 def move_base(c):
-    # launches an action server: move_base
     c.read("~base_global_planner", "navfn/NavfnROS")
     c.read("~base_local_planner", "base_local_planner/TrajectoryPlannerROS")
     c.read("~global_costmap/robot_base_frame", "base_link")
@@ -16,13 +15,7 @@ def move_base(c):
     c.read("~oscillation_timeout", 0.0)
     c.read("~oscillation_distance", 0.5)
 
-    # action server
     c.action_server("move_base", "move_base_msgs/MoveBaseAction")
-    c.sub("move_base/goal", "move_base_msgs/MoveBaseActionGoal")
-    c.sub("move_base/cancel", "actionlib_msgs/GoalID")
-    c.pub("move_base/feedback", "move_base_msgs/MoveBaseActionFeedback")
-    c.pub("move_base/status", "actionlib_msgs/GoalStatusArray")
-    c.pub("move_base/result", "move_base_msgs/MoveBaseActionResult")
 
     c.sub("move_base_simple/goal", "geometry_msgs/PoseStamped")
 
