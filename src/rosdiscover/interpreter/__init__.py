@@ -12,6 +12,7 @@ import logging
 import attr
 import roslaunch  # FIXME try to lose this dependency!
 
+from .summary import NodeSummary
 from .parameter import ParameterServer
 from ..workspace import Workspace
 
@@ -19,42 +20,6 @@ logger = logging.getLogger(__name__)  # type: logging.Logger
 logger.setLevel(logging.DEBUG)
 
 FullName = str
-
-
-@attr.s(frozen=True)
-class NodeSummary(object):
-    name = attr.ib(type=str)
-    fullname = attr.ib(type=str)
-    namespace = attr.ib(type=str)
-    kind = attr.ib(type=str)
-    package = attr.ib(type=str)
-    pubs = attr.ib(type=FrozenSet[Tuple[FullName, str]],
-                   converter=frozenset)
-    subs = attr.ib(type=FrozenSet[Tuple[FullName, str]],
-                   converter=frozenset)
-    reads = attr.ib(type=FrozenSet[FullName],
-                    converter=frozenset)
-    writes = attr.ib(type=FrozenSet[FullName],
-                    converter=frozenset)
-    provides = attr.ib(type=FrozenSet[Tuple[FullName, str]],
-                       converter=frozenset)
-
-    def to_dict(self):
-        # type: () -> Dict[str, Any]
-        pubs = [{'name': str(n), 'format': str(f)} for (n, f) in self.pubs]
-        subs = [{'name': str(n), 'format': str(f)} for (n, f) in self.subs]
-        provides = \
-            [{'name': str(n), 'format': str(f)} for (n, f) in self.provides]
-        return {'name': str(self.name),
-                'fullname': str(self.fullname),
-                'namespace': str(self.namespace),
-                'kind': str(self.kind),
-                'package': str(self.package),
-                'reads': list(self.reads),
-                'writes': list(self.writes),
-                'provides': provides,
-                'pubs': pubs,
-                'subs': subs}
 
 
 class NodeContext(object):
