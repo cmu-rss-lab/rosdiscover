@@ -1,6 +1,6 @@
 __all__ = ['ParameterServer']
 
-from typing import MutableMapping, Any
+from typing import MutableMapping, Iterator, Any
 
 
 class ParameterServer(MutableMapping[str, Any]):
@@ -10,6 +10,18 @@ class ParameterServer(MutableMapping[str, Any]):
     def __init__(self):
         # type: () -> None
         self.__contents = {}  # type: Dict[str, Any]
+
+    def __len__(self):
+        # type: () -> int
+        return len(self.__contents)
+
+    def __delitem__(self, key):
+        # type: (str) -> None
+        del self.__contents[key]
+
+    def __iter__(self):
+        # type: () -> Iterator[str]
+        return self.__contents.__iter__()
 
     def __getitem__(self, key):
         # type: (str) -> Any
