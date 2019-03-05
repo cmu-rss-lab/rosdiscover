@@ -182,6 +182,27 @@ class NodeContext(object):
         self.pub('{}/feedback'.format(ns), '{}Feedback'.format(fmt))
         self.pub('{}/result'.format(ns), '{}Result'.format(fmt))
 
+    def action_client(self, ns, fmt):
+        # type: (str, str) -> None
+        """
+        Creates a new action client.
+
+        Parameters:
+            ns: the namespace of the corresponding action server.
+            fmt: the name of the action format used by the server.
+        """
+        logger.debug("node [%s] provides action client [%s] with format [%s]",
+                     self.__name, ns, fmt)
+
+        ns = self.resolve(ns)
+        self.__action_clients.add((ns, fmt))
+
+        self.pub('{}/goal'.format(ns), '{}Goal'.format(fmt))
+        self.pub('{}/cancel'.format(ns), 'actionlib_msgs/GoalID')
+        self.sub('{}/status'.format(ns), 'actionlib_msgs/GoalStatusArray')
+        self.sub('{}/feedback'.format(ns), '{}Feedback'.format(fmt))
+        self.sub('{}/result'.format(ns), '{}Result'.format(fmt))
+
 
 class Model(object):
     """
