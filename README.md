@@ -36,3 +36,15 @@ $ docker run --rm -it rosdiscover
     /ros_ws/src/turtlebot_simulator/turtlebot_stage/launch/turtlebot_in_stage.launch \
     --workspace /ros_ws
 ```
+
+
+### Example Ground Truth
+
+```
+$ xhost local:root
+$ docker run --rm \
+  -e DISPLAY=unix${DISPLAY} \
+  -v /tmp/.X11-unix:/tmp/.X11-unix \
+  -it discover
+~ roslaunch /ros_ws/src/turtlebot_simulator/turtlebot_stage/launch/turtlebot_in_stage.launch
+```
