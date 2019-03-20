@@ -58,14 +58,14 @@ ADVERTISER_PORT="""     port {port_name} : TopicAdvertisePortT = new TopicAdvert
     """
 
 PROVIDER_PORT="""     port {port_name} : ServiceProviderPortT = new ServiceProviderPortT extended with {{
-        property svc_type : string = "{svc_type}"
-        property name : string = "{service}"
+        property svc_type : string = "{svc_type}";
+        property name : string = "{service}";
         property args : string = "";
     }};
     """
 
 REQUIRER_PORT=""""     port {port_name} : ServiceClientPortT = new ServiceClientPortT extended with {{
-        property svc_type : string = "{svc_type}"
+        property svc_type : string = "{svc_type}";
         property persistency : boolean = {persistence}
     }};
     """
@@ -109,14 +109,14 @@ class AcmeGenerator(object):
                     service = {'details' : prov, "provs" : [], "reqs" : []}
                     services[prov["name"]] = service
                 service["provs"].append(node()["name"])
-            for call in node()['requires']:
-                service={}
-                if call["name"] in services:
-                    service = services[call["name"]]
-                else:
-                    service = {'details' : call, "provs": [], "reqs" : []}
-                    services[call["name"]] = service
-                service["reqs"].append(node()["name"])
+            # for call in node()['requires']:
+            #     service={}
+            #     if call["name"] in services:
+            #         service = services[call["name"]]
+            #     else:
+            #         service = {'details' : call, "provs": [], "reqs" : []}
+            #         services[call["name"]] = service
+            #     service["reqs"].append(node()["name"])
             components.append(node())
         return components, topics, services
 
@@ -125,15 +125,15 @@ class AcmeGenerator(object):
         if service in conns:
             s = conns[service]
         else:
-            s={}
-            s.name = service
-            s.callers= {}
-            s.providers = {}
+            s={"name" : service, 'callers': set(), 'providers' : set()}
+            # s.name = service
+            # s.callers= {}
+            # s.providers = {}
             conns[service] = s
         if is_provider:
-            s.providers.add(port_qualified)
+            s['providers'].add(port_qualified)
         else:
-            s.callers.add(port_qualified)
+            s['callers'].add(port_qualified)
 
     def to_acme_name(self, name):
         return name.replace("/","_")
@@ -158,23 +158,25 @@ class AcmeGenerator(object):
                 pname = self.to_acme_name(p['name']) + "_pub"
                 port = ADVERTISER_PORT.format(port_name=pname, msg_type=p['format'], topic=p['name'])
                 ports.append(port)
-                attachments.append(ATTACHMENT.format(comp=comp_name, port=pname, conn="%s_conn" %self.to_acme_name(p['name']), role="%s_pub" %comp_name))
+                attachments.append(ATTACHMENT.format(comp=comp_name, port=pname, 
+                    conn="%s_conn" %self.to_acme_name(p['name']), role="%s_pub" %comp_name))
             for s in c['subs']:
                 pname = self.to_acme_name(s['name']) + "_sub"
                 port = SUBSCRIBER_PORT.format(port_name=pname, msg_type=s['format'], topic=s['name'])
                 ports.append(port)
-                attachments.append(ATTACHMENT.format(comp=comp_name, port=pname, conn="%s_conn" %self.to_acme_name(p['name']), role="%s_sub" %comp_name))
+                attachments.append(ATTACHMENT.format(comp=comp_name, port=pname, 
+                    conn="%s_conn" %self.to_acme_name(s['name']), role="%s_sub" %comp_name))
             for s in c['provides']:
                 pname=self.to_acme_name(s['name']) + "_svc"
                 port = PROVIDER_PORT.format(port_name=pname, svc_type=s['format'], service=s['name'])
                 ports.append(port)
                 self.update_service_conn(service_conns,s['name'], "%s.%s" %(comp_name, pname), True)
                 #attach = attach + "  attachment %s.%s to %s.%s;\n" %(comp_name,pname,"%s_conn" %s['name'].replace("/","_"), "%s_prov" %comp_name)
-            for s in c['calls']:
-                pname=self.to_acme_name(s['name']) + "_call"
-                port = REQUIRER_PORT.format(port_name=pname, svc_type=s['format'], service=s['name'])
-                ports.append(port)
-                self.update_service_conn(service_conns,s['name'], "%s.%s" %(comp_name, pname), False)
+            # for s in c['calls']:
+            #     pname=self.to_acme_name(s['name']) + "_call"
+            #     port = REQUIRER_PORT.format(port_name=pname, svc_type=s['format'], service=s['name'])
+            #     ports.append(port)
+            #     self.update_service_conn(service_conns,s['name'], "%s.%s" %(comp_name, pname), False)
 
                 #attach = attach + "  attachment %s.%s to %s.%s;" %(comp_name,pname, "%s_conn" %s['name'].replace("/","_"), "%s_call" %comp_name)
 
@@ -185,6 +187,7 @@ class AcmeGenerator(object):
 
         connector_strs = []
         for t in topics:
+            
             roles = []
             for p in topics[t]["pubs"]:
                 rname= p + "_pub"
@@ -193,6 +196,7 @@ class AcmeGenerator(object):
             for s in topics[t]["subs"]:
                 rname= s + "_sub"
                 role = SUBSCRIBER_ROLE.format(role_name=rname)
+                print(role)
                 roles.append(role)
             cname = self.to_acme_name(topics[t]["details"]['name']) + "_conn"
             conn = TOPIC_CONNECTOR.format(conn_name=cname, roles="\n".join(roles), msg_type=topics[t]["details"]['format'], topic=topics[t]["details"]['name'])
@@ -200,15 +204,15 @@ class AcmeGenerator(object):
 
         for s in service_conns:
             # Only create a connector for services that are connected
-            if len(s.providers) != 0 and len(s.callers) != 0:
+            if len(service_conns[s]['providers']) != 0 and len(service_conns[s]['callers']) != 0:
                 roles = []
                 cname="%s_conn" %self.to_acme_name(s)
-                for p in service_conns[s].providers:
+                for p in service_conns[s]['providers']:
                     rname = self.to_acme_name(p)
                     role=PROVIDER_ROLE.format(role_name=rname)
                     roles.append(role)
                     attachments.append(SERVICE_ATTACHMENT.format(qualitifed_port=p,conn=cname,role=rname))
-                for p in service_conns[s].callers:
+                for p in service_conns[s]['callers']:
                     rname = self.to_acme_name(p)
                     role=CLIENT_ROLE.format(role_name=rname)
                     roles = "%s%s\n" %(roles,role)
