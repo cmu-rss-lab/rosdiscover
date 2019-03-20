@@ -22,6 +22,7 @@ logger.setLevel(logging.DEBUG)
 FullName = str
 
 
+
 class NodeContext(object):
     def __init__(self,
                  name,          # type: str
@@ -39,8 +40,9 @@ class NodeContext(object):
         self.__provides = set()  # type: Set[Tuple[str, str]]
         self.__subs = set()  # type: Set[Tuple[str, str]]
         self.__pubs = set()  # type: Set[Tuple[str, str]]
+
         self.__action_servers = set()  # type: Set[Tuple[str, str]]
-        self.__action_clients = set()  # type: Set[Tuple[str, str]]
+
         self.__reads = set()  # type: Set[str]
         self.__writes = set()  # type: Set[str]
 
@@ -161,6 +163,7 @@ class NodeContext(object):
         param = self.resolve(param)
         self.__writes.add(param)
 
+
     def action_server(self, ns, fmt):
         # type: (str, str) -> None
         """
@@ -202,6 +205,7 @@ class NodeContext(object):
         self.sub('{}/status'.format(ns), 'actionlib_msgs/GoalStatusArray')
         self.sub('{}/feedback'.format(ns), '{}Feedback'.format(fmt))
         self.sub('{}/result'.format(ns), '{}Result'.format(fmt))
+
 
 
 class Model(object):
