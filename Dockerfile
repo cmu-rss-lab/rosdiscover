@@ -7,7 +7,7 @@ RUN pip install -U pip==18.1 \
 
 WORKDIR /ros_ws
 RUN mkdir -p /ros_ws/src \
- && rosinstall_generator turtlebot_simulator \
+ && rosinstall_generator turtlebot_simulator rviz \
       --rosdistro indigo \
       --deps > .rosinstall \
  && wstool init -j8 /ros_ws/src /ros_ws/.rosinstall

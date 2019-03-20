@@ -12,6 +12,8 @@ import logging
 import attr
 import roslaunch  # FIXME try to lose this dependency!
 
+from .summary import NodeSummary
+from .parameter import ParameterServer
 from ..workspace import Workspace
 
 logger = logging.getLogger(__name__)  # type: logging.Logger
@@ -19,63 +21,6 @@ logger.setLevel(logging.DEBUG)
 
 FullName = str
 
-
-class ParameterServer(object):
-    def __init__(self):
-        # type: () -> None
-        self.__contents = {}  # type: Dict[str, Any]
-
-    def __getitem__(self, key):
-        # type: (str) -> Any
-        return self.__contents[key]
-
-    def __contains__(self, key):
-        # type: (str) -> bool
-        return key in self.__contents
-
-    def __setitem__(self, key, val):
-        # type: (str, Any) -> None
-        self.__contents[key] = val
-
-    def get(self, key, default):
-        # type: (str, Any) -> Any
-        return self.__contents.get(key, default)
-
-
-@attr.s(frozen=True)
-class NodeSummary(object):
-    name = attr.ib(type=str)
-    fullname = attr.ib(type=str)
-    namespace = attr.ib(type=str)
-    kind = attr.ib(type=str)
-    package = attr.ib(type=str)
-    pubs = attr.ib(type=FrozenSet[Tuple[FullName, str]],
-                   converter=frozenset)
-    subs = attr.ib(type=FrozenSet[Tuple[FullName, str]],
-                   converter=frozenset)
-    reads = attr.ib(type=FrozenSet[FullName],
-                    converter=frozenset)
-    writes = attr.ib(type=FrozenSet[FullName],
-                    converter=frozenset)
-    provides = attr.ib(type=FrozenSet[Tuple[FullName, str]],
-                       converter=frozenset)
-
-    def to_dict(self):
-        # type: () -> Dict[str, Any]
-        pubs = [{'name': str(n), 'format': str(f)} for (n, f) in self.pubs]
-        subs = [{'name': str(n), 'format': str(f)} for (n, f) in self.subs]
-        provides = \
-            [{'name': str(n), 'format': str(f)} for (n, f) in self.provides]
-        return {'name': str(self.name),
-                'fullname': str(self.fullname),
-                'namespace': str(self.namespace),
-                'kind': str(self.kind),
-                'package': str(self.package),
-                'reads': list(self.reads),
-                'writes': list(self.writes),
-                'provides': provides,
-                'pubs': pubs,
-                'subs': subs}
 
 
 class NodeContext(object):
@@ -95,6 +40,9 @@ class NodeContext(object):
         self.__provides = set()  # type: Set[Tuple[str, str]]
         self.__subs = set()  # type: Set[Tuple[str, str]]
         self.__pubs = set()  # type: Set[Tuple[str, str]]
+
+        self.__action_servers = set()  # type: Set[Tuple[str, str]]
+
         self.__reads = set()  # type: Set[str]
         self.__writes = set()  # type: Set[str]
 
@@ -132,7 +80,9 @@ class NodeContext(object):
                            writes=self.__writes,
                            pubs=self.__pubs,
                            subs=self.__subs,
-                           provides=self.__provides)
+                           provides=self.__provides,
+                           action_servers=self.__action_servers,
+                           action_clients=self.__action_clients)
 
     def resolve(self, name):
         # type: (str) -> FullName
@@ -212,6 +162,50 @@ class NodeContext(object):
                      self.__name, val, param)
         param = self.resolve(param)
         self.__writes.add(param)
+
+
+    def action_server(self, ns, fmt):
+        # type: (str, str) -> None
+        """
+        Creates a new action server.
+
+        Parameters:
+            ns: the namespace of the action server.
+            fmt: the name of the action format used by the server.
+        """
+        logger.debug("node [%s] provides action server [%s] with format [%s]",
+                     self.__name, ns, fmt)
+
+        ns = self.resolve(ns)
+        self.__action_servers.add((ns, fmt))
+
+        self.sub('{}/goal'.format(ns), '{}Goal'.format(fmt))
+        self.sub('{}/cancel'.format(ns), 'actionlib_msgs/GoalID')
+        self.pub('{}/status'.format(ns), 'actionlib_msgs/GoalStatusArray')
+        self.pub('{}/feedback'.format(ns), '{}Feedback'.format(fmt))
+        self.pub('{}/result'.format(ns), '{}Result'.format(fmt))
+
+    def action_client(self, ns, fmt):
+        # type: (str, str) -> None
+        """
+        Creates a new action client.
+
+        Parameters:
+            ns: the namespace of the corresponding action server.
+            fmt: the name of the action format used by the server.
+        """
+        logger.debug("node [%s] provides action client [%s] with format [%s]",
+                     self.__name, ns, fmt)
+
+        ns = self.resolve(ns)
+        self.__action_clients.add((ns, fmt))
+
+        self.pub('{}/goal'.format(ns), '{}Goal'.format(fmt))
+        self.pub('{}/cancel'.format(ns), 'actionlib_msgs/GoalID')
+        self.sub('{}/status'.format(ns), 'actionlib_msgs/GoalStatusArray')
+        self.sub('{}/feedback'.format(ns), '{}Feedback'.format(fmt))
+        self.sub('{}/result'.format(ns), '{}Result'.format(fmt))
+
 
 
 class Model(object):
