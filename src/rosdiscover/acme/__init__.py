@@ -22,6 +22,12 @@ SERVICE_CONNECTOR="""  connector {conn_name} : ServiceConnT = new ServiceConnT e
     {roles}
     }};
    """
+
+ACTION_CONNECTOR="""  connector {conn_name} : ActionServerConnT = new ActionServerConnT extended with {{
+    {roles}
+    }};
+   """
+
 NODE_COMPONENT="""   component {comp_name} : ROSNodeCompT = new ROSNodeCompT extended with {{
         {ports}
         property name = "{node_name}";
@@ -38,6 +44,12 @@ PROVIDER_ROLE="""     role {role_name} : ROSServiceCallRoleT = new ROSServiceCal
     """
 
 CLIENT_ROLE="""       role {role_name} : ROSServiceProviderRoleT = new ROSServiceProviderRoleT;
+    """
+
+ACTION_CLIENT_ROLE="""      role {role_name} : ROSActionCallerRoleT = new ROSActionCallRoleT;
+    """
+
+ACTION_SERVER_ROLE="""      role {role_name} : ROSActionResponderRoleT = new ROSActionResponderRoleT;
     """
 
 TOPIC_PORT="""     port {port_name} : ${port_type} = new ${port_type} extended with {{
@@ -64,9 +76,19 @@ PROVIDER_PORT="""     port {port_name} : ServiceProviderPortT = new ServiceProvi
     }};
     """
 
-REQUIRER_PORT=""""     port {port_name} : ServiceClientPortT = new ServiceClientPortT extended with {{
+REQUIRER_PORT="""     port {port_name} : ServiceClientPortT = new ServiceClientPortT extended with {{
         property svc_type : string = "{svc_type}";
         property persistency : boolean = {persistence}
+    }};
+    """
+
+ACTION_CLIENT_PORT="""    port {port_name} : ActionClientPortT = new ActionClientPortT extended with {{
+        property action_type : string = "{action_type}";
+    }};
+    """
+
+ACTION_SERVER_PORT="""    port {port_name}: ActionServerPortT = new ActionServerPortT extended with {{
+        property action_type : string = "{action_type}";
     }};
     """
 
@@ -83,6 +105,7 @@ class AcmeGenerator(object):
         components = []
         topics = {}
         services = {}
+        actions = {}
 
         for node in self.__nodes:
             for pub in node()['pubs']:
@@ -117,8 +140,24 @@ class AcmeGenerator(object):
             #         service = {'details' : call, "provs": [], "reqs" : []}
             #         services[call["name"]] = service
             #     service["reqs"].append(node()["name"])
+            for ac in node()["action-servers"]:
+                action={}
+                if ac["name"] in actions:
+                    action = actions[ac["name"]]
+                else:
+                    action={'details' : ac, "servers": [], "clients": []}
+                    actions[ac["name"]] = action
+                action["servers"].append(node()["name"])
+            for ac in node()["action-clients"]:
+                action={}
+                if ac["name"] in actions:
+                    action = actions[ac["name"]]
+                else:
+                    action={'details' : ac, "servers": [], "clients": []}
+                    actions[ac["name"]] = action
+                action["clients"].append(node()["name"])    
             components.append(node())
-        return components, topics, services
+        return components, topics, services, actions
 
     def update_service_conn(self, conns, service, port_qualified, is_provider):
         s = {}
@@ -135,12 +174,24 @@ class AcmeGenerator(object):
         else:
             s['callers'].add(port_qualified)
 
+    def update_action_conn(self, conns, action, port_qualified, is_server):
+        a = {}
+        if action in conns:
+            a = conns[action]
+        else:
+            a={'name' : action, "clients" : set(), 'servers' : set()}
+            conns[action] = a
+        if is_server:
+            a['servers'].add(port_qualified)
+        else:
+            a['clients'].add(port_qualified)
+
     def to_acme_name(self, name):
         return name.replace("/","_")
 
     def generate_acme(self):
         # type: () -> str
-        components, topics, services = self.get_components_and_connectors()
+        components, topics, services, actions = self.get_components_and_connectors()
 
         system_name = os.path.basename(os.path.normpath(self.__launch_file)).split('.')[0]
 
@@ -148,6 +199,7 @@ class AcmeGenerator(object):
         attachments = []
         component_strs = []
         service_conns={}
+        action_conns={}
 
         ATTACHMENT="""  attachment {comp}.{port} to {conn}.{role};"""
         SERVICE_ATTACHMENT = """  attachment {qualified_port} to {conn}.{role};"""
@@ -179,7 +231,16 @@ class AcmeGenerator(object):
             #     self.update_service_conn(service_conns,s['name'], "%s.%s" %(comp_name, pname), False)
 
                 #attach = attach + "  attachment %s.%s to %s.%s;" %(comp_name,pname, "%s_conn" %s['name'].replace("/","_"), "%s_call" %comp_name)
-
+            for a in c['action-servers']:
+                pname=self.to_acme_name(a['name']) + "_srvr";
+                port = ACTION_SERVER_PORT.format(port_name=pname, action_type=a['name'])
+                ports.append(port)
+                self.update_action_conn(action_conns,a['name'], "%s.%s" %(comp_name,pname), True)
+            for a in c['action-clients']:
+                pname=self.to_acme_name(a['name']) + "_cli";
+                port = ACTION_CLIENT_PORT.format(port_name=pname, action_type=a['name'])
+                ports.append(port)
+                self.update_action_conn(action_conns,a['name'], "%s.%s" %(comp_name,pname), False)
 
             comp = NODE_COMPONENT.format(comp_name=comp_name, ports="\n".join(ports), node_name=c['name'])
             component_strs.append(comp)
@@ -218,7 +279,27 @@ class AcmeGenerator(object):
                     roles = "%s%s\n" %(roles,role)
                     attachments.append(SERVICE_ATTACHMENT.format(qualitifed_port=p,conn=cname,role=rname))
                 connector_strs.append(SERVICE_CONNECTOR.format(conn_name=cname, roles="\n".join(roles)))
-    
+        for a in action_conns:
+            # only create a connector for actions that are connected
+            if len(action_conns[a]['servers']) != 0 and len(action_conns[a]['clients']) != 0:
+                roles = []
+                cname="%s_conn" %self.to_acme_name(a)
+                for c in action_conns[a]['clients']:
+                    rname = self.to_acme_name(c)
+                    role=ACTION_CLIENT_ROLE.format(role_name=rname)
+                    roles.append(role)
+                    attachments.append(SERVICE_ATTACHMENT.format(qualified_port=c,conn=cname,role=rname))
+                for s in action_conns[s]['servers']:
+                    rname = self.to_acme_name(s)
+                    role=ACTION_SERVER_ROLE.format(role_name=rname)
+                    roles.append(role)
+                    attachments.append(SERVICE_ATTACHMENT.format(qualified_port=c,conn=cname,role=rname))
+                connector_strs.append(ACTION_CONNECTOR.format(conn_name=cname, roles="\n".join(roles)))
         acme = acme + "\n".join(connector_strs)
         acme = acme + "\n".join(attachments) + "}"
         return acme
+
+
+"""
+rosdiscover acme /ros_ws/src/turtlebot_simulator/turtlebot_stage/launch/turtlebot_in_stage.launch --workspace /ros_ws --acme generated.acme
+"""
