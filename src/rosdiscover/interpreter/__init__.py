@@ -42,7 +42,7 @@ class NodeContext(object):
         self.__pubs = set()  # type: Set[Tuple[str, str]]
 
         self.__action_servers = set()  # type: Set[Tuple[str, str]]
-
+        self.__action_clients = set () # type: Set[Tupe[str,str]]
         self.__reads = set()  # type: Set[str]
         self.__writes = set()  # type: Set[str]
 
