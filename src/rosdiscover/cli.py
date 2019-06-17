@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Provides a simple command-line interface.
 """
@@ -17,10 +18,11 @@ logger = logging.getLogger(__name__)  # type: logging.Logger
 logger.setLevel(logging.DEBUG)
 
 
-def _launch(fn_launch, dir_workspace):
-    logger.info("simulating launch [%s] inside workspace [%s]",
-                fn_launch, dir_workspace)
+def _launch(name_image, fn_launch):
+    logger.info("simulating launch [%s] for image [%s]",
+                fn_launch, name_image)
 
+    # FIXME build interpreter for a given image
     workspace = Workspace(dir_workspace)
     interpreter = Interpreter(workspace)
     interpreter.launch(fn_launch)
@@ -28,18 +30,15 @@ def _launch(fn_launch, dir_workspace):
 
 
 def launch(args):
-    """
-    Simulates the architectural effects of a `roslaunch` command.
-    """
-    interpreter = _launch(args.filename, args.workspace)
+    """Simulates the architectural effects of a `roslaunch` command."""
+    interpreter = _launch(args.image, args.filename)
     output = [n.to_dict() for n in interpreter.nodes]
     print(yaml.dump(output, default_flow_style=False))
 
-def generate_acme(args):
-    """
-    Generates an Acme description from the launch file
-    """
-    interpreter = _launch(args.filename, args.workspace)
+_launch(args.image, args.filename)
+_launch(args.image, args.filename)def generate_acme(args):
+    """Generates an Acme description for a given roslaunch command."""
+    interpreter = _launch(args.image, args.filename)
     nodes = [n.to_dict for n in interpreter.nodes]
     acme_gen = AcmeGenerator(nodes,args.filename)
     acme = acme_gen.generate_acme()
@@ -52,7 +51,7 @@ def generate_acme(args):
 
 def rostopic_list(args):
     # simulates the list command
-    interpreter = _launch(args.filename, args.workspace)
+    interpreter = _launch(args.image, args.filename)
     topics = set()
     for node in interpreter.nodes:
         topics |= set(x for (x, _) in node.pubs | node.subs)
@@ -60,7 +59,7 @@ def rostopic_list(args):
 
 
 def rosservice_list(args):
-    interpreter = _launch(args.filename, args.workspace)
+    interpreter = _launch(args.image, args.filename)
     services = set()
     for node in interpreter.nodes:
         services |= set(s for (s, _) in node.provides)
@@ -78,27 +77,35 @@ def main():
     p = subparsers.add_parser(
         'launch',
         help='simulates the effects of a roslaunch.')
-    p.add_argument('filename', type=str, help='a ROS launch file')
-    p.add_argument('--workspace', type=str, default='/ros_ws')
+    p.add_argument('image', type=str,
+                   help='name of a Docker image for a ROS application.')
+    p.add_argument('filename', type=str,
+                   help='path to a roslaunch file inside the Docker image.')
     p.set_defaults(func=launch)
 
     p = subparsers.add_parser(
         'rostopic',
         help='simulates the output of rostopic for a given configuration.')
-    p.add_argument('filename', type=str, help='a ROS launch file')
-    p.add_argument('--workspace', type=str, default='/ros_ws')
+    p.add_argument('image', type=str,
+                   help='name of a Docker image for a ROS application.')
+    p.add_argument('filename', type=str,
+                   help='path to a roslaunch file inside the Docker image.')
     p.set_defaults(func=rostopic_list)
 
     p = subparsers.add_parser(
         'rosservice',
         help='simulates the output of rosservice for a given configuration.')
-    p.add_argument('filename', type=str, help='a ROS launch file')
-    p.add_argument('--workspace', type=str, default='/ros_ws')
+    p.add_argument('image', type=str,
+                   help='name of a Docker image for a ROS application.')
+    p.add_argument('filename', type=str,
+                   help='path to a roslaunch file inside the Docker image.')
     p.set_defaults(func=rosservice_list)
 
     p = subparsers.add_parser('acme', help='generates Acme from a source file')
-    p.add_argument('filename', type=str, help='a ROS launch file')
-    p.add_argument('--workspace', type=str, default='/ros_ws')
+    p.add_argument('image', type=str,
+                   help='name of a Docker image for a ROS application.')
+    p.add_argument('filename', type=str,
+                   help='path to a roslaunch file inside the Docker image.')
     p.add_argument("--acme", type=str, help='Output to the named Acme file')
     p.set_defaults(func=generate_acme)
 
