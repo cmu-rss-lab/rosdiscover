@@ -40,7 +40,7 @@ def generate_acme(args):
     """Generates an Acme description for a given roslaunch command."""
     interpreter = _launch(args.image, args.filename)
     nodes = [n.to_dict for n in interpreter.nodes]
-    acme_gen = AcmeGenerator(nodes,args.filename)
+    acme_gen = AcmeGenerator(nodes, args.filename)
     acme = acme_gen.generate_acme()
     if args.acme is not None:
         with open(args.acme,'w') as f:
