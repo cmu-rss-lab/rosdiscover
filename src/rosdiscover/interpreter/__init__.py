@@ -13,6 +13,7 @@ import logging
 
 import attr
 import roswire
+from roswire.proxy.launch import LaunchFileReader
 
 from .summary import NodeSummary
 from .parameter import ParameterServer
@@ -23,7 +24,7 @@ logger.setLevel(logging.DEBUG)
 FullName = str
 
 
-class NodeContext(object):
+class NodeContext:
     def __init__(self,
                  name: str,
                  namespace: str,
@@ -184,7 +185,7 @@ class NodeContext(object):
         self.sub('{}/result'.format(ns), '{}Result'.format(fmt))
 
 
-class Model(object):
+class Model:
     """Models the architectural interactions of a node type."""
     _models: Dict[Tuple[str, str], Model] = {}
 
@@ -227,11 +228,10 @@ def model(package: str, name: str) -> Any:
     return register
 
 
-class Interpreter(object):
-    # FIXME use image
-    def __init__(self, workspace) -> None:
-        # type: (Workspace) -> None
-        self.__workspace = workspace
+class Interpreter:
+    def __init__(self, rsw: roswire.ROSWire, image: str) -> None:
+        self.__image = image
+        self.__roswire = rsw
         self.__params = ParameterServer()
         self.__nodes: Set[NodeSummary] = set()
 
@@ -247,20 +247,20 @@ class Interpreter(object):
 
     def launch(self, fn: str) -> None:
         """Simulates the effects of `roslaunch` using a given launch file."""
-        config = roslaunch.config.ROSLaunchConfig()
-        loader = roslaunch.xmlloader.XmlLoader()
-        loader.load(fn, config)
+        with self.__roswire.launch(self.__image) as app:
+            reader = LaunchFileReader(app.shell, app.files)
+            # NOTE this method also supports command-line arguments
+            config = reader.read(fn)
 
-        for param in config.params.values():
-            self.__params[param.key] = param.value
+        for key, value in config.params.items():
+            self.__params[key] = value
 
         for node in config.nodes:
             logger.debug("launching node: %s", node.name)
             try:
-                remappings = {str(old): str(new)
-                              for (old, new) in node.remap_args}
+                remappings = {old: new for (old, new) in node.remappings}
                 self.load(pkg=node.package,
-                          nodetype=node.type,
+                          nodetype=node.typ,
                           name=node.name,
                           namespace=node.namespace,  # FIXME
                           remappings=remappings,
