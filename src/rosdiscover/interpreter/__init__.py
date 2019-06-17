@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 This module is used to model the architectural consequences of particular
 ROS commands (e.g., launching a given :code:`.launch` file via
@@ -6,15 +7,15 @@ ROS commands (e.g., launching a given :code:`.launch` file via
 The main class within this module is :class:`Interpreter`, which acts as a
 model evaluator / virtual machine for a ROS architecture.
 """
-from typing import Dict, Iterator, Any, Optional, Tuple, Callable, Set, FrozenSet
+from typing import (Dict, Iterator, Any, Optional, Tuple, Callable, Set,
+                    FrozenSet)
 import logging
 
 import attr
-import roslaunch  # FIXME try to lose this dependency!
+import roswire
 
 from .summary import NodeSummary
 from .parameter import ParameterServer
-from ..workspace import Workspace
 
 logger = logging.getLogger(__name__)  # type: logging.Logger
 logger.setLevel(logging.DEBUG)
@@ -22,16 +23,15 @@ logger.setLevel(logging.DEBUG)
 FullName = str
 
 
-
 class NodeContext(object):
     def __init__(self,
-                 name,          # type: str
-                 namespace,     # type: str
-                 kind,          # type: str
-                 package,       # type: str
-                 remappings,    # type: Dict[str, str]
-                 params         # type: ParameterServer
-                 ):             # type: (...) -> None
+                 name: str,
+                 namespace: str,
+                 kind: str,
+                 package: str,
+                 remappings: Dict[str, str],
+                 params: ParameterServer
+                 ) -> None:
         self.__name = name
         self.__namespace = namespace
         self.__kind = kind
@@ -52,15 +52,13 @@ class NodeContext(object):
         }  # type: Dict[str, str]
 
     @property
-    def fullname(self):
-        # type: () -> str
+    def fullname(self) -> str:
         ns = self.__namespace
         if ns[-1] != '/':
             ns += ' /'
         return '{}{}'.format(ns, self.__name)
 
-    def _remap(self, name):
-        # type: (str) -> str
+    def _remap(self, name: str) -> str:
         if name in self.__remappings:
             name_new = self.__remappings[name]
             logger.info("applying remapping from [%s] to [%s]",
@@ -69,8 +67,7 @@ class NodeContext(object):
         else:
             return name
 
-    def summarize(self):
-        # type: (...) -> NodeSummary
+    def summarize(self) -> NodeSummary:
         return NodeSummary(name=self.__name,
                            fullname=self.fullname,
                            namespace=self.__namespace,
@@ -84,10 +81,8 @@ class NodeContext(object):
                            action_servers=self.__action_servers,
                            action_clients=self.__action_clients)
 
-    def resolve(self, name):
-        # type: (str) -> FullName
-        """
-        Resolves a given name within the context of this node.
+    def resolve(self, name: str) -> str:
+        """Resolves a given name within the context of this node.
 
         Returns:
             the fully qualified form of a given name.
@@ -100,11 +95,8 @@ class NodeContext(object):
         else:
             return '/{}'.format(name)
 
-    def provide(self, service, fmt):
-        # type: (str, str) -> None
-        """
-        Instructs the node to provide a service.
-        """
+    def provide(self, service: str, fmt: str) -> None:
+        """Instructs the node to provide a service."""
         logger.debug("node [%s] provides service [%s] using format [%s]",
                      self.__name, service, fmt)
 
@@ -112,10 +104,8 @@ class NodeContext(object):
         service_name_full = self._remap(service_name_full)
         self.__provides.add((service_name_full, fmt))
 
-    def sub(self, topic_name, fmt):
-        # type: (str, str) -> None
-        """
-        Subscribes the node to a given topic.
+    def sub(self, topic_name: str, fmt: str) -> None:
+        """Subscribes the node to a given topic.
 
         Parameters:
             topic: the unqualified name of the topic.
@@ -127,10 +117,8 @@ class NodeContext(object):
                      self.__name, topic_name, fmt)
         self.__subs.add((topic_name_full, fmt))
 
-    def pub(self, topic_name, fmt):
-        # type: (str, str) -> None
-        """
-        Instructs the node to publish to a given topic.
+    def pub(self, topic_name: str, fmt: str) -> None:
+        """Instructs the node to publish to a given topic.
 
         Parameters:
             topic: the unqualified name of the topic.
@@ -142,32 +130,23 @@ class NodeContext(object):
                      self.__name, topic_name, fmt)
         self.__pubs.add((topic_name_full, fmt))
 
-    def read(self,
-             param,     # type: str
-             default    # type: Optional[Any]
-             ):         # type: (...) -> Any
-        """
-        Obtains the value of a given parameter from the parameter
-        server.
-        """
+    def read(self, param: str, default: Optional[Any] = None) -> None:
+        """Obtains the value of a given parameter from the parameter server."""
         logger.debug("node [%s] reads parameter [%s]",
                      self.__name, param)
         param = self.resolve(param)
         self.__reads.add(param)
         return self.__params.get(param, default)
 
-    def write(self, param, val):
-        # type: (str, Any) -> None
+    def write(self, param: str, val: Any) -> None:
         logger.debug("node [%s] writes [%s] to parameter [%s]",
                      self.__name, val, param)
         param = self.resolve(param)
         self.__writes.add(param)
 
-
-    def action_server(self, ns, fmt):
+    def action_server(self, ns: str, fmt: str) -> None:
         # type: (str, str) -> None
-        """
-        Creates a new action server.
+        """Creates a new action server.
 
         Parameters:
             ns: the namespace of the action server.
@@ -185,10 +164,8 @@ class NodeContext(object):
         self.pub('{}/feedback'.format(ns), '{}Feedback'.format(fmt))
         self.pub('{}/result'.format(ns), '{}Result'.format(fmt))
 
-    def action_client(self, ns, fmt):
-        # type: (str, str) -> None
-        """
-        Creates a new action client.
+    def action_client(self, ns: str, fmt: str) -> None:
+        """Creates a new action client.
 
         Parameters:
             ns: the namespace of the corresponding action server.
@@ -207,11 +184,8 @@ class NodeContext(object):
         self.sub('{}/result'.format(ns), '{}Result'.format(fmt))
 
 
-
 class Model(object):
-    """
-    Models the architectural interactions of a node type.
-    """
+    """Models the architectural interactions of a node type."""
     _models = {}  # type: Dict[Tuple[str, str], Model]
 
     @staticmethod
