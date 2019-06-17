@@ -35,8 +35,8 @@ def launch(args):
     output = [n.to_dict() for n in interpreter.nodes]
     print(yaml.dump(output, default_flow_style=False))
 
-_launch(args.image, args.filename)
-_launch(args.image, args.filename)def generate_acme(args):
+
+def generate_acme(args):
     """Generates an Acme description for a given roslaunch command."""
     interpreter = _launch(args.image, args.filename)
     nodes = [n.to_dict for n in interpreter.nodes]
