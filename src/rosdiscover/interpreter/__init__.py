@@ -187,7 +187,7 @@ class NodeContext:
 
 class Model:
     """Models the architectural interactions of a node type."""
-    _models: Dict[Tuple[str, str], Model] = {}
+    _models: Dict[Tuple[str, str], 'Model'] = {}
 
     @staticmethod
     def register(package: str,
@@ -205,7 +205,7 @@ class Model:
                      name, package)
 
     @staticmethod
-    def find(package: str, name: str) -> Model:
+    def find(package: str, name: str) -> 'Model':
         return Model._models[(package, name)]
 
     def __init__(self,

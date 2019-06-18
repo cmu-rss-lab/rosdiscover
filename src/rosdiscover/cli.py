@@ -6,9 +6,9 @@ import logging
 import argparse
 
 import yaml
+import roswire
 
-from .workspace import Workspace
-from .interpreter import Interpreter
+from .interpreter import Interpreter, Model
 from .acme import AcmeGenerator
 from . import models
 
@@ -19,12 +19,11 @@ logger.setLevel(logging.DEBUG)
 
 
 def _launch(name_image, fn_launch):
+    rsw = roswire.ROSWire()
     logger.info("simulating launch [%s] for image [%s]",
                 fn_launch, name_image)
 
-    # FIXME build interpreter for a given image
-    workspace = Workspace(dir_workspace)
-    interpreter = Interpreter(workspace)
+    interpreter = Interpreter(rsw, name_image)
     interpreter.launch(fn_launch)
     return interpreter
 
