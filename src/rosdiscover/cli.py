@@ -66,9 +66,10 @@ def rosservice_list(args):
 
 
 def main():
-    # log_to_stdout = logging.StreamHandler()
-    # log_to_stdout.setLevel(logging.DEBUG)
-    # logging.getLogger('rosdiscover').addHandler(log_to_stdout)
+    log_to_stdout = logging.StreamHandler()
+    log_to_stdout.setLevel(logging.DEBUG)
+    logging.getLogger('rosdiscover').addHandler(log_to_stdout)
+    logging.getLogger('roswire').addHandler(log_to_stdout)
 
     parser = argparse.ArgumentParser(description=DESC)
     subparsers = parser.add_subparsers()
