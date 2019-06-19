@@ -9,8 +9,7 @@ def cmd_vel_mux(c):
     fn = c.read("~yaml_cfg_file", None)
 
     # TODO ensure that file exists
-    with open(fn, 'r') as f:
-        yml = yaml.load(f)
+    yml = yaml.load(c.read_file(fn))
 
     c.pub(yml.get('publisher', 'output'), 'geometry_msgs/Twist')
     for sub_desc in yml['subscribers']:

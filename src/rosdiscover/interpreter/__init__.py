@@ -364,6 +364,7 @@ class Interpreter:
                           kind=nodetype,
                           package=pkg,
                           remappings=remappings,
+                          files=self.__files,
                           params=self.__params)
         model.eval(ctx)
         self.__nodes.add(ctx.summarize())
