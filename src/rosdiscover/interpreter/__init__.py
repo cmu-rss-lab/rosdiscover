@@ -32,13 +32,15 @@ class NodeContext:
                  kind: str,
                  package: str,
                  remappings: Dict[str, str],
-                 params: ParameterServer
+                 params: ParameterServer,
+                 files: roswire.proxy.FileProxy
                  ) -> None:
         self.__name = name
         self.__namespace = namespace
         self.__kind = kind
         self.__package = package
         self.__params = params
+        self.__files = files
         self.__provides: Set[Tuple[str, str]] = set()
         self.__subs: Set[Tuple[str, str]] = set()
         self.__pubs: Set[Tuple[str, str]] = set()
@@ -49,10 +51,10 @@ class NodeContext:
         self.__reads: Set[str] = set()
         self.__writes: Set[str] = set()
 
-        self.__remappings = {
+        self.__remappings: Dict[str, str] = {
             self.resolve(x): self.resolve(y)
             for (x, y) in remappings.items()
-        }  # type: Dict[str, str]
+        }
 
     @property
     def fullname(self) -> str:
@@ -147,8 +149,11 @@ class NodeContext:
         param = self.resolve(param)
         self.__writes.add(param)
 
+    def read_file(self, fn: str) -> str:
+        """Reads the contents of a text file."""
+        return self.__files.read(fn)
+
     def action_server(self, ns: str, fmt: str) -> None:
-        # type: (str, str) -> None
         """Creates a new action server.
 
         Parameters:
