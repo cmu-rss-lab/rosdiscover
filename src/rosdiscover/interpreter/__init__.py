@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 This module is used to model the architectural consequences of particular
 ROS commands (e.g., launching a given :code:`.launch` file via
@@ -6,15 +7,17 @@ ROS commands (e.g., launching a given :code:`.launch` file via
 The main class within this module is :class:`Interpreter`, which acts as a
 model evaluator / virtual machine for a ROS architecture.
 """
-from typing import Dict, Iterator, Any, Optional, Tuple, Callable, Set, FrozenSet
+from typing import (Dict, Iterator, Any, Optional, Tuple, Callable, Set,
+                    FrozenSet)
 import logging
+import contextlib
 
 import attr
-import roslaunch  # FIXME try to lose this dependency!
+import roswire
+from roswire.proxy.launch import LaunchFileReader
 
 from .summary import NodeSummary
 from .parameter import ParameterServer
-from ..workspace import Workspace
 
 logger = logging.getLogger(__name__)  # type: logging.Logger
 logger.setLevel(logging.DEBUG)
@@ -22,45 +25,45 @@ logger.setLevel(logging.DEBUG)
 FullName = str
 
 
-
-class NodeContext(object):
+class NodeContext:
     def __init__(self,
-                 name,          # type: str
-                 namespace,     # type: str
-                 kind,          # type: str
-                 package,       # type: str
-                 remappings,    # type: Dict[str, str]
-                 params         # type: ParameterServer
-                 ):             # type: (...) -> None
+                 name: str,
+                 namespace: str,
+                 kind: str,
+                 package: str,
+                 remappings: Dict[str, str],
+                 params: ParameterServer,
+                 files: roswire.proxy.FileProxy
+                 ) -> None:
         self.__name = name
         self.__namespace = namespace
         self.__kind = kind
         self.__package = package
         self.__params = params
-        self.__provides = set()  # type: Set[Tuple[str, str]]
-        self.__subs = set()  # type: Set[Tuple[str, str]]
-        self.__pubs = set()  # type: Set[Tuple[str, str]]
+        self.__files = files
+        self.__provides: Set[Tuple[str, str]] = set()
+        self.__subs: Set[Tuple[str, str]] = set()
+        self.__pubs: Set[Tuple[str, str]] = set()
 
-        self.__action_servers = set()  # type: Set[Tuple[str, str]]
+        self.__action_servers: Set[Tuple[str, str]] = set()
+        self.__action_clients: Set[Tuple[str, str]] = set()
 
-        self.__reads = set()  # type: Set[str]
-        self.__writes = set()  # type: Set[str]
+        self.__reads: Set[str] = set()
+        self.__writes: Set[str] = set()
 
-        self.__remappings = {
+        self.__remappings: Dict[str, str] = {
             self.resolve(x): self.resolve(y)
             for (x, y) in remappings.items()
-        }  # type: Dict[str, str]
+        }
 
     @property
-    def fullname(self):
-        # type: () -> str
+    def fullname(self) -> str:
         ns = self.__namespace
         if ns[-1] != '/':
             ns += ' /'
         return '{}{}'.format(ns, self.__name)
 
-    def _remap(self, name):
-        # type: (str) -> str
+    def _remap(self, name: str) -> str:
         if name in self.__remappings:
             name_new = self.__remappings[name]
             logger.info("applying remapping from [%s] to [%s]",
@@ -69,8 +72,7 @@ class NodeContext(object):
         else:
             return name
 
-    def summarize(self):
-        # type: (...) -> NodeSummary
+    def summarize(self) -> NodeSummary:
         return NodeSummary(name=self.__name,
                            fullname=self.fullname,
                            namespace=self.__namespace,
@@ -84,10 +86,8 @@ class NodeContext(object):
                            action_servers=self.__action_servers,
                            action_clients=self.__action_clients)
 
-    def resolve(self, name):
-        # type: (str) -> FullName
-        """
-        Resolves a given name within the context of this node.
+    def resolve(self, name: str) -> str:
+        """Resolves a given name within the context of this node.
 
         Returns:
             the fully qualified form of a given name.
@@ -100,11 +100,8 @@ class NodeContext(object):
         else:
             return '/{}'.format(name)
 
-    def provide(self, service, fmt):
-        # type: (str, str) -> None
-        """
-        Instructs the node to provide a service.
-        """
+    def provide(self, service: str, fmt: str) -> None:
+        """Instructs the node to provide a service."""
         logger.debug("node [%s] provides service [%s] using format [%s]",
                      self.__name, service, fmt)
 
@@ -112,10 +109,8 @@ class NodeContext(object):
         service_name_full = self._remap(service_name_full)
         self.__provides.add((service_name_full, fmt))
 
-    def sub(self, topic_name, fmt):
-        # type: (str, str) -> None
-        """
-        Subscribes the node to a given topic.
+    def sub(self, topic_name: str, fmt: str) -> None:
+        """Subscribes the node to a given topic.
 
         Parameters:
             topic: the unqualified name of the topic.
@@ -127,10 +122,8 @@ class NodeContext(object):
                      self.__name, topic_name, fmt)
         self.__subs.add((topic_name_full, fmt))
 
-    def pub(self, topic_name, fmt):
-        # type: (str, str) -> None
-        """
-        Instructs the node to publish to a given topic.
+    def pub(self, topic_name: str, fmt: str) -> None:
+        """Instructs the node to publish to a given topic.
 
         Parameters:
             topic: the unqualified name of the topic.
@@ -142,32 +135,26 @@ class NodeContext(object):
                      self.__name, topic_name, fmt)
         self.__pubs.add((topic_name_full, fmt))
 
-    def read(self,
-             param,     # type: str
-             default    # type: Optional[Any]
-             ):         # type: (...) -> Any
-        """
-        Obtains the value of a given parameter from the parameter
-        server.
-        """
+    def read(self, param: str, default: Optional[Any] = None) -> None:
+        """Obtains the value of a given parameter from the parameter server."""
         logger.debug("node [%s] reads parameter [%s]",
                      self.__name, param)
         param = self.resolve(param)
         self.__reads.add(param)
         return self.__params.get(param, default)
 
-    def write(self, param, val):
-        # type: (str, Any) -> None
+    def write(self, param: str, val: Any) -> None:
         logger.debug("node [%s] writes [%s] to parameter [%s]",
                      self.__name, val, param)
         param = self.resolve(param)
         self.__writes.add(param)
 
+    def read_file(self, fn: str) -> str:
+        """Reads the contents of a text file."""
+        return self.__files.read(fn)
 
-    def action_server(self, ns, fmt):
-        # type: (str, str) -> None
-        """
-        Creates a new action server.
+    def action_server(self, ns: str, fmt: str) -> None:
+        """Creates a new action server.
 
         Parameters:
             ns: the namespace of the action server.
@@ -185,10 +172,8 @@ class NodeContext(object):
         self.pub('{}/feedback'.format(ns), '{}Feedback'.format(fmt))
         self.pub('{}/result'.format(ns), '{}Result'.format(fmt))
 
-    def action_client(self, ns, fmt):
-        # type: (str, str) -> None
-        """
-        Creates a new action client.
+    def action_client(self, ns: str, fmt: str) -> None:
+        """Creates a new action client.
 
         Parameters:
             ns: the namespace of the corresponding action server.
@@ -207,18 +192,15 @@ class NodeContext(object):
         self.sub('{}/result'.format(ns), '{}Result'.format(fmt))
 
 
-
-class Model(object):
-    """
-    Models the architectural interactions of a node type.
-    """
-    _models = {}  # type: Dict[Tuple[str, str], Model]
+class Model:
+    """Models the architectural interactions of a node type."""
+    _models: Dict[Tuple[str, str], 'Model'] = {}
 
     @staticmethod
-    def register(package,       # type: str
-                 name,          # type: str
-                 definition     # type: Callable[[NodeContext], None]
-                 ):             # type: (...) -> None
+    def register(package: str,
+                 name: str,
+                 definition: Callable[[NodeContext], None]
+                 ) -> None:
         key = (package, name)
         models = Model._models
         if key in models:
@@ -230,8 +212,7 @@ class Model(object):
                      name, package)
 
     @staticmethod
-    def find(package, name):
-        # type: (str, str) -> Model
+    def find(package: str, name: str) -> 'Model':
         return Model._models[(package, name)]
 
     def __init__(self,
@@ -243,63 +224,60 @@ class Model(object):
         self.__name = name
         self.__definition = definition
 
-    def eval(self, context):
-        # type: (NodeContext) -> None
+    def eval(self, context: NodeContext) -> None:
         return self.__definition(context)
 
 
-def model(package, name):
-    # type: (str, str) -> Any
-    def register(m):
-        # type: (Callable[[NodeContext], None]) -> Any
+def model(package: str, name: str) -> Any:
+    def register(m: Callable[[NodeContext], None]) -> Any:
         Model.register(package, name, m)
         return m
     return register
 
 
-class Interpreter(object):
-    def __init__(self, workspace):
-        # type: (Workspace) -> None
-        self.__workspace = workspace
+class Interpreter:
+    @staticmethod
+    @contextlib.contextmanager
+    def for_image(image: str) -> Iterator['Interpreter']:
+        """Constructs an interpreter for a given Docker image."""
+        rsw = roswire.ROSWire()  # TODO don't maintain multiple instances
+        with rsw.launch(image) as app:
+            yield Interpreter(app.files, app.shell) 
+
+    def __init__(self,
+                 files: roswire.proxy.FileProxy,
+                 shell: roswire.proxy.ShellProxy
+                 ) -> None:
+        self.__files = files
+        self.__shell = shell
         self.__params = ParameterServer()
-        self.__nodes = set()  # type: Set[NodeSummary]
+        self.__nodes: Set[NodeSummary] = set()
 
     @property
-    def parameters(self):
-        """
-        The simulated parameter server for this interpreter.
-        """
-        # type: () -> ParameterServer
+    def parameters(self) -> ParameterServer:
+        """The simulated parameter server for this interpreter."""
         return self.__params
 
     @property
-    def nodes(self):
-        """
-        Returns an iterator over the summaries for each node on the ROS graph.
-        """
-        # type: () -> Iterator[NodeSummary]
-        for n in self.__nodes:
-            yield n
+    def nodes(self) -> Iterator[NodeSummary]:
+        """Returns an iterator of summaries for each ROS node."""
+        yield from self.__nodes
 
-    def launch(self, fn):
-        # type: (str) -> None
-        """
-        Simulates the effects of `roslaunch` using a given launch file.
-        """
-        config = roslaunch.config.ROSLaunchConfig()
-        loader = roslaunch.xmlloader.XmlLoader()
-        loader.load(fn, config)
+    def launch(self, fn: str) -> None:
+        """Simulates the effects of `roslaunch` using a given launch file."""
+        # NOTE this method also supports command-line arguments
+        reader = LaunchFileReader(self.__shell, self.__files)
+        config = reader.read(fn)
 
-        for param in config.params.values():
-            self.__params[param.key] = param.value
+        for key, value in config.params.items():
+            self.__params[key] = value
 
         for node in config.nodes:
             logger.debug("launching node: %s", node.name)
             try:
-                remappings = {str(old): str(new)
-                              for (old, new) in node.remap_args}
+                remappings = {old: new for (old, new) in node.remappings}
                 self.load(pkg=node.package,
-                          nodetype=node.type,
+                          nodetype=node.typ,
                           name=node.name,
                           namespace=node.namespace,  # FIXME
                           remappings=remappings,
@@ -308,23 +286,19 @@ class Interpreter(object):
                 logger.exception("failed to launch node: %s", node.name)
                 raise
 
-    def create_nodelet_manager(self, name):
-        # type: (str) -> None
-        """
-        Creates a nodelet manager with a given name.
-        """
+    def create_nodelet_manager(self, name: str) -> None:
+        """Creates a nodelet manager with a given name."""
         logger.info('launched nodelet manager: %s', name)
 
     def load_nodelet(self,
-                     pkg,           # type: str
-                     nodetype,      # type: str
-                     name,          # type: str
-                     namespace,     # type: str
-                     remappings,    # type: Dict[str, str]
-                     manager        # type: str
-                     ):             # type: (...) -> None
-        """
-        Loads a nodelet using the provided instructions.
+                     pkg: str,
+                     nodetype: str,
+                     name: str,
+                     namespace: str,
+                     remappings: Dict[str, str],
+                     manager: str
+                     ) -> None:
+        """Loads a nodelet using the provided instructions.
 
         Parameters:
             pkg: the name of the package to which the nodelet belongs.
@@ -344,15 +318,14 @@ class Interpreter(object):
         return self.load(pkg, nodetype, name, namespace, remappings, '')
 
     def load(self,
-             pkg,           # type: str
-             nodetype,      # type: str
-             name,          # type: str
-             namespace,     # type: str
-             remappings,    # type: Dict[str, str]
-             args           # type: str
-             ):             # type: (...) -> None
-        """
-        Loads a node using the provided instructions.
+             pkg: str,
+             nodetype: str,
+             name: str,
+             namespace: str,
+             remappings: Dict[str, str],
+             args: str
+             ) -> None:
+        """Loads a node using the provided instructions.
 
         Parameters:
             pkg: the name of the package to which the node belongs.
@@ -391,6 +364,7 @@ class Interpreter(object):
                           kind=nodetype,
                           package=pkg,
                           remappings=remappings,
+                          files=self.__files,
                           params=self.__params)
         model.eval(ctx)
         self.__nodes.add(ctx.summarize())
