@@ -233,15 +233,15 @@ def model(package: str, name: str) -> Any:
 class Interpreter:
     @staticmethod
     @contextlib.contextmanager
-    def for_image(self, image: str) -> Iterator['Interpreter']:
+    def for_image(image: str) -> Iterator['Interpreter']:
         """Constructs an interpreter for a given Docker image."""
         rsw = roswire.ROSWire()  # TODO don't maintain multiple instances
         with rsw.launch(image) as app:
             yield Interpreter(app.files, app.shell) 
 
     def __init__(self,
-                 files: roswire.FileProxy,
-                 shell: roswire.ShellProxy
+                 files: roswire.proxy.FileProxy,
+                 shell: roswire.proxy.ShellProxy
                  ) -> None:
         self.__files = files
         self.__shell = shell

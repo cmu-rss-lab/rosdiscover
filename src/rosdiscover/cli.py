@@ -22,10 +22,10 @@ def _launch(name_image, fn_launch):
     rsw = roswire.ROSWire()
     logger.info("simulating launch [%s] for image [%s]",
                 fn_launch, name_image)
-
-    interpreter = Interpreter(rsw, name_image)
-    interpreter.launch(fn_launch)
-    return interpreter
+    # FIXME passing interpreter outside of the context is very weird/bad
+    with Interpreter.for_image(name_image) as interpreter:
+        interpreter.launch(fn_launch)
+        return interpreter
 
 
 def launch(args):
