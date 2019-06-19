@@ -10,6 +10,7 @@ model evaluator / virtual machine for a ROS architecture.
 from typing import (Dict, Iterator, Any, Optional, Tuple, Callable, Set,
                     FrozenSet)
 import logging
+import contextlib
 
 import attr
 import roswire
@@ -230,9 +231,20 @@ def model(package: str, name: str) -> Any:
 
 
 class Interpreter:
-    def __init__(self, rsw: roswire.ROSWire, image: str) -> None:
-        self.__image = image
-        self.__roswire = rsw
+    @staticmethod
+    @contextlib.contextmanager
+    def for_image(self, image: str) -> Iterator['Interpreter']:
+        """Constructs an interpreter for a given Docker image."""
+        rsw = roswire.ROSWire()  # TODO don't maintain multiple instances
+        with rsw.launch(image) as app:
+            yield Interpreter(app.files, app.shell) 
+
+    def __init__(self,
+                 files: roswire.FileProxy,
+                 shell: roswire.ShellProxy
+                 ) -> None:
+        self.__files = files
+        self.__shell = shell
         self.__params = ParameterServer()
         self.__nodes: Set[NodeSummary] = set()
 
@@ -248,10 +260,9 @@ class Interpreter:
 
     def launch(self, fn: str) -> None:
         """Simulates the effects of `roslaunch` using a given launch file."""
-        with self.__roswire.launch(self.__image) as app:
-            reader = LaunchFileReader(app.shell, app.files)
-            # NOTE this method also supports command-line arguments
-            config = reader.read(fn)
+        # NOTE this method also supports command-line arguments
+        reader = LaunchFileReader(self.__shell, self.__files)
+        config = reader.read(fn)
 
         for key, value in config.params.items():
             self.__params[key] = value
