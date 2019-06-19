@@ -38,14 +38,15 @@ class NodeContext:
         self.__kind = kind
         self.__package = package
         self.__params = params
-        self.__provides = set()  # type: Set[Tuple[str, str]]
-        self.__subs = set()  # type: Set[Tuple[str, str]]
-        self.__pubs = set()  # type: Set[Tuple[str, str]]
+        self.__provides: Set[Tuple[str, str]] = set()
+        self.__subs: Set[Tuple[str, str]] = set()
+        self.__pubs: Set[Tuple[str, str]] = set()
 
-        self.__action_servers = set()  # type: Set[Tuple[str, str]]
+        self.__action_servers: Set[Tuple[str, str]] = set()
+        self.__action_clients: Set[Tuple[str, str]] = set()
 
-        self.__reads = set()  # type: Set[str]
-        self.__writes = set()  # type: Set[str]
+        self.__reads: Set[str] = set()
+        self.__writes: Set[str] = set()
 
         self.__remappings = {
             self.resolve(x): self.resolve(y)
