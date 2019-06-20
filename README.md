@@ -16,6 +16,13 @@ using the provided Dockerfile, as shown below.
 $ docker build -t rosdiscover .
 ```
 
+Install dependencies:
+
+```
+(venv) $ pip install .
+(venv) $ pip install -r requirements.txt
+```
+
 ### Usage
 
 To simulate the effects of a particular launch command, run the following:
