@@ -48,6 +48,12 @@ def generate_acme(args):
             f.write(acme)
     else:
         print(acme)
+    if (args.check):
+        if args.acme is None:
+            (results, _) = acme_gen.check_acme_string(acme)
+        else:
+            (results, _) = acme_gen.check_acme_file(args.acme)
+        print(results)
 
 
 def rostopic_list(args):
@@ -100,6 +106,7 @@ def main():
     p.add_argument('filename', type=str, help='a ROS launch file')
     p.add_argument('--workspace', type=str, default='/ros_ws')
     p.add_argument("--acme", type=str, help='Output to the named Acme file')
+    p,add_argument("--check", action='store_true', 'Typecheck the architecture and report any errors')
     p.set_defaults(func=generate_acme)
 
     args = parser.parse_args()

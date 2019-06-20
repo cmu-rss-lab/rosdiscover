@@ -7,6 +7,8 @@ The main class within this module is :clas:`AcmeGenerator`
 import logging
 import copy
 import os
+from subprocess import Popen, PIPE
+import tempfile
 
 logger = logging.getLogger(__name__) # type: logging.Logger
 logger.setLevel(logging.DEBUG)
@@ -299,6 +301,22 @@ class AcmeGenerator(object):
         acme = acme + "\n".join(attachments) + "}"
         return acme
 
+    def check_acme_file(self,filename):
+        process = Popen(['java', '-jar', 'lib/acme.standalone-ros.jar', filename])
+        (output,err) = process.communicate()
+        exit_code = process.wait()
+        return output, err
+
+    def check_acme_string(self,acme):
+        (f,filename) = tempfile.mkstemp()
+        #filename = f.name
+        try:
+            f.write(acme)
+            f.close()
+            return self.check_acme_file(filename)
+        finally:
+            os.unlink(filename)
+            
 
 """
 rosdiscover acme /ros_ws/src/turtlebot_simulator/turtlebot_stage/launch/turtlebot_in_stage.launch --workspace /ros_ws --acme generated.acme

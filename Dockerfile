@@ -46,6 +46,9 @@ ENV TURTLEBOT_STAGE_WORLD_FILE /ros_ws/src/turtlebot_simulator/turtlebot_stage/m
 # create a portable executable
 WORKDIR /opt/rosdiscover
 COPY . /tmp/discover
+RUN mkdir /opt/rosdiscover/lib
+RUN ls /tmp/discover/
+RUN cp /tmp/discover/lib/acme.standalone-ros.jar /opt/rosdiscover/lib/
 RUN pip install /tmp/discover \
  && echo "\
 import attr\n\
