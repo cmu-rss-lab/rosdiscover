@@ -1,6 +1,14 @@
 # rosdiscover
 
+
 ## Installation
+
+See below for two different methods of installing rosdiscover. Both methods
+require that Docker is installed on your machine and that your user belongs
+to the `docker` group (i.e., `sudo` isn't required to run `docker` commands).
+
+
+### Native Installation
 
 To avoid interfering with the rest of your system (i.e., to avoid Python’s
 equivalent of DLL hell), we strongly recommend that ROSWire is installed
@@ -17,7 +25,7 @@ $ pipenv shell
 Note that installing rosdiscover to your host machine using the method
 described above requires that Python 3.6+ is installed on your machine.
 
-### Installation via Docker
+### (Alternative) Docker Installation
 
 
 Build a single Docker image for `rosdiscover` and the system under analysis
