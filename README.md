@@ -3,9 +3,15 @@
 
 ## Installation
 
-See below for two different methods of installing rosdiscover. Both methods
-require that Docker is installed on your machine and that your user belongs
-to the `docker` group (i.e., `sudo` isn't required to run `docker` commands).
+See below for two different methods of installing rosdiscover.
+In general, the native installation should be preferred, but for some cases
+(e.g., machines that run Mac OS or Windows), the Docker-based method is
+ideal.
+
+Both methods require that Docker is installed on your machine and that your
+user belongs to the `docker` group (i.e., `sudo` isn't required to run `docker`
+commands).
+For instructions on installing Docker, refer to: https://docs.docker.com/install/
 
 
 ### Native Installation
