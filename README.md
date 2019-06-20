@@ -16,20 +16,23 @@ For instructions on installing Docker, refer to: https://docs.docker.com/install
 
 ### Native Installation
 
-To avoid interfering with the rest of your system (i.e., to avoid Python’s
-equivalent of DLL hell), we strongly recommend that ROSWire is installed
-within a virtualenv or pipenv (pipenv is preferred). To install roswire
-from source within a virtual environment:
+The ideal way to install `rosdiscover` is to install to a virtual environment
+running on your host machine. This method requires that your host machine is
+running Python 3.6 or greater.
+
+We strongly recommend that you install `rosdiscover` inside a Python virtual
+environment (via virtualenv or pipenv) to avoid interfering with the rest of
+your system (i.e., to avoid Python’s equivalent of DLL hell). 
+To install roswire from source within a virtual environment using `pipenv`:
 
 ```
 $ git clone git@github.com:ChrisTimperley/rosdiscover rosdiscover
 $ cd rosdiscover
 $ pipenv shell
 (rosdiscover) $ pip install .
+(rosdiscover) $ pip install -r requirements.txt
 ```
 
-Note that installing rosdiscover to your host machine using the method
-described above requires that Python 3.6+ is installed on your machine.
 
 ### (Alternative) Docker Installation
 
