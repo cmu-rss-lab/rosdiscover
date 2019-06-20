@@ -1,13 +1,24 @@
 # rosdiscover
 
-## Getting Started
+## Installation
 
-Below are some instructions for running `rosdiscover` on a TurtleBot/Stage
-system that was used in Phase II CP2. Support for generic ROS systems will
-be added at a later point.
+To avoid interfering with the rest of your system (i.e., to avoid Python’s
+equivalent of DLL hell), we strongly recommend that ROSWire is installed
+within a virtualenv or pipenv (pipenv is preferred). To install roswire
+from source within a virtual environment:
 
+```
+$ git clone git@github.com:ChrisTimperley/rosdiscover rosdiscover
+$ cd rosdiscover
+$ pipenv shell
+(rosdiscover) $ pip install .
+```
 
-### Installation
+Note that installing rosdiscover to your host machine using the method
+described above requires that Python 3.6+ is installed on your machine.
+
+### Installation via Docker
+
 
 Build a single Docker image for `rosdiscover` and the system under analysis
 using the provided Dockerfile, as shown below.
@@ -16,14 +27,7 @@ using the provided Dockerfile, as shown below.
 $ docker build -t rosdiscover .
 ```
 
-Install dependencies:
-
-```
-(venv) $ pip install .
-(venv) $ pip install -r requirements.txt
-```
-
-### Usage
+## Getting Started
 
 To simulate the effects of a particular launch command, run the following:
 
@@ -42,16 +46,4 @@ $ docker run --rm -it rosdiscover
 # rosdiscover rostopic \
     /ros_ws/src/turtlebot_simulator/turtlebot_stage/launch/turtlebot_in_stage.launch \
     --workspace /ros_ws
-```
-
-
-### Example Ground Truth
-
-```
-$ xhost local:root
-$ docker run --rm \
-  -e DISPLAY=unix${DISPLAY} \
-  -v /tmp/.X11-unix:/tmp/.X11-unix \
-  -it discover
-~ roslaunch /ros_ws/src/turtlebot_simulator/turtlebot_stage/launch/turtlebot_in_stage.launch
 ```
