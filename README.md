@@ -36,13 +36,28 @@ $ pipenv shell
 
 ### (Alternative) Docker Installation
 
+In some cases, it may not be possible to install `rosdiscover` natively on
+your machine (e.g., Mac OS or Windows machines). `rosdiscover` can be
+installed on such systems by building (or downloading) and using a Docker
+image for `rosdiscover`.
 
-Build a single Docker image for `rosdiscover` and the system under analysis
-using the provided Dockerfile, as shown below.
+To build the Docker image for `rosdiscover`:
 
 ```
 $ docker build -t rosdiscover .
 ```
+
+Alternatively, to download a prebuilt Docker image for `rosdiscover` from DockerHub:
+
+```
+$ docker pull christimperley/rosdiscover
+$ docker tag christimperley/rosdiscover rosdiscover
+```
+
+### Running `rosdiscover` via Docker
+
+ADD INSTRUCTIONS
+
 
 ## Getting Started
 
