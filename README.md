@@ -54,9 +54,18 @@ $ docker pull christimperley/rosdiscover
 $ docker tag christimperley/rosdiscover rosdiscover
 ```
 
-### Running `rosdiscover` via Docker
+To run `rosdiscover` commands via Docker, replace `rosdiscover` with the following
+prefix:
 
-ADD INSTRUCTIONS
+```
+$ docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -it rosdiscover
+```
+
+where `-v /var/run/docker.sock:/var/run/docker.sock` is used to mount the
+host's Docker socket inside the `rosdiscover` container. Optionally, you may
+also want to use volume mounting to persist (and reuse) the cache:
+
+**TODO: requires careful handling of users/permissions.**
 
 
 ## Getting Started
@@ -66,7 +75,7 @@ To simulate the effects of a particular launch command, run the following:
 ```
 $ docker run --rm -it rosdiscover
 # rosdiscover launch \
-    /ros_ws/src/turtlebot_simulator/turtlebot_stage/launch/turtlebot_in_stage.launch \
+     \
     --workspace /ros_ws
 ```
 
@@ -76,6 +85,5 @@ instance, given by a launch file within a workspace:
 ```
 $ docker run --rm -it rosdiscover
 # rosdiscover rostopic \
-    /ros_ws/src/turtlebot_simulator/turtlebot_stage/launch/turtlebot_in_stage.launch \
     --workspace /ros_ws
 ```
