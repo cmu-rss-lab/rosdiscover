@@ -4,3 +4,4 @@ RUN cd /tmp/rosdiscover \
  && pip install --no-cache -r requirements.txt \
  && pip install --no-cache . \
  && rm -rf /tmp/*
+ENTRYPOINT ["rosdiscover"]
