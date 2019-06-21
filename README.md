@@ -70,20 +70,18 @@ also want to use volume mounting to persist (and reuse) the cache:
 
 ## Getting Started
 
-To simulate the effects of a particular launch command, run the following:
+To simulate the effects of a particular launch command using a given XML launch
+file for a ROS application provided by a given Docker image (e.g., `example_ros_app`),
+run the following:
 
 ```
-$ docker run --rm -it rosdiscover
-# rosdiscover launch \
-     \
-    --workspace /ros_ws
+$ rosdiscover launch example_ros_app
+    /ros_ws/src/turtlebot_simulator/turtlebot_stage/launch/turtlebot_in_stage.launch
 ```
 
-To simulate the outcome of a `rostopic` call for a particular ROS architectural
-instance, given by a launch file within a workspace:
+To simulate the outcome of a `rostopic` call:
 
 ```
-$ docker run --rm -it rosdiscover
-# rosdiscover rostopic \
-    --workspace /ros_ws
+$ rosdiscover rostopic example_ros_app
+    /ros_ws/src/turtlebot_simulator/turtlebot_stage/launch/turtlebot_in_stage.launch
 ```
