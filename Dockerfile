@@ -1,7 +1,16 @@
-FROM jfloff/alpine-python:3.7
+FROM alpine:3.7
 COPY . /tmp/rosdiscover
 RUN cd /tmp/rosdiscover \
- && pip install --no-cache -r requirements.txt \
- && pip install --no-cache . \
+ && apk add --no-cache \
+      git \
+      python3 \
+      python3-dev \
+      py3-pip \
+      build-base \
+      docker \
+      gcc \
+      linux-headers \
+ && pip3 install --no-cache -r requirements.txt \
+ && pip3 install --no-cache . \
  && rm -rf /tmp/*
 ENTRYPOINT ["rosdiscover"]
