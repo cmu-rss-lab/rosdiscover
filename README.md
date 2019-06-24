@@ -33,7 +33,6 @@ $ pipenv shell
 (rosdiscover) $ pip install -r requirements.txt
 ```
 
-
 ### (Alternative) Docker Installation
 
 In some cases, it may not be possible to install `rosdiscover` natively on
