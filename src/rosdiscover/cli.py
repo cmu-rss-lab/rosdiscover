@@ -10,6 +10,7 @@ import roswire
 
 from .interpreter import Interpreter, Model
 from .acme import AcmeGenerator
+from .extract import Extractor
 from . import models
 
 DESC = 'discovery of ROS architectures'
@@ -57,6 +58,13 @@ def rostopic_list(args):
     print('\n'.join(sorted(topics)))
 
 
+def extract_model(args):
+    rsw = roswire.ROSWire()
+    with rsw.launch(args.image) as system:
+        extractor = Extractor(system)
+        extractor.extract_from_python_file(args.filename)
+
+
 def rosservice_list(args):
     interpreter = _launch(args.image, args.filename)
     services = set()
@@ -82,6 +90,16 @@ def main():
     p.add_argument('filename', type=str,
                    help='path to a roslaunch file inside the Docker image.')
     p.set_defaults(func=launch)
+
+    p = subparsers.add_parser(
+        'extract',
+        help=('attempts to extract an architectural model for a given '
+              'package inside a provided Docker image.'))
+    p.add_argument('image', type=str,
+                   help='name of a Docker image for a ROS application.')
+    p.add_argument('filename', type=str,
+                   help='path to a source file inside the Docker image.')
+    p.set_defaults(func=extract_model)
 
     p = subparsers.add_parser(
         'rostopic',
