@@ -81,8 +81,8 @@ def main():
         help='simulates the effects of a roslaunch.')
     p.add_argument('image', type=str,
                    help='name of a Docker image for a ROS application.')
-    p.add_argument('filename', type=str,
-                   help='path to a roslaunch file inside the Docker image.')
+    p.add_argument('filename', type=str, metavar='F', nargs='+',
+                   help='paths to the roslaunch files inside the Docker image.')
     p.set_defaults(func=launch)
 
     p = subparsers.add_parser(
@@ -90,8 +90,8 @@ def main():
         help='simulates the output of rostopic for a given configuration.')
     p.add_argument('image', type=str,
                    help='name of a Docker image for a ROS application.')
-    p.add_argument('filename', type=str,
-                   help='path to a roslaunch file inside the Docker image.')
+    p.add_argument('filename', type=str, metavar='F', nargs='+',
+                   help='paths to the roslaunch files inside the Docker image.')
     p.set_defaults(func=rostopic_list)
 
     p = subparsers.add_parser(
@@ -99,15 +99,15 @@ def main():
         help='simulates the output of rosservice for a given configuration.')
     p.add_argument('image', type=str,
                    help='name of a Docker image for a ROS application.')
-    p.add_argument('filename', type=str,
-                   help='path to a roslaunch file inside the Docker image.')
+    p.add_argument('filename', type=str, metavar='F', nargs='+',
+                   help='paths to the roslaunch files inside the Docker image.')
     p.set_defaults(func=rosservice_list)
 
     p = subparsers.add_parser('acme', help='generates Acme from a source file')
     p.add_argument('image', type=str,
                    help='name of a Docker image for a ROS application.')
-    p.add_argument('filename', type=str,
-                   help='path to a roslaunch file inside the Docker image.')
+    p.add_argument('filename', type=str, metavar='F', nargs='+',
+                   help='paths to the roslaunch files inside the Docker image.')
     p.add_argument("--acme", type=str, help='Output to the named Acme file')
     p.set_defaults(func=generate_acme)
 
