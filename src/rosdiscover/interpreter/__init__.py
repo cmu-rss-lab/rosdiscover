@@ -19,14 +19,13 @@ from roswire.proxy.launch import LaunchFileReader
 from .summary import NodeSummary
 from .parameter import ParameterServer
 
-
 logger = logging.getLogger(__name__)  # type: logging.Logger
 logger.setLevel(logging.DEBUG)
 
 FullName = str
 
-class NodeContext(object):
 
+class NodeContext:
     def __init__(self,
                  name: str,
                  namespace: str,
