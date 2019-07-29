@@ -41,6 +41,7 @@ class NodeContext:
         self.__package = package
         self.__params = params
         self.__files = files
+        self.__uses: Set[Tuple[str, str]] = set()
         self.__provides: Set[Tuple[str, str]] = set()
         self.__subs: Set[Tuple[str, str]] = set()
         self.__pubs: Set[Tuple[str, str]] = set()
@@ -108,6 +109,15 @@ class NodeContext:
         service_name_full = self.resolve(service)
         service_name_full = self._remap(service_name_full)
         self.__provides.add((service_name_full, fmt))
+
+    def uses(self, service: str, fmt: str) -> None:
+        """Instructs the node to use a given service."""
+        logger.debug("node [%s] uses a service [%s] with format [%s]",
+                     self.__name, service, fmt)
+
+        service_name_full = self.resolve(service)
+        service_name_full = self._remap(service_name_full)
+        self.__uses.add((service_name_full, fmt))
 
     def sub(self, topic_name: str, fmt: str) -> None:
         """Subscribes the node to a given topic.
