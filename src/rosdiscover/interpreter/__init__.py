@@ -251,7 +251,7 @@ class Interpreter:
         """Constructs an interpreter for a given Docker image."""
         rsw = roswire.ROSWire()  # TODO don't maintain multiple instances
         with rsw.launch(image) as app:
-            yield Interpreter(app.files, app.shell) 
+            yield Interpreter(app.files, app.shell)
 
     def __init__(self,
                  files: roswire.proxy.FileProxy,
