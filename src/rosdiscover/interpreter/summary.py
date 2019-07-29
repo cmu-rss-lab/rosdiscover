@@ -20,6 +20,8 @@ class NodeSummary(object):
                     converter=frozenset)
     writes = attr.ib(type=FrozenSet[str],
                     converter=frozenset)
+    uses = attr.ib(type=FrozenSet[Tuple[str, str]],
+                   converter=frozenset)
     provides = attr.ib(type=FrozenSet[Tuple[str, str]],
                        converter=frozenset)
     action_servers = attr.ib(type=FrozenSet[Tuple[str, str]],
@@ -33,6 +35,8 @@ class NodeSummary(object):
         subs = [{'name': str(n), 'format': str(f)} for (n, f) in self.subs]
         provides = \
             [{'name': str(n), 'format': str(f)} for (n, f) in self.provides]
+        uses = \
+            [{'name': str(n), 'format': str(f)} for (n, f) in self.uses]
         action_servers = [{'name': str(n), 'format': str(f)}
                           for (n, f) in self.action_servers]
         action_clients = [{'name': str(n), 'format': str(f)}
@@ -45,6 +49,7 @@ class NodeSummary(object):
                 'reads': list(self.reads),
                 'writes': list(self.writes),
                 'provides': provides,
+                'uses': uses,
                 'action-servers': action_servers,
                 'action-clients': action_clients,
                 'pubs': pubs,
