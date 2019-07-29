@@ -110,7 +110,7 @@ class NodeContext:
         service_name_full = self._remap(service_name_full)
         self.__provides.add((service_name_full, fmt))
 
-    def uses(self, service: str, fmt: str) -> None:
+    def use(self, service: str, fmt: str) -> None:
         """Instructs the node to use a given service."""
         logger.debug("node [%s] uses a service [%s] with format [%s]",
                      self.__name, service, fmt)
