@@ -84,6 +84,7 @@ class NodeContext:
                            pubs=self.__pubs,
                            subs=self.__subs,
                            provides=self.__provides,
+                           uses=self.__uses,
                            action_servers=self.__action_servers,
                            action_clients=self.__action_clients)
 
