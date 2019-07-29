@@ -31,6 +31,7 @@ class NodeContext:
                  namespace: str,
                  kind: str,
                  package: str,
+                 args: str,
                  remappings: Dict[str, str],
                  params: ParameterServer,
                  files: roswire.proxy.FileProxy
@@ -41,6 +42,7 @@ class NodeContext:
         self.__package = package
         self.__params = params
         self.__files = files
+        self.__args = args
         self.__uses: Set[Tuple[str, str]] = set()
         self.__provides: Set[Tuple[str, str]] = set()
         self.__subs: Set[Tuple[str, str]] = set()
@@ -56,6 +58,10 @@ class NodeContext:
             self.resolve(x): self.resolve(y)
             for (x, y) in remappings.items()
         }
+
+    @property
+    def args(self) -> str:
+        return self.__args
 
     @property
     def fullname(self) -> str:
@@ -373,6 +379,7 @@ class Interpreter:
                           namespace=namespace,
                           kind=nodetype,
                           package=pkg,
+                          args=args,
                           remappings=remappings,
                           files=self.__files,
                           params=self.__params)
