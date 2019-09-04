@@ -14,6 +14,9 @@ def launch(image: str, launch_filenames: Sequence[str]) -> None:
     with rsw.launch(image) as system:
         with system.roscore() as ros:
             for fn_launch in launch_filenames:
-                logger.debug("launching: %s", launch_fn)
+                logger.debug("launching: %s", fn_launch)
                 ros.launch(fn_launch)
                 time.sleep(5)
+
+            for node in ros.nodes:
+                print(node)
