@@ -12,6 +12,7 @@ import roswire
 from .interpreter import Interpreter, Model
 from .acme import AcmeGenerator
 from . import models
+from .dynamic import launch as _launch_dynamic
 
 DESC = 'discovery of ROS architectures'
 
@@ -28,6 +29,10 @@ def _launch(name_image: str, launch_files: Sequence[str]) -> Interpreter:
             logger.info("simulating launch [%s]", fn_launch)
             interpreter.launch(fn_launch)
         return interpreter
+
+
+def launch_dynamic(args):
+    _launch_dynamic(args.image, args.filenames)
 
 
 def launch(args):
@@ -84,6 +89,15 @@ def main():
     p.add_argument('filenames', type=str, metavar='F', nargs='+',
                    help='paths to the roslaunch files inside the Docker image.')
     p.set_defaults(func=launch)
+
+    p = subparsers.add_parser(
+        'dynamic',
+        help='simulates the effects of a roslaunch via dynamic analysis.')
+    p.add_argument('image', type=str,
+                   help='name of a Docker image for a ROS application.')
+    p.add_argument('filenames', type=str, metavar='F', nargs='+',
+                   help='paths to the roslaunch files inside the Docker image.')
+    p.set_defaults(func=launch_dynamic)
 
     p = subparsers.add_parser(
         'rostopic',
