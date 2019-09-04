@@ -362,11 +362,15 @@ class Interpreter:
             Exception: if there is no model for the given node type.
         """
         # logger.info("loading node: %s (%s)", name, nodetype)
+        args = args.strip()
         if nodetype == 'nodelet':
             if args == 'manager':
                 return self.create_nodelet_manager(name)
+            elif args.startswith('standalone '):
+                pkg_and_nodetype = args.partition(' ')[2]
+                pkg, _, nodetype = pkg_and_nodetype.partition('/')
+                return self.load_nodelet(pkg, nodetype, name, namespace, remappings)
             else:
-                logger.info("DEBUG: %s", args)
                 load, pkg_and_nodetype, mgr = args.split(' ')
                 pkg, _, nodetype = pkg_and_nodetype.partition('/')
                 return self.load_nodelet(pkg, nodetype, name, namespace, remappings, mgr)
