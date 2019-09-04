@@ -312,7 +312,7 @@ class Interpreter:
                      name: str,
                      namespace: str,
                      remappings: Dict[str, str],
-                     manager: str
+                     manager: Optional[str] = None
                      ) -> None:
         """Loads a nodelet using the provided instructions.
 
@@ -324,13 +324,18 @@ class Interpreter:
             remappings: a dictionary of name remappings that should be applied
                 to this nodelet, where keys correspond to old names and values
                 correspond to new names.
-            manager: the name of the manager for this nodelet.
+            manager: the name of the manager, if any, for this nodelet. If
+                this nodelet is standalone, :code:`manager` should be set to
+                :code:`None`.
 
         Raises:
             Exception: if there is no model for the given nodelet type.
         """
-        logger.info('launching nodelet [%s] inside manager [%s]',
-                    name, manager)
+        if manager:
+            logger.info('launching nodelet [%s] inside manager [%s]',
+                        name, manager)
+        else:
+            logger.info('launching standalone nodelet [%s]', name)
         return self.load(pkg, nodetype, name, namespace, remappings, '')
 
     def load(self,
@@ -361,6 +366,7 @@ class Interpreter:
             if args == 'manager':
                 return self.create_nodelet_manager(name)
             else:
+                logger.info("DEBUG: %s", args)
                 load, pkg_and_nodetype, mgr = args.split(' ')
                 pkg, _, nodetype = pkg_and_nodetype.partition('/')
                 return self.load_nodelet(pkg, nodetype, name, namespace, remappings, mgr)
