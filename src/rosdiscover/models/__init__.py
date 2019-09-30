@@ -42,5 +42,5 @@ from . import gzserver
 from . import spawn_model
 from . import turtlebot3_teleop_key
 from . import pdw_turtlebot3_fake
-from . import pdw_turtlebot3_teleop
+from . import pdw_turtlebot3_teleop_key
 from . import pdw_robot_state_publisher

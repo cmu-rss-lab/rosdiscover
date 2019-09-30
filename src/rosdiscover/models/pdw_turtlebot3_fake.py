@@ -1,7 +1,7 @@
 from ..interpreter import model
 
 
-@model('pdw_turtlebot3_fake', 'turtlebot3_fake_node')
+@model('pdw_turtlebot3_fake', 'pdw_turtlebot3_fake_node')
 def turtlebot3_fake_node(c):
     model = c.read('tb3_model', '')
     c.read('wheel_left_joint_name', 'wheel_left_joint')
