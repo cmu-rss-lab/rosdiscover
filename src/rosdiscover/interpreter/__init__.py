@@ -291,13 +291,14 @@ class Interpreter:
         for node in config.nodes:
             logger.debug("launching node: %s", node.name)
             try:
+                args = node.args or ''
                 remappings = {old: new for (old, new) in node.remappings}
                 self.load(pkg=node.package,
                           nodetype=node.typ,
                           name=node.name,
                           namespace=node.namespace,  # FIXME
                           remappings=remappings,
-                          args=node.args)
+                          args=args)
             except Exception:
                 logger.exception("failed to launch node: %s", node.name)
                 raise
