@@ -19,19 +19,19 @@ from roswire.proxy.launch import LaunchFileReader
 from .summary import NodeSummary
 from .parameter import ParameterServer
 
-
 logger = logging.getLogger(__name__)  # type: logging.Logger
 logger.setLevel(logging.DEBUG)
 
 FullName = str
 
-class NodeContext(object):
 
+class NodeContext:
     def __init__(self,
                  name: str,
                  namespace: str,
                  kind: str,
                  package: str,
+                 args: str,
                  remappings: Dict[str, str],
                  params: ParameterServer,
                  files: roswire.proxy.FileProxy
@@ -42,6 +42,8 @@ class NodeContext(object):
         self.__package = package
         self.__params = params
         self.__files = files
+        self.__args = args
+        self.__uses: Set[Tuple[str, str]] = set()
         self.__provides: Set[Tuple[str, str]] = set()
         self.__subs: Set[Tuple[str, str]] = set()
         self.__pubs: Set[Tuple[str, str]] = set()
@@ -56,6 +58,10 @@ class NodeContext(object):
             self.resolve(x): self.resolve(y)
             for (x, y) in remappings.items()
         }
+
+    @property
+    def args(self) -> str:
+        return self.__args
 
     @property
     def fullname(self) -> str:
@@ -84,6 +90,7 @@ class NodeContext(object):
                            pubs=self.__pubs,
                            subs=self.__subs,
                            provides=self.__provides,
+                           uses=self.__uses,
                            action_servers=self.__action_servers,
                            action_clients=self.__action_clients)
 
@@ -109,6 +116,15 @@ class NodeContext(object):
         service_name_full = self.resolve(service)
         service_name_full = self._remap(service_name_full)
         self.__provides.add((service_name_full, fmt))
+
+    def use(self, service: str, fmt: str) -> None:
+        """Instructs the node to use a given service."""
+        logger.debug("node [%s] uses a service [%s] with format [%s]",
+                     self.__name, service, fmt)
+
+        service_name_full = self.resolve(service)
+        service_name_full = self._remap(service_name_full)
+        self.__uses.add((service_name_full, fmt))
 
     def sub(self, topic_name: str, fmt: str) -> None:
         """Subscribes the node to a given topic.
@@ -242,7 +258,7 @@ class Interpreter:
         """Constructs an interpreter for a given Docker image."""
         rsw = roswire.ROSWire()  # TODO don't maintain multiple instances
         with rsw.launch(image) as app:
-            yield Interpreter(app.files, app.shell) 
+            yield Interpreter(app.files, app.shell)
 
     def __init__(self,
                  files: roswire.proxy.FileProxy,
@@ -275,13 +291,14 @@ class Interpreter:
         for node in config.nodes:
             logger.debug("launching node: %s", node.name)
             try:
+                args = node.args or ''
                 remappings = {old: new for (old, new) in node.remappings}
                 self.load(pkg=node.package,
                           nodetype=node.typ,
                           name=node.name,
                           namespace=node.namespace,  # FIXME
                           remappings=remappings,
-                          args=node.args)
+                          args=args)
             except Exception:
                 logger.exception("failed to launch node: %s", node.name)
                 raise
@@ -296,7 +313,7 @@ class Interpreter:
                      name: str,
                      namespace: str,
                      remappings: Dict[str, str],
-                     manager: str
+                     manager: Optional[str] = None
                      ) -> None:
         """Loads a nodelet using the provided instructions.
 
@@ -308,13 +325,18 @@ class Interpreter:
             remappings: a dictionary of name remappings that should be applied
                 to this nodelet, where keys correspond to old names and values
                 correspond to new names.
-            manager: the name of the manager for this nodelet.
+            manager: the name of the manager, if any, for this nodelet. If
+                this nodelet is standalone, :code:`manager` should be set to
+                :code:`None`.
 
         Raises:
             Exception: if there is no model for the given nodelet type.
         """
-        logger.info('launching nodelet [%s] inside manager [%s]',
-                    name, manager)
+        if manager:
+            logger.info('launching nodelet [%s] inside manager [%s]',
+                        name, manager)
+        else:
+            logger.info('launching standalone nodelet [%s]', name)
         return self.load(pkg, nodetype, name, namespace, remappings, '')
 
     def load(self,
@@ -341,9 +363,14 @@ class Interpreter:
             Exception: if there is no model for the given node type.
         """
         # logger.info("loading node: %s (%s)", name, nodetype)
+        args = args.strip()
         if nodetype == 'nodelet':
             if args == 'manager':
                 return self.create_nodelet_manager(name)
+            elif args.startswith('standalone '):
+                pkg_and_nodetype = args.partition(' ')[2]
+                pkg, _, nodetype = pkg_and_nodetype.partition('/')
+                return self.load_nodelet(pkg, nodetype, name, namespace, remappings)
             else:
                 load, pkg_and_nodetype, mgr = args.split(' ')
                 pkg, _, nodetype = pkg_and_nodetype.partition('/')
@@ -363,6 +390,7 @@ class Interpreter:
                           namespace=namespace,
                           kind=nodetype,
                           package=pkg,
+                          args=args,
                           remappings=remappings,
                           files=self.__files,
                           params=self.__params)
