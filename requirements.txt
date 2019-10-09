@@ -1,1 +1,1 @@
-git+git://github.com/ChrisTimperley/roswire#egg=roswire
+git+git://github.com/ChrisTimperley/roswire@e5b5f7ce690c229738a86e2146a39409ab2ca04d#egg=roswire
