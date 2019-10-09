@@ -113,7 +113,7 @@ def main():
     p.add_argument('filename', type=str,
                    help='path to a roslaunch file inside the Docker image.')
     p.add_argument("--acme", type=str, help='Output to the named Acme file')
-    p,add_argument("--check", action='store_true', 'Typecheck the architecture and report any errors')
+    p.add_argument("--check", action='store_true', help='Typecheck the architecture and report any errors')
     p.set_defaults(func=generate_acme)
 
     args = parser.parse_args()
