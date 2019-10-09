@@ -34,7 +34,11 @@ def launch(args):
     """Simulates the architectural effects of a `roslaunch` command."""
     interpreter = _launch(args.image, args.filenames)
     output = [n.to_dict() for n in interpreter.nodes]
-    print(yaml.dump(output, default_flow_style=False))
+    if args.output is not None:
+        with open(args.output,'w') as of:
+            yaml.dump(output,of, default_flow_style=False)
+    else:
+        print(yaml.dump(output, default_flow_style=False))
 
 
 def generate_acme(args):
@@ -83,6 +87,7 @@ def main():
                    help='name of a Docker image for a ROS application.')
     p.add_argument('filenames', type=str, metavar='F', nargs='+',
                    help='paths to the roslaunch files inside the Docker image.')
+    p.add_argument('--output', type=str, help="file to output YAML to")
     p.set_defaults(func=launch)
 
     p = subparsers.add_parser(
