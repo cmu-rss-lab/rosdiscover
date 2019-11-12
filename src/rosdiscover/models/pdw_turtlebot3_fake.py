@@ -14,3 +14,6 @@ def turtlebot3_fake_node(c):
     c.pub('joint_states', 'sensor_msgs/JointState')
     c.pub('odom', 'nav_msgs/Odometry')
     c.sub('cmd_vel', 'geometry_msgs/Twist')
+
+    c.pub('/tf', 'tf2_msgs/TFMessage')
+    c.pub('/tf_static', 'tf2_msgs/TFMessage')
