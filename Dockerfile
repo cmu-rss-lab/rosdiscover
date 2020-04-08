@@ -10,7 +10,6 @@ RUN cd /tmp/rosdiscover \
       docker \
       gcc \
       linux-headers \
- && pip3 install --no-cache -r requirements.txt \
  && pip3 install --no-cache . \
  && rm -rf /tmp/*
 ENTRYPOINT ["rosdiscover"]
