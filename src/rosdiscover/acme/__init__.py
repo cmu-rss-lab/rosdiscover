@@ -95,10 +95,10 @@ ACTION_SERVER_PORT="""    port {port_name}: ActionServerPortT = new ActionServer
 class AcmeGenerator(object):
     def __init__(self,
                  nodes, # type: Iterator[NodeSummary]
-                 launch_file
+                 launch_files
                  ):    # type: (...) -> None
         self.__nodes = nodes
-        self.__launch_file = launch_file
+        self.__launch_files = launch_files
 
     def get_components_and_connectors(self):
         # type: () ->Tuple[Array[NodeSummary],Dict[str,Dict],Dict[str,Dict]]
@@ -193,7 +193,7 @@ class AcmeGenerator(object):
         # type: () -> str
         components, topics, services, actions = self.get_components_and_connectors()
 
-        system_name = os.path.basename(os.path.normpath(self.__launch_file)).split('.')[0]
+        system_name = os.path.basename(os.path.normpath(self.__launch_files)).split('.')[0]
 
         acme = "import families/ROSFam.acme;\nsystem %s : ROSFam = new ROSFam extended with {\n" %system_name;
         attachments = []
@@ -248,20 +248,21 @@ class AcmeGenerator(object):
 
         connector_strs = []
         for t in topics:
-            
-            roles = []
-            for p in topics[t]["pubs"]:
-                rname= p + "_pub"
-                role = ADVERTISER_ROLE.format(role_name=rname)
-                roles.append(role)
-            for s in topics[t]["subs"]:
-                rname= s + "_sub"
-                role = SUBSCRIBER_ROLE.format(role_name=rname)
-                print(role)
-                roles.append(role)
-            cname = self.to_acme_name(topics[t]["details"]['name']) + "_conn"
-            conn = TOPIC_CONNECTOR.format(conn_name=cname, roles="\n".join(roles), msg_type=topics[t]["details"]['format'], topic=topics[t]["details"]['name'])
-            connector_strs.append(conn)
+
+            if len(topics[t]["pubs"]) + len(topics[t]["subs"]) > 1:
+                roles = []
+                for p in topics[t]["pubs"]:
+                    rname= p + "_pub"
+                    role = ADVERTISER_ROLE.format(role_name=rname)
+                    roles.append(role)
+                for s in topics[t]["subs"]:
+                    rname= s + "_sub"
+                    role = SUBSCRIBER_ROLE.format(role_name=rname)
+                    print(role)
+                    roles.append(role)
+                cname = self.to_acme_name(topics[t]["details"]['name']) + "_conn"
+                conn = TOPIC_CONNECTOR.format(conn_name=cname, roles="\n".join(roles), msg_type=topics[t]["details"]['format'], topic=topics[t]["details"]['name'])
+                connector_strs.append(conn)
 
         for s in service_conns:
             # Only create a connector for services that are connected

@@ -45,9 +45,10 @@ def generate_acme(args):
     """Generates an Acme description for a given roslaunch command."""
     interpreter = _launch(args.image, args.filenames)
     nodes = [n.to_dict for n in interpreter.nodes]
-    acme_gen = AcmeGenerator(nodes, args.filename)
+    acme_gen = AcmeGenerator(nodes, args.acme)
     acme = acme_gen.generate_acme()
     if args.acme is not None:
+        print("Writing Acme to %s" %args.acme)
         with open(args.acme,'w') as f:
             f.write(acme)
     else:
@@ -113,7 +114,7 @@ def main():
                    help='name of a Docker image for a ROS application.')
     p.add_argument('filenames', type=str, metavar='F', nargs='+',
                    help='paths to the roslaunch files inside the Docker image.')
-    p.add_argument("--acme", type=str, help='Output to the named Acme file')
+    p.add_argument("--acme", type=str, default="generated.acme", help='Output to the named Acme file')
     p.set_defaults(func=generate_acme)
 
     args = parser.parse_args()
