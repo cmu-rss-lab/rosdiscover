@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 __all__ = ('Config',)
 
+from types import MappingProxyType
 from typing import Any, Mapping, Sequence
 
 import attr
@@ -20,10 +21,13 @@ class Config:
     launches: Sequence[str]
         The sequence of launch files that should be used to launch the
         application.
+    environment: Mapping[str, str]
+        A set of environment variables that should be used by the application.
     """
     image: str
     sources: Sequence[str]
     launches: Sequence[str]
+    environment: Mapping[str, str] = attr.ib(factory=dict)
 
     @classmethod
     def from_dict(cls, dict_: Mapping[str, Any]) -> 'Config':
@@ -49,9 +53,14 @@ class Config:
         if not isinstance(dict_['launches'], list):
             raise ValueError("expected 'launches' to be a list")
 
+        has_environment = 'environment' in dict_
+        if has_environment and not isinstance(dict_['environment'], dict):
+            raise ValueError("expected 'environment' to be a mapping")
+
         image: str = dict_['image'] 
         sources: Sequence[str] = dict_['sources']
         launches: Sequence[str] = dict_['launches']
+        environment: Mapping[str, str] = dict_.get('environment', {})
         return Config(image=image,
                       sources=sources,
                       launches=launches)
@@ -64,3 +73,5 @@ class Config:
     def __attrs_post_init__(self) -> None:
         object.__setattr__(self, 'sources', tuple(self.sources))
         object.__setattr__(self, 'launches', tuple(self.launches))
+        environment = MappingProxyType(self.environment.copy())
+        object.__setattr__(self, 'environment', environment)
