@@ -2,14 +2,14 @@
 """
 Provides a simple command-line interface.
 """
-from typing import Sequence
+from typing import Any, Mapping, Sequence
 import logging
 import argparse
 import os.path
 from os import path
 
-import yaml
 import roswire
+import yaml
 
 from .interpreter import Interpreter, Model
 from .acme import AcmeGenerator
@@ -20,11 +20,13 @@ DESC = 'discovery of ROS architectures'
 logger = logging.getLogger(__name__)  # type: logging.Logger
 logger.setLevel(logging.DEBUG)
 
-def _read_configuration(args):
-    config={}
+
+def _read_configuration(args) -> Mapping[str, Any]:
+    config = {}
     if args.config is not None:
-        config = yaml.load(args.config, Loader=yaml.FullLoader)
+        config = yaml.load(args.config, Loader=yaml.SafeLoader)
     return config
+
 
 def _launch(name_image: str,
             launch_files: Sequence[str],
