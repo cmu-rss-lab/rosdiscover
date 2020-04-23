@@ -3,17 +3,16 @@
 Provides a simple command-line interface.
 """
 from typing import Any, Mapping, Sequence
-import logging
 import argparse
-import os.path
-from os import path
+import logging
+import os
 
 import roswire
-import yaml
 
-from .interpreter import Interpreter, Model
-from .acme import AcmeGenerator
 from . import models
+from .acme import AcmeGenerator
+from .config import Config
+from .interpreter import Interpreter, Model
 
 DESC = 'discovery of ROS architectures'
 
@@ -21,39 +20,21 @@ logger = logging.getLogger(__name__)  # type: logging.Logger
 logger.setLevel(logging.DEBUG)
 
 
-def _read_configuration(args) -> Mapping[str, Any]:
-    config = {}
-    if args.config is not None:
-        config = yaml.load(args.config, Loader=yaml.SafeLoader)
-    return config
-
-
-def _launch(name_image: str,
-            launch_files: Sequence[str],
-            sources: Sequence[str]
-            ) -> Interpreter:
+def _launch(config: Config) -> Interpreter:
     rsw = roswire.ROSWire()
-    logger.info("reconstructing architecture for image [%s]", name_image)
+    logger.info("reconstructing architecture for image [%s]", config.image)
     # FIXME passing interpreter outside of the context is very weird/bad
-    with Interpreter.for_image(name_image, sources) as interpreter:
-        for fn_launch in launch_files:
+    with Interpreter.for_image(config.image, config.sources) as interpreter:
+        for fn_launch in config.launches:
             logger.info("simulating launch [%s]", fn_launch)
             interpreter.launch(fn_launch)
         return interpreter
 
+
 def _launch_config(args):
-    config = _read_configuration(args)
-    if 'image' not in config.keys():
-        raise Exception("'image' is undefined in configuration")
-    if 'launches' not in config.keys() or not isinstance(config['launches'], list):
-        raise Exception("'launches' is missing or is not a list in configuration")
- 
-    if 'sources' not in config.keys():
-        config["sources"] = []
-    
-    if not isinstance(config['sources'], list):
-        raise Exception("'sources' is not a list in the configuration")
-    _launch(config["image"], config["launches"], config["sources"])
+    config = Config.from_yaml_file(args.config)
+    _launch(config)
+
 
 def launch(args):
     """Simulates the architectural effects of a `roslaunch` command."""
