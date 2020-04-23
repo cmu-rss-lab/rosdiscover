@@ -1,0 +1,6 @@
+image: fetch
+sources:
+  - /opt/ros/melodic/setup.bash
+  - /ros_ws/dev/setup.bash
+launches:
+  - /ros_ws/src/fetch_gazebo/fetch_gazebo/launch/pickplace_playground.launch
