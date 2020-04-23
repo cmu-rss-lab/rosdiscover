@@ -8,11 +8,12 @@ The main class within this module is :class:`Interpreter`, which acts as a
 model evaluator / virtual machine for a ROS architecture.
 """
 from typing import (Dict, Iterator, Any, Optional, Tuple, Callable, Set,
-                    FrozenSet)
+                    FrozenSet, Sequence)
 import logging
 import contextlib
 
 import attr
+import dockerblade
 import roswire
 from roswire.proxy.launch import LaunchFileReader
 
@@ -34,7 +35,7 @@ class NodeContext:
                  args: str,
                  remappings: Dict[str, str],
                  params: ParameterServer,
-                 files: roswire.proxy.FileProxy
+                 files: dockerblade.files.FileSystem,
                  ) -> None:
         self.__name = name
         self.__namespace = namespace
@@ -254,15 +255,15 @@ def model(package: str, name: str) -> Any:
 class Interpreter:
     @staticmethod
     @contextlib.contextmanager
-    def for_image(image: str) -> Iterator['Interpreter']:
+    def for_image(image: str, sources: Sequence[str]) -> Iterator['Interpreter']:
         """Constructs an interpreter for a given Docker image."""
         rsw = roswire.ROSWire()  # TODO don't maintain multiple instances
-        with rsw.launch(image) as app:
+        with rsw.launch(image, sources) as app:
             yield Interpreter(app.files, app.shell)
 
     def __init__(self,
-                 files: roswire.proxy.FileProxy,
-                 shell: roswire.proxy.ShellProxy
+                 files: dockerblade.files.FileSystem,
+                 shell: dockerblade.shell.Shell
                  ) -> None:
         self.__files = files
         self.__shell = shell
@@ -283,6 +284,14 @@ class Interpreter:
         """Simulates the effects of `roslaunch` using a given launch file."""
         # NOTE this method also supports command-line arguments
         reader = LaunchFileReader(self.__shell, self.__files)
+
+        # Workaround:
+        # https://answers.ros.org/question/299232/roslaunch-python-arg-substitution-finds-wrong-package-folder-path/
+        # https://github.com/ros/ros_comm/blob/e96c407c64e1c17b0dd2bb85b67f388380527097/tools/roslaunch/src/roslaunch/substitution_args.py#L141L145
+        sed_command = 's#$(find xacro)/xacro #$(find xacro)/xacro.py #g'
+        sed_command = f'sed -i "{sed_command}" {fn}'
+        self.__shell.check_output(sed_command)
+
         config = reader.read(fn)
 
         for key, value in config.params.items():
@@ -349,20 +358,28 @@ class Interpreter:
              ) -> None:
         """Loads a node using the provided instructions.
 
-        Parameters:
-            pkg: the name of the package to which the node belongs.
-            nodetype: the name of the type of node that should be loaded.
-            name: the name that should be assigned to the node.
-            namespace: the namespace into which the node should be loaded.
-            remappings: a dictionary of name remappings that should be applied
-                to this node, where keys correspond to old names and values
-                correspond to new names.
-            args: a string containing command-line arguments to the node.
+        Parameters
+        ----------
+        pkg: str
+            the name of the package to which the node belongs.
+        nodetype: str
+            the name of the type of node that should be loaded.
+        name: str
+            the name that should be assigned to the node.
+        namespace: str
+            the namespace into which the node should be loaded.
+        remappings: Dict[str, str]
+            a dictionary of name remappings that should be applied
+            to this node, where keys correspond to old names and values
+            correspond to new names.
+        args: str
+            a string containing command-line arguments to the node.
 
-        Raises:
-            Exception: if there is no model for the given node type.
+        Raises
+        ------
+        Exception
+            if there is no model for the given node type.
         """
-        # logger.info("loading node: %s (%s)", name, nodetype)
         args = args.strip()
         if nodetype == 'nodelet':
             if args == 'manager':

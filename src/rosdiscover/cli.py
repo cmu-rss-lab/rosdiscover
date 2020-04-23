@@ -19,11 +19,14 @@ logger = logging.getLogger(__name__)  # type: logging.Logger
 logger.setLevel(logging.DEBUG)
 
 
-def _launch(name_image: str, launch_files: Sequence[str]) -> Interpreter:
+def _launch(name_image: str,
+            launch_files: Sequence[str],
+            sources: Sequence[str]
+            ) -> Interpreter:
     rsw = roswire.ROSWire()
     logger.info("reconstructing architecture for image [%s]", name_image)
     # FIXME passing interpreter outside of the context is very weird/bad
-    with Interpreter.for_image(name_image) as interpreter:
+    with Interpreter.for_image(name_image, sources) as interpreter:
         for fn_launch in launch_files:
             logger.info("simulating launch [%s]", fn_launch)
             interpreter.launch(fn_launch)
@@ -32,7 +35,7 @@ def _launch(name_image: str, launch_files: Sequence[str]) -> Interpreter:
 
 def launch(args):
     """Simulates the architectural effects of a `roslaunch` command."""
-    interpreter = _launch(args.image, args.filenames)
+    interpreter = _launch(args.image, args.filenames, args.sources)
     output = [n.to_dict() for n in interpreter.nodes]
     if args.output is not None:
         with open(args.output,'w') as of:
@@ -43,7 +46,7 @@ def launch(args):
 
 def generate_acme(args):
     """Generates an Acme description for a given roslaunch command."""
-    interpreter = _launch(args.image, args.filenames)
+    interpreter = _launch(args.image, args.filenames, args.sources)
     nodes = [n.to_dict for n in interpreter.nodes]
     acme_gen = AcmeGenerator(nodes, args.acme)
     acme = acme_gen.generate_acme()
@@ -57,7 +60,7 @@ def generate_acme(args):
 
 def rostopic_list(args):
     # simulates the list command
-    interpreter = _launch(args.image, args.filenames)
+    interpreter = _launch(args.image, args.filenames, args.sources)
     topics = set()
     for node in interpreter.nodes:
         topics |= set(x for (x, _) in node.pubs | node.subs)
@@ -65,7 +68,7 @@ def rostopic_list(args):
 
 
 def rosservice_list(args):
-    interpreter = _launch(args.image, args.filenames)
+    interpreter = _launch(args.image, args.filenames, args.sources)
     services = set()
     for node in interpreter.nodes:
         services |= set(s for (s, _) in node.provides)
@@ -88,6 +91,8 @@ def main():
                    help='name of a Docker image for a ROS application.')
     p.add_argument('filenames', type=str, metavar='F', nargs='+',
                    help='paths to the roslaunch files inside the Docker image.')
+    p.add_argument('--source', '-s', dest='sources', type=str, action='append',
+                   help='sources that should be used to initialise the ROS workspace.')
     p.add_argument('--output', type=str, help="file to output YAML to")
     p.set_defaults(func=launch)
 
@@ -98,6 +103,8 @@ def main():
                    help='name of a Docker image for a ROS application.')
     p.add_argument('filenames', type=str, metavar='F', nargs='+',
                    help='paths to the roslaunch files inside the Docker image.')
+    p.add_argument('--source', '-s', dest='sources', type=str, action='append',
+                   help='sources that should be used to initialise the ROS workspace.')
     p.set_defaults(func=rostopic_list)
 
     p = subparsers.add_parser(
@@ -107,6 +114,8 @@ def main():
                    help='name of a Docker image for a ROS application.')
     p.add_argument('filenames', type=str, metavar='F', nargs='+',
                    help='paths to the roslaunch files inside the Docker image.')
+    p.add_argument('--source', '-s', dest='sources', type=str, action='append',
+                   help='sources that should be used to initialise the ROS workspace.')
     p.set_defaults(func=rosservice_list)
 
     p = subparsers.add_parser('acme', help='generates Acme from a source file')
@@ -114,6 +123,8 @@ def main():
                    help='name of a Docker image for a ROS application.')
     p.add_argument('filenames', type=str, metavar='F', nargs='+',
                    help='paths to the roslaunch files inside the Docker image.')
+    p.add_argument('--source', '-s', dest='sources', type=str, action='append',
+                   help='sources that should be used to initialise the ROS workspace.')
     p.add_argument("--acme", type=str, default="generated.acme", help='Output to the named Acme file')
     p.set_defaults(func=generate_acme)
 
