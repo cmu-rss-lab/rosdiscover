@@ -58,7 +58,7 @@ class Config:
 
     @classmethod
     def from_yaml_file(cls, filename: str) -> 'Config':
-        dict_ = yaml.load(args.config, Loader=yaml.SafeLoader)
+        dict_ = yaml.load(filename, Loader=yaml.SafeLoader)
         return cls.from_dict(dict_)
 
     def __attrs_post_init__(self) -> None:
