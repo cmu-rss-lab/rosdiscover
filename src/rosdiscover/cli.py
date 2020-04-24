@@ -4,9 +4,9 @@ Provides a simple command-line interface.
 """
 from typing import Any, Mapping, Sequence
 import argparse
-import logging
 import os
 
+from loguru import logger
 import roswire
 
 from . import models
@@ -16,17 +16,14 @@ from .interpreter import Interpreter, Model
 
 DESC = 'discovery of ROS architectures'
 
-logger = logging.getLogger(__name__)  # type: logging.Logger
-logger.setLevel(logging.DEBUG)
-
 
 def _launch(config: Config) -> Interpreter:
     rsw = roswire.ROSWire()
-    logger.info("reconstructing architecture for image [%s]", config.image)
+    logger.info(f"reconstructing architecture for image [{config.image}]")
     # FIXME passing interpreter outside of the context is very weird/bad
-    with Interpreter.for_image(config.image, config.sources) as interpreter:
+    with Interpreter.for_image(config.image, config.sources, config.workspaces) as interpreter:
         for fn_launch in config.launches:
-            logger.info("simulating launch [%s]", fn_launch)
+            logger.info(f"simulating launch [{fn_launch}]")
             interpreter.launch(fn_launch)
         return interpreter
 
@@ -93,14 +90,7 @@ config_help="""R|The YAML file to read configuration parameters from.
      - an array of sources that should be used to initialise the ROS workspace."""
 
 def main():
-
-    
-
-    log_to_stdout = logging.StreamHandler()
-    log_to_stdout.setLevel(logging.DEBUG)
-    logging.getLogger('rosdiscover').addHandler(log_to_stdout)
-    logging.getLogger('roswire').addHandler(log_to_stdout)
-
+    logger.enable('roswire')
     parser = argparse.ArgumentParser(description=DESC)
     subparsers = parser.add_subparsers()
 
