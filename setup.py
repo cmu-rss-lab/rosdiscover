@@ -19,7 +19,7 @@ setup(
     python_requires='>=3.6',
     install_requires=[
         'rooibos>=0.4.1',
-        'roswire @ git+https://github.com/ChrisTimperley/roswire.git@799033ce9e56aed78b120e579d509cacc2eda2a8#egg=roswire'
+        'roswire @ git+https://github.com/ChrisTimperley/roswire.git@25cb2a4612fa19916b7fab669297543b2765826b#egg=roswire'
         'typing>=3.6.6',
         'attrs>=18.2.0',
         'dockerblade~=0.4.0',
