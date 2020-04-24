@@ -2,5 +2,8 @@ image: rbcar
 sources:
 - /opt/ros/kinetic/setup.bash
 - /ros_ws/devel/setup.bash 
+workspaces:
+- /opt/ros/kinetic
+- /ros_ws/devel
 launches:
 - /ros_ws/src/rbcar_sim/rbcar_sim_bringup/launch/rbcar_complete.launch
