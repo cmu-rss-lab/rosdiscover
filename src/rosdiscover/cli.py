@@ -45,10 +45,10 @@ def _launch_config(args):
         raise Exception("'image' is undefined in configuration")
     if 'launches' not in config.keys() or not isinstance(config['launches'], list):
         raise Exception("'launches' is missing or is not a list in configuration")
- 
+    print(config["launches"])
     if 'sources' not in config.keys():
         config["sources"] = []
-    
+    print(config["sources"])
     if not isinstance(config['sources'], list):
         raise Exception("'sources' is not a list in the configuration")
     _launch(config["image"], config["launches"], config["sources"])
