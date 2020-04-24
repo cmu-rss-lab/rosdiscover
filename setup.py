@@ -19,7 +19,7 @@ setup(
     python_requires='>=2.7',
     install_requires=[
         'rooibos>=0.4.1',
-        'roswire~=1.1.0',
+        'roswire~=1.2.0',
         'typing>=3.6.6',
         'attrs>=18.2.0',
         'dockerblade~=0.4.0',
