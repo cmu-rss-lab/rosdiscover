@@ -16,10 +16,10 @@ setup(
     author_email='ctimperley@cmu.edu',
     url='https://github.com/ChrisTimperley/rosdiscover',
     license='mit',
-    python_requires='>=2.7',
+    python_requires='>=3.6',
     install_requires=[
         'rooibos>=0.4.1',
-        'roswire~=1.2.0',
+        'roswire @ git+https://github.com/ChrisTimperley/roswire.git@b8d4b2b9044e0bbcf324c122d01c4e4a29389013#egg=roswire'
         'typing>=3.6.6',
         'attrs>=18.2.0',
         'dockerblade~=0.4.0',
@@ -32,11 +32,9 @@ setup(
     classifiers=[
         'Natural Language :: English',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6'
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7'
     ],
     entry_points = {
         'console_scripts': [
