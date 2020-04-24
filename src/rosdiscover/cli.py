@@ -80,14 +80,9 @@ class MultiLineFormatter(argparse.HelpFormatter):
             return text[2:].splitlines()
         return argparse.HelpFormatter._split_lines(self, text, width)
 
-config_help="""R|The YAML file to read configuration parameters from. 
-- indicates stdin
-  Should have the following parts:
-    image:(required) name of a Docker image for a ROS application.
-    launches:(required)
-      - an aray of paths to the roslaunch files inside the Docker image.
-    sources:(optional)
-     - an array of sources that should be used to initialise the ROS workspace."""
+config_help="""R|A YAML file defining the configuration.
+- indicates stdin.
+%s""" %Config.__doc__
 
 def main():
     logger.enable('roswire')
