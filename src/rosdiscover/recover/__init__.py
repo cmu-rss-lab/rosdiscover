@@ -8,9 +8,15 @@ to simple nodes with static models (rather than nodes that may publish and
 subscribe to different topics at run-time depending on their configuration).
 """
 from typing import Iterator
+import contextlib
 
+from comby import Comby
+from loguru import logger
+from roswire import ROSWire
 import attr
-import comby
+import roswire as _roswire
+
+from ..config import Config
 
 _ADVERTISE = ":[[nh]].advertise<:[type]>(\":[topic]\", :[queue_size]);"
 
@@ -34,12 +40,14 @@ class PublisherDefinition:
     queue_size: int
 
 
-@attr.s(slots=True, frozen=True)
-class CppModelExtractor:
-    """Extracts architectural models from C++ source code."""
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class PythonModelExtractor:
+    """Extracts architectural models from Python source code."""
+    _source: str
     _comby: Comby = attr.ib(factory=Comby)
 
-    def extract_publishers(source: str) -> Iterator[PublisherDefinition]:
+    @property
+    def publishers(self) -> Iterator[PublisherDefinition]:
         for match in self._comby.matches(source, _ADVERTISE, language='.cpp'):
             type_ = match['type_']
             topic = match['topic']
@@ -47,3 +55,29 @@ class CppModelExtractor:
             yield PublisherDefinition(type_=type_,
                                       topic=topic,
                                       queue_size=queue_size)
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class RecoveryTool:
+    _config: Config
+    _system: _roswire.System = attr.ib(repr=False)
+
+    @classmethod
+    @contextlib.contextmanager
+    def for_config(cls, config: Config) -> Iterator['RecoveryTool']:
+        roswire = ROSWire()
+        with roswire.launch(config.image, config.sources) as app:
+            yield cls.for_app_instance(config, app)
+
+    @classmethod
+    def for_app_instance(cls,
+                         config: Config,
+                         app: _roswire.System) -> 'RecoveryTool':
+        return RecoveryTool(config=config, system=app)
+
+    def recover_node(self, package: str, node: str) -> None:
+        logger.debug(f'recovering model for node [{node}] '
+                     f'in package [{package}]')
+        # FIXME hardcoded
+        filename = '/ros_ws/src/fetch_ros/fetch_navigation/scripts/tilt_head.py'
+        raise NotImplementedError
