@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-__all__ = ('CppModelExtractor',)
+__all__ = ('PythonModelExtractor',)
 
 from typing import Iterator
 
@@ -10,16 +10,14 @@ from .core import PublisherDefinition
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
-class CppModelExtractor:
-    """Extracts architectural models from C++ source code."""
+class PythonModelExtractor:
+    """Extracts architectural models from Python source code."""
     _source: str
     _comby: Comby = attr.ib(factory=Comby)
 
     @property
     def publishers(self) -> Iterator[PublisherDefinition]:
-        comby = self._comby
-        pattern = ":[[nh]].advertise<:[type]>(\":[topic]\", :[queue_size]);"
-        for match in comby.matches(self._source, pattern, language='.cpp'):
+        for match in self._comby.matches(source, _ADVERTISE, language='.cpp'):
             type_ = match['type_']
             topic = match['topic']
             queue_size = int(match['queue_size'])
