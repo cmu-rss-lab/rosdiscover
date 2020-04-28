@@ -32,6 +32,10 @@ $ pipenv shell
 (rosdiscover) $ pip install -e .
 ```
 
+To perform architecture recover, users must also install Comby:
+https://github.com/comby-tools/comby
+
+
 ### (Alternative) Docker Installation
 
 In some cases, it may not be possible to install `rosdiscover` natively on
@@ -64,22 +68,3 @@ host's Docker socket inside the `rosdiscover` container. Optionally, you may
 also want to use volume mounting to persist (and reuse) the cache:
 
 **TODO: requires careful handling of users/permissions.**
-
-
-## Getting Started
-
-To simulate the effects of a particular launch command using a given XML launch
-file for a ROS application provided by a given Docker image (e.g., `example_ros_app`),
-run the following:
-
-```
-$ rosdiscover launch example_ros_app
-    /ros_ws/src/turtlebot_simulator/turtlebot_stage/launch/turtlebot_in_stage.launch
-```
-
-To simulate the outcome of a `rostopic` call:
-
-```
-$ rosdiscover rostopic example_ros_app
-    /ros_ws/src/turtlebot_simulator/turtlebot_stage/launch/turtlebot_in_stage.launch
-```

@@ -18,8 +18,8 @@ setup(
     license='mit',
     python_requires='>=3.6',
     install_requires=[
-        'rooibos>=0.4.1',
-        'roswire @ git+https://github.com/ChrisTimperley/roswire.git@e87dafdd811b8909f3c49ec0a969529c39330155#egg=roswire'
+        'comby @ git+https://github.com/ChrisTimperley/comby-python.git@83129c90a77c5f06b136f74784bf2ae30ba63437#egg=comby',
+        'roswire @ git+https://github.com/ChrisTimperley/roswire.git@e87dafdd811b8909f3c49ec0a969529c39330155#egg=roswire',
         'typing>=3.6.6',
         'attrs>=18.2.0',
         'dockerblade~=0.4.0',
