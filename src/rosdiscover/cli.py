@@ -14,6 +14,10 @@ from .acme import AcmeGenerator
 from .config import Config
 from .interpreter import Interpreter, Model
 
+CONFIG_HELP = f"""R|A YAML file defining the configuration.
+- indicates stdin.
+{Config.__doc__}"""
+
 DESC = 'discovery of ROS architectures'
 
 
@@ -74,15 +78,24 @@ def rosservice_list(args):
         services |= set(s for (s, _) in node.provides)
     print('\n'.join(sorted(services)))
 
+
+def recover(args):
+    node = args.node
+    package = args.package
+    print(f"Attempting to recover architecture for node [{node}] "
+          f"in package [{package}]")
+
+    config = Config.from_yaml_file(args.config)
+    print(f"Using configuration: {config}")
+
+    raise NotImplementedError
+
+
 class MultiLineFormatter(argparse.HelpFormatter):
     def _split_lines(self, text, width):
         if text.startswith('R|'):
             return text[2:].splitlines()
         return argparse.HelpFormatter._split_lines(self, text, width)
-
-config_help="""R|A YAML file defining the configuration.
-- indicates stdin.
-%s""" %Config.__doc__
 
 def main():
     logger.enable('roswire')
@@ -91,30 +104,41 @@ def main():
 
     p = subparsers.add_parser(
         'launch',
-        help='simulates the effects of a roslaunch.', formatter_class=MultiLineFormatter)
+        help='simulates the effects of a roslaunch.',
+        formatter_class=MultiLineFormatter)
     p.add_argument('--output', type=str, help="file to output YAML to")
-    p.add_argument('config', type=argparse.FileType('r'), help=config_help)
-
+    p.add_argument('config', type=argparse.FileType('r'), help=CONFIG_HELP)
     p.set_defaults(func=launch)
 
     p = subparsers.add_parser(
-        'rostopic',
-        help='simulates the output of rostopic for a given configuration.', formatter_class=MultiLineFormatter)
-    
-    p.add_argument('config', type=argparse.FileType('r'), help=config_help)
+        'recover',
+        help='attempts to recover an architectural model for a node.')
+    p.add_argument('config', type=argparse.FileType('r'), help=CONFIG_HELP)
+    p.add_argument('package', type=str,
+        help='The name of the package to which the node belongs.')
+    p.add_argument('node', type=str, help='The name of the node.')
+    p.set_defaults(func=recover)
 
+    p = subparsers.add_parser(
+        'rostopic',
+        help='simulates the output of rostopic for a given configuration.',
+        formatter_class=MultiLineFormatter)
+    p.add_argument('config', type=argparse.FileType('r'), help=CONFIG_HELP)
     p.set_defaults(func=rostopic_list)
 
     p = subparsers.add_parser(
         'rosservice',
-        help='simulates the output of rosservice for a given configuration.', formatter_class=MultiLineFormatter)
+        help='simulates the output of rosservice for a given configuration.',
+        formatter_class=MultiLineFormatter)
     
-    p.add_argument('config', type=argparse.FileType('r'), help=config_help)
+    p.add_argument('config', type=argparse.FileType('r'), help=CONFIG_HELP)
     p.set_defaults(func=rosservice_list)
 
-    p = subparsers.add_parser('acme', help='generates Acme from a source file', formatter_class=MultiLineFormatter)
+    p = subparsers.add_parser('acme',
+            help='generates Acme from a source file',
+            formatter_class=MultiLineFormatter)
     p.add_argument("--acme", type=str, default="generated.acme", help='Output to the named Acme file')
-    p.add_argument('config', type=argparse.FileType('r'), help=config_help)
+    p.add_argument('config', type=argparse.FileType('r'), help=CONFIG_HELP)
     p.set_defaults(func=generate_acme)
 
     args = parser.parse_args()
