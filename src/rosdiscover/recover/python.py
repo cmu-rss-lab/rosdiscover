@@ -3,10 +3,14 @@ __all__ = ('PythonModelExtractor',)
 
 from typing import Iterator
 
+from loguru import logger
 from comby import Comby
 import attr
 
-from .core import PublisherDefinition
+from .core import PublisherDefinition, RecoveredNodeModel
+
+_PUBLISHER_TEMPLATE = \
+    'rospy.Publisher(:[topic_expr], :[type], queue_size=:[queue_size])'
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -15,11 +19,20 @@ class PythonModelExtractor:
     _source: str
     _comby: Comby = attr.ib(factory=Comby)
 
+    def __attrs_post_init__(self) -> None:
+        logger.debug(f"extracting model from Python source:\n{self._source}")
+
+    def extract(self) -> RecoveredNodeModel:
+        publishers = list(self.publishers)
+        raise NotImplementedError
+
     @property
     def publishers(self) -> Iterator[PublisherDefinition]:
-        for match in self._comby.matches(source, _ADVERTISE, language='.cpp'):
+        comby = self._comby
+        template = _PUBLISHER_TEMPLATE
+        for match in comby.matches(self._source, template, language='.py'):
             type_ = match['type_']
-            topic = match['topic']
+            topic = match['topic_expr']
             queue_size = int(match['queue_size'])
             yield PublisherDefinition(type_=type_,
                                       topic=topic,

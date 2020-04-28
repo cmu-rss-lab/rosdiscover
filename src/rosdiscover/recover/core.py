@@ -3,6 +3,8 @@
 This module provides several data structures that are used to describe
 architectural models that have been recovered from nodes.
 """
+from typing import Collection
+
 import attr
 
 
@@ -23,3 +25,11 @@ class PublisherDefinition:
     type_: str
     topic: str
     queue_size: int
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class RecoveredNodeModel:
+    publishers: Collection[PublisherDefinition]
+
+    def __attrs_post_init__(self) -> None:
+        object.__setattr__(self, 'publishers', tuple(publishers))

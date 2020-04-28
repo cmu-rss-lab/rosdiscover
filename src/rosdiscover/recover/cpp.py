@@ -6,7 +6,7 @@ from typing import Iterator
 from comby import Comby
 import attr
 
-from .core import PublisherDefinition
+from .core import PublisherDefinition, RecoveredNodeModel
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -14,6 +14,9 @@ class CppModelExtractor:
     """Extracts architectural models from C++ source code."""
     _source: str
     _comby: Comby = attr.ib(factory=Comby)
+
+    def extract(self) -> RecoveredNodeModel:
+        raise NotImplementedError
 
     @property
     def publishers(self) -> Iterator[PublisherDefinition]:

@@ -13,6 +13,7 @@ from . import models
 from .acme import AcmeGenerator
 from .config import Config
 from .interpreter import Interpreter, Model
+from .recover import RecoveryTool
 
 CONFIG_HELP = f"""R|A YAML file defining the configuration.
 - indicates stdin.
@@ -88,6 +89,8 @@ def recover(args):
     config = Config.from_yaml_file(args.config)
     print(f"Using configuration: {config}")
 
+    with RecoveryTool.for_config(config) as tool:
+        tool.recover_node(node, package)
     raise NotImplementedError
 
 
@@ -99,6 +102,7 @@ class MultiLineFormatter(argparse.HelpFormatter):
 
 def main():
     logger.enable('roswire')
+    logger.enable('rosdiscover')
     parser = argparse.ArgumentParser(description=DESC)
     subparsers = parser.add_subparsers()
 

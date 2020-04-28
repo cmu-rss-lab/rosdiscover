@@ -16,8 +16,10 @@ from roswire import ROSWire
 import attr
 import roswire as _roswire
 
+from .core import RecoveredNodeModel
+from .cpp import CppModelExtractor
+from .python import PythonModelExtractor
 from ..config import Config
-
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -38,17 +40,19 @@ class RecoveryTool:
                          app: _roswire.System) -> 'RecoveryTool':
         return RecoveryTool(config=config, system=app)
 
-    def recover_node(self, package: str, node: str) -> None:
+    def recover_node(self, package: str, node: str) -> RecoveredNodeModel:
         logger.debug(f'recovering model for node [{node}] '
                      f'in package [{package}]')
         # FIXME hardcoded
-        filename = '/ros_ws/src/fetch_ros/fetch_navigation/scripts/tilt_head.py'
         return self.recover_py_node(package, node)
 
-    def recover_cpp_node(self, package: str, node: str) -> None:
+    def recover_cpp_node(self, package: str, node: str) -> RecoveredNodeModel:
         """Recovers the model for a C++ node."""
-        raise NotImplementedError
+        return CppModelExtractor(package, node).extract()
 
-    def recover_py_node(self, package: str, node: str) -> None:
+    def recover_py_node(self, package: str, node: str) -> RecoveredNodeModel:
         """Recovers the model for a Python node."""
-        raise NotImplementedError
+        # FIXME hardcoded
+        filename = '/ros_ws/src/fetch_ros/fetch_navigation/scripts/tilt_head.py'
+        source = self._system.files.read(filename)
+        return PythonModelExtractor(source).extract()
