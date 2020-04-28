@@ -15,7 +15,7 @@ import contextlib
 import attr
 import dockerblade
 import roswire
-from roswire.proxy.launch import LaunchFileReader
+from roswire.proxy.roslaunch.reader import LaunchFileReader
 
 from .summary import NodeSummary
 from .parameter import ParameterServer
@@ -255,7 +255,9 @@ def model(package: str, name: str) -> Any:
 class Interpreter:
     @staticmethod
     @contextlib.contextmanager
-    def for_image(image: str, sources: Sequence[str]) -> Iterator['Interpreter']:
+    def for_image(image: str,
+                  sources: Sequence[str]
+                  ) -> Iterator['Interpreter']:
         """Constructs an interpreter for a given Docker image."""
         rsw = roswire.ROSWire()  # TODO don't maintain multiple instances
         with rsw.launch(image, sources) as app:
@@ -283,7 +285,8 @@ class Interpreter:
     def launch(self, fn: str) -> None:
         """Simulates the effects of `roslaunch` using a given launch file."""
         # NOTE this method also supports command-line arguments
-        reader = LaunchFileReader(self.__shell, self.__files)
+        reader = LaunchFileReader(shell=self.__shell,
+                                  files=self.__files)
 
         # Workaround:
         # https://answers.ros.org/question/299232/roslaunch-python-arg-substitution-finds-wrong-package-folder-path/
