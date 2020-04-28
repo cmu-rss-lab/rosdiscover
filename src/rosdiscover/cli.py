@@ -21,7 +21,7 @@ def _launch(config: Config) -> Interpreter:
     rsw = roswire.ROSWire()
     logger.info(f"reconstructing architecture for image [{config.image}]")
     # FIXME passing interpreter outside of the context is very weird/bad
-    with Interpreter.for_image(config.image, config.sources, config.workspaces) as interpreter:
+    with Interpreter.for_image(config.image, config.sources) as interpreter:
         for fn_launch in config.launches:
             logger.info(f"simulating launch [{fn_launch}]")
             interpreter.launch(fn_launch)
