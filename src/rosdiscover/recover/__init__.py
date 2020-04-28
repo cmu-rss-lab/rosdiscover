@@ -22,25 +22,6 @@ _ADVERTISE = ":[[nh]].advertise<:[type]>(\":[topic]\", :[queue_size]);"
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
-class PublisherDefinition:
-    """Describes a topic publish call.
-
-    Attributes
-    ----------
-    type_: str
-        The name of the type used by the publisher.
-    topic: str
-        The name of the topic to which messages are published.
-    queue_size: int
-        The queue size for the publisher.
-    """
-    # location: comby.LocationRange
-    type_: str
-    topic: str
-    queue_size: int
-
-
-@attr.s(slots=True, frozen=True, auto_attribs=True)
 class PythonModelExtractor:
     """Extracts architectural models from Python source code."""
     _source: str
