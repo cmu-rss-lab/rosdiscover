@@ -8,6 +8,7 @@ import os
 
 from loguru import logger
 import roswire
+import yaml
 
 from . import models
 from .acme import AcmeGenerator
@@ -30,12 +31,14 @@ def _launch(config: Config) -> Interpreter:
 
 def _launch_config(args):
     config = Config.from_yaml_file(args.config)
-    _launch(config)
+    return _launch(config)
 
 
 def launch(args):
     """Simulates the architectural effects of a `roslaunch` command."""
     interpreter = _launch_config(args)
+    if interpreter is None:
+        print("Interpreter was null - ERROR!")
     output = [n.to_dict() for n in interpreter.nodes]
     if args.output is not None:
         with open(args.output,'w') as of:

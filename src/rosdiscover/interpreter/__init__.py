@@ -230,7 +230,16 @@ class Model:
 
     @staticmethod
     def find(package: str, name: str) -> 'Model':
-        return Model._models[(package, name)]
+        try:
+            return Model._models[(package, name)]
+        except Exception:
+            m = "failed to find model for node type [{}] in package [{}]"
+            m = m.format(name, package)
+            logger.warning(m)
+            ph = Model._models[('PLACEHOLDER', 'PLACEHOLDER')]
+            ph.__package = package
+            ph.__name = name
+            return ph
 
     def __init__(self,
                  package,       # type: str
@@ -402,8 +411,11 @@ class Interpreter:
         try:
             model = Model.find(pkg, nodetype)
         except Exception:
+            # mdl = model(pkg, nodetype)
             m = "failed to find model for node type [{}] in package [{}]"
             m = m.format(nodetype, pkg)
+            logger.warning(m)
+            # model = mdl
             raise Exception(m)
 
         ctx = NodeContext(name=name,
@@ -415,4 +427,5 @@ class Interpreter:
                           files=self.__files,
                           params=self.__params)
         model.eval(ctx)
+
         self.__nodes.add(ctx.summarize())
