@@ -12,8 +12,8 @@ DEPTH_IMAGE_PROC_PKG = 'depth_image_proc'
 def convert_metric(c):
     c.mark_nodelet()
 
-    c.sub ('image_raw', IMAGE_TOPIC_TYPE)
-    c.pub ('image', IMAGE_TOPIC_TYPE)
+    c.sub('image_raw', IMAGE_TOPIC_TYPE)
+    c.pub('image', IMAGE_TOPIC_TYPE)
 
 @model(DEPTH_IMAGE_PROC_PKG, 'disparity')
 def disparity(c):

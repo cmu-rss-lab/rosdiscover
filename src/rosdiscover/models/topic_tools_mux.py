@@ -17,6 +17,6 @@ def mux(c):
     topics=parser.parse_args(c.args.split())
 
     c.pub(topics.outopic, "any")
-    for inT in topics.intopic:
-        c.sub(inT, "any")
+    for in_topic in topics.intopic:
+        c.sub(in_topic, "any")
 
