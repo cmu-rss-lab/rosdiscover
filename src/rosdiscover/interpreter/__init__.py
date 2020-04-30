@@ -44,6 +44,7 @@ class NodeContext:
         self.__params = params
         self.__files = files
         self.__args = args
+        self.__nodelet: bool = False
         self.__uses: Set[Tuple[str, str]] = set()
         self.__provides: Set[Tuple[str, str]] = set()
         self.__subs: Set[Tuple[str, str]] = set()
@@ -52,7 +53,7 @@ class NodeContext:
         self.__action_servers: Set[Tuple[str, str]] = set()
         self.__action_clients: Set[Tuple[str, str]] = set()
 
-        self.__reads: Set[str] = set()
+        self.__reads: Set[Tuple[str, bool]] = set()
         self.__writes: Set[str] = set()
         self.__placeholder : bool = False
 
@@ -87,6 +88,7 @@ class NodeContext:
                            namespace=self.__namespace,
                            kind=self.__kind,
                            package=self.__package,
+                           nodelet=self.__nodelet,
                            reads=self.__reads,
                            writes=self.__writes,
                            pubs=self.__pubs,
@@ -154,12 +156,12 @@ class NodeContext:
                      self.__name, topic_name, fmt)
         self.__pubs.add((topic_name_full, fmt))
 
-    def read(self, param: str, default: Optional[Any] = None) -> None:
+    def read(self, param: str, default: Optional[Any] = None, dynamic: Optional[bool] = False) -> None:
         """Obtains the value of a given parameter from the parameter server."""
         logger.debug("node [%s] reads parameter [%s]",
                      self.__name, param)
         param = self.resolve(param)
-        self.__reads.add(param)
+        self.__reads.add((param, dynamic))
         return self.__params.get(param, default)
 
     def write(self, param: str, val: Any) -> None:
@@ -209,11 +211,11 @@ class NodeContext:
         self.sub('{}/feedback'.format(ns), '{}Feedback'.format(fmt))
         self.sub('{}/result'.format(ns), '{}Result'.format(fmt))
 
-    def markAsNodelet(self):
-        self.__isNodelet = True
+    def mark_nodelet(self):
+        self.__nodelet = True
 
-    def markAsPlaceholder(self):
-        self.__isPlaceholder = True
+    def mark_placeholder(self):
+        self.__placeholder = True
 
 class Model:
     """Models the architectural interactions of a node type."""

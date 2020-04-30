@@ -10,14 +10,14 @@ DEPTH_IMAGE_PROC_PKG = 'depth_image_proc'
 
 @model(DEPTH_IMAGE_PROC_PKG, 'convert_metric')
 def convert_metric(c):
-    c.markAsNodelet()
+    c.mark_nodelet()
 
     c.sub ('image_raw', IMAGE_TOPIC_TYPE)
     c.pub ('image', IMAGE_TOPIC_TYPE)
 
 @model(DEPTH_IMAGE_PROC_PKG, 'disparity')
 def disparity(c):
-    c.markAsNodelet()
+    c.mark_nodelet()
 
     c.sub('left/image_rect', IMAGE_TOPIC_TYPE)
     c.sub('right/camera_info', MSGS_CAMERA_INFO)
@@ -29,7 +29,7 @@ def disparity(c):
 
 @model(DEPTH_IMAGE_PROC_PKG, 'point_cloud_xyz')
 def point_cloud_xyz(c):
-    c.markAsNodelet()
+    c.mark_nodelet()
 
     c.sub('camera_info', MSGS_CAMERA_INFO)
     c.sub('image_rect', IMAGE_TOPIC_TYPE)
@@ -40,7 +40,7 @@ def point_cloud_xyz(c):
 
 @model(DEPTH_IMAGE_PROC_PKG, 'point_cloud_xyzrgb')
 def point_cloud_xyzrgb(c):
-    c.markAsNodelet()
+    c.mark_nodelet()
 
     c.sub('rgb/camera_info', MSGS_CAMERA_INFO)
     c.sub('rgb/image_rect_color', IMAGE_TOPIC_TYPE)
@@ -52,7 +52,7 @@ def point_cloud_xyzrgb(c):
 
 @model(DEPTH_IMAGE_PROC_PKG, 'register')
 def register(c):
-    c.markAsNodelet()
+    c.mark_nodelet()
 
     c.sub('rgb/camera_info', MSGS_CAMERA_INFO)
     c.sub('depth/camera_info', MSGS_CAMERA_INFO)

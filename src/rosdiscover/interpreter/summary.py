@@ -12,11 +12,12 @@ class NodeSummary(object):
     namespace = attr.ib(type=str)
     kind = attr.ib(type=str)
     package = attr.ib(type=str)
+    nodelet = attr.ib(type=bool)
     pubs = attr.ib(type=FrozenSet[Tuple[str, str]],
                    converter=frozenset)
     subs = attr.ib(type=FrozenSet[Tuple[str, str]],
                    converter=frozenset)
-    reads = attr.ib(type=FrozenSet[str],
+    reads = attr.ib(type=FrozenSet[Tuple[str, bool]],
                     converter=frozenset)
     writes = attr.ib(type=FrozenSet[str],
                     converter=frozenset)
@@ -41,12 +42,14 @@ class NodeSummary(object):
                           for (n, f) in self.action_servers]
         action_clients = [{'name': str(n), 'format': str(f)}
                           for (n, f) in self.action_clients]
+        reads = [{'name' : str(n), 'dynamic' : bool(d)} for (n, d) in self.reads]
         return {'name': str(self.name),
                 'fullname': str(self.fullname),
                 'namespace': str(self.namespace),
                 'kind': str(self.kind),
                 'package': str(self.package),
-                'reads': list(self.reads),
+                'nodelet': bool(self.nodelet),
+                'reads': reads,
                 'writes': list(self.writes),
                 'provides': provides,
                 'uses': uses,
