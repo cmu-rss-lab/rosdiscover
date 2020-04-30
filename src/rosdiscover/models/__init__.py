@@ -45,4 +45,5 @@ from . import pdw_turtlebot3_fake
 from . import pdw_turtlebot3_teleop_key
 from . import pdw_robot_state_publisher
 from . import topic_tools_mux
+from . import image_proc_nodelets
 from . import placeholder

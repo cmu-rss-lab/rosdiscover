@@ -54,6 +54,7 @@ class NodeContext:
 
         self.__reads: Set[str] = set()
         self.__writes: Set[str] = set()
+        self.__placeholder : bool = False
 
         self.__remappings: Dict[str, str] = {
             self.resolve(x): self.resolve(y)
@@ -208,6 +209,11 @@ class NodeContext:
         self.sub('{}/feedback'.format(ns), '{}Feedback'.format(fmt))
         self.sub('{}/result'.format(ns), '{}Result'.format(fmt))
 
+    def markAsNodelet(self):
+        self.__isNodelet = True
+
+    def markAsPlaceholder(self):
+        self.__isPlaceholder = True
 
 class Model:
     """Models the architectural interactions of a node type."""
