@@ -37,8 +37,6 @@ def _launch_config(args):
 def launch(args):
     """Simulates the architectural effects of a `roslaunch` command."""
     interpreter = _launch_config(args)
-    if interpreter is None:
-        print("Interpreter was null - ERROR!")
     output = [n.to_dict() for n in interpreter.nodes]
     if args.output is not None:
         with open(args.output,'w') as of:

@@ -53,6 +53,8 @@ class NodeContext:
         self.__action_servers: Set[Tuple[str, str]] = set()
         self.__action_clients: Set[Tuple[str, str]] = set()
 
+        # The tuple is (name, dynamic) where name is the name of the parameter
+        # and dynamic is whether the node reacts to updates to the parameter via reconfigure
         self.__reads: Set[Tuple[str, bool]] = set()
         self.__writes: Set[str] = set()
         self.__placeholder : bool = False
@@ -419,11 +421,9 @@ class Interpreter:
         try:
             model = Model.find(pkg, nodetype)
         except Exception:
-            # mdl = model(pkg, nodetype)
             m = "failed to find model for node type [{}] in package [{}]"
             m = m.format(nodetype, pkg)
             logger.warning(m)
-            # model = mdl
             raise Exception(m)
 
         ctx = NodeContext(name=name,

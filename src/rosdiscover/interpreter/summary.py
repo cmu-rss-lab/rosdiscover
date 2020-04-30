@@ -17,6 +17,8 @@ class NodeSummary(object):
                    converter=frozenset)
     subs = attr.ib(type=FrozenSet[Tuple[str, str]],
                    converter=frozenset)
+    # The tuple is (name, dynamic) where name is the name of the parameter
+    # and dynamic is whether the node reacts to updates to the parameter via reconfigure
     reads = attr.ib(type=FrozenSet[Tuple[str, bool]],
                     converter=frozenset)
     writes = attr.ib(type=FrozenSet[str],
@@ -42,7 +44,7 @@ class NodeSummary(object):
                           for (n, f) in self.action_servers]
         action_clients = [{'name': str(n), 'format': str(f)}
                           for (n, f) in self.action_clients]
-        reads = [{'name' : str(n), 'dynamic' : bool(d)} for (n, d) in self.reads]
+        reads = [{'name' : n, 'dynamic' : d } for (n, d) in self.reads]
         return {'name': str(self.name),
                 'fullname': str(self.fullname),
                 'namespace': str(self.namespace),
