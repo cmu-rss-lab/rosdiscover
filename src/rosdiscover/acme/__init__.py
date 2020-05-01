@@ -7,6 +7,10 @@ The main class within this module is :clas:`AcmeGenerator`
 import logging
 import copy
 import os
+import tempfile
+import subprocess
+import json
+
 
 logger = logging.getLogger(__name__) # type: logging.Logger
 logger.setLevel(logging.DEBUG)
@@ -93,12 +97,12 @@ ACTION_SERVER_PORT="""    port {port_name}: ActionServerPortT = new ActionServer
     """
 
 class AcmeGenerator(object):
-    def __init__(self,
-                 nodes, # type: Iterator[NodeSummary]
-                 launch_files
-                 ):    # type: (...) -> None
+
+    def __init__(self, nodes, acme_file, jar):    # type: (...) -> None
         self.__nodes = nodes
-        self.__launch_files = launch_files
+        self.__acme_file = acme_file
+        self.__generate_dangling_connectors = False
+        self.__acme_jar = jar if jar is not None else 'lib/acme.standalone-ros.jar'
 
     def get_components_and_connectors(self):
         # type: () ->Tuple[Array[NodeSummary],Dict[str,Dict],Dict[str,Dict]]
@@ -155,7 +159,7 @@ class AcmeGenerator(object):
                 else:
                     action={'details' : ac, "servers": [], "clients": []}
                     actions[ac["name"]] = action
-                action["clients"].append(node()["name"])    
+                action["clients"].append(node()["name"])
             components.append(node())
         return components, topics, services, actions
 
@@ -193,7 +197,8 @@ class AcmeGenerator(object):
         # type: () -> str
         components, topics, services, actions = self.get_components_and_connectors()
 
-        system_name = os.path.basename(os.path.normpath(self.__launch_files)).split('.')[0]
+        system_name = "RobotSystem" if self.__acme_file is None else '_'.join(self.__acme_file.split(".")[:-1])
+        # system_name = os.path.basename(os.path.normpath(self.__launch_files)).split('.')[0]
 
         acme = "import families/ROSFam.acme;\nsystem %s : ROSFam = new ROSFam extended with {\n" %system_name;
         attachments = []
@@ -210,13 +215,13 @@ class AcmeGenerator(object):
                 pname = self.to_acme_name(p['name']) + "_pub"
                 port = ADVERTISER_PORT.format(port_name=pname, msg_type=p['format'], topic=p['name'])
                 ports.append(port)
-                attachments.append(ATTACHMENT.format(comp=comp_name, port=pname, 
+                attachments.append(ATTACHMENT.format(comp=comp_name, port=pname,
                     conn="%s_conn" %self.to_acme_name(p['name']), role="%s_pub" %comp_name))
             for s in c['subs']:
                 pname = self.to_acme_name(s['name']) + "_sub"
                 port = SUBSCRIBER_PORT.format(port_name=pname, msg_type=s['format'], topic=s['name'])
                 ports.append(port)
-                attachments.append(ATTACHMENT.format(comp=comp_name, port=pname, 
+                attachments.append(ATTACHMENT.format(comp=comp_name, port=pname,
                     conn="%s_conn" %self.to_acme_name(s['name']), role="%s_sub" %comp_name))
             for s in c['provides']:
                 pname=self.to_acme_name(s['name']) + "_svc"
@@ -258,7 +263,7 @@ class AcmeGenerator(object):
                 for s in topics[t]["subs"]:
                     rname= s + "_sub"
                     role = SUBSCRIBER_ROLE.format(role_name=rname)
-                    print(role)
+
                     roles.append(role)
                 cname = self.to_acme_name(topics[t]["details"]['name']) + "_conn"
                 conn = TOPIC_CONNECTOR.format(conn_name=cname, roles="\n".join(roles), msg_type=topics[t]["details"]['format'], topic=topics[t]["details"]['name'])
@@ -266,7 +271,7 @@ class AcmeGenerator(object):
 
         for s in service_conns:
             # Only create a connector for services that are connected
-            if len(service_conns[s]['providers']) != 0 and len(service_conns[s]['callers']) != 0:
+            if self.__generate_dangling_connectors or (len(service_conns[s]['providers']) != 0 and len(service_conns[s]['callers']) != 0):
                 roles = []
                 cname="%s_conn" %self.to_acme_name(s)
                 for p in service_conns[s]['providers']:
@@ -282,7 +287,7 @@ class AcmeGenerator(object):
                 connector_strs.append(SERVICE_CONNECTOR.format(conn_name=cname, roles="\n".join(roles)))
         for a in action_conns:
             # only create a connector for actions that are connected
-            if len(action_conns[a]['servers']) != 0 and len(action_conns[a]['clients']) != 0:
+            if self.__generate_dangling_connectors or (len(action_conns[a]['servers']) != 0 and len(action_conns[a]['clients']) != 0):
                 roles = []
                 cname="%s_conn" %self.to_acme_name(a)
                 for c in action_conns[a]['clients']:
@@ -298,7 +303,53 @@ class AcmeGenerator(object):
                 connector_strs.append(ACTION_CONNECTOR.format(conn_name=cname, roles="\n".join(roles)))
         acme = acme + "\n".join(connector_strs)
         acme = acme + "\n".join(attachments) + "}"
+        self.generate_acme_file(acme)
         return acme
+
+
+    def generate_acme_file(self, acme):
+        if self.__acme_file is not None:
+            logger.info(f"Writing Acme to {self.__acme_file}")
+            with open(self.__acme_file, 'w') as f:
+                f.write(acme)
+
+    def check_acme(self, acme):
+        (_, name) = tempfile.mkstemp(suffix='.acme')
+        logger.debug(f"Writing Acme to {name}")
+        with open(name, 'w') as f:
+            f.write(acme)
+        self._check_acme(name)
+        os.remove(name)
+
+    def check_acme(self):
+        self._check_acme(self.__acme_file)
+
+    def _check_acme(self, __acme_file):
+        (_, jf) = tempfile.mkstemp(suffix=".json")
+        try:
+            logger.debug("Running Acme checker")
+            run = subprocess.run(["java", "-jar", self.__acme_jar, "-j", jf, __acme_file], capture_output=True)
+            if run.returncode == 0:
+                logger.debug("Checking ran successfully")
+                logger.info(run.stdout)
+                with open(jf, 'r') as j:
+                    checks = json.load(j)
+                if len(checks["errors"]) == 0:
+                    print("Robot architecture has no errors")
+                else:
+                    print("The following problems were found with the robot architecture:")
+                    for e in checks["errors"]:
+                        if 'causes' not in e.keys() or len(e['causes']) == 0:
+                            print(f"    {e['error']}")
+                        else:
+                            for c in e["causes"]:
+                                print(f"    {c}")
+
+            else:
+                logger.error("Could not run the checker")
+                logger.error(run.stderr)
+        finally:
+            os.remove(jf)
 
 
 """
