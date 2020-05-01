@@ -63,4 +63,8 @@ def register(c):
 
     c.read('queue_size', 5)
 
+    # TODO: The documentation mentions that this TF should exist
+    # but we don't have a way to record it
+    # This is here to give an idea for when we to decide to
+    # record it
     #c.tf('depth_optical_frame', '/rgb_optical_frame')
