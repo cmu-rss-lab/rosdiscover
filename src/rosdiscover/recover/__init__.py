@@ -95,16 +95,33 @@ class RecoveryTool:
     def recover_node(self, package: str, node: str) -> RecoveredNodeModel:
         logger.debug(f'recovering model for node [{node}] '
                      f'in package [{package}]')
+        files = self._system.files
         binary_path = self.locate_node_binary(package, node)
-        return self.recover_py_node(package, node)
+        first_line = files.read(binary_path).partition('\n')[0]
+        if 'python' in first_line:
+            return self.recover_py_node(package, node, binary_path)
+        else:
+            return self.recover_cpp_node(package, node, binary_path)
 
-    def recover_cpp_node(self, package: str, node: str) -> RecoveredNodeModel:
-        """Recovers the model for a C++ node."""
-        return CppModelExtractor(package, node).extract()
+    def recover_cpp_node(self,
+                         package: str,
+                         node: str,
+                         path_binary: str
+                         ) -> RecoveredNodeModel:
+        """Recovers the model for a C++ node from a given binary."""
+        logger.debug(f'recovering model for C++ node [{node}] '
+                     f'in package [{package}] '
+                     f'with binary [{path_binary}]')
+        raise NotImplementedError
 
-    def recover_py_node(self, package: str, node: str) -> RecoveredNodeModel:
-        """Recovers the model for a Python node."""
-        # FIXME hardcoded
-        filename = '/ros_ws/src/fetch_ros/fetch_navigation/scripts/tilt_head.py'
-        source = self._system.files.read(filename)
+    def recover_py_node(self,
+                        package: str,
+                        node: str,
+                        path_script: str
+                        ) -> RecoveredNodeModel:
+        """Recovers the model for a Python node from a given script."""
+        logger.debug(f'recovering model for Python node [{node}] '
+                     f'in package [{package}] '
+                     f'with binary [{path_script}]')
+        source = self._system.files.read(path_script)
         return PythonModelExtractor(source).extract()
