@@ -28,6 +28,7 @@ class PythonModelExtractor:
 
     @property
     def publishers(self) -> Iterator[PublisherDefinition]:
+        logger.debug('extracting publishers')
         comby = self._comby
         template = _PUBLISHER_TEMPLATE
         for match in comby.matches(self._source, template, language='.py'):

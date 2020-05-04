@@ -101,8 +101,9 @@ class MultiLineFormatter(argparse.HelpFormatter):
         return argparse.HelpFormatter._split_lines(self, text, width)
 
 def main():
-    logger.enable('roswire')
+    logger.enable('comby')
     logger.enable('rosdiscover')
+    logger.enable('roswire')
     parser = argparse.ArgumentParser(description=DESC)
     subparsers = parser.add_subparsers()
 
@@ -134,7 +135,7 @@ def main():
         'rosservice',
         help='simulates the output of rosservice for a given configuration.',
         formatter_class=MultiLineFormatter)
-    
+
     p.add_argument('config', type=argparse.FileType('r'), help=CONFIG_HELP)
     p.set_defaults(func=rosservice_list)
 
