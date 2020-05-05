@@ -9,7 +9,7 @@ def gzserver(c):
     c.pub('~light/modify', 'gazebo_msgs/Light')
     c.pub('~request', 'gazebo_msgs/Request')
     c.pub('~link_states', 'gazebo_msgs/LinkState')
-    c.pub('~model_states', 'gazebo_msgs/ModelState')
+    c.pub('~model_states', 'gazebo_msgs/ModelStates')
 
     c.sub('~response', 'gazebo_msgs/Response')
     c.sub('~set_link_state', 'gazebo_msgs/LinkState')

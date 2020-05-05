@@ -44,6 +44,7 @@ class NodeContext:
         self.__params = params
         self.__files = files
         self.__args = args
+        self.__nodelet: bool = False
         self.__uses: Set[Tuple[str, str]] = set()
         self.__provides: Set[Tuple[str, str]] = set()
         self.__subs: Set[Tuple[str, str]] = set()
@@ -52,8 +53,11 @@ class NodeContext:
         self.__action_servers: Set[Tuple[str, str]] = set()
         self.__action_clients: Set[Tuple[str, str]] = set()
 
-        self.__reads: Set[str] = set()
+        # The tuple is (name, dynamic) where name is the name of the parameter
+        # and dynamic is whether the node reacts to updates to the parameter via reconfigure
+        self.__reads: Set[Tuple[str, bool]] = set()
         self.__writes: Set[str] = set()
+        self.__placeholder : bool = False
 
         self.__remappings: Dict[str, str] = {
             self.resolve(x): self.resolve(y)
@@ -86,6 +90,7 @@ class NodeContext:
                            namespace=self.__namespace,
                            kind=self.__kind,
                            package=self.__package,
+                           nodelet=self.__nodelet,
                            reads=self.__reads,
                            writes=self.__writes,
                            pubs=self.__pubs,
@@ -153,12 +158,12 @@ class NodeContext:
                      self.__name, topic_name, fmt)
         self.__pubs.add((topic_name_full, fmt))
 
-    def read(self, param: str, default: Optional[Any] = None) -> None:
+    def read(self, param: str, default: Optional[Any] = None, dynamic: Optional[bool] = False) -> None:
         """Obtains the value of a given parameter from the parameter server."""
         logger.debug("node [%s] reads parameter [%s]",
                      self.__name, param)
         param = self.resolve(param)
-        self.__reads.add(param)
+        self.__reads.add((param, dynamic))
         return self.__params.get(param, default)
 
     def write(self, param: str, val: Any) -> None:
@@ -208,6 +213,11 @@ class NodeContext:
         self.sub('{}/feedback'.format(ns), '{}Feedback'.format(fmt))
         self.sub('{}/result'.format(ns), '{}Result'.format(fmt))
 
+    def mark_nodelet(self):
+        self.__nodelet = True
+
+    def mark_placeholder(self):
+        self.__placeholder = True
 
 class Model:
     """Models the architectural interactions of a node type."""
@@ -230,7 +240,16 @@ class Model:
 
     @staticmethod
     def find(package: str, name: str) -> 'Model':
-        return Model._models[(package, name)]
+        try:
+            return Model._models[(package, name)]
+        except Exception:
+            m = "failed to find model for node type [{}] in package [{}]"
+            m = m.format(name, package)
+            logger.warning(m)
+            ph = Model._models[('PLACEHOLDER', 'PLACEHOLDER')]
+            ph.__package = package
+            ph.__name = name
+            return ph
 
     def __init__(self,
                  package,       # type: str
@@ -404,6 +423,7 @@ class Interpreter:
         except Exception:
             m = "failed to find model for node type [{}] in package [{}]"
             m = m.format(nodetype, pkg)
+            logger.warning(m)
             raise Exception(m)
 
         ctx = NodeContext(name=name,
@@ -415,4 +435,5 @@ class Interpreter:
                           files=self.__files,
                           params=self.__params)
         model.eval(ctx)
+
         self.__nodes.add(ctx.summarize())
