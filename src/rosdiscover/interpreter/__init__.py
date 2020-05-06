@@ -282,6 +282,7 @@ class Interpreter:
         with rsw.launch(image, sources) as app:
             yield Interpreter(app.files, app.shell)
 
+
     def __init__(self,
                  files: dockerblade.files.FileSystem,
                  shell: dockerblade.shell.Shell

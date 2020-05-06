@@ -104,7 +104,6 @@ def main():
     p = subparsers.add_parser(
         'rostopic',
         help='simulates the output of rostopic for a given configuration.', formatter_class=MultiLineFormatter)
-
     p.add_argument('config', type=argparse.FileType('r'), help=config_help)
 
     p.set_defaults(func=rostopic_list)
@@ -112,7 +111,6 @@ def main():
     p = subparsers.add_parser(
         'rosservice',
         help='simulates the output of rosservice for a given configuration.', formatter_class=MultiLineFormatter)
-
     p.add_argument('config', type=argparse.FileType('r'), help=config_help)
     p.set_defaults(func=rosservice_list)
 
@@ -121,6 +119,7 @@ def main():
 
     p.add_argument("--check", "-c", action='store_true')
     p.add_argument("--jar", type=str, help='Pointer to the Acme jar file', default='lib/acme.standalone-ros.jar')
+
 
     p.add_argument('config', type=argparse.FileType('r'), help=config_help)
     p.set_defaults(func=generate_acme)

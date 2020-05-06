@@ -4,6 +4,7 @@ RUN apk update && \
 	apk add openjdk8
 
 COPY . /tmp/rosdiscover
+
 RUN cd /tmp/rosdiscover \
  && apk add --no-cache \
       git \

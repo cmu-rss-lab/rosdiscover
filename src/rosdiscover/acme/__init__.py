@@ -268,7 +268,6 @@ class AcmeGenerator(object):
                 for s in topics[t]["subs"]:
                     rname= s + "_sub"
                     role = SUBSCRIBER_ROLE.format(role_name=rname)
-
                     roles.append(role)
                 cname = self.to_acme_name(topics[t]["details"]['name']) + "_conn"
                 conn = TOPIC_CONNECTOR.format(conn_name=cname, roles="\n".join(roles), msg_type=topics[t]["details"]['format'], topic=topics[t]["details"]['name'])
@@ -314,6 +313,22 @@ class AcmeGenerator(object):
         self.generate_acme_file(acme)
         return acme
 
+    def check_acme_file(self,filename):
+        process = Popen(['java', '-jar', 'lib/acme.standalone-ros.jar', filename])
+        (output,err) = process.communicate()
+        exit_code = process.wait()
+        return output, err
+
+    def check_acme_string(self,acme):
+        (f,filename) = tempfile.mkstemp()
+        #filename = f.name
+        try:
+            f.write(acme)
+            f.close()
+            return self.check_acme_file(filename)
+        finally:
+            os.unlink(filename)
+            
 
     def generate_acme_file(self, acme):
         if self.__acme_file is not None:
