@@ -29,7 +29,12 @@ To install roswire from source within a virtual environment using `pipenv`:
 $ git clone git@github.com:ChrisTimperley/rosdiscover rosdiscover
 $ cd rosdiscover
 $ pipenv shell
+<<<<<<< HEAD
 (rosdiscover) $ pip install -e .
+=======
+(rosdiscover) $ pip install .
+(rosdiscover) $ pip install -r requirements.txt
+>>>>>>> acme
 ```
 
 ### (Alternative) Docker Installation
