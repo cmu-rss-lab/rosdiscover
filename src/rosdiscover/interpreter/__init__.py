@@ -8,13 +8,14 @@ The main class within this module is :class:`Interpreter`, which acts as a
 model evaluator / virtual machine for a ROS architecture.
 """
 from typing import (Dict, Iterator, Any, Optional, Tuple, Callable, Set,
-                    FrozenSet)
+                    FrozenSet, Sequence)
 import logging
 import contextlib
 
 import attr
+import dockerblade
 import roswire
-from roswire.proxy.launch import LaunchFileReader
+from roswire.proxy.roslaunch.reader import LaunchFileReader
 
 from .summary import NodeSummary
 from .parameter import ParameterServer
@@ -34,7 +35,7 @@ class NodeContext:
                  args: str,
                  remappings: Dict[str, str],
                  params: ParameterServer,
-                 files: roswire.proxy.FileProxy
+                 files: dockerblade.files.FileSystem,
                  ) -> None:
         self.__name = name
         self.__namespace = namespace
@@ -43,6 +44,7 @@ class NodeContext:
         self.__params = params
         self.__files = files
         self.__args = args
+        self.__nodelet: bool = False
         self.__uses: Set[Tuple[str, str]] = set()
         self.__provides: Set[Tuple[str, str]] = set()
         self.__subs: Set[Tuple[str, str]] = set()
@@ -51,8 +53,11 @@ class NodeContext:
         self.__action_servers: Set[Tuple[str, str]] = set()
         self.__action_clients: Set[Tuple[str, str]] = set()
 
-        self.__reads: Set[str] = set()
+        # The tuple is (name, dynamic) where name is the name of the parameter
+        # and dynamic is whether the node reacts to updates to the parameter via reconfigure
+        self.__reads: Set[Tuple[str, bool]] = set()
         self.__writes: Set[str] = set()
+        self.__placeholder : bool = False
 
         self.__remappings: Dict[str, str] = {
             self.resolve(x): self.resolve(y)
@@ -85,6 +90,7 @@ class NodeContext:
                            namespace=self.__namespace,
                            kind=self.__kind,
                            package=self.__package,
+                           nodelet=self.__nodelet,
                            reads=self.__reads,
                            writes=self.__writes,
                            pubs=self.__pubs,
@@ -152,12 +158,12 @@ class NodeContext:
                      self.__name, topic_name, fmt)
         self.__pubs.add((topic_name_full, fmt))
 
-    def read(self, param: str, default: Optional[Any] = None) -> None:
+    def read(self, param: str, default: Optional[Any] = None, dynamic: Optional[bool] = False) -> None:
         """Obtains the value of a given parameter from the parameter server."""
         logger.debug("node [%s] reads parameter [%s]",
                      self.__name, param)
         param = self.resolve(param)
-        self.__reads.add(param)
+        self.__reads.add((param, dynamic))
         return self.__params.get(param, default)
 
     def write(self, param: str, val: Any) -> None:
@@ -207,6 +213,11 @@ class NodeContext:
         self.sub('{}/feedback'.format(ns), '{}Feedback'.format(fmt))
         self.sub('{}/result'.format(ns), '{}Result'.format(fmt))
 
+    def mark_nodelet(self):
+        self.__nodelet = True
+
+    def mark_placeholder(self):
+        self.__placeholder = True
 
 class Model:
     """Models the architectural interactions of a node type."""
@@ -229,7 +240,16 @@ class Model:
 
     @staticmethod
     def find(package: str, name: str) -> 'Model':
-        return Model._models[(package, name)]
+        try:
+            return Model._models[(package, name)]
+        except Exception:
+            m = "failed to find model for node type [{}] in package [{}]"
+            m = m.format(name, package)
+            logger.warning(m)
+            ph = Model._models[('PLACEHOLDER', 'PLACEHOLDER')]
+            ph.__package = package
+            ph.__name = name
+            return ph
 
     def __init__(self,
                  package,       # type: str
@@ -254,15 +274,15 @@ def model(package: str, name: str) -> Any:
 class Interpreter:
     @staticmethod
     @contextlib.contextmanager
-    def for_image(image: str) -> Iterator['Interpreter']:
+    def for_image(image: str,
+                  sources: Sequence[str]
+                  ) -> Iterator['Interpreter']:
         """Constructs an interpreter for a given Docker image."""
         rsw = roswire.ROSWire()  # TODO don't maintain multiple instances
-        with rsw.launch(image) as app:
-            yield Interpreter(app.files, app.shell)
-
+        with rsw.launch(image, sources) as app:
     def __init__(self,
-                 files: roswire.proxy.FileProxy,
-                 shell: roswire.proxy.ShellProxy
+                 files: dockerblade.files.FileSystem,
+                 shell: dockerblade.shell.Shell
                  ) -> None:
         self.__files = files
         self.__shell = shell
@@ -282,7 +302,16 @@ class Interpreter:
     def launch(self, fn: str) -> None:
         """Simulates the effects of `roslaunch` using a given launch file."""
         # NOTE this method also supports command-line arguments
-        reader = LaunchFileReader(self.__shell, self.__files)
+        reader = LaunchFileReader(shell=self.__shell,
+                                  files=self.__files)
+
+        # Workaround:
+        # https://answers.ros.org/question/299232/roslaunch-python-arg-substitution-finds-wrong-package-folder-path/
+        # https://github.com/ros/ros_comm/blob/e96c407c64e1c17b0dd2bb85b67f388380527097/tools/roslaunch/src/roslaunch/substitution_args.py#L141L145
+        sed_command = 's#$(find xacro)/xacro #$(find xacro)/xacro.py #g'
+        sed_command = f'sed -i "{sed_command}" {fn}'
+        self.__shell.check_output(sed_command)
+
         config = reader.read(fn)
 
         for key, value in config.params.items():
@@ -349,20 +378,28 @@ class Interpreter:
              ) -> None:
         """Loads a node using the provided instructions.
 
-        Parameters:
-            pkg: the name of the package to which the node belongs.
-            nodetype: the name of the type of node that should be loaded.
-            name: the name that should be assigned to the node.
-            namespace: the namespace into which the node should be loaded.
-            remappings: a dictionary of name remappings that should be applied
-                to this node, where keys correspond to old names and values
-                correspond to new names.
-            args: a string containing command-line arguments to the node.
+        Parameters
+        ----------
+        pkg: str
+            the name of the package to which the node belongs.
+        nodetype: str
+            the name of the type of node that should be loaded.
+        name: str
+            the name that should be assigned to the node.
+        namespace: str
+            the namespace into which the node should be loaded.
+        remappings: Dict[str, str]
+            a dictionary of name remappings that should be applied
+            to this node, where keys correspond to old names and values
+            correspond to new names.
+        args: str
+            a string containing command-line arguments to the node.
 
-        Raises:
-            Exception: if there is no model for the given node type.
+        Raises
+        ------
+        Exception
+            if there is no model for the given node type.
         """
-        # logger.info("loading node: %s (%s)", name, nodetype)
         args = args.strip()
         if nodetype == 'nodelet':
             if args == 'manager':
@@ -384,6 +421,7 @@ class Interpreter:
         except Exception:
             m = "failed to find model for node type [{}] in package [{}]"
             m = m.format(nodetype, pkg)
+            logger.warning(m)
             raise Exception(m)
 
         ctx = NodeContext(name=name,
@@ -395,4 +433,5 @@ class Interpreter:
                           files=self.__files,
                           params=self.__params)
         model.eval(ctx)
+
         self.__nodes.add(ctx.summarize())

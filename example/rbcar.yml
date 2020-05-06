@@ -1,0 +1,6 @@
+image: christimperley/robots:rbcar
+sources:
+- /opt/ros/kinetic/setup.bash
+- /ros_ws/devel/setup.bash 
+launches:
+- /ros_ws/src/rbcar_sim/rbcar_sim_bringup/launch/rbcar_complete.launch

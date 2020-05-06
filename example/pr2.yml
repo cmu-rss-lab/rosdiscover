@@ -1,0 +1,7 @@
+image: pr2
+sources:
+- /opt/ros/kinetic/setup.bash
+- /ros_ws/devel/setup.bash
+launches:
+- /opt/ros/kinetic/share/gazebo_ros/launch/empty_world.launch
+- /ros_ws/src/pr2_simulator/pr2_gazebo/launch/pr2.launch
