@@ -205,23 +205,28 @@ class AcmeGenerator(object):
         component_strs = []
         service_conns={}
         action_conns={}
-
+        attachments_to_topic = {}
         ATTACHMENT="""  attachment {comp}.{port} to {conn}.{role};"""
         SERVICE_ATTACHMENT = """  attachment {qualified_port} to {conn}.{role};"""
         for c in components:
             ports = []
             comp_name = self.to_acme_name(c['name'])
+
             for p in c['pubs']:
+                if p['name'] not in attachments_to_topic.keys():
+                    attachments_to_topic[p['name']] = []
                 pname = self.to_acme_name(p['name']) + "_pub"
                 port = ADVERTISER_PORT.format(port_name=pname, msg_type=p['format'], topic=p['name'])
                 ports.append(port)
-                attachments.append(ATTACHMENT.format(comp=comp_name, port=pname,
+                attachments_to_topic[p['name']].append(ATTACHMENT.format(comp=comp_name, port=pname,
                     conn="%s_conn" %self.to_acme_name(p['name']), role="%s_pub" %comp_name))
             for s in c['subs']:
+                if s['name'] not in attachments_to_topic.keys():
+                    attachments_to_topic[s['name']] = []
                 pname = self.to_acme_name(s['name']) + "_sub"
                 port = SUBSCRIBER_PORT.format(port_name=pname, msg_type=s['format'], topic=s['name'])
                 ports.append(port)
-                attachments.append(ATTACHMENT.format(comp=comp_name, port=pname,
+                attachments_to_topic[s['name']].append(ATTACHMENT.format(comp=comp_name, port=pname,
                     conn="%s_conn" %self.to_acme_name(s['name']), role="%s_sub" %comp_name))
             for s in c['provides']:
                 pname=self.to_acme_name(s['name']) + "_svc"
@@ -268,6 +273,9 @@ class AcmeGenerator(object):
                 cname = self.to_acme_name(topics[t]["details"]['name']) + "_conn"
                 conn = TOPIC_CONNECTOR.format(conn_name=cname, roles="\n".join(roles), msg_type=topics[t]["details"]['format'], topic=topics[t]["details"]['name'])
                 connector_strs.append(conn)
+
+                for a in attachments_to_topic[t]:
+                    attachments.append(a)
 
         for s in service_conns:
             # Only create a connector for services that are connected

@@ -1,4 +1,8 @@
 FROM alpine:3.7
+RUN apk update && \
+    apk fetch openjdk8 && \
+	apk add openjdk8
+
 COPY . /tmp/rosdiscover
 RUN cd /tmp/rosdiscover \
  && apk add --no-cache \
@@ -12,4 +16,5 @@ RUN cd /tmp/rosdiscover \
       linux-headers \
  && pip3 install --no-cache . \
  && rm -rf /tmp/*
+RUN mkdir lib && cd lib && wget http://acme.able.cs.cmu.edu/public/rosdiscover/acme.standalone-ros.jar && cd ..
 ENTRYPOINT ["rosdiscover"]
