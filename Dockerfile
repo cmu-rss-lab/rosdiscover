@@ -1,9 +1,9 @@
 FROM alpine:3.7
-# create a portable executable
-WORKDIR /opt/rosdiscover
+RUN apk update && \
+    apk fetch openjdk8 && \
+	apk add openjdk8
+
 COPY . /tmp/rosdiscover
-RUN mkdir /opt/rosdiscover/lib
-COPY ./lib/acme.standalone-ros.jar /opt/rosdiscover/lib/
 
 RUN cd /tmp/rosdiscover \
  && apk add --no-cache \
@@ -15,7 +15,7 @@ RUN cd /tmp/rosdiscover \
       docker \
       gcc \
       linux-headers \
- && pip3 install --no-cache -r requirements.txt \
  && pip3 install --no-cache . \
  && rm -rf /tmp/*
+RUN mkdir lib && cd lib && wget http://acme.able.cs.cmu.edu/public/rosdiscover/acme.standalone-ros.jar && cd ..
 ENTRYPOINT ["rosdiscover"]

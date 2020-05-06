@@ -18,7 +18,6 @@ from .interpreter import Interpreter, Model
 DESC = 'discovery of ROS architectures'
 
 
-<<<<<<< HEAD
 def _launch(config: Config) -> Interpreter:
     rsw = roswire.ROSWire()
     logger.info(f"reconstructing architecture for image [{config.image}]")
@@ -50,21 +49,18 @@ def generate_acme(args):
     """Generates an Acme description for a given roslaunch command."""
     interpreter = _launch_config(args)
     nodes = [n.to_dict for n in interpreter.nodes]
-    acme_gen = AcmeGenerator(nodes, args.acme)
+    acme_gen = AcmeGenerator(nodes, args.acme, args.jar)
     acme = acme_gen.generate_acme()
-    if args.acme is not None:
-        print("Writing Acme to %s" %args.acme)
-        with open(args.acme,'w') as f:
-            f.write(acme)
-    else:
-        print(acme)
-    if (args.check):
-        if args.acme is None:
-            (results, _) = acme_gen.check_acme_string(acme)
-        else:
-            (results, _) = acme_gen.check_acme_file(args.acme)
-        print(results)
 
+    acme_gen.generate_acme_file(acme)
+
+    if args.acme is None:
+        print(acme)
+        if args.check:
+            acme_gen.check_acme(acme)
+    else:
+        if args.check:
+            acme_gen.check_acme()
 
 def rostopic_list(args):
     # simulates the list command
@@ -108,7 +104,6 @@ def main():
     p = subparsers.add_parser(
         'rostopic',
         help='simulates the output of rostopic for a given configuration.', formatter_class=MultiLineFormatter)
-    
     p.add_argument('config', type=argparse.FileType('r'), help=config_help)
 
     p.set_defaults(func=rostopic_list)
@@ -116,12 +111,16 @@ def main():
     p = subparsers.add_parser(
         'rosservice',
         help='simulates the output of rosservice for a given configuration.', formatter_class=MultiLineFormatter)
-    
     p.add_argument('config', type=argparse.FileType('r'), help=config_help)
     p.set_defaults(func=rosservice_list)
 
     p = subparsers.add_parser('acme', help='generates Acme from a source file', formatter_class=MultiLineFormatter)
     p.add_argument("--acme", type=str, default="generated.acme", help='Output to the named Acme file')
+
+    p.add_argument("--check", "-c", action='store_true')
+    p.add_argument("--jar", type=str, help='Pointer to the Acme jar file', default='lib/acme.standalone-ros.jar')
+
+
     p.add_argument('config', type=argparse.FileType('r'), help=config_help)
     p.set_defaults(func=generate_acme)
 
