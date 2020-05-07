@@ -18,6 +18,7 @@ from .interpreter import Interpreter, Model
 DESC = 'discovery of ROS architectures'
 
 
+<<<<<<< HEAD
 def _launch(config: Config) -> Interpreter:
     rsw = roswire.ROSWire()
     logger.info(f"reconstructing architecture for image [{config.image}]")
@@ -57,6 +58,12 @@ def generate_acme(args):
             f.write(acme)
     else:
         print(acme)
+    if (args.check):
+        if args.acme is None:
+            (results, _) = acme_gen.check_acme_string(acme)
+        else:
+            (results, _) = acme_gen.check_acme_file(args.acme)
+        print(results)
 
 
 def rostopic_list(args):
