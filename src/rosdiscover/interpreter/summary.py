@@ -1,12 +1,13 @@
-__all__ = ['NodeSummary']
+# -*- coding: utf-8 -*-
+__all__ = ('NodeSummary',)
 
 from typing import FrozenSet, Tuple
 
 import attr
 
 
-@attr.s(frozen=True)
-class NodeSummary(object):
+@attr.s(frozen=True, slots=True)
+class NodeSummary:
     name = attr.ib(type=str)
     fullname = attr.ib(type=str)
     namespace = attr.ib(type=str)
