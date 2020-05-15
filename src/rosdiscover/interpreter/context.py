@@ -63,7 +63,7 @@ class NodeContext:
 
     def _apply_remappings(self, name: str) -> str:
         """Applies any appropriate remappings to a fully qualified name."""
-        for remap_from in ordered(self.__remappings):
+        for remap_from in sorted(self.__remappings):
             remap_to = self.__remappings[remap_from]
             if name.startswith(remap_from):
                 name_new = name.replace(remap_from, remap_to, 1)
