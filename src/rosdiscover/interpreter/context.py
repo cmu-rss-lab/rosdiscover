@@ -3,6 +3,7 @@ from typing import Dict, Any, Optional, Tuple, Set
 
 from loguru import logger
 import dockerblade
+import roswire.name as rosname
 
 from .summary import NodeSummary
 from .parameter import ParameterServer
@@ -19,6 +20,9 @@ class NodeContext:
                  params: ParameterServer,
                  files: dockerblade.files.FileSystem,
                  ) -> None:
+        assert rosname.name_is_legal(namespace)
+        namespace = rosname.global_name(namespace)
+
         self.__name = name
         self.__namespace = namespace
         self.__kind = kind
@@ -55,7 +59,7 @@ class NodeContext:
         ns = self.__namespace
         if ns[-1] != '/':
             ns += ' /'
-        return '{}{}'.format(ns, self.__name)
+        return '{ns}{self.__name}'.format(ns, self.__name)
 
     def _remap(self, name: str) -> str:
         if name in self.__remappings:
@@ -85,16 +89,24 @@ class NodeContext:
     def resolve(self, name: str) -> str:
         """Resolves a given name within the context of this node.
 
-        Returns:
+        Returns
+        -------
+        str
             the fully qualified form of a given name.
+
+        References
+        ----------
+        * http://wiki.ros.org/Names
         """
+        # global
         if name[0] == '/':
             return name
+        # private
         elif name[0] == '~':
-            return '{}/{}'.format(self.fullname, name[1:])
-        # FIXME
+            return f'{self.fullname}/{name[1:]}'
+        # relative and base names
         else:
-            return '/{}'.format(name)
+            return rosname.namespace_join(self.__namespace, name)
 
     def provide(self, service: str, fmt: str) -> None:
         """Instructs the node to provide a service."""
