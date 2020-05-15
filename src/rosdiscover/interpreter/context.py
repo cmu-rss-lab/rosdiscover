@@ -59,7 +59,7 @@ class NodeContext:
         ns = self.__namespace
         if ns[-1] != '/':
             ns += ' /'
-        return '{ns}{self.__name}'.format(ns, self.__name)
+        return f'{ns}{self.__name}'
 
     def _remap(self, name: str) -> str:
         if name in self.__remappings:
