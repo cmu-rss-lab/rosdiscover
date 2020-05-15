@@ -61,7 +61,8 @@ class NodeContext:
             ns += ' /'
         return f'{ns}{self.__name}'
 
-    def _remap(self, name: str) -> str:
+    def _apply_remappings(self, name: str) -> str:
+        """Applies any appropriate remappings to a fully qualified name."""
         if name in self.__remappings:
             name_new = self.__remappings[name]
             logger.info("applying remapping from [%s] to [%s]",
@@ -86,18 +87,9 @@ class NodeContext:
                            action_servers=self.__action_servers,
                            action_clients=self.__action_clients)
 
-    def resolve(self, name: str) -> str:
-        """Resolves a given name within the context of this node.
-
-        Returns
-        -------
-        str
-            the fully qualified form of a given name.
-
-        References
-        ----------
-        * http://wiki.ros.org/Names
-        """
+    def _resolve_without_remapping(self, name: str) -> str:
+        """Resolves a given name to a global name, without applying
+        any remappings, within the context of this node."""
         # global
         if name[0] == '/':
             return name
@@ -108,12 +100,26 @@ class NodeContext:
         else:
             return rosname.namespace_join(self.__namespace, name)
 
+    def resolve(self, name: str) -> str:
+        """Resolves a given name within the context of this node.
+
+        Returns
+        -------
+        str
+            The fully qualified form of a given name.
+
+        References
+        ----------
+        * http://wiki.ros.org/Names
+        """
+        name = self._resolve_without_remapping(name)
+        return self._apply_remappings(name)
+
     def provide(self, service: str, fmt: str) -> None:
         """Instructs the node to provide a service."""
         logger.debug(f"node [{self.__name}] provides service [{service}] "
                      f"using format [{fmt}]")
         service_name_full = self.resolve(service)
-        service_name_full = self._remap(service_name_full)
         self.__provides.add((service_name_full, fmt))
 
     def use(self, service: str, fmt: str) -> None:
@@ -121,7 +127,6 @@ class NodeContext:
         logger.debug(f"node [{self.__name}] uses a service [{service}] "
                      f"with format [{fmt}]")
         service_name_full = self.resolve(service)
-        service_name_full = self._remap(service_name_full)
         self.__uses.add((service_name_full, fmt))
 
     def sub(self, topic_name: str, fmt: str) -> None:
@@ -132,7 +137,6 @@ class NodeContext:
             fmt: the message format used by the topic.
         """
         topic_name_full = self.resolve(topic_name)
-        topic_name_full = self._remap(topic_name_full)
         logger.debug(f"node [{self.__name}] subscribes to topic "
                      f"[{topic_name}] with format [{fmt}]")
         self.__subs.add((topic_name_full, fmt))
@@ -145,7 +149,6 @@ class NodeContext:
             fmt: the message format used by the topic.
         """
         topic_name_full = self.resolve(topic_name)
-        topic_name_full = self._remap(topic_name_full)
         logger.debug(f"node [{self.__name}] publishes to topic "
                      f"[{topic_name}] with format [{fmt}]")
         self.__pubs.add((topic_name_full, fmt))
