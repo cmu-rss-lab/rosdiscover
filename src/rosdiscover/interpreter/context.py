@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from typing import Dict, Any, Optional, Tuple, Set
+from typing import Any, Dict, Mapping, Optional, Set, Tuple
 
 from loguru import logger
 import dockerblade
@@ -45,7 +45,7 @@ class NodeContext:
         self.__writes: Set[str] = set()
         self.__placeholder : bool = False
 
-        self.__remappings: Dict[str, str] = {
+        self.__remappings: Mapping[str, str] = {
             self.resolve(x): self.resolve(y)
             for (x, y) in remappings.items()
         }
