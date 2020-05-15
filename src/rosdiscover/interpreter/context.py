@@ -179,11 +179,11 @@ class NodeContext:
         ns = self.resolve(ns)
         self.__action_servers.add((ns, fmt))
 
-        self.sub('{}/goal'.format(ns), '{}Goal'.format(fmt))
-        self.sub('{}/cancel'.format(ns), 'actionlib_msgs/GoalID')
-        self.pub('{}/status'.format(ns), 'actionlib_msgs/GoalStatusArray')
-        self.pub('{}/feedback'.format(ns), '{}Feedback'.format(fmt))
-        self.pub('{}/result'.format(ns), '{}Result'.format(fmt))
+        self.sub(f'{ns}/goal', f'{fmt}Goal')
+        self.sub(f'{ns}/cancel', 'actionlib_msgs/GoalID')
+        self.pub(f'{ns}/status', 'actionlib_msgs/GoalStatusArray')
+        self.pub(f'{ns}/feedback', f'{fmt}Feedback')
+        self.pub(f'{ns}/result', f'{fmt}Result')
 
     def action_client(self, ns: str, fmt: str) -> None:
         """Creates a new action client.
@@ -196,11 +196,11 @@ class NodeContext:
         ns = self.resolve(ns)
         self.__action_clients.add((ns, fmt))
 
-        self.pub('{}/goal'.format(ns), '{}Goal'.format(fmt))
-        self.pub('{}/cancel'.format(ns), 'actionlib_msgs/GoalID')
-        self.sub('{}/status'.format(ns), 'actionlib_msgs/GoalStatusArray')
-        self.sub('{}/feedback'.format(ns), '{}Feedback'.format(fmt))
-        self.sub('{}/result'.format(ns), '{}Result'.format(fmt))
+        self.pub(f'{ns}/goal', f'{fmt}Goal')
+        self.pub(f'{ns}/cancel', 'actionlib_msgs/GoalID')
+        self.sub(f'{ns}/status', 'actionlib_msgs/GoalStatusArray')
+        self.sub(f'{ns}/feedback', f'{fmt}Feedback')
+        self.sub(f'{ns}/result', f'{fmt}Result')
 
     def mark_nodelet(self):
         self.__nodelet = True
