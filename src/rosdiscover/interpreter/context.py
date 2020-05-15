@@ -63,13 +63,13 @@ class NodeContext:
 
     def _apply_remappings(self, name: str) -> str:
         """Applies any appropriate remappings to a fully qualified name."""
-        if name in self.__remappings:
-            name_new = self.__remappings[name]
-            logger.info("applying remapping from [%s] to [%s]",
-                        name, name_new)
-            return name_new
-        else:
-            return name
+        for remap_from in ordered(self.__remappings):
+            remap_to = self.__remappings[remap_from]
+            if name.startswith(remap_from):
+                name_new = name.replace(remap_from, remap_to, 1)
+                logger.info(f"applying remapping from [{name}] to [{name_new}]")
+                name = name_new
+        return name
 
     def summarize(self) -> NodeSummary:
         return NodeSummary(name=self.__name,
