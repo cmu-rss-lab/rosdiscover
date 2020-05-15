@@ -91,7 +91,7 @@ class NodeContext:
         if name[0] == '/':
             return name
         elif name[0] == '~':
-            return '/{}/{}'.format(self.__name, name[1:])
+            return '{}/{}'.format(self.fullname, name[1:])
         # FIXME
         else:
             return '/{}'.format(name)
