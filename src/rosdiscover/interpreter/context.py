@@ -46,7 +46,8 @@ class NodeContext:
         self.__placeholder : bool = False
 
         self.__remappings: Mapping[str, str] = {
-            self.resolve(x): self.resolve(y)
+            self._resolve_without_remapping(x):
+            self._resolve_without_remapping(y)
             for (x, y) in remappings.items()
         }
 
