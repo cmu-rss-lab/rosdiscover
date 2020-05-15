@@ -106,7 +106,7 @@ class NodeContext:
             return f'{self.fullname}/{name[1:]}'
         # relative and base names
         else:
-            return rosname.namespace_join(self.__namespace, name)
+            return f'{self.__namespace}{name}'
 
     def provide(self, service: str, fmt: str) -> None:
         """Instructs the node to provide a service."""
