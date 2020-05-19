@@ -47,9 +47,13 @@ class Model:
         self.__package = package
         self.__name = name
         self.__definition = definition
+        self.__placeholder = False
 
     def eval(self, context: NodeContext) -> None:
         return self.__definition(context)
+
+    def mark_placeholder(self):
+        self.__placeholder = True
 
 
 def model(package: str, name: str) -> Any:
