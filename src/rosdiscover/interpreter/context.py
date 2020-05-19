@@ -44,8 +44,6 @@ class NodeContext:
         # and dynamic is whether the node reacts to updates to the parameter via reconfigure
         self.__reads: Set[Tuple[str, bool]] = set()
         self.__writes: Set[str] = set()
-        self.__placeholder : bool = False
-        self.__placeholder : bool = False
 
         self.__remappings: Mapping[str, str] = {
             self._resolve_without_remapping(x):

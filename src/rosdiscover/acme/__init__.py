@@ -291,8 +291,10 @@ class AcmeGenerator(object):
                                               topic=topics[t]["details"]['name'])
                 connector_strs.append(conn)
 
+
                 for a in attachments_to_topic[t]:
                     attachments.append(a)
+
 
         for s in service_conns:
             # Only create a connector for services that are connected
