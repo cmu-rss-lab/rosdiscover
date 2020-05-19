@@ -35,6 +35,13 @@ NODE_COMPONENT = """   component {comp_name} : ROSNodeCompT = new ROSNodeCompT e
         property name = "{node_name}";
     }};
     """
+NODE_PLACEHOLDER_COMPONENT = """   component {comp_name} : ROSNodeCompT, PlaceholderT = new ROSNodeCompT, PlaceholderT extended with {{
+        {ports}
+        property name = "{node_name}";
+        property placeholder = true;
+    }};
+"""
+
 
 SUBSCRIBER_ROLE = """    role {role_name} : ROSTopicSubscriberRoleT = new ROSTopicSubscriberRoleT;
     """
@@ -260,8 +267,10 @@ class AcmeGenerator(object):
                 port = ACTION_CLIENT_PORT.format(port_name=pname, action_type=a['name'])
                 ports.append(port)
                 self.update_action_conn(action_conns, a['name'], f"{comp_name}.{pname}", False)
-
-            comp = NODE_COMPONENT.format(comp_name=comp_name, ports="\n".join(ports), node_name=c['name'])
+            if c['placeholder']:
+                comp = NODE_PLACEHOLDER_COMPONENT.format(comp_name=comp_name, ports="\n".join(ports), node_name=c['name'])
+            else:
+                comp = NODE_COMPONENT.format(comp_name=comp_name, ports="\n".join(ports), node_name=c['name'])
             component_strs.append(comp)
         acme = acme + "\n".join(component_strs)
 

@@ -36,6 +36,7 @@ class Model:
             ph = Model._models[('PLACEHOLDER', 'PLACEHOLDER')]
             ph.__package = package
             ph.__name = name
+            ph.__placeholder = True
             return ph
 
     def __init__(self,

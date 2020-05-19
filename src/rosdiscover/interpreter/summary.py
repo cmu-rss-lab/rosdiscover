@@ -14,6 +14,7 @@ class NodeSummary:
     kind = attr.ib(type=str)
     package = attr.ib(type=str)
     nodelet = attr.ib(type=bool)
+    placeholder = attr.ib(type=bool)
     pubs = attr.ib(type=FrozenSet[Tuple[str, str]],
                    converter=frozenset)
     subs = attr.ib(type=FrozenSet[Tuple[str, str]],
@@ -52,6 +53,7 @@ class NodeSummary:
                 'kind': str(self.kind),
                 'package': str(self.package),
                 'nodelet': bool(self.nodelet),
+                'placeholder': bool(self.placeholder),
                 'reads': reads,
                 'writes': list(self.writes),
                 'provides': provides,

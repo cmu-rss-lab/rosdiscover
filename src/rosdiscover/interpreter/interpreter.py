@@ -178,5 +178,7 @@ class Interpreter:
                           files=self.__files,
                           params=self.__params)
         model.eval(ctx)
+        if hasattr(model, '__placeholder') and model.__placeholder:
+            model.mark_placeholder()
 
         self.__nodes.add(ctx.summarize())
