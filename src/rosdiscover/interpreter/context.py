@@ -62,6 +62,7 @@ class NodeContext:
             ns += ' /'
         return f'{ns}{self.__name}'
 
+
     def _apply_remappings(self, name: str) -> str:
         """Applies any appropriate remappings to a fully qualified name."""
         for remap_from in sorted(self.__remappings):
@@ -79,7 +80,6 @@ class NodeContext:
                            kind=self.__kind,
                            package=self.__package,
                            nodelet=self.__nodelet,
-                           placeholder=self.__placeholder,
                            reads=self.__reads,
                            writes=self.__writes,
                            pubs=self.__pubs,
@@ -88,6 +88,7 @@ class NodeContext:
                            uses=self.__uses,
                            action_servers=self.__action_servers,
                            action_clients=self.__action_clients)
+
 
     def _resolve_without_remapping(self, name: str) -> str:
         """Resolves a given name to a global name, without applying
@@ -101,6 +102,7 @@ class NodeContext:
         # relative and base names
         else:
             return rosname.namespace_join(self.__namespace, name)
+
 
     def resolve(self, name: str) -> str:
         """Resolves a given name within the context of this node.
@@ -155,27 +157,8 @@ class NodeContext:
                      f"[{topic_name}] with format [{fmt}]")
         self.__pubs.add((topic_name_full, fmt))
 
-    def read(self,
-             param: str,
-             default: Optional[Any] = None,
-             dynamic: bool = False
-             ) -> Optional[Any]:
-        """Obtains the value of a given parameter from the parameter server.
-
-        Parameters
-        ----------
-        param: str
-            The name of the parameter
-        default: Any, optional
-            The default value for the parameter, if it isn't set on the server.
-        dynamic: bool
-            Indicates whether or not the parameter is a dynamic parameter.
-
-        Returns
-        -------
-        Optional[Any]
-            The "current" value of the parameter.
-        """
+    def read(self, param: str, default: Optional[Any] = None, dynamic: Optional[bool] = False) -> None:
+        """Obtains the value of a given parameter from the parameter server."""
         logger.debug(f"node [{self.__name}] reads parameter [{param}]")
         param = self.resolve(param)
         self.__reads.add((param, dynamic))
