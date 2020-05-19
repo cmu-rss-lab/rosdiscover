@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from typing import Dict, Any, Optional, Tuple, Set
+from typing import Any, Dict, Mapping, Optional, Set, Tuple
 
 from loguru import logger
 import dockerblade
@@ -45,8 +45,9 @@ class NodeContext:
         self.__writes: Set[str] = set()
         self.__placeholder : bool = False
 
-        self.__remappings: Dict[str, str] = {
-            self.resolve(x): self.resolve(y)
+        self.__remappings: Mapping[str, str] = {
+            self._resolve_without_remapping(x):
+            self._resolve_without_remapping(y)
             for (x, y) in remappings.items()
         }
 
@@ -61,14 +62,16 @@ class NodeContext:
             ns += ' /'
         return f'{ns}{self.__name}'
 
-    def _remap(self, name: str) -> str:
-        if name in self.__remappings:
-            name_new = self.__remappings[name]
-            logger.info("applying remapping from [%s] to [%s]",
-                        name, name_new)
-            return name_new
-        else:
-            return name
+
+    def _apply_remappings(self, name: str) -> str:
+        """Applies any appropriate remappings to a fully qualified name."""
+        for remap_from in sorted(self.__remappings):
+            remap_to = self.__remappings[remap_from]
+            if name.startswith(remap_from):
+                name_new = name.replace(remap_from, remap_to, 1)
+                logger.info(f"applying remapping from [{name}] to [{name_new}]")
+                name = name_new
+        return name
 
     def summarize(self) -> NodeSummary:
         return NodeSummary(name=self.__name,
@@ -86,18 +89,10 @@ class NodeContext:
                            action_servers=self.__action_servers,
                            action_clients=self.__action_clients)
 
-    def resolve(self, name: str) -> str:
-        """Resolves a given name within the context of this node.
 
-        Returns
-        -------
-        str
-            the fully qualified form of a given name.
-
-        References
-        ----------
-        * http://wiki.ros.org/Names
-        """
+    def _resolve_without_remapping(self, name: str) -> str:
+        """Resolves a given name to a global name, without applying
+        any remappings, within the context of this node."""
         # global
         if name[0] == '/':
             return name
@@ -108,12 +103,27 @@ class NodeContext:
         else:
             return rosname.namespace_join(self.__namespace, name)
 
+
+    def resolve(self, name: str) -> str:
+        """Resolves a given name within the context of this node.
+
+        Returns
+        -------
+        str
+            The fully qualified form of a given name.
+
+        References
+        ----------
+        * http://wiki.ros.org/Names
+        """
+        name = self._resolve_without_remapping(name)
+        return self._apply_remappings(name)
+
     def provide(self, service: str, fmt: str) -> None:
         """Instructs the node to provide a service."""
         logger.debug(f"node [{self.__name}] provides service [{service}] "
                      f"using format [{fmt}]")
         service_name_full = self.resolve(service)
-        service_name_full = self._remap(service_name_full)
         self.__provides.add((service_name_full, fmt))
 
     def use(self, service: str, fmt: str) -> None:
@@ -121,7 +131,6 @@ class NodeContext:
         logger.debug(f"node [{self.__name}] uses a service [{service}] "
                      f"with format [{fmt}]")
         service_name_full = self.resolve(service)
-        service_name_full = self._remap(service_name_full)
         self.__uses.add((service_name_full, fmt))
 
     def sub(self, topic_name: str, fmt: str) -> None:
@@ -132,7 +141,6 @@ class NodeContext:
             fmt: the message format used by the topic.
         """
         topic_name_full = self.resolve(topic_name)
-        topic_name_full = self._remap(topic_name_full)
         logger.debug(f"node [{self.__name}] subscribes to topic "
                      f"[{topic_name}] with format [{fmt}]")
         self.__subs.add((topic_name_full, fmt))
@@ -145,7 +153,6 @@ class NodeContext:
             fmt: the message format used by the topic.
         """
         topic_name_full = self.resolve(topic_name)
-        topic_name_full = self._remap(topic_name_full)
         logger.debug(f"node [{self.__name}] publishes to topic "
                      f"[{topic_name}] with format [{fmt}]")
         self.__pubs.add((topic_name_full, fmt))
