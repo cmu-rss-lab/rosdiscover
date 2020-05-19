@@ -31,6 +31,7 @@ class NodeContext:
         self.__files = files
         self.__args = args
         self.__nodelet: bool = False
+        self.__placeholder: bool = False
         self.__uses: Set[Tuple[str, str]] = set()
         self.__provides: Set[Tuple[str, str]] = set()
         self.__subs: Set[Tuple[str, str]] = set()
@@ -43,6 +44,7 @@ class NodeContext:
         # and dynamic is whether the node reacts to updates to the parameter via reconfigure
         self.__reads: Set[Tuple[str, bool]] = set()
         self.__writes: Set[str] = set()
+        self.__placeholder : bool = False
         self.__placeholder : bool = False
 
         self.__remappings: Mapping[str, str] = {
