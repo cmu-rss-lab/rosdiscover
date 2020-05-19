@@ -62,6 +62,7 @@ class NodeContext:
             ns += ' /'
         return f'{ns}{self.__name}'
 
+
     def _apply_remappings(self, name: str) -> str:
         """Applies any appropriate remappings to a fully qualified name."""
         for remap_from in sorted(self.__remappings):
@@ -88,6 +89,7 @@ class NodeContext:
                            action_servers=self.__action_servers,
                            action_clients=self.__action_clients)
 
+
     def _resolve_without_remapping(self, name: str) -> str:
         """Resolves a given name to a global name, without applying
         any remappings, within the context of this node."""
@@ -100,6 +102,7 @@ class NodeContext:
         # relative and base names
         else:
             return rosname.namespace_join(self.__namespace, name)
+
 
     def resolve(self, name: str) -> str:
         """Resolves a given name within the context of this node.
