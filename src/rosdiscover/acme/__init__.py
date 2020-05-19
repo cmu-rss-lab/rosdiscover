@@ -42,7 +42,6 @@ NODE_PLACEHOLDER_COMPONENT = """   component {comp_name} : ROSNodeCompT, Placeho
     }};
 """
 
-
 SUBSCRIBER_ROLE = """    role {role_name} : ROSTopicSubscriberRoleT = new ROSTopicSubscriberRoleT;
     """
 
@@ -248,7 +247,6 @@ class AcmeGenerator(object):
                 port = PROVIDER_PORT.format(port_name=pname, svc_type=s['format'], service=s['name'])
                 ports.append(port)
                 self.update_service_conn(service_conns, s['name'], f"{comp_name}.{pname}", True)
-                # attach = attach + "  attachment %s.%s to %s.%s;\n" %(comp_name,pname,"%s_conn" %s['name'].replace("/","_"), "%s_prov" %comp_name)
             # Left here for when we do calls
             # for s in c['calls']:
             #     pname=self.to_acme_name(s['name']) + "_call"
@@ -256,7 +254,6 @@ class AcmeGenerator(object):
             #     ports.append(port)
             #     self.update_service_conn(service_conns,s['name'], "%s.%s" %(comp_name, pname), False)
 
-            # attach = attach + "  attachment %s.%s to %s.%s;" %(comp_name,pname, "%s_conn" %s['name'].replace("/","_"), "%s_call" %comp_name)
             for a in c['action-servers']:
                 pname = self.to_acme_name(a['name']) + "_srvr";
                 port = ACTION_SERVER_PORT.format(port_name=pname, action_type=a['name'])
@@ -268,7 +265,8 @@ class AcmeGenerator(object):
                 ports.append(port)
                 self.update_action_conn(action_conns, a['name'], f"{comp_name}.{pname}", False)
             if c['placeholder']:
-                comp = NODE_PLACEHOLDER_COMPONENT.format(comp_name=comp_name, ports="\n".join(ports), node_name=c['name'])
+                comp = NODE_PLACEHOLDER_COMPONENT.format(comp_name=comp_name, ports="\n".join(ports),
+                                                         node_name=c['name'])
             else:
                 comp = NODE_COMPONENT.format(comp_name=comp_name, ports="\n".join(ports), node_name=c['name'])
             component_strs.append(comp)
