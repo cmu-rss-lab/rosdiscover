@@ -49,6 +49,7 @@ def generate_acme(args):
     """Generates an Acme description for a given roslaunch command."""
     interpreter = _launch_config(args)
     nodes = [n.to_dict for n in interpreter.nodes]
+
     acme_gen = AcmeGenerator(nodes, args.acme, args.jar)
     acme = acme_gen.generate_acme()
 
@@ -88,6 +89,7 @@ config_help="""R|A YAML file defining the configuration.
 - indicates stdin.
 %s""" %Config.__doc__
 
+
 def main():
     logger.enable('roswire')
     parser = argparse.ArgumentParser(description=DESC)
@@ -95,7 +97,8 @@ def main():
 
     p = subparsers.add_parser(
         'launch',
-        help='simulates the effects of a roslaunch.', formatter_class=MultiLineFormatter)
+        help='simulates the effects of a roslaunch.',
+        formatter_class=MultiLineFormatter)
     p.add_argument('--output', type=str, help="file to output YAML to")
     p.add_argument('config', type=argparse.FileType('r'), help=config_help)
 
@@ -103,18 +106,23 @@ def main():
 
     p = subparsers.add_parser(
         'rostopic',
-        help='simulates the output of rostopic for a given configuration.', formatter_class=MultiLineFormatter)
+        help='simulates the output of rostopic for a given configuration.',
+        formatter_class=MultiLineFormatter)
+
     p.add_argument('config', type=argparse.FileType('r'), help=config_help)
 
     p.set_defaults(func=rostopic_list)
 
     p = subparsers.add_parser(
         'rosservice',
-        help='simulates the output of rosservice for a given configuration.', formatter_class=MultiLineFormatter)
+        help='simulates the output of rosservice for a given configuration.', 
+        formatter_class=MultiLineFormatter)
     p.add_argument('config', type=argparse.FileType('r'), help=config_help)
     p.set_defaults(func=rosservice_list)
 
-    p = subparsers.add_parser('acme', help='generates Acme from a source file', formatter_class=MultiLineFormatter)
+    p = subparsers.add_parser('acme', 
+                              help='generates Acme from a source file', 
+                              formatter_class=MultiLineFormatter)
     p.add_argument("--acme", type=str, default="generated.acme", help='Output to the named Acme file')
 
     p.add_argument("--check", "-c", action='store_true')

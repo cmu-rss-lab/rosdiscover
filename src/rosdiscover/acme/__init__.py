@@ -98,7 +98,11 @@ ACTION_SERVER_PORT="""    port {port_name}: ActionServerPortT = new ActionServer
 
 class AcmeGenerator(object):
 
-    def __init__(self, nodes, acme_file, jar):    # type: (...) -> None
+
+    def __init__(self, 
+                 nodes, # type: Iterator[NodeSummary]
+                 acme_file, 
+                 jar):    # type: (...) -> None
         self.__nodes = nodes
         self.__acme_file = acme_file
         self.__generate_dangling_connectors = False
@@ -273,8 +277,10 @@ class AcmeGenerator(object):
                 conn = TOPIC_CONNECTOR.format(conn_name=cname, roles="\n".join(roles), msg_type=topics[t]["details"]['format'], topic=topics[t]["details"]['name'])
                 connector_strs.append(conn)
 
+
                 for a in attachments_to_topic[t]:
                     attachments.append(a)
+
 
         for s in service_conns:
             # Only create a connector for services that are connected
