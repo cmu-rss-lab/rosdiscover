@@ -80,6 +80,7 @@ class NodeContext:
                            kind=self.__kind,
                            package=self.__package,
                            nodelet=self.__nodelet,
+                           placeholder=self.__placeholder,
                            reads=self.__reads,
                            writes=self.__writes,
                            pubs=self.__pubs,
