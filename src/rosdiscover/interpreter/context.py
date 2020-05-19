@@ -3,6 +3,7 @@ from typing import Dict, Any, Optional, Tuple, Set
 
 from loguru import logger
 import dockerblade
+import roswire.name as rosname
 
 from .summary import NodeSummary
 from .parameter import ParameterServer
@@ -19,6 +20,9 @@ class NodeContext:
                  params: ParameterServer,
                  files: dockerblade.files.FileSystem,
                  ) -> None:
+        assert rosname.name_is_legal(namespace)
+        namespace = rosname.global_name(namespace)
+
         self.__name = name
         self.__namespace = namespace
         self.__kind = kind
@@ -55,7 +59,7 @@ class NodeContext:
         ns = self.__namespace
         if ns[-1] != '/':
             ns += ' /'
-        return '{}{}'.format(ns, self.__name)
+        return f'{ns}{self.__name}'
 
     def _remap(self, name: str) -> str:
         if name in self.__remappings:
@@ -85,16 +89,24 @@ class NodeContext:
     def resolve(self, name: str) -> str:
         """Resolves a given name within the context of this node.
 
-        Returns:
+        Returns
+        -------
+        str
             the fully qualified form of a given name.
+
+        References
+        ----------
+        * http://wiki.ros.org/Names
         """
+        # global
         if name[0] == '/':
             return name
+        # private
         elif name[0] == '~':
-            return '/{}/{}'.format(self.__name, name[1:])
-        # FIXME
+            return f'{self.fullname}/{name[1:]}'
+        # relative and base names
         else:
-            return '/{}'.format(name)
+            return rosname.namespace_join(self.__namespace, name)
 
     def provide(self, service: str, fmt: str) -> None:
         """Instructs the node to provide a service."""
@@ -167,11 +179,11 @@ class NodeContext:
         ns = self.resolve(ns)
         self.__action_servers.add((ns, fmt))
 
-        self.sub('{}/goal'.format(ns), '{}Goal'.format(fmt))
-        self.sub('{}/cancel'.format(ns), 'actionlib_msgs/GoalID')
-        self.pub('{}/status'.format(ns), 'actionlib_msgs/GoalStatusArray')
-        self.pub('{}/feedback'.format(ns), '{}Feedback'.format(fmt))
-        self.pub('{}/result'.format(ns), '{}Result'.format(fmt))
+        self.sub(f'{ns}/goal', f'{fmt}Goal')
+        self.sub(f'{ns}/cancel', 'actionlib_msgs/GoalID')
+        self.pub(f'{ns}/status', 'actionlib_msgs/GoalStatusArray')
+        self.pub(f'{ns}/feedback', f'{fmt}Feedback')
+        self.pub(f'{ns}/result', f'{fmt}Result')
 
     def action_client(self, ns: str, fmt: str) -> None:
         """Creates a new action client.
@@ -184,11 +196,11 @@ class NodeContext:
         ns = self.resolve(ns)
         self.__action_clients.add((ns, fmt))
 
-        self.pub('{}/goal'.format(ns), '{}Goal'.format(fmt))
-        self.pub('{}/cancel'.format(ns), 'actionlib_msgs/GoalID')
-        self.sub('{}/status'.format(ns), 'actionlib_msgs/GoalStatusArray')
-        self.sub('{}/feedback'.format(ns), '{}Feedback'.format(fmt))
-        self.sub('{}/result'.format(ns), '{}Result'.format(fmt))
+        self.pub(f'{ns}/goal', f'{fmt}Goal')
+        self.pub(f'{ns}/cancel', 'actionlib_msgs/GoalID')
+        self.sub(f'{ns}/status', 'actionlib_msgs/GoalStatusArray')
+        self.sub(f'{ns}/feedback', f'{fmt}Feedback')
+        self.sub(f'{ns}/result', f'{fmt}Result')
 
     def mark_nodelet(self):
         self.__nodelet = True
