@@ -8,7 +8,6 @@ import attr
 
 @attr.s(frozen=True, slots=True, auto_attribs=True)
 class NodeSummary:
-
     name: str
     fullname: str
     namespace: str
