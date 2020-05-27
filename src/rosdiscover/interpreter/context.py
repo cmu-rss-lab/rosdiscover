@@ -158,7 +158,7 @@ class NodeContext:
              param: str,
              default: Optional[Any] = None,
              dynamic: bool = False
-             ) -> None:
+             ) -> Optional[Any]:
         """Obtains the value of a given parameter from the parameter server.
 
         Parameters
@@ -169,6 +169,11 @@ class NodeContext:
             The default value for the parameter, if it isn't set on the server.
         dynamic: bool
             Indicates whether or not the parameter is a dynamic parameter.
+
+        Returns
+        -------
+        Optional[Any]
+            The "current" value of the parameter.
         """
         logger.debug(f"node [{self.__name}] reads parameter [{param}]")
         param = self.resolve(param)
