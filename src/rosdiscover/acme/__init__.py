@@ -216,7 +216,8 @@ class AcmeGenerator:
         system_name = "RobotSystem" if self.__acme_file is None else '_'.join(self.__acme_file.split(".")[:-1])
         # system_name = os.path.basename(os.path.normpath(self.__launch_files)).split('.')[0]
 
-        acme = f"import families/ROSFam.acme;\nsystem {system_name} : ROSFam = new ROSFam extended with {\n"
+        acme = "import families/ROSFam.acme;\nsystem {} : ROSFam = new ROSFam extended with {\n"
+        acme = acme.format(system_name)
         attachments = []
         component_strs = []
         service_conns = {}
