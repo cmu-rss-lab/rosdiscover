@@ -8,12 +8,11 @@ import attr
 
 @attr.s(frozen=True, slots=True, auto_attribs=True)
 class NodeSummary:
-
     name: str
     fullname: str
     namespace: str
     kind: str
-    package:str
+    package: str
     nodelet: bool
     # placeholder indicates whether the node was not really discovered, but
     # was put in place to "complete" the architecture. Placeholder is set
