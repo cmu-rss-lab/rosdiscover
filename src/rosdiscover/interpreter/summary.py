@@ -9,11 +9,11 @@ import attr
 @attr.s(frozen=True, slots=True, auto_attribs=True)
 class NodeSummary:
 
-    name: str,
-    fullname: str,
-    namespace: str,
-    kind: str,
-    package:str, 
+    name: str
+    fullname: str
+    namespace: str
+    kind: str
+    package:str
     nodelet: bool
     # placeholder indicates whether the node was not really discovered, but
     # was put in place to "complete" the architecture. Placeholder is set
@@ -21,9 +21,9 @@ class NodeSummary:
     # because it is not a predefined model, or it's interactions were not
     # discovered otherwise. Typically, placeholders will have no information
     # about topics, services, etc.
-    placeholder: bool,
-    pubs: Collection[Tuple[str, str]],
-    subs = Collection[Tupe[str, str]],
+    placeholder: bool
+    pubs: Collection[Tuple[str, str]]
+    subs: Collection[Tuple[str, str]]
     # The tuple is (name, dynamic) where name is the name of the parameter
     # and dynamic is whether the node reacts to updates to the parameter via reconfigure
     reads: Collection[Tuple[str, bool]]
