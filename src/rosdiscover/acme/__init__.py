@@ -10,15 +10,15 @@ Example:
 """
 from typing import Dict, Iterator, Tuple
 import logging
-import copy
 import os
-import tempfile
 import subprocess
 import json
+import tempfile
 
 from loguru import logger
 
 from ..interpreter import NodeSummary
+
 
 # Constants for Acme generation
 TOPIC_CONNECTOR = """   connector {conn_name} : TopicConnectorT = new TopicConnectorT extended with {{
@@ -42,6 +42,12 @@ NODE_COMPONENT = """   component {comp_name} : ROSNodeCompT = new ROSNodeCompT e
         property name = "{node_name}";
     }};
     """
+NODE_PLACEHOLDER_COMPONENT = """   component {comp_name} : ROSNodeCompT, PlaceholderT = new ROSNodeCompT, PlaceholderT extended with {{
+        {ports}
+        property name = "{node_name}";
+        property placeholder = true;
+    }};
+"""
 
 SUBSCRIBER_ROLE = """    role {role_name} : ROSTopicSubscriberRoleT = new ROSTopicSubscriberRoleT;
     """
@@ -102,6 +108,7 @@ ACTION_SERVER_PORT = """    port {port_name}: ActionServerPortT = new ActionServ
     """
 
 
+
 class AcmeGenerator:
     def __init__(self,
                  nodes, # type: Iterator[NodeSummary]
@@ -125,7 +132,7 @@ class AcmeGenerator:
                 if pub["name"] in topics:
                     topic = topics[pub["name"]]
                 else:
-                    topic = {'details' : pub, "pubs" : [], "subs" : []}
+                    topic = {'details': pub, "pubs": [], "subs": []}
                     topics[pub["name"]] = topic
                 topic["pubs"].append(node()["name"])
             for sub in node()['subs']:
@@ -209,7 +216,8 @@ class AcmeGenerator:
         system_name = "RobotSystem" if self.__acme_file is None else '_'.join(self.__acme_file.split(".")[:-1])
         # system_name = os.path.basename(os.path.normpath(self.__launch_files)).split('.')[0]
 
-        acme = f"import families/ROSFam.acme;\nsystem {system_name} : ROSFam = new ROSFam extended with {\n"
+        acme = "import families/ROSFam.acme;\nsystem {} : ROSFam = new ROSFam extended with {\n"
+        acme = acme.format(system_name)
         attachments = []
         component_strs = []
         service_conns = {}
@@ -224,34 +232,37 @@ class AcmeGenerator:
             for p in c['pubs']:
                 if p['name'] not in attachments_to_topic.keys():
                     attachments_to_topic[p['name']] = []
-                pname = self.to_acme_name(p['name']) + "_pub"
+                pname = f'{self.to_acme_name(p["name"])}_pub'
                 port = ADVERTISER_PORT.format(port_name=pname, msg_type=p['format'], topic=p['name'])
                 ports.append(port)
-                attachments_to_topic[p['name']].append(ATTACHMENT.format(comp=comp_name, port=pname,
-                    conn=f"{self.to_acme_name(p['name'])}_conn",
-                    role=f"{comp_name}_pub"))
+                attachments_to_topic[p['name']].append(
+                    ATTACHMENT.format(comp=comp_name,
+                                      port=pname,
+                                      conn=f"{self.to_acme_name(p['name'])}_conn",
+                                      role=f"{comp_name}_pub"))
             for s in c['subs']:
                 if s['name'] not in attachments_to_topic.keys():
                     attachments_to_topic[s['name']] = []
-                pname = self.to_acme_name(s['name']) + "_sub"
+                pname = f"{self.to_acme_name(s['name'])}_sub"
                 port = SUBSCRIBER_PORT.format(port_name=pname, msg_type=s['format'], topic=s['name'])
                 ports.append(port)
-                attachments_to_topic[s['name']].append(ATTACHMENT.format(comp=comp_name, port=pname,
-                    conn=f"{self.to_acme_name(s['name'])}_conn",
-                    role=f"{comp_name}_sub"))
+                attachments_to_topic[s['name']].append(
+                    ATTACHMENT.format(comp=comp_name,
+                                      port=pname,
+                                      conn=f"{self.to_acme_name(s['name'])}_conn",
+                                      role=f"{comp_name}_sub"))
             for s in c['provides']:
-                pname = self.to_acme_name(s['name']) + "_svc"
+                pname = f"{self.to_acme_name(s['name'])}_svc"
                 port = PROVIDER_PORT.format(port_name=pname, svc_type=s['format'], service=s['name'])
                 ports.append(port)
                 self.update_service_conn(service_conns, s['name'], f"{comp_name}.{pname}", True)
-                #attach = attach + "  attachment %s.%s to %s.%s;\n" %(comp_name,pname,"%s_conn" %s['name'].replace("/","_"), "%s_prov" %comp_name)
+            # Left here for when we do calls
             # for s in c['calls']:
             #     pname=self.to_acme_name(s['name']) + "_call"
             #     port = REQUIRER_PORT.format(port_name=pname, svc_type=s['format'], service=s['name'])
             #     ports.append(port)
             #     self.update_service_conn(service_conns,s['name'], "%s.%s" %(comp_name, pname), False)
 
-                #attach = attach + "  attachment %s.%s to %s.%s;" %(comp_name,pname, "%s_conn" %s['name'].replace("/","_"), "%s_call" %comp_name)
             for a in c['action-servers']:
                 pname = self.to_acme_name(a['name']) + "_srvr";
                 port = ACTION_SERVER_PORT.format(port_name=pname,
@@ -291,7 +302,9 @@ class AcmeGenerator:
                     role = SUBSCRIBER_ROLE.format(role_name=rname)
                     roles.append(role)
                 cname = self.to_acme_name(topics[t]["details"]['name']) + "_conn"
-                conn = TOPIC_CONNECTOR.format(conn_name=cname, roles="\n".join(roles), msg_type=topics[t]["details"]['format'], topic=topics[t]["details"]['name'])
+                conn = TOPIC_CONNECTOR.format(conn_name=cname, roles="\n".join(roles),
+                                              msg_type=topics[t]["details"]['format'],
+                                              topic=topics[t]["details"]['name'])
                 connector_strs.append(conn)
 
                 for a in attachments_to_topic[t]:
@@ -299,14 +312,15 @@ class AcmeGenerator:
 
         for s in service_conns:
             # Only create a connector for services that are connected
-            if self.__generate_dangling_connectors or (len(service_conns[s]['providers']) != 0 and len(service_conns[s]['callers']) != 0):
+            if self.__generate_dangling_connectors or (
+                    len(service_conns[s]['providers']) != 0 and len(service_conns[s]['callers']) != 0):
                 roles = []
-                cname = f"{self.to_acme_name(s)_conn"
+                cname = f"{self.to_acme_name(s)}_conn"
                 for p in service_conns[s]['providers']:
                     rname = self.to_acme_name(p)
                     role = PROVIDER_ROLE.format(role_name=rname)
                     roles.append(role)
-                    attachments.append(SERVICE_ATTACHMENT.format(qualitifed_port=p, conn=cname,role=rname))
+                    attachments.append(SERVICE_ATTACHMENT.format(qualitifed_port=p, conn=cname, role=rname))
                 for p in service_conns[s]['callers']:
                     rname = self.to_acme_name(p)
                     role = CLIENT_ROLE.format(role_name=rname)
@@ -318,28 +332,29 @@ class AcmeGenerator:
 
         for a in action_conns:
             # only create a connector for actions that are connected
-            if self.__generate_dangling_connectors or (len(action_conns[a]['servers']) != 0 and len(action_conns[a]['clients']) != 0):
+            if self.__generate_dangling_connectors or (
+                    len(action_conns[a]['servers']) != 0 and len(action_conns[a]['clients']) != 0):
                 roles = []
-                cname = f"{self.to_acme_name(a)_conn"
+                cname = f"{self.to_acme_name(a)}_conn"
                 for c in action_conns[a]['clients']:
                     rname = self.to_acme_name(c)
                     role = ACTION_CLIENT_ROLE.format(role_name=rname)
                     roles.append(role)
-                    attachments.append(SERVICE_ATTACHMENT.format(qualified_port=c,conn=cname,role=rname))
+                    attachments.append(SERVICE_ATTACHMENT.format(qualified_port=c, conn=cname, role=rname))
                 for s in action_conns[s]['servers']:
                     rname = self.to_acme_name(s)
                     role = ACTION_SERVER_ROLE.format(role_name=rname)
                     roles.append(role)
-                    attachments.append(SERVICE_ATTACHMENT.format(qualified_port=c,conn=cname,role=rname))
+                    attachments.append(SERVICE_ATTACHMENT.format(qualified_port=c, conn=cname, role=rname))
                 connector_strs.append(ACTION_CONNECTOR.format(conn_name=cname, roles="\n".join(roles)))
         acme = acme + "\n".join(connector_strs)
         acme = acme + "\n".join(attachments) + "}"
         self.generate_acme_file(acme)
         return acme
 
-    def check_acme_file(self,filename):
-        process = Popen(['java', '-jar', 'lib/acme.standalone-ros.jar', filename])
-        (output,err) = process.communicate()
+    def check_acme_file(self, filename):
+        process = subprocess.Popen(['java', '-jar', 'lib/acme.standalone-ros.jar', filename])
+        (output, err) = process.communicate()
         exit_code = process.wait()
         return output, err
 
@@ -358,14 +373,6 @@ class AcmeGenerator:
             with open(self.__acme_file, 'w') as f:
                 f.write(acme)
 
-    def check_acme(self, acme):
-        (_, name) = tempfile.mkstemp(suffix='.acme')
-        logger.debug(f"Writing Acme to {name}")
-        with open(name, 'w') as f:
-            f.write(acme)
-        self._check_acme(name)
-        os.remove(name)
-
     def check_acme(self):
         self._check_acme(self.__acme_file)
 
@@ -373,6 +380,7 @@ class AcmeGenerator:
         (_, jf) = tempfile.mkstemp(suffix=".json")
         try:
             logger.debug("Running Acme checker")
+            print("Checking architecture...")
             run = subprocess.run(["java", "-jar", self.__acme_jar, "-j", jf, __acme_file], capture_output=True)
             if run.returncode == 0:
                 logger.debug("Checking ran successfully")
