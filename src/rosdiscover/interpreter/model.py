@@ -11,6 +11,7 @@ from .context import NodeContext
 class Model:
     """Models the architectural interactions of a node type."""
     _models: Dict[Tuple[str, str], 'Model'] = {}
+    __placeholder: bool = False
 
     @staticmethod
     def register(package: str,
