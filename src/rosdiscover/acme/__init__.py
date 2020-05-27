@@ -1,6 +1,6 @@
 """
 This module is used to generate an Acme description from a set of nodes parsed
-from aa launch file. 
+from a launch file.
 
 The main class within this module is :clas:`AcmeGenerator`
 """
@@ -11,9 +11,7 @@ import tempfile
 import subprocess
 import json
 
-
-logger = logging.getLogger(__name__) # type: logging.Logger
-logger.setLevel(logging.DEBUG)
+from loguru import logger
 
 # Constants for Acme generation
 TOPIC_CONNECTOR="""   connector {conn_name} : TopicConnectorT = new TopicConnectorT extended with {{
