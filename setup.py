@@ -7,13 +7,7 @@ path = os.path.join(os.path.dirname(__file__), 'src/rosdiscover/version.py')
 with open(path, 'r') as f:
     exec(f.read())
 
-
 setup(
     version=__version__,
-    include_package_data=True,
-    entry_points = {
-        'console_scripts': [
-            'rosdiscover = rosdiscover.cli:main',
-        ]
-    }
+    include_package_data=True
 )
