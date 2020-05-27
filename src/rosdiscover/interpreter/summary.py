@@ -12,7 +12,7 @@ class NodeSummary:
     fullname: str
     namespace: str
     kind: str
-    package:str
+    package: str
     nodelet: bool
     # placeholder indicates whether the node was not really discovered, but
     # was put in place to "complete" the architecture. Placeholder is set
@@ -43,17 +43,17 @@ class NodeSummary:
         object.__setattr__(self, 'action_clients', frozenset(self.action_clients))
 
     def to_dict(self) -> Dict[str, Any]:
-        pubs = [{'name': str(n), 'format': str(f)} for (n, f) in self.pubs]
-        subs = [{'name': str(n), 'format': str(f)} for (n, f) in self.subs]
+        pubs = [{'name': n, 'format': f} for (n, f) in self.pubs]
+        subs = [{'name': n, 'format': f} for (n, f) in self.subs]
         provides = \
-            [{'name': str(n), 'format': str(f)} for (n, f) in self.provides]
+            [{'name': n, 'format': f} for (n, f) in self.provides]
         uses = \
-            [{'name': str(n), 'format': str(f)} for (n, f) in self.uses]
-        action_servers = [{'name': str(n), 'format': str(f)}
+            [{'name': n, 'format': f} for (n, f) in self.uses]
+        action_servers = [{'name': n, 'format': f}
                           for (n, f) in self.action_servers]
-        action_clients = [{'name': str(n), 'format': str(f)}
+        action_clients = [{'name': n, 'format': f}
                           for (n, f) in self.action_clients]
-        reads = [{'name' : n, 'dynamic' : d } for (n, d) in self.reads]
+        reads = [{'name': n, 'dynamic': d} for (n, d) in self.reads]
         return {'name': self.name,
                 'fullname': self.fullname,
                 'namespace': self.namespace,
