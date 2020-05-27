@@ -1,12 +1,9 @@
+# -*- coding: utf-8 -*-
 """
 This module is used to generate an Acme description from a set of nodes parsed
 from a launch file.
 
 The main class provided by this module is :class:`AcmeGenerator`
-
-Example:
-
-    rosdiscover acme /ros_ws/src/turtlebot_simulator/turtlebot_stage/launch/turtlebot_in_stage.launch --workspace /ros_ws --acme generated.acme
 """
 from typing import Dict, Iterator, Tuple
 import logging
