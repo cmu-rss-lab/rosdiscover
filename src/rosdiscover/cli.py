@@ -2,9 +2,7 @@
 """
 Provides a simple command-line interface.
 """
-from typing import Any, Mapping, Sequence
 import argparse
-import os
 
 from loguru import logger
 import roswire
@@ -19,7 +17,6 @@ DESC = 'discovery of ROS architectures'
 
 
 def _launch(config: Config) -> Interpreter:
-    rsw = roswire.ROSWire()
     logger.info(f"reconstructing architecture for image [{config.image}]")
     # FIXME passing interpreter outside of the context is very weird/bad
     with Interpreter.for_image(config.image, config.sources) as interpreter:
@@ -63,6 +60,7 @@ def generate_acme(args):
         if args.check:
             acme_gen.check_acme()
 
+
 def rostopic_list(args):
     # simulates the list command
     interpreter = _launch_config(args)
@@ -78,6 +76,7 @@ def rosservice_list(args):
     for node in interpreter.nodes:
         services |= set(s for (s, _) in node.provides)
     print('\n'.join(sorted(services)))
+
 
 class MultiLineFormatter(argparse.HelpFormatter):
     def _split_lines(self, text, width):

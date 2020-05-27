@@ -1,47 +1,49 @@
 # -*- coding: utf-8 -*-
 __all__ = ('NodeSummary',)
 
-from typing import FrozenSet, Tuple
+from typing import Any, Collection, Dict, Tuple
 
 import attr
 
 
-@attr.s(frozen=True, slots=True)
+@attr.s(frozen=True, slots=True, auto_attribs=True)
 class NodeSummary:
-    name = attr.ib(type=str)
-    fullname = attr.ib(type=str)
-    namespace = attr.ib(type=str)
-    kind = attr.ib(type=str)
-    package = attr.ib(type=str)
-    nodelet = attr.ib(type=bool)
+
+    name: str,
+    fullname: str,
+    namespace: str,
+    kind: str,
+    package:str, 
+    nodelet: bool
     # placeholder indicates whether the node was not really discovered, but
     # was put in place to "complete" the architecture. Placeholder is set
     # if the component template could not be found in the library, either
     # because it is not a predefined model, or it's interactions were not
     # discovered otherwise. Typically, placeholders will have no information
     # about topics, services, etc.
-    placeholder = attr.ib(type=bool)
-    pubs = attr.ib(type=FrozenSet[Tuple[str, str]],
-                   converter=frozenset)
-    subs = attr.ib(type=FrozenSet[Tuple[str, str]],
-                   converter=frozenset)
+    placeholder: bool,
+    pubs: Collection[Tuple[str, str]],
+    subs = Collection[Tupe[str, str]],
     # The tuple is (name, dynamic) where name is the name of the parameter
     # and dynamic is whether the node reacts to updates to the parameter via reconfigure
-    reads = attr.ib(type=FrozenSet[Tuple[str, bool]],
-                    converter=frozenset)
-    writes = attr.ib(type=FrozenSet[str],
-                    converter=frozenset)
-    uses = attr.ib(type=FrozenSet[Tuple[str, str]],
-                   converter=frozenset)
-    provides = attr.ib(type=FrozenSet[Tuple[str, str]],
-                       converter=frozenset)
-    action_servers = attr.ib(type=FrozenSet[Tuple[str, str]],
-                             converter=frozenset)
-    action_clients = attr.ib(type=FrozenSet[Tuple[str, str]],
-                             converter=frozenset)
+    reads: Collection[Tuple[str, bool]]
+    writes: Collection[str]
+    uses: Collection[Tuple[str, str]]
+    provides: Collection[Tuple[str, str]]
+    action_servers: Collection[Tuple[str, str]]
+    action_clients: Collection[Tuple[str, str]]
 
-    def to_dict(self):
-        # type: () -> Dict[str, Any]
+    def __attrs_post_init__(self) -> None:
+        object.__setattr__(self, 'pubs', frozenset(self.pubs))
+        object.__setattr__(self, 'subs', frozenset(self.subs))
+        object.__setattr__(self, 'reads', frozenset(self.reads))
+        object.__setattr__(self, 'writes', frozenset(self.writes))
+        object.__setattr__(self, 'uses', frozenset(self.uses))
+        object.__setattr__(self, 'provides', frozenset(self.provides))
+        object.__setattr__(self, 'action_servers', frozenset(self.action_servers))
+        object.__setattr__(self, 'action_clients', frozenset(self.action_clients))
+
+    def to_dict(self) -> Dict[str, Any]:
         pubs = [{'name': str(n), 'format': str(f)} for (n, f) in self.pubs]
         subs = [{'name': str(n), 'format': str(f)} for (n, f) in self.subs]
         provides = \
@@ -53,11 +55,11 @@ class NodeSummary:
         action_clients = [{'name': str(n), 'format': str(f)}
                           for (n, f) in self.action_clients]
         reads = [{'name' : n, 'dynamic' : d } for (n, d) in self.reads]
-        return {'name': str(self.name),
-                'fullname': str(self.fullname),
-                'namespace': str(self.namespace),
-                'kind': str(self.kind),
-                'package': str(self.package),
+        return {'name': self.name,
+                'fullname': self.fullname,
+                'namespace': self.namespace,
+                'kind': self.kind,
+                'package': self.package,
                 'nodelet': self.nodelet,
                 'placeholder': self.placeholder,
                 'reads': reads,

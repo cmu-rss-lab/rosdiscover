@@ -1,7 +1,7 @@
+# -*- coding: utf-8 -*-
 from ..interpreter import model
 
 IMAGE_TOPIC_TYPE = 'sensor_msgs/Image'
-
 IMAGE_PROC_PKG = 'image_proc'
 
 
@@ -15,6 +15,7 @@ def debayer(c):
 
     c.read('~debayer', 0)
 
+
 @model(IMAGE_PROC_PKG, 'rectify')
 def rectify(c):
     c.mark_nodelet()
@@ -26,6 +27,7 @@ def rectify(c):
 
     c.read('~queue_size', 5)
     c.read('~interpolation', 1)
+
 
 @model(IMAGE_PROC_PKG, 'crop_decimate')
 def crop_decimate(c):
@@ -45,6 +47,7 @@ def crop_decimate(c):
     c.read('~width', 0, True)
     c.read('~height', 0, True)
     c.read('~interpolation', 0, True)
+
 
 @model(IMAGE_PROC_PKG, 'resize')
 def resize(c):

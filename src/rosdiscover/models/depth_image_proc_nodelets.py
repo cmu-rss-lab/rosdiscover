@@ -1,12 +1,11 @@
+# -*- coding: utf-8 -*-
 from ..interpreter import model
 
 POINTCLOUD2 = 'sensor_msgs/PointCloud2'
-
 MSGS_CAMERA_INFO = 'sensor_msgs/CameraInfo'
-
 IMAGE_TOPIC_TYPE = 'sensor_msgs/Image'
-
 DEPTH_IMAGE_PROC_PKG = 'depth_image_proc'
+
 
 @model(DEPTH_IMAGE_PROC_PKG, 'convert_metric')
 def convert_metric(c):
@@ -14,6 +13,7 @@ def convert_metric(c):
 
     c.sub('image_raw', IMAGE_TOPIC_TYPE)
     c.pub('image', IMAGE_TOPIC_TYPE)
+
 
 @model(DEPTH_IMAGE_PROC_PKG, 'disparity')
 def disparity(c):
@@ -27,6 +27,7 @@ def disparity(c):
     c.read('delta_d', 0.125)
     c.read('queue_size', 5)
 
+
 @model(DEPTH_IMAGE_PROC_PKG, 'point_cloud_xyz')
 def point_cloud_xyz(c):
     c.mark_nodelet()
@@ -37,6 +38,7 @@ def point_cloud_xyz(c):
     c.pub('points', POINTCLOUD2)
 
     c.read('queue_size', 5)
+
 
 @model(DEPTH_IMAGE_PROC_PKG, 'point_cloud_xyzrgb')
 def point_cloud_xyzrgb(c):
@@ -49,6 +51,7 @@ def point_cloud_xyzrgb(c):
     c.pub('depth_registered/points', POINTCLOUD2)
 
     c.read('queue_size', 5)
+
 
 @model(DEPTH_IMAGE_PROC_PKG, 'register')
 def register(c):

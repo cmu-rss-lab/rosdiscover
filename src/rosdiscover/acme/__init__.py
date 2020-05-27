@@ -1,17 +1,24 @@
 """
 This module is used to generate an Acme description from a set of nodes parsed
-from aa launch file. 
+from a launch file.
 
-The main class within this module is :clas:`AcmeGenerator`
+The main class provided by this module is :class:`AcmeGenerator`
+
+Example:
+
+    rosdiscover acme /ros_ws/src/turtlebot_simulator/turtlebot_stage/launch/turtlebot_in_stage.launch --workspace /ros_ws --acme generated.acme
 """
-import json
+from typing import Dict, Iterator, Tuple
 import logging
 import os
 import subprocess
+import json
 import tempfile
 
-logger = logging.getLogger(__name__)  # type: logging.Logger
-logger.setLevel(logging.DEBUG)
+from loguru import logger
+
+from ..interpreter import NodeSummary
+
 
 # Constants for Acme generation
 TOPIC_CONNECTOR = """   connector {conn_name} : TopicConnectorT = new TopicConnectorT extended with {{
@@ -101,12 +108,12 @@ ACTION_SERVER_PORT = """    port {port_name}: ActionServerPortT = new ActionServ
     """
 
 
-class AcmeGenerator(object):
 
+class AcmeGenerator:
     def __init__(self,
-                 nodes,  # type: Iterator[NodeSummary]
+                 nodes, # type: Iterator[NodeSummary]
                  acme_file,
-                 jar):  # type: (...) -> None
+                 jar) -> None:
         self.__nodes = nodes
         self.__acme_file = acme_file
         self.__generate_dangling_connectors = False
@@ -341,9 +348,9 @@ class AcmeGenerator(object):
         exit_code = process.wait()
         return output, err
 
-    def check_acme_string(self, acme):
-        (f, filename) = tempfile.mkstemp()
-        # filename = f.name
+
+    def check_acme_string(self,acme):
+        f, filename = tempfile.mkstemp()
         try:
             f.write(acme)
             f.close()
@@ -395,8 +402,3 @@ class AcmeGenerator(object):
                 logger.error(run.stderr)
         finally:
             os.remove(jf)
-
-
-"""
-rosdiscover acme /ros_ws/src/turtlebot_simulator/turtlebot_stage/launch/turtlebot_in_stage.launch --workspace /ros_ws --acme generated.acme
-"""
