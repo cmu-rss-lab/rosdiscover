@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 __all__ = ('NodeSummary',)
 
-from typing import Any, Dict, FrozenSet, Tuple
+from typing import Any, Collection, Dict, Tuple
 
 import attr
 
@@ -14,16 +14,26 @@ class NodeSummary:
     kind: str
     package: str
     nodelet: bool
-    pubs: FrozenSet[Tuple[str, str]] = attr.ib(converter=frozenset)
-    subs: FrozenSet[Tuple[str, str]]  = attr.ib(converter=frozenset)
+    pubs: Collection[Tuple[str, str]]
+    subs: Collection[Tuple[str, str]]
     # The tuple is (name, dynamic) where name is the name of the parameter
     # and dynamic is whether the node reacts to updates to the parameter via reconfigure
-    reads: FrozenSet[Tuple[str, bool]] = attr.ib(converter=frozenset)
-    writes: FrozenSet[str] = attr.ib(converter=frozenset)
-    uses: FrozenSet[Tuple[str, str]] = attr.ib(converter=frozenset)
-    provides: FrozenSet[Tuple[str, str]] = attr.ib(converter=frozenset)
-    action_servers: FrozenSet[Tuple[str, str]] = attr.ib(converter=frozenset)
-    action_clients: FrozenSet[Tuple[str, str]] = attr.ib(converter=frozenset)
+    reads: Collection[Tuple[str, bool]]
+    writes: Collection[str]
+    uses: Collection[Tuple[str, str]]
+    provides: Collection[Tuple[str, str]]
+    action_servers: Collection[Tuple[str, str]]
+    action_clients: Collection[Tuple[str, str]]
+
+    def __attrs_post_init__(self) -> None:
+        object.__setattr__(self, 'pubs', frozenset(self.pubs))
+        object.__setattr__(self, 'subs', frozenset(self.subs))
+        object.__setattr__(self, 'reads', frozenset(self.reads))
+        object.__setattr__(self, 'writes', frozenset(self.writes))
+        object.__setattr__(self, 'uses', frozenset(self.uses))
+        object.__setattr__(self, 'provides', frozenset(self.provides))
+        object.__setattr__(self, 'action_servers', frozenset(self.action_servers))
+        object.__setattr__(self, 'action_clients', frozenset(self.action_clients))
 
     def to_dict(self) -> Dict[str, Any]:
         pubs = [{'name': str(n), 'format': str(f)} for (n, f) in self.pubs]
