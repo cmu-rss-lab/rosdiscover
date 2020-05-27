@@ -213,7 +213,6 @@ class AcmeGenerator:
         system_name = "RobotSystem" if self.__acme_file is None else '_'.join(self.__acme_file.split(".")[:-1])
         # system_name = os.path.basename(os.path.normpath(self.__launch_files)).split('.')[0]
 
-        acme = "import families/ROSFam.acme;\nsystem {} : ROSFam = new ROSFam extended with {\n"
         acme = acme.format(system_name)
         attachments = []
         component_strs = []
@@ -354,6 +353,7 @@ class AcmeGenerator:
         (output, err) = process.communicate()
         exit_code = process.wait()
         return output, err
+
 
     def check_acme_string(self,acme):
         f, filename = tempfile.mkstemp()
