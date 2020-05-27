@@ -14,6 +14,12 @@ class NodeSummary:
     kind = attr.ib(type=str)
     package = attr.ib(type=str)
     nodelet = attr.ib(type=bool)
+    # placeholder indicates whether the node was not really discovered, but
+    # was put in place to "complete" the architecture. Placeholder is set
+    # if the component template could not be found in the library, either
+    # because it is not a predefined model, or it's interactions were not
+    # discovered otherwise. Typically, placeholders will have no information
+    # about topics, services, etc.
     placeholder = attr.ib(type=bool)
     pubs = attr.ib(type=FrozenSet[Tuple[str, str]],
                    converter=frozenset)
@@ -52,8 +58,8 @@ class NodeSummary:
                 'namespace': str(self.namespace),
                 'kind': str(self.kind),
                 'package': str(self.package),
-                'nodelet': bool(self.nodelet),
-                'placeholder': bool(self.placeholder),
+                'nodelet': self.nodelet,
+                'placeholder': self.placeholder,
                 'reads': reads,
                 'writes': list(self.writes),
                 'provides': provides,
