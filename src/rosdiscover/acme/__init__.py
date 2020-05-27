@@ -319,7 +319,7 @@ class AcmeGenerator:
                 for p in service_conns[s]['callers']:
                     rname = AcmeGenerator.to_acme_name(p)
                     role = CLIENT_ROLE.format(role_name=rname)
-                    roles = f"{roles}{role}\n"
+                    roles = roles.append(f"{role}\n")
                     attachments.append(SERVICE_ATTACHMENT.format(qualitifed_port=p,
                                                                  conn=cname,
                                                                  role=rname))
@@ -381,7 +381,7 @@ class AcmeGenerator:
             run = subprocess.run(["java", "-jar", self.__acme_jar, "-j", jf, acme_file], capture_output=True)
             if run.returncode == 0:
                 logger.debug("Checking ran successfully")
-                logger.info(run.stdout)
+                logger.debug(run.stdout)
                 with open(jf, 'r') as j:
                     checks = json.load(j)
                 if len(checks["errors"]) == 0:
