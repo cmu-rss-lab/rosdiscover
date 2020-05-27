@@ -14,6 +14,9 @@ from .config import Config
 from .interpreter import Interpreter, Model
 
 DESC = 'discovery of ROS architectures'
+CONFIG_HELP = """R|A YAML file defining the configuration.
+- indicates stdin.
+{Config.__doc__}"""
 
 
 def _launch(config: Config) -> Interpreter:
@@ -84,11 +87,6 @@ class MultiLineFormatter(argparse.HelpFormatter):
             return text[2:].splitlines()
         return argparse.HelpFormatter._split_lines(self, text, width)
 
-config_help="""R|A YAML file defining the configuration.
-- indicates stdin.
-%s""" %Config.__doc__
-
-
 def main():
     logger.enable('roswire')
     parser = argparse.ArgumentParser(description=DESC)
@@ -99,7 +97,7 @@ def main():
         help='simulates the effects of a roslaunch.',
         formatter_class=MultiLineFormatter)
     p.add_argument('--output', type=str, help="file to output YAML to")
-    p.add_argument('config', type=argparse.FileType('r'), help=config_help)
+    p.add_argument('config', type=argparse.FileType('r'), help=CONFIG_HELP)
 
     p.set_defaults(func=launch)
 
@@ -108,19 +106,19 @@ def main():
         help='simulates the output of rostopic for a given configuration.',
         formatter_class=MultiLineFormatter)
 
-    p.add_argument('config', type=argparse.FileType('r'), help=config_help)
+    p.add_argument('config', type=argparse.FileType('r'), help=CONFIG_HELP)
 
     p.set_defaults(func=rostopic_list)
 
     p = subparsers.add_parser(
         'rosservice',
-        help='simulates the output of rosservice for a given configuration.', 
+        help='simulates the output of rosservice for a given configuration.',
         formatter_class=MultiLineFormatter)
-    p.add_argument('config', type=argparse.FileType('r'), help=config_help)
+    p.add_argument('config', type=argparse.FileType('r'), help=CONFIG_HELP)
     p.set_defaults(func=rosservice_list)
 
-    p = subparsers.add_parser('acme', 
-                              help='generates Acme from a source file', 
+    p = subparsers.add_parser('acme',
+                              help='generates Acme from a source file',
                               formatter_class=MultiLineFormatter)
     p.add_argument("--acme", type=str, default="generated.acme", help='Output to the named Acme file')
 
@@ -128,7 +126,7 @@ def main():
     p.add_argument("--jar", type=str, help='Pointer to the Acme jar file', default='lib/acme.standalone-ros.jar')
 
 
-    p.add_argument('config', type=argparse.FileType('r'), help=config_help)
+    p.add_argument('config', type=argparse.FileType('r'), help=CONFIG_HELP)
     p.set_defaults(func=generate_acme)
 
     args = parser.parse_args()
