@@ -18,6 +18,8 @@ import json
 
 from loguru import logger
 
+from ..interpreter import NodeSummary
+
 # Constants for Acme generation
 TOPIC_CONNECTOR="""   connector {conn_name} : TopicConnectorT = new TopicConnectorT extended with {{
     {roles}
