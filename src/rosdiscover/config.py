@@ -73,5 +73,5 @@ class Config:
     def __attrs_post_init__(self) -> None:
         object.__setattr__(self, 'sources', tuple(self.sources))
         object.__setattr__(self, 'launches', tuple(self.launches))
-        environment = MappingProxyType(self.environment.copy())
+        environment = MappingProxyType(dict(self.environment))
         object.__setattr__(self, 'environment', environment)
