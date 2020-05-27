@@ -364,14 +364,6 @@ class AcmeGenerator:
             with open(self.__acme_file, 'w') as f:
                 f.write(acme)
 
-    def check_acme(self, acme):
-        (_, name) = tempfile.mkstemp(suffix='.acme')
-        logger.debug(f"Writing Acme to {name}")
-        with open(name, 'w') as f:
-            f.write(acme)
-        self._check_acme(name)
-        os.remove(name)
-
     def check_acme(self):
         self._check_acme(self.__acme_file)
 
