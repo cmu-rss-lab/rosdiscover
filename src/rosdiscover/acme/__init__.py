@@ -3,7 +3,12 @@ This module is used to generate an Acme description from a set of nodes parsed
 from a launch file.
 
 The main class provided by this module is :class:`AcmeGenerator`
+
+Example:
+
+    rosdiscover acme /ros_ws/src/turtlebot_simulator/turtlebot_stage/launch/turtlebot_in_stage.launch --workspace /ros_ws --acme generated.acme
 """
+from typing import Array, Dict, Iterator, Tuple
 import logging
 import copy
 import os
@@ -94,13 +99,12 @@ ACTION_SERVER_PORT="""    port {port_name}: ActionServerPortT = new ActionServer
     }};
     """
 
-class AcmeGenerator(object):
 
-
-    def __init__(self, 
+class AcmeGenerator:
+    def __init__(self,
                  nodes, # type: Iterator[NodeSummary]
-                 acme_file, 
-                 jar):    # type: (...) -> None
+                 acme_file,
+                 jar) -> None:
         self.__nodes = nodes
         self.__acme_file = acme_file
         self.__generate_dangling_connectors = False
@@ -324,15 +328,13 @@ class AcmeGenerator(object):
         return output, err
 
     def check_acme_string(self,acme):
-        (f,filename) = tempfile.mkstemp()
-        #filename = f.name
+        f, filename = tempfile.mkstemp()
         try:
             f.write(acme)
             f.close()
             return self.check_acme_file(filename)
         finally:
             os.unlink(filename)
-            
 
     def generate_acme_file(self, acme):
         if self.__acme_file is not None:
@@ -377,8 +379,3 @@ class AcmeGenerator(object):
                 logger.error(run.stderr)
         finally:
             os.remove(jf)
-
-
-"""
-rosdiscover acme /ros_ws/src/turtlebot_simulator/turtlebot_stage/launch/turtlebot_in_stage.launch --workspace /ros_ws --acme generated.acme
-"""
