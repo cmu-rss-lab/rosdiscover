@@ -2,7 +2,7 @@
 This module is used to generate an Acme description from a set of nodes parsed
 from a launch file.
 
-The main class within this module is :clas:`AcmeGenerator`
+The main class provided by this module is :class:`AcmeGenerator`
 """
 import logging
 import copy
