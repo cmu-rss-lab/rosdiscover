@@ -8,7 +8,7 @@ Example:
 
     rosdiscover acme /ros_ws/src/turtlebot_simulator/turtlebot_stage/launch/turtlebot_in_stage.launch --workspace /ros_ws --acme generated.acme
 """
-from typing import Array, Dict, Iterator, Tuple
+from typing import Dict, Iterator, Tuple
 import logging
 import copy
 import os
