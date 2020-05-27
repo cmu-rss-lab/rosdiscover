@@ -60,6 +60,7 @@ def generate_acme(args):
         if args.check:
             acme_gen.check_acme()
 
+
 def rostopic_list(args):
     # simulates the list command
     interpreter = _launch_config(args)
@@ -75,6 +76,7 @@ def rosservice_list(args):
     for node in interpreter.nodes:
         services |= set(s for (s, _) in node.provides)
     print('\n'.join(sorted(services)))
+
 
 class MultiLineFormatter(argparse.HelpFormatter):
     def _split_lines(self, text, width):

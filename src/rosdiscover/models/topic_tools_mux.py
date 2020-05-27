@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
 from ..interpreter import model
-from loguru import logger
+
 import argparse
+
 
 @model("topic_tools", "mux")
 def mux(c):
@@ -14,7 +16,7 @@ def mux(c):
     parser = argparse.ArgumentParser("topic_tools/mux")
     parser.add_argument("outopic", type=str)
     parser.add_argument("intopic", nargs="+", type=str)
-    topics=parser.parse_args(c.args.split())
+    topics = parser.parse_args(c.args.split())
 
     c.pub(topics.outopic, "any")
     for in_topic in topics.intopic:
