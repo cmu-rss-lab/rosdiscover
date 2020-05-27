@@ -1,40 +1,31 @@
 # -*- coding: utf-8 -*-
 __all__ = ('NodeSummary',)
 
-from typing import FrozenSet, Tuple
+from typing import Any, Dict, FrozenSet, Tuple
 
 import attr
 
 
-@attr.s(frozen=True, slots=True)
+@attr.s(frozen=True, slots=True, auto_attribs=True)
 class NodeSummary:
-    name = attr.ib(type=str)
-    fullname = attr.ib(type=str)
-    namespace = attr.ib(type=str)
-    kind = attr.ib(type=str)
-    package = attr.ib(type=str)
-    nodelet = attr.ib(type=bool)
-    pubs = attr.ib(type=FrozenSet[Tuple[str, str]],
-                   converter=frozenset)
-    subs = attr.ib(type=FrozenSet[Tuple[str, str]],
-                   converter=frozenset)
+    name: str
+    fullname: str
+    namespace: str
+    kind: str
+    package: str
+    nodelet: bool
+    pubs: FrozenSet[Tuple[str, str]] = attr.ib(converter=frozenset)
+    subs: FrozenSet[Tuple[str, str]]  = attr.ib(converter=frozenset)
     # The tuple is (name, dynamic) where name is the name of the parameter
     # and dynamic is whether the node reacts to updates to the parameter via reconfigure
-    reads = attr.ib(type=FrozenSet[Tuple[str, bool]],
-                    converter=frozenset)
-    writes = attr.ib(type=FrozenSet[str],
-                    converter=frozenset)
-    uses = attr.ib(type=FrozenSet[Tuple[str, str]],
-                   converter=frozenset)
-    provides = attr.ib(type=FrozenSet[Tuple[str, str]],
-                       converter=frozenset)
-    action_servers = attr.ib(type=FrozenSet[Tuple[str, str]],
-                             converter=frozenset)
-    action_clients = attr.ib(type=FrozenSet[Tuple[str, str]],
-                             converter=frozenset)
+    reads: FrozenSet[Tuple[str, bool]] = attr.ib(converter=frozenset)
+    writes: FrozenSet[str] = attr.ib(converter=frozenset)
+    uses: FrozenSet[Tuple[str, str]] = attr.ib(converter=frozenset)
+    provides: FrozenSet[Tuple[str, str]] = attr.ib(converter=frozenset)
+    action_servers: FrozenSet[Tuple[str, str]] = attr.ib(converter=frozenset)
+    action_clients: FrozenSet[Tuple[str, str]] = attr.ib(converter=frozenset)
 
-    def to_dict(self):
-        # type: () -> Dict[str, Any]
+    def to_dict(self) -> Dict[str, Any]:
         pubs = [{'name': str(n), 'format': str(f)} for (n, f) in self.pubs]
         subs = [{'name': str(n), 'format': str(f)} for (n, f) in self.subs]
         provides = \
@@ -46,12 +37,12 @@ class NodeSummary:
         action_clients = [{'name': str(n), 'format': str(f)}
                           for (n, f) in self.action_clients]
         reads = [{'name' : n, 'dynamic' : d } for (n, d) in self.reads]
-        return {'name': str(self.name),
-                'fullname': str(self.fullname),
-                'namespace': str(self.namespace),
-                'kind': str(self.kind),
-                'package': str(self.package),
-                'nodelet': bool(self.nodelet),
+        return {'name': self.name,
+                'fullname': self.fullname,
+                'namespace': self.namespace,
+                'kind': self.kind,
+                'package': self.package,
+                'nodelet': self.nodelet,
                 'reads': reads,
                 'writes': list(self.writes),
                 'provides': provides,
