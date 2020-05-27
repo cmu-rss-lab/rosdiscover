@@ -37,7 +37,7 @@ def crop_decimate(c):
     c.sub('camera/camera_info', 'sensor_msgs/CameraInfo')
 
     c.pub('camera_out/image_raw', IMAGE_TOPIC_TYPE)
-    c.pub('camera_out/camera_info','sensor_msgs/CameraInfo')
+    c.pub('camera_out/camera_info', 'sensor_msgs/CameraInfo')
 
     c.read('~queue_size', 5)
     c.read('~decimation_x', 1, True)

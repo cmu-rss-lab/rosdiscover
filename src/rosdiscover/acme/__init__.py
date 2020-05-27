@@ -1,12 +1,9 @@
+# -*- coding: utf-8 -*-
 """
 This module is used to generate an Acme description from a set of nodes parsed
 from a launch file.
 
 The main class provided by this module is :class:`AcmeGenerator`
-
-Example:
-
-    rosdiscover acme /ros_ws/src/turtlebot_simulator/turtlebot_stage/launch/turtlebot_in_stage.launch --workspace /ros_ws --acme generated.acme
 """
 from typing import Dict, Iterator, Tuple
 import logging
@@ -178,7 +175,7 @@ class AcmeGenerator:
             components.append(node())
         return components, topics, services, actions
 
-    def update_service_conn(self, conns, service, port_qualified, is_provider):
+    def update_service_conn(self, conns, service, port_qualified, is_provider) -> None:
         s = {}
         if service in conns:
             s = conns[service]
@@ -193,7 +190,7 @@ class AcmeGenerator:
         else:
             s['callers'].add(port_qualified)
 
-    def update_action_conn(self, conns, action, port_qualified, is_server):
+    def update_action_conn(self, conns, action, port_qualified, is_server) -> None:
         a = {}
         if action in conns:
             a = conns[action]
@@ -205,24 +202,25 @@ class AcmeGenerator:
         else:
             a['clients'].add(port_qualified)
 
-    def to_acme_name(self, name):
+    @staticmethod
+    def to_acme_name(self, name: str) -> str:
         return name.replace("/", "_")
 
-    def generate_acme(self):
-        # type: () -> str
-        components, topics, services, actions = self.get_components_and_connectors()
+    def generate_acme(self) -> str:
+        components, topics, services, actions = \
+            self.get_components_and_connectors()
 
         system_name = "RobotSystem" if self.__acme_file is None else '_'.join(self.__acme_file.split(".")[:-1])
         # system_name = os.path.basename(os.path.normpath(self.__launch_files)).split('.')[0]
 
-        acme = "import families/ROSFam.acme;\nsystem %s : ROSFam = new ROSFam extended with {\n" % system_name;
+        acme = acme.format(system_name)
         attachments = []
         component_strs = []
         service_conns = {}
         action_conns = {}
         attachments_to_topic = {}
-        ATTACHMENT = """  attachment {comp}.{port} to {conn}.{role};"""
-        SERVICE_ATTACHMENT = """  attachment {qualified_port} to {conn}.{role};"""
+        ATTACHMENT = "  attachment {comp}.{port} to {conn}.{role};"
+        SERVICE_ATTACHMENT = "  attachment {qualified_port} to {conn}.{role};"
         for c in components:
             ports = []
             comp_name = self.to_acme_name(c['name'])
@@ -263,25 +261,32 @@ class AcmeGenerator:
 
             for a in c['action-servers']:
                 pname = self.to_acme_name(a['name']) + "_srvr";
-                port = ACTION_SERVER_PORT.format(port_name=pname, action_type=a['name'])
+                port = ACTION_SERVER_PORT.format(port_name=pname,
+                                                 action_type=a['name'])
                 ports.append(port)
-                self.update_action_conn(action_conns, a['name'], f"{comp_name}.{pname}", True)
+                self.update_action_conn(action_conns,
+                                        a['name'],
+                                        f"{comp_name}.{pname}",
+                                        True)
+
             for a in c['action-clients']:
                 pname = self.to_acme_name(a['name']) + "_cli";
-                port = ACTION_CLIENT_PORT.format(port_name=pname, action_type=a['name'])
+                port = ACTION_CLIENT_PORT.format(port_name=pname,
+                                                 action_type=a['name'])
                 ports.append(port)
-                self.update_action_conn(action_conns, a['name'], f"{comp_name}.{pname}", False)
-            if c['placeholder']:
-                comp = NODE_PLACEHOLDER_COMPONENT.format(comp_name=comp_name, ports="\n".join(ports),
-                                                         node_name=c['name'])
-            else:
-                comp = NODE_COMPONENT.format(comp_name=comp_name, ports="\n".join(ports), node_name=c['name'])
+                self.update_action_conn(action_conns,
+                                        a['name'],
+                                        f"{comp_name}.{pname}",
+                                        False)
+
+            comp = NODE_COMPONENT.format(comp_name=comp_name,
+                                         ports='\n'.join(ports),
+                                         node_name=c['name'])
             component_strs.append(comp)
         acme = acme + "\n".join(component_strs)
 
         connector_strs = []
         for t in topics:
-
             if len(topics[t]["pubs"]) + len(topics[t]["subs"]) > 1:
                 roles = []
                 for p in topics[t]["pubs"]:
@@ -298,10 +303,8 @@ class AcmeGenerator:
                                               topic=topics[t]["details"]['name'])
                 connector_strs.append(conn)
 
-
                 for a in attachments_to_topic[t]:
                     attachments.append(a)
-
 
         for s in service_conns:
             # Only create a connector for services that are connected
@@ -318,8 +321,11 @@ class AcmeGenerator:
                     rname = self.to_acme_name(p)
                     role = CLIENT_ROLE.format(role_name=rname)
                     roles = f"{roles}{role}\n"
-                    attachments.append(SERVICE_ATTACHMENT.format(qualitifed_port=p, conn=cname, role=rname))
+                    attachments.append(SERVICE_ATTACHMENT.format(qualitifed_port=p,
+                                                                 conn=cname,
+                                                                 role=rname))
                 connector_strs.append(SERVICE_CONNECTOR.format(conn_name=cname, roles="\n".join(roles)))
+
         for a in action_conns:
             # only create a connector for actions that are connected
             if self.__generate_dangling_connectors or (

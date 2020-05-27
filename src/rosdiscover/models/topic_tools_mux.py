@@ -21,4 +21,3 @@ def mux(c):
     c.pub(topics.outopic, "any")
     for in_topic in topics.intopic:
         c.sub(in_topic, "any")
-
