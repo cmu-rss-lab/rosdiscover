@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from ..interpreter import model
 
 
@@ -7,9 +8,9 @@ def diagnostic_aggregator(c):
     if '/' not in base_path:
         base_path = '/' + base_path
 
-    pub_rate = c.read('~pub_rate', 1.0)
+    c.read('~pub_rate', 1.0)
 
-    other_as_errors = c.read('~other_as_errors', False)
+    c.read('~other_as_errors', False)
 
     # TODO create analyzer group
     # https://github.com/ros/diagnostics/blob/indigo-devel/diagnostic_aggregator/src/analyzer_group.cpp

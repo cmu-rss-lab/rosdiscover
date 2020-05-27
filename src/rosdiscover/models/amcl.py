@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from ..interpreter import model
 
 
@@ -37,7 +38,7 @@ def amcl(c):
     c.read("~laser_model_type", "likelihood_field")
     c.read("~odom_model_type", "diff")
     c.read("~update_min_d", 0.2)
-    c.read("~update_min_a", M_PI/6.0)
+    c.read("~update_min_a", M_PI / 6.0)
     c.read("~odom_frame_id", "odom")
     c.read("~base_frame_id", "base_link")
     c.read("~global_frame_id", "map")
