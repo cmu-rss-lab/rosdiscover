@@ -5,13 +5,11 @@ Provides a simple command-line interface.
 import argparse
 
 from loguru import logger
-import roswire
 import yaml
 
-from . import models
 from .acme import AcmeGenerator
 from .config import Config
-from .interpreter import Interpreter, Model
+from .interpreter import Interpreter
 
 DESC = 'discovery of ROS architectures'
 CONFIG_HELP = """R|A YAML file defining the configuration.
@@ -29,18 +27,18 @@ def _launch(config: Config) -> Interpreter:
         return interpreter
 
 
-def _launch_config(args):
+def _launch_config(args) -> Interpreter:
     config = Config.from_yaml_file(args.config)
     return _launch(config)
 
 
-def launch(args):
+def launch(args) -> None:
     """Simulates the architectural effects of a `roslaunch` command."""
     interpreter = _launch_config(args)
     output = [n.to_dict() for n in interpreter.nodes]
-    if args.output is not None:
-        with open(args.output,'w') as of:
-            yaml.dump(output,of, default_flow_style=False)
+    if args.output:
+        with open(args.output, 'w') as f:
+            yaml.dump(output, f, default_flow_style=False)
     else:
         print(yaml.dump(output, default_flow_style=False))
 
@@ -64,7 +62,7 @@ def generate_acme(args):
             acme_gen.check_acme()
 
 
-def rostopic_list(args):
+def rostopic_list(args) -> None:
     # simulates the list command
     interpreter = _launch_config(args)
     topics = set()
@@ -73,7 +71,7 @@ def rostopic_list(args):
     print('\n'.join(sorted(topics)))
 
 
-def rosservice_list(args):
+def rosservice_list(args) -> None:
     interpreter = _launch_config(args)
     services = set()
     for node in interpreter.nodes:
@@ -87,7 +85,8 @@ class MultiLineFormatter(argparse.HelpFormatter):
             return text[2:].splitlines()
         return argparse.HelpFormatter._split_lines(self, text, width)
 
-def main():
+
+def main() -> None:
     logger.enable('roswire')
     parser = argparse.ArgumentParser(description=DESC)
     subparsers = parser.add_subparsers()
@@ -124,7 +123,6 @@ def main():
 
     p.add_argument("--check", "-c", action='store_true')
     p.add_argument("--jar", type=str, help='Pointer to the Acme jar file', default='lib/acme.standalone-ros.jar')
-
 
     p.add_argument('config', type=argparse.FileType('r'), help=CONFIG_HELP)
     p.set_defaults(func=generate_acme)
