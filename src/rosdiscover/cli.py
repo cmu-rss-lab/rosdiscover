@@ -47,9 +47,9 @@ def launch(args) -> None:
 def generate_acme(args):
     """Generates an Acme description for a given roslaunch command."""
     interpreter = _launch_config(args)
-    nodes = [n.to_dict for n in interpreter.nodes]
+    #nodes = [n.to_dict for n in interpreter.nodes]
 
-    acme_gen = AcmeGenerator(nodes, args.acme, args.jar)
+    acme_gen = AcmeGenerator(interpreter.nodes, args.acme, args.jar)
     acme = acme_gen.generate_acme()
 
     acme_gen.generate_acme_file(acme)
@@ -117,7 +117,7 @@ def main() -> None:
     p.add_argument('config', type=argparse.FileType('r'), help=CONFIG_HELP)
     p.set_defaults(func=rosservice_list)
 
-    acme_jar_path = pkg_resources.resource_filename(__name__, 'lib/name_of_jar_file')
+    acme_jar_path = pkg_resources.resource_filename(__name__, 'acme/lib/acme.standalone-ros.jar')
     p = subparsers.add_parser('acme',
                               help='generates Acme from a source file',
                               formatter_class=MultiLineFormatter)

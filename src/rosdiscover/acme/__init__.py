@@ -157,7 +157,7 @@ class AcmeGenerator:
                 if pTopic in topics:
                     topic = topics[pTopic]
                 else:
-                    topic = {'details': {'topic': pTopic, 'type': pType}, "pubs": [], "subs": []}
+                    topic = {'details': {'name': pTopic, 'format': pType}, "pubs": [], "subs": []}
                     topics[pTopic] = topic
                 topic["pubs"].append(node.name)
             for sTopic, sType in node.subs:
@@ -165,7 +165,7 @@ class AcmeGenerator:
                 if sTopic in topics:
                     topic = topics[sTopic]
                 else:
-                    topic = {'details': {'topic': sTopic, 'type': sType}, "pubs": [], "subs": []}
+                    topic = {'details': {'name': sTopic, 'format': sType}, "pubs": [], "subs": []}
                     topics[sTopic] = topic
                 topic["subs"].append(node.name)
             for sName, sType in node.provides:
@@ -173,7 +173,7 @@ class AcmeGenerator:
                 if sName in services:
                     service = services[sName]
                 else:
-                    service = {'details': {'name': sName, 'type': sType}, "provs": [], "reqs": []}
+                    service = {'details': {'name': sName, 'format': sType}, "provs": [], "reqs": []}
                     services[sName] = service
                 service["provs"].append(node.name)
             # for call in node()['requires']:
@@ -197,7 +197,7 @@ class AcmeGenerator:
                 if aName in actions:
                     action = actions[aName]
                 else:
-                    action = {'details': {'name': aName, 'type': aType}, "servers": [], "clients": []}
+                    action = {'details': {'name': aName, 'format': aType}, "servers": [], "clients": []}
                     actions[aName] = action
                 action["clients"].append(node.name)
             components.append(node)
@@ -214,8 +214,7 @@ class AcmeGenerator:
         system_name = "RobotSystem" if self.__acme_file is None else '_'.join(self.__acme_file.split(".")[:-1])
         # system_name = os.path.basename(os.path.normpath(self.__launch_files)).split('.')[0]
 
-        acme = "import families/ROSFam.acme;\nsystem {} : ROSFam = new ROSFam extended with {\n"
-        acme = acme.format(system_name)
+        acme = f"import families/ROSFam.acme;\nsystem {system_name} : ROSFam = new ROSFam extended with {{\n"
         attachments: List[str] = []
         component_strs: List[str] = []
         service_conns: Dict[str, dict] = {}
