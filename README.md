@@ -49,13 +49,6 @@ To build the Docker image for `rosdiscover`:
 $ docker build -t rosdiscover .
 ```
 
-Alternatively, to download a prebuilt Docker image for `rosdiscover` from DockerHub:
-
-```
-$ docker pull christimperley/rosdiscover
-$ docker tag christimperley/rosdiscover rosdiscover
-```
-
 To run `rosdiscover` commands via Docker, replace `rosdiscover` with the following
 prefix:
 
