@@ -38,6 +38,9 @@ $ pipenv shell
 
 ### (Alternative) Docker Installation
 
+**(WARNING: This approach is more complex than the native installation:
+Where possible, you should try to stick to the native installation.)**
+
 In some cases, it may not be possible to install `rosdiscover` natively on
 your machine (e.g., Mac OS or Windows machines). `rosdiscover` can be
 installed on such systems by building (or downloading) and using a Docker
@@ -49,11 +52,13 @@ To build the Docker image for `rosdiscover`:
 $ docker build -t rosdiscover .
 ```
 
-To run `rosdiscover` commands via Docker, replace `rosdiscover` with the following
-prefix:
+To run `rosdiscover` commands via Docker, replace in all commands shown below
+`rosdiscover` with the following prefix:
 
 ```
-$ docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -it rosdiscover
+$ docker run --rm \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    -it rosdiscover
 ```
 
 where `-v /var/run/docker.sock:/var/run/docker.sock` is used to mount the
