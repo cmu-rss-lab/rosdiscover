@@ -12,8 +12,5 @@ RUN apk add --no-cache \
  && rm -rf /tmp/*
 COPY . /opt/rosdiscover
 RUN pip3 install --no-cache -e /opt/rosdiscover \
- && mkdir -p lib \
- && cd lib \
- && wget -nv http://acme.able.cs.cmu.edu/public/rosdiscover/acme.standalone-ros.jar \
  && rm -rf /tmp/*
 ENTRYPOINT ["rosdiscover"]
