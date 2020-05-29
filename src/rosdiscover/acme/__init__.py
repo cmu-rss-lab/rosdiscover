@@ -5,8 +5,7 @@ from a launch file.
 
 The main class provided by this module is :class:`AcmeGenerator`
 """
-from typing import Dict, Iterator, Optional, Tuple, List, Any
-import logging
+from typing import Dict, Iterator, Optional, Tuple, List
 import os
 import subprocess
 import json
@@ -103,6 +102,7 @@ ACTION_SERVER_PORT = """    port {port_name}: ActionServerPortT = new ActionServ
         property action_type : string = "{action_type}";
     }};
     """
+
 
 def update_service_conn(conns, service, port_qualified, is_provider) -> None:
     s = {}
@@ -353,7 +353,7 @@ class AcmeGenerator:
     def check_acme_file(filename: str) -> Tuple[bytes, bytes]:
         process = subprocess.Popen(['java', '-jar', 'lib/acme.standalone-ros.jar', filename])
         (output, err) = process.communicate()
-        exit_code = process.wait()
+        process.wait()
         return output, err
 
     def check_acme_string(self, acme: str) -> Tuple[bytes, bytes]:
