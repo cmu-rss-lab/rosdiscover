@@ -67,7 +67,7 @@ def rostopic_list(args) -> None:
     interpreter = _launch_config(args)
     topics = set()
     for node in interpreter.nodes:
-        topics |= set(x for (x, _) in node.pubs | node.subs)
+        topics |= set(x for (x, _) in set(node.pubs) | set(node.subs))
     print('\n'.join(sorted(topics)))
 
 
