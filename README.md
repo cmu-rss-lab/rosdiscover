@@ -10,15 +10,17 @@ ideal.
 
 Both methods require that Docker is installed on your machine and that your
 user belongs to the `docker` group (i.e., `sudo` isn't required to run `docker`
-commands).
-For instructions on installing Docker, refer to: https://docs.docker.com/install/
+commands). For instructions on installing Docker,
+refer to: https://docs.docker.com/install/
 
 
 ### Native Installation
 
 The ideal way to install `rosdiscover` is to install to a virtual environment
 running on your host machine. This method requires that your host machine is
-running Python 3.6 or greater.
+running Python 3.6 or greater. If that isn't the case, the safest way to install
+a newer version of Python on your machine is via [pyenv](https://github.com/pyenv/pyenv),
+which allows you to manage multiple installations of Python.
 
 We strongly recommend that you install `rosdiscover` inside a Python virtual
 environment (via virtualenv or pipenv) to avoid interfering with the rest of
