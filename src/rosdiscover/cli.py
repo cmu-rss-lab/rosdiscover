@@ -6,6 +6,7 @@ import argparse
 
 from loguru import logger
 import yaml
+import pkg_resources
 
 from .acme import AcmeGenerator
 from .config import Config
@@ -116,13 +117,14 @@ def main() -> None:
     p.add_argument('config', type=argparse.FileType('r'), help=CONFIG_HELP)
     p.set_defaults(func=rosservice_list)
 
+    acme_jar_path = pkg_resources.resource_filename(__name__, 'lib/name_of_jar_file')
     p = subparsers.add_parser('acme',
                               help='generates Acme from a source file',
                               formatter_class=MultiLineFormatter)
     p.add_argument("--acme", type=str, default="generated.acme", help='Output to the named Acme file')
 
     p.add_argument("--check", "-c", action='store_true')
-    p.add_argument("--jar", type=str, help='Pointer to the Acme jar file', default='lib/acme.standalone-ros.jar')
+    p.add_argument("--jar", type=str, help='Pointer to the Acme jar file', default=acme_jar_path)
 
     p.add_argument('config', type=argparse.FileType('r'), help=CONFIG_HELP)
     p.set_defaults(func=generate_acme)
