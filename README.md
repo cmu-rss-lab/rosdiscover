@@ -10,15 +10,17 @@ ideal.
 
 Both methods require that Docker is installed on your machine and that your
 user belongs to the `docker` group (i.e., `sudo` isn't required to run `docker`
-commands).
-For instructions on installing Docker, refer to: https://docs.docker.com/install/
+commands). For instructions on installing Docker,
+refer to: https://docs.docker.com/install/
 
 
 ### Native Installation
 
 The ideal way to install `rosdiscover` is to install to a virtual environment
 running on your host machine. This method requires that your host machine is
-running Python 3.6 or greater.
+running Python 3.6 or greater. If that isn't the case, the safest way to install
+a newer version of Python on your machine is via [pyenv](https://github.com/pyenv/pyenv),
+which allows you to manage multiple installations of Python.
 
 We strongly recommend that you install `rosdiscover` inside a Python virtual
 environment (via virtualenv or pipenv) to avoid interfering with the rest of
@@ -36,6 +38,9 @@ $ pipenv shell
 
 ### (Alternative) Docker Installation
 
+**(WARNING: This approach is more complex than the native installation:
+Where possible, you should try to stick to the native installation.)**
+
 In some cases, it may not be possible to install `rosdiscover` natively on
 your machine (e.g., Mac OS or Windows machines). `rosdiscover` can be
 installed on such systems by building (or downloading) and using a Docker
@@ -47,18 +52,13 @@ To build the Docker image for `rosdiscover`:
 $ docker build -t rosdiscover .
 ```
 
-Alternatively, to download a prebuilt Docker image for `rosdiscover` from DockerHub:
+To run `rosdiscover` commands via Docker, replace in all commands shown below
+`rosdiscover` with the following prefix:
 
 ```
-$ docker pull christimperley/rosdiscover
-$ docker tag christimperley/rosdiscover rosdiscover
-```
-
-To run `rosdiscover` commands via Docker, replace `rosdiscover` with the following
-prefix:
-
-```
-$ docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -it rosdiscover
+$ docker run --rm \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    -it rosdiscover
 ```
 
 where `-v /var/run/docker.sock:/var/run/docker.sock` is used to mount the

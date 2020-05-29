@@ -1,5 +1,7 @@
 *
 !setup.py
-!requirements.txt
+!setup.cfg
+!tox.ini
+!requirements.dev.txt
 !src
 !lib
