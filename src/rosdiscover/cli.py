@@ -47,7 +47,7 @@ def launch(args) -> None:
 def generate_acme(args):
     """Generates an Acme description for a given roslaunch command."""
     interpreter = _launch_config(args)
-    #nodes = [n.to_dict for n in interpreter.nodes]
+    # nodes = [n.to_dict for n in interpreter.nodes]
 
     acme_gen = AcmeGenerator(interpreter.nodes, args.acme, args.jar)
     acme = acme_gen.generate_acme()
