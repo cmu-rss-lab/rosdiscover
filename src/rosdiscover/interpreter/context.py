@@ -159,7 +159,7 @@ class NodeContext:
              param: str,
              default: Optional[Any] = None,
              dynamic: bool = False
-             ) -> None:
+             ) -> Any:
         """Obtains the value of a given parameter from the parameter server."""
         logger.debug(f"node [{self.__name}] reads parameter [{param}]")
         param = self.resolve(param)
