@@ -155,7 +155,11 @@ class NodeContext:
                      f"[{topic_name}] with format [{fmt}]")
         self.__pubs.add((topic_name_full, fmt))
 
-    def read(self, param: str, default: Optional[Any] = None, dynamic: Optional[bool] = False) -> None:
+    def read(self,
+             param: str,
+             default: Optional[Any] = None,
+             dynamic: bool = False
+             ) -> None:
         """Obtains the value of a given parameter from the parameter server."""
         logger.debug(f"node [{self.__name}] reads parameter [{param}]")
         param = self.resolve(param)
