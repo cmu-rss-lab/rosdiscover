@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from typing import Dict, Iterator, Optional, Set, Sequence
+from typing import Dict, Iterator, Mapping, Optional, Set, Sequence
 import contextlib
 
 from loguru import logger
@@ -17,11 +17,13 @@ class Interpreter:
     @staticmethod
     @contextlib.contextmanager
     def for_image(image: str,
-                  sources: Sequence[str]
+                  sources: Sequence[str],
+                  *,
+                  environment: Optional[Mapping[str, str]] = None
                   ) -> Iterator['Interpreter']:
         """Constructs an interpreter for a given Docker image."""
         rsw = roswire.ROSWire()  # TODO don't maintain multiple instances
-        with rsw.launch(image, sources) as app:
+        with rsw.launch(image, sources, environment=environment) as app:
             yield Interpreter(app.files, app.shell)
 
     def __init__(self,

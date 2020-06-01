@@ -21,7 +21,10 @@ CONFIG_HELP = """R|A YAML file defining the configuration.
 def _launch(config: Config) -> Interpreter:
     logger.info(f"reconstructing architecture for image [{config.image}]")
     # FIXME passing interpreter outside of the context is very weird/bad
-    with Interpreter.for_image(config.image, config.sources) as interpreter:
+    with Interpreter.for_image(config.image,
+                               config.sources,
+                               environment=config.environment
+                               ) as interpreter:
         for fn_launch in config.launches:
             logger.info(f"simulating launch [{fn_launch}]")
             interpreter.launch(fn_launch)

@@ -60,9 +60,11 @@ class Config:
         image: str = dict_['image']
         sources: Sequence[str] = dict_['sources']
         launches: Sequence[str] = dict_['launches']
+        environment: Mapping[str, str] = dict(dict_['environment'])
         return Config(image=image,
                       sources=sources,
-                      launches=launches)
+                      launches=launches,
+                      environment=environment)
 
     @classmethod
     def from_yaml_file(cls, filename: str) -> 'Config':
