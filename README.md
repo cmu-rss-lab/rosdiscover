@@ -70,18 +70,75 @@ also want to use volume mounting to persist (and reuse) the cache:
 
 ## Getting Started
 
-To simulate the effects of a particular launch command using a given XML launch
-file for a ROS application provided by a given Docker image (e.g., `example_ros_app`),
+ROSDiscover offers a number of commands for interacting with Docker images,
+all of which accept the path to a YAML configuration file as one of their
+parameters. Several example YAML configuration files can be found under the
+`example` directory at the root of this repository. Below is an example of
+one of those configuration files, `example/fetch.yml`, a configuration file
+for the [Fetch mobile robot](https://github.com/TheRobotCooperative/TheRobotCooperative/tree/master/fetch).
+
+```yaml
+image: fetch
+sources:
+- /opt/ros/melodic/setup.bash
+- /ros_ws/devel/setup.bash
+launches:
+- /ros_ws/src/fetch_gazebo/fetch_gazebo/launch/pickplace_playground.launch
+```
+
+The `image` property specifies the name of the Docker image that is used
+to provide the robot. `sources` gives an ordered list of the scripts that
+must be sourced to setup the correct working environment for the robot;
+in most cases, `sources` will look as it does above, except the term
+`melodic` may be replaced with the name of another ROS distribution
+(e.g., `indigo` or `kinetic`). `launches` gives an ordered list of the XML
+launch files that should be used to launch the software for the robot.
+For now, each element in this list is an absolute path to a launch file
+inside the container. In the near future, support for relative paths
+(e.g., name of package + name of launch file) and passing command-line
+arguments will be added. There is also an additional `environment` property,
+exemplified below, which accepts a mapping from names of environment
+variables to their respective values. This is useful in a small number of
+cases (e.g., specifying `TURTLEBOT3_MODEL` for TurtleBot3).
+
+```yaml
+image: turtlebot3
+sources:
+- /opt/ros/kinetic/setup.bash
+- /ros_ws/devel/setup.bash
+environment:
+  TURTLEBOT3_MODEL: burger
+launches:
+- /ros_ws/src/turtlebot3_simulations/turtlebot3_gazebo/launch/turtlebot3_house.launch
+```
+
+### Commands
+
+To see a complete list of commands that are supported by ROSDiscover,
 run the following:
 
 ```
-$ rosdiscover launch example_ros_app
-    /ros_ws/src/turtlebot_simulator/turtlebot_stage/launch/turtlebot_in_stage.launch
+$ rosdiscover --help
+usage: rosdiscover [-h] {launch,rostopic,rosservice,acme} ...
+
+discovery of ROS architectures
+
+positional arguments:
+  {launch,rostopic,rosservice,acme}
+    launch              simulates the effects of a roslaunch.
+    rostopic            simulates the output of rostopic for a given
+                        configuration.
+    rosservice          simulates the output of rosservice for a given
+                        configuration.
+    acme                generates Acme from a source file
+
+optional arguments:
+  -h, --help            show this help message and exit
 ```
 
-To simulate the outcome of a `rostopic` call:
+The `launch` command is used to simulate the effects of a sequence of `roslaunch`
+calls for a robot application:
 
 ```
-$ rosdiscover rostopic example_ros_app
-    /ros_ws/src/turtlebot_simulator/turtlebot_stage/launch/turtlebot_in_stage.launch
+$ rosdiscover launch example/fetch.yml
 ```
