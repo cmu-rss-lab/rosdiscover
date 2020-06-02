@@ -60,7 +60,7 @@ class Config:
         image: str = dict_['image']
         sources: Sequence[str] = dict_['sources']
         launches: Sequence[str] = dict_['launches']
-        environment: Mapping[str, str] = dict(dict_['environment'])
+        environment: Mapping[str, str] = dict(dict_['environment']) if 'environment' in dict_.keys() else dict()
         return Config(image=image,
                       sources=sources,
                       launches=launches,
