@@ -64,6 +64,10 @@ class Interpreter:
             self.__params[key] = value
 
         for node in config.nodes:
+            if not node.filename:
+                m = ("unable to determine associated launch file for "
+                     f"node: {node}")
+                raise Exception(m)
             logger.debug(f"launching node: {node.name}")
             try:
                 args = node.args or ''
@@ -72,6 +76,7 @@ class Interpreter:
                           nodetype=node.typ,
                           name=node.name,
                           namespace=node.namespace,  # FIXME
+                          launch_filename=node.filename,
                           remappings=remappings,
                           args=args)
             # FIXME this is waaay too permissive
@@ -88,38 +93,58 @@ class Interpreter:
                      nodetype: str,
                      name: str,
                      namespace: str,
+                     launch_filename: str,
                      remappings: Dict[str, str],
                      manager: Optional[str] = None
                      ) -> None:
         """Loads a nodelet using the provided instructions.
 
-        Parameters:
-            pkg: the name of the package to which the nodelet belongs.
-            nodetype: the name of the type of nodelet that should be loaded.
-            name: the name that should be assigned to the nodelet.
-            namespace: the namespace into which the nodelet should be loaded.
-            remappings: a dictionary of name remappings that should be applied
-                to this nodelet, where keys correspond to old names and values
-                correspond to new names.
-            manager: the name of the manager, if any, for this nodelet. If
-                this nodelet is standalone, :code:`manager` should be set to
-                :code:`None`.
+        Parameters
+        ----------
+        pkg: str
+            the name of the package to which the nodelet belongs.
+        nodetype: str
+            the name of the type of nodelet that should be loaded.
+        name: str
+            the name that should be assigned to the nodelet.
+        namespace: str
+            the namespace into which the nodelet should be loaded.
+        launch_filename: str
+            the absolute path to the XML launch file where this node
+            was declared.
+        remappings: Dict[str, str]
+            a dictionary of name remappings that should be applied
+            to this nodelet, where keys correspond to old names and values
+            correspond to new names.
+        manager: Optional[str]
+            the name of the manager, if any, for this nodelet. If
+            this nodelet is standalone, :code:`manager` should be set to
+            :code:`None`.
 
-        Raises:
-            Exception: if there is no model for the given nodelet type.
+        Raises
+        ------
+        Exception
+            if there is no model for the given nodelet type.
         """
         if manager:
             logger.info(f'launching nodelet [{name}] '
                         f'inside manager [{manager}]')
         else:
             logger.info(f'launching standalone nodelet [{name}]')
-        return self.load(pkg, nodetype, name, namespace, remappings, '')
+        return self.load(pkg=pkg,
+                         nodetype=nodetype,
+                         name=name,
+                         namespace=namespace,
+                         launch_filename=launch_filename,
+                         remappings=remappings,
+                         args='')
 
     def load(self,
              pkg: str,
              nodetype: str,
              name: str,
              namespace: str,
+             launch_filename: str,
              remappings: Dict[str, str],
              args: str
              ) -> None:
@@ -135,6 +160,9 @@ class Interpreter:
             the name that should be assigned to the node.
         namespace: str
             the namespace into which the node should be loaded.
+        launch_filename: str
+            the absolute path to the XML launch file where this node
+            was declared.
         remappings: Dict[str, str]
             a dictionary of name remappings that should be applied
             to this node, where keys correspond to old names and values
@@ -154,11 +182,22 @@ class Interpreter:
             elif args.startswith('standalone '):
                 pkg_and_nodetype = args.partition(' ')[2]
                 pkg, _, nodetype = pkg_and_nodetype.partition('/')
-                return self.load_nodelet(pkg, nodetype, name, namespace, remappings)
+                return self.load_nodelet(pkg=pkg,
+                                         nodetype=nodetype,
+                                         name=name,
+                                         namespace=namespace,
+                                         launch_filename=launch_filename,
+                                         remappings=remappings)
             else:
                 load, pkg_and_nodetype, mgr = args.split(' ')
                 pkg, _, nodetype = pkg_and_nodetype.partition('/')
-                return self.load_nodelet(pkg, nodetype, name, namespace, remappings, mgr)
+                return self.load_nodelet(pkg=pkg,
+                                         nodetype=nodetype,
+                                         name=name,
+                                         namespace=namespace,
+                                         launch_filename=launch_filename,
+                                         remappings=remappings,
+                                         manager=mgr)
 
         if remappings:
             logger.info(f"using remappings: {remappings}")
@@ -176,6 +215,7 @@ class Interpreter:
                           kind=nodetype,
                           package=pkg,
                           args=args,
+                          launch_filename=launch_filename,
                           remappings=remappings,
                           files=self.__files,
                           params=self.__params)

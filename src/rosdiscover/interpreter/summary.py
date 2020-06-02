@@ -14,6 +14,7 @@ class NodeSummary:
     kind: str
     package: str
     nodelet: bool
+    filename: str
     # placeholder indicates whether the node was not really discovered, but
     # was put in place to "complete" the architecture. Placeholder is set
     # if the component template could not be found in the library, either
@@ -60,6 +61,7 @@ class NodeSummary:
                 'kind': self.kind,
                 'package': self.package,
                 'nodelet': self.nodelet,
+                'filename': self.filename,
                 'placeholder': self.placeholder,
                 'reads': reads,
                 'writes': list(self.writes),

@@ -17,6 +17,7 @@ class NodeContext:
                  package: str,
                  args: str,
                  remappings: Dict[str, str],
+                 launch_filename: str,
                  params: ParameterServer,
                  files: dockerblade.files.FileSystem,
                  ) -> None:
@@ -30,6 +31,7 @@ class NodeContext:
         self.__params = params
         self.__files = files
         self.__args = args
+        self.__launch_filename = launch_filename
         self.__nodelet: bool = False
         self.__placeholder: bool = False
         self.__uses: Set[Tuple[str, str]] = set()
@@ -75,6 +77,7 @@ class NodeContext:
     def summarize(self) -> NodeSummary:
         return NodeSummary(name=self.__name,
                            fullname=self.fullname,
+                           filename=self.__launch_filename,
                            namespace=self.__namespace,
                            kind=self.__kind,
                            package=self.__package,

@@ -281,8 +281,8 @@ class AcmeGenerator:
                                    False)
             component_template: str = NODE_COMPONENT if not c.placeholder else NODE_PLACEHOLDER_COMPONENT
             comp = component_template.format(comp_name=comp_name,
-                                         ports='\n'.join(ports),
-                                         node_name=c.name)
+                                             ports='\n'.join(ports),
+                                             node_name=c.name)
             component_strs.append(comp)
         acme = acme + "\n".join(component_strs)
 
