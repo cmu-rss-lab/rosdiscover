@@ -1,4 +1,4 @@
-image: turtlebot3
+image: therobotcooperative/turtlebot3
 sources:
 - /opt/ros/kinetic/setup.bash
 - /ros_ws/devel/setup.bash
