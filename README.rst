@@ -1,6 +1,9 @@
 rosdiscover
 ===========
 
+.. image:: https://www.travis-ci.org/ChrisTimperley/rosdiscover.svg?branch=master
+    :target: https://www.travis-ci.org/ChrisTimperley/rosdiscover
+
 Installation
 ------------
 
