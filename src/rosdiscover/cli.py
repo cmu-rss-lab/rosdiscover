@@ -10,9 +10,7 @@ import pkg_resources
 
 from .acme import AcmeGenerator
 from .config import Config
-from .interpreter import Interpreter
-
-from .interpreter import NodeSummary
+from .interpreter import Interpreter, NodeSummary
 
 DESC = 'discovery of ROS architectures'
 CONFIG_HELP = """R|A YAML file defining the configuration.
@@ -48,33 +46,34 @@ def launch(args) -> None:
     else:
         print(yaml.dump(output, default_flow_style=False))
 
+def nodes_from_yaml(args):
+    with open(args.arch.name, 'r') as f: 
+            data = yaml.safe_load(f) 
+    nodes = []  
+    for d in data: #create the NodeSummary object from a dictionary, append to nodes list
+        read = []
+        write = []
+        same_fields = {'pubs' : [], 'subs' : [], 'uses' : [], 'provides' : [], 
+                        'action-servers' : [], 'action-clients' : []}
+        for i in same_fields:
+            for j in d[i]:
+                same_fields[i].append((j['name'], j['format']))
+        for i in d['reads']:
+            read.append((i['name'], i['dynamic']))
+        for i in d['writes']:
+            write.append(i)
+        obj = NodeSummary(d['name'], d['fullname'], d['namespace'], 
+            d['kind'], d['package'], d['nodelet'], d['filename'], 
+            d['placeholder'], same_fields['pubs'], same_fields['subs'], 
+            read, write, same_fields['uses'], same_fields['provides'], 
+            same_fields['action-servers'], same_fields['action-clients']) 
+        nodes.append(obj)
+    return nodes
 
 def generate_acme(args):
-    with open(args.il.name, 'r') as f: 
-        data = yaml.load(f, Loader=yaml.FullLoader) #generates dictionary from YAML
     """Generates an Acme description for a given roslaunch command."""
-
-    nodes = []
-    if args.il is not None:
-        for d in data: #create the NodeSummary object from a dictionary, append to nodes list
-            read = []
-            write = []
-            same_fields = {'pubs' : [], 'subs' : [], 'uses' : [], 'provides' : [], 
-                            'action-servers' : [], 'action-clients' : []}
-            for i in same_fields:
-                for j in d[i]:
-                    same_fields[i].append((j['name'], j['format']))
-            for i in d['reads']:
-                read.append((i['name'], i['dynamic']))
-            for i in d['writes']:
-                write.append(i)
-            obj = NodeSummary(d['name'], d['fullname'], d['namespace'], 
-                d['kind'], d['package'], d['nodelet'], d['filename'], 
-                d['placeholder'], same_fields['pubs'], same_fields['subs'], 
-                read, write, same_fields['uses'], same_fields['provides'], 
-                same_fields['action-servers'], same_fields['action-clients']) 
-            nodes.append(obj)
-        acme_gen = AcmeGenerator(nodes, args.acme, args.jar)
+    if args.arch is not None:
+        acme_gen = AcmeGenerator(nodes_from_yaml(args), args.acme, args.jar)
 
     else:
         interpreter = _launch_config(args)
@@ -159,7 +158,7 @@ def main() -> None:
     p.add_argument("--jar", type=str, help='Pointer to the Acme jar file', default=acme_jar_path)
 
     p.add_argument('config', type=argparse.FileType('r'), help=CONFIG_HELP)
-    p.add_argument('--il', type=argparse.FileType('r'))
+    p.add_argument('--arch', type=argparse.FileType('r'))
     p.set_defaults(func=generate_acme)
 
     args = parser.parse_args()
