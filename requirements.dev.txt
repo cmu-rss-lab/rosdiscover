@@ -1,4 +1,5 @@
 flake8==3.8.2
+pep8-naming==0.10.0
 mypy==0.770
 pytest==5.4.2
 ptpython==3.0.2
