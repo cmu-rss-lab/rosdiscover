@@ -48,9 +48,9 @@ def launch(args) -> None:
 
 def nodes_from_yaml(args):
     with open(args.arch.name, 'r') as f: 
-            data = yaml.safe_load(f) 
+        data = yaml.safe_load(f) 
     nodes = []  
-    for d in data: #create the NodeSummary object from a dictionary, append to nodes list
+    for d in data: 
         read = []
         write = []
         same_fields = {'pubs' : [], 'subs' : [], 'uses' : [], 'provides' : [], 
@@ -62,11 +62,11 @@ def nodes_from_yaml(args):
             read.append((i['name'], i['dynamic']))
         for i in d['writes']:
             write.append(i)
-        obj = NodeSummary(d['name'], d['fullname'], d['namespace'], 
-            d['kind'], d['package'], d['nodelet'], d['filename'], 
-            d['placeholder'], same_fields['pubs'], same_fields['subs'], 
-            read, write, same_fields['uses'], same_fields['provides'], 
-            same_fields['action-servers'], same_fields['action-clients']) 
+        obj = NodeSummary(name=d['name'], fullname=d['fullname'], namespace=d['namespace'], 
+            kind=d['kind'], package=d['package'], nodelet=d['nodelet'], filename=d['filename'], 
+            placeholder=d['placeholder'], pubs=same_fields['pubs'], subs=same_fields['subs'], 
+            reads=read, writes=write, uses=same_fields['uses'], provides=same_fields['provides'], 
+            action_servers=same_fields['action-servers'], action_clients=same_fields['action-clients']) 
         nodes.append(obj)
     return nodes
 
