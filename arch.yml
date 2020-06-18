@@ -1,0 +1,147 @@
+- action-clients: []
+  action-servers: []
+  filename: /opt/ros/kinetic/share/gazebo_ros/launch/empty_world.launch
+  fullname: /gazebo
+  kind: gzserver
+  name: gazebo
+  namespace: /
+  nodelet: false
+  package: gazebo_ros
+  placeholder: false
+  provides:
+  - format: gazebo_msgs/SetModelConfiguration
+    name: /gazebo/set_model_configuration
+  - format: gazebo_msgs/GetLinkProperties
+    name: /gazebo/get_link_properties
+  - format: gazebo_msgs/DeleteLight
+    name: /gazebo/delete_light
+  - format: gazebo_msgs/GetLightProperties
+    name: /gazebo/get_light_properties
+  - format: gazebo_msgs/GetWorldProperties
+    name: /gazebo/get_world_properties
+  - format: gazebo_msgs/SpawnModel
+    name: /gazebo/spawn_urdf_model
+  - format: gazebo_msgs/GetModelState
+    name: /gazebo/get_model_state
+  - format: gazebo_msgs/GetLinkState
+    name: /gazebo/get_link_state
+  - format: gazebo_msgs/SetLightProperties
+    name: /gazebo/set_light_properties
+  - format: gazebo_msgs/DeleteModel
+    name: /gazebo/delete_model
+  - format: std_srvs/Empty
+    name: /gazebo/reset_world
+  - format: std_srvs/Empty
+    name: /gazebo/reset_simulation
+  - format: gazebo_msgs/ApplyJointEffort
+    name: /gazebo/apply_joint_effort
+  - format: gazebo_msgs/BodyRequest
+    name: /gazebo/clear_body_wrenches
+  - format: gazebo_msgs/ApplyBodyWrench
+    name: /gazebo/apply_body_wrench
+  - format: gazebo_msgs/SetJointProperties
+    name: /gazebo/set_joint_properties
+  - format: gazebo_msgs/GetModelProperties
+    name: /gazebo/get_model_properties
+  - format: gazebo_msgs/GetJointProperties
+    name: /gazebo/get_joint_properties
+  - format: std_srvs/Empty
+    name: /gazebo/unpause_physics
+  - format: gazebo_msgs/GetPhysicsProperties
+    name: /gazebo/get_physics_properties
+  - format: gazebo_msgs/SetPhysicsProperties
+    name: /gazebo/set_physics_properties
+  - format: gazebo_msgs/SetLinkProperties
+    name: /gazebo/set_link_properties
+  - format: gazebo_msgs/JointRequest
+    name: /gazebo/clear_joint_forces
+  - format: gazebo_msgs/SetModelState
+    name: /gazebo/set_model_state
+  - format: gazebo_msgs/SpawnModel
+    name: /gazebo/spawn_sdf_model
+  pubs:
+  - format: rosgraph_msgs/Clock
+    name: /clock
+  - format: nav_msgs/Odometry
+    name: /odom
+  - format: gazebo_msgs/Light
+    name: /gazebo/factory/light
+  - format: gazebo_msgs/Light
+    name: /gazebo/light/modify
+  - format: geometry_msgs/Twist
+    name: /cmd_vel
+  - format: gazebo_msgs/Request
+    name: /gazebo/request
+  - format: gazebo_msgs/ModelStates
+    name: /gazebo/model_states
+  - format: gazebo_msgs/LinkState
+    name: /gazebo/link_states
+  - format: sensor_msgs/JointState
+    name: /joint_states
+  - format: gazebo_msgs/Factory
+    name: /gazebo/factory
+  reads:
+  - dynamic: false
+    name: /gazebo/pub_clock_frequency
+  subs:
+  - format: gazebo_msgs/LinkState
+    name: /gazebo/set_link_state
+  - format: gazebo_msgs/Response
+    name: /gazebo/response
+  - format: gazebo_msgs/ModelState
+    name: /gazebo/set_model_state
+  uses: []
+  writes:
+  - /gazebo/use_sim_time
+- action-clients: []
+  action-servers: []
+  filename: /opt/ros/kinetic/share/gazebo_ros/launch/empty_world.launch
+  fullname: /gazebo_gui
+  kind: gzclient
+  name: gazebo_gui
+  namespace: /
+  nodelet: false
+  package: gazebo_ros
+  placeholder: false
+  provides:
+  - format: unknown type
+    name: /gazebo_gui/set_parameters
+  pubs:
+  - format: dynamic_recongfigure/ConfigDescription
+    name: /gazebo_gui/parameter_description
+  - format: dynamic_reconfigure/Config
+    name: /gazebo_gui/parameter_updates
+  reads: []
+  subs:
+  - format: rosgraph_msgs/Clock
+    name: /clock
+  uses: []
+  writes: []
+- action-clients: []
+  action-servers: []
+  filename: /ros_ws/src/turtlebot3_simulations/turtlebot3_gazebo/launch/turtlebot3_house.launch
+  fullname: /spawn_urdf
+  kind: spawn_model
+  name: spawn_urdf
+  namespace: /
+  nodelet: false
+  package: gazebo_ros
+  placeholder: false
+  provides: []
+  pubs: []
+  reads: []
+  subs:
+  - format: gazebo_msgs/ModelStates
+    name: /gazebo/model_states
+  uses:
+  - format: gazebo_msgs/SetModelConfiguration
+    name: /gazebo/set_model_configuration
+  - format: gazebo_msgs/DeleteModel
+    name: /gazebo/delete_model
+  - format: gazebo_msgs/SpawnModel
+    name: /gazebo/spawn_sdf_model_client
+  - format: std_srvs/Empty
+    name: /gazebo/unpause_physics
+  - format: gazebo_msgs/SpawnModel
+    name: /gazebo/spawn_urdf_model_client
+  writes: []

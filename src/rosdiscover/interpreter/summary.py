@@ -71,4 +71,3 @@ class NodeSummary:
                 'action-clients': action_clients,
                 'pubs': pubs,
                 'subs': subs}
-

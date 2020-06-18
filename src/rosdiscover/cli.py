@@ -46,15 +46,17 @@ def launch(args) -> None:
     else:
         print(yaml.dump(output, default_flow_style=False))
 
+
 def nodes_from_yaml(args):
-    with open(args.arch.name, 'r') as f: 
-        data = yaml.safe_load(f) 
-    nodes = []  
-    for d in data: 
+    with open(args.arch.name, 'r') as f:
+        data = yaml.safe_load(f)
+    f.close()
+    nodes = []
+    for d in data:
         read = []
         write = []
-        same_fields = {'pubs' : [], 'subs' : [], 'uses' : [], 'provides' : [], 
-                        'action-servers' : [], 'action-clients' : []}
+        same_fields = {'pubs': [], 'subs': [], 'uses': [], 'provides': [],
+                       'action-servers': [], 'action-clients': []}
         for i in same_fields:
             for j in d[i]:
                 same_fields[i].append((j['name'], j['format']))
@@ -62,13 +64,14 @@ def nodes_from_yaml(args):
             read.append((i['name'], i['dynamic']))
         for i in d['writes']:
             write.append(i)
-        obj = NodeSummary(name=d['name'], fullname=d['fullname'], namespace=d['namespace'], 
-            kind=d['kind'], package=d['package'], nodelet=d['nodelet'], filename=d['filename'], 
-            placeholder=d['placeholder'], pubs=same_fields['pubs'], subs=same_fields['subs'], 
-            reads=read, writes=write, uses=same_fields['uses'], provides=same_fields['provides'], 
-            action_servers=same_fields['action-servers'], action_clients=same_fields['action-clients']) 
+        obj = NodeSummary(name=d['name'], fullname=d['fullname'], namespace=d['namespace'],
+                          kind=d['kind'], package=d['package'], nodelet=d['nodelet'], filename=d['filename'],
+                          placeholder=d['placeholder'], pubs=same_fields['pubs'], subs=same_fields['subs'],
+                          reads=read, writes=write, uses=same_fields['uses'], provides=same_fields['provides'],
+                          action_servers=same_fields['action-servers'], action_clients=same_fields['action-clients'])
         nodes.append(obj)
     return nodes
+
 
 def generate_acme(args):
     """Generates an Acme description for a given roslaunch command."""
@@ -91,7 +94,6 @@ def generate_acme(args):
     else:
         if args.check:
             acme_gen.check_acme()
-   
 
 
 def rostopic_list(args) -> None:

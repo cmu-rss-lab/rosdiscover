@@ -1,0 +1,275 @@
+import families/ROSFam.acme;
+system arch : ROSFam = new ROSFam extended with {
+   component gazebo : ROSNodeCompT = new ROSNodeCompT extended with {
+             port _gazebo_factory_pub : TopicAdvertisePortT = new TopicAdvertisePortT extended with {
+        property msg_type = "gazebo_msgs/Factory";
+        property topic = "/gazebo/factory";
+    };
+    
+     port _cmd_vel_pub : TopicAdvertisePortT = new TopicAdvertisePortT extended with {
+        property msg_type = "geometry_msgs/Twist";
+        property topic = "/cmd_vel";
+    };
+    
+     port _clock_pub : TopicAdvertisePortT = new TopicAdvertisePortT extended with {
+        property msg_type = "rosgraph_msgs/Clock";
+        property topic = "/clock";
+    };
+    
+     port _gazebo_light_modify_pub : TopicAdvertisePortT = new TopicAdvertisePortT extended with {
+        property msg_type = "gazebo_msgs/Light";
+        property topic = "/gazebo/light/modify";
+    };
+    
+     port _gazebo_request_pub : TopicAdvertisePortT = new TopicAdvertisePortT extended with {
+        property msg_type = "gazebo_msgs/Request";
+        property topic = "/gazebo/request";
+    };
+    
+     port _gazebo_model_states_pub : TopicAdvertisePortT = new TopicAdvertisePortT extended with {
+        property msg_type = "gazebo_msgs/ModelStates";
+        property topic = "/gazebo/model_states";
+    };
+    
+     port _joint_states_pub : TopicAdvertisePortT = new TopicAdvertisePortT extended with {
+        property msg_type = "sensor_msgs/JointState";
+        property topic = "/joint_states";
+    };
+    
+     port _odom_pub : TopicAdvertisePortT = new TopicAdvertisePortT extended with {
+        property msg_type = "nav_msgs/Odometry";
+        property topic = "/odom";
+    };
+    
+     port _gazebo_link_states_pub : TopicAdvertisePortT = new TopicAdvertisePortT extended with {
+        property msg_type = "gazebo_msgs/LinkState";
+        property topic = "/gazebo/link_states";
+    };
+    
+     port _gazebo_factory_light_pub : TopicAdvertisePortT = new TopicAdvertisePortT extended with {
+        property msg_type = "gazebo_msgs/Light";
+        property topic = "/gazebo/factory/light";
+    };
+    
+     port _gazebo_response_sub : TopicSubscribePortT = new TopicSubscribePortT extended with {
+        property msg_type = "gazebo_msgs/Response";
+        property topic = "/gazebo/response";
+    };
+    
+     port _gazebo_set_link_state_sub : TopicSubscribePortT = new TopicSubscribePortT extended with {
+        property msg_type = "gazebo_msgs/LinkState";
+        property topic = "/gazebo/set_link_state";
+    };
+    
+     port _gazebo_set_model_state_sub : TopicSubscribePortT = new TopicSubscribePortT extended with {
+        property msg_type = "gazebo_msgs/ModelState";
+        property topic = "/gazebo/set_model_state";
+    };
+    
+     port _gazebo_set_light_properties_svc : ServiceProviderPortT = new ServiceProviderPortT extended with {
+        property svc_type : string = "gazebo_msgs/SetLightProperties";
+        property name : string = "/gazebo/set_light_properties";
+        property args : string = "";
+    };
+    
+     port _gazebo_clear_body_wrenches_svc : ServiceProviderPortT = new ServiceProviderPortT extended with {
+        property svc_type : string = "gazebo_msgs/BodyRequest";
+        property name : string = "/gazebo/clear_body_wrenches";
+        property args : string = "";
+    };
+    
+     port _gazebo_get_model_state_svc : ServiceProviderPortT = new ServiceProviderPortT extended with {
+        property svc_type : string = "gazebo_msgs/GetModelState";
+        property name : string = "/gazebo/get_model_state";
+        property args : string = "";
+    };
+    
+     port _gazebo_reset_world_svc : ServiceProviderPortT = new ServiceProviderPortT extended with {
+        property svc_type : string = "std_srvs/Empty";
+        property name : string = "/gazebo/reset_world";
+        property args : string = "";
+    };
+    
+     port _gazebo_set_link_properties_svc : ServiceProviderPortT = new ServiceProviderPortT extended with {
+        property svc_type : string = "gazebo_msgs/SetLinkProperties";
+        property name : string = "/gazebo/set_link_properties";
+        property args : string = "";
+    };
+    
+     port _gazebo_get_joint_properties_svc : ServiceProviderPortT = new ServiceProviderPortT extended with {
+        property svc_type : string = "gazebo_msgs/GetJointProperties";
+        property name : string = "/gazebo/get_joint_properties";
+        property args : string = "";
+    };
+    
+     port _gazebo_get_link_properties_svc : ServiceProviderPortT = new ServiceProviderPortT extended with {
+        property svc_type : string = "gazebo_msgs/GetLinkProperties";
+        property name : string = "/gazebo/get_link_properties";
+        property args : string = "";
+    };
+    
+     port _gazebo_get_light_properties_svc : ServiceProviderPortT = new ServiceProviderPortT extended with {
+        property svc_type : string = "gazebo_msgs/GetLightProperties";
+        property name : string = "/gazebo/get_light_properties";
+        property args : string = "";
+    };
+    
+     port _gazebo_spawn_sdf_model_svc : ServiceProviderPortT = new ServiceProviderPortT extended with {
+        property svc_type : string = "gazebo_msgs/SpawnModel";
+        property name : string = "/gazebo/spawn_sdf_model";
+        property args : string = "";
+    };
+    
+     port _gazebo_set_model_configuration_svc : ServiceProviderPortT = new ServiceProviderPortT extended with {
+        property svc_type : string = "gazebo_msgs/SetModelConfiguration";
+        property name : string = "/gazebo/set_model_configuration";
+        property args : string = "";
+    };
+    
+     port _gazebo_delete_light_svc : ServiceProviderPortT = new ServiceProviderPortT extended with {
+        property svc_type : string = "gazebo_msgs/DeleteLight";
+        property name : string = "/gazebo/delete_light";
+        property args : string = "";
+    };
+    
+     port _gazebo_get_world_properties_svc : ServiceProviderPortT = new ServiceProviderPortT extended with {
+        property svc_type : string = "gazebo_msgs/GetWorldProperties";
+        property name : string = "/gazebo/get_world_properties";
+        property args : string = "";
+    };
+    
+     port _gazebo_set_physics_properties_svc : ServiceProviderPortT = new ServiceProviderPortT extended with {
+        property svc_type : string = "gazebo_msgs/SetPhysicsProperties";
+        property name : string = "/gazebo/set_physics_properties";
+        property args : string = "";
+    };
+    
+     port _gazebo_set_model_state_svc : ServiceProviderPortT = new ServiceProviderPortT extended with {
+        property svc_type : string = "gazebo_msgs/SetModelState";
+        property name : string = "/gazebo/set_model_state";
+        property args : string = "";
+    };
+    
+     port _gazebo_reset_simulation_svc : ServiceProviderPortT = new ServiceProviderPortT extended with {
+        property svc_type : string = "std_srvs/Empty";
+        property name : string = "/gazebo/reset_simulation";
+        property args : string = "";
+    };
+    
+     port _gazebo_get_physics_properties_svc : ServiceProviderPortT = new ServiceProviderPortT extended with {
+        property svc_type : string = "gazebo_msgs/GetPhysicsProperties";
+        property name : string = "/gazebo/get_physics_properties";
+        property args : string = "";
+    };
+    
+     port _gazebo_get_link_state_svc : ServiceProviderPortT = new ServiceProviderPortT extended with {
+        property svc_type : string = "gazebo_msgs/GetLinkState";
+        property name : string = "/gazebo/get_link_state";
+        property args : string = "";
+    };
+    
+     port _gazebo_delete_model_svc : ServiceProviderPortT = new ServiceProviderPortT extended with {
+        property svc_type : string = "gazebo_msgs/DeleteModel";
+        property name : string = "/gazebo/delete_model";
+        property args : string = "";
+    };
+    
+     port _gazebo_apply_body_wrench_svc : ServiceProviderPortT = new ServiceProviderPortT extended with {
+        property svc_type : string = "gazebo_msgs/ApplyBodyWrench";
+        property name : string = "/gazebo/apply_body_wrench";
+        property args : string = "";
+    };
+    
+     port _gazebo_get_model_properties_svc : ServiceProviderPortT = new ServiceProviderPortT extended with {
+        property svc_type : string = "gazebo_msgs/GetModelProperties";
+        property name : string = "/gazebo/get_model_properties";
+        property args : string = "";
+    };
+    
+     port _gazebo_spawn_urdf_model_svc : ServiceProviderPortT = new ServiceProviderPortT extended with {
+        property svc_type : string = "gazebo_msgs/SpawnModel";
+        property name : string = "/gazebo/spawn_urdf_model";
+        property args : string = "";
+    };
+    
+     port _gazebo_set_joint_properties_svc : ServiceProviderPortT = new ServiceProviderPortT extended with {
+        property svc_type : string = "gazebo_msgs/SetJointProperties";
+        property name : string = "/gazebo/set_joint_properties";
+        property args : string = "";
+    };
+    
+     port _gazebo_unpause_physics_svc : ServiceProviderPortT = new ServiceProviderPortT extended with {
+        property svc_type : string = "std_srvs/Empty";
+        property name : string = "/gazebo/unpause_physics";
+        property args : string = "";
+    };
+    
+     port _gazebo_clear_joint_forces_svc : ServiceProviderPortT = new ServiceProviderPortT extended with {
+        property svc_type : string = "gazebo_msgs/JointRequest";
+        property name : string = "/gazebo/clear_joint_forces";
+        property args : string = "";
+    };
+    
+     port _gazebo_apply_joint_effort_svc : ServiceProviderPortT = new ServiceProviderPortT extended with {
+        property svc_type : string = "gazebo_msgs/ApplyJointEffort";
+        property name : string = "/gazebo/apply_joint_effort";
+        property args : string = "";
+    };
+    
+        property name = "gazebo";
+    };
+    
+   component gazebo_gui : ROSNodeCompT = new ROSNodeCompT extended with {
+             port _gazebo_gui_parameter_description_pub : TopicAdvertisePortT = new TopicAdvertisePortT extended with {
+        property msg_type = "dynamic_recongfigure/ConfigDescription";
+        property topic = "/gazebo_gui/parameter_description";
+    };
+    
+     port _gazebo_gui_parameter_updates_pub : TopicAdvertisePortT = new TopicAdvertisePortT extended with {
+        property msg_type = "dynamic_reconfigure/Config";
+        property topic = "/gazebo_gui/parameter_updates";
+    };
+    
+     port _clock_sub : TopicSubscribePortT = new TopicSubscribePortT extended with {
+        property msg_type = "rosgraph_msgs/Clock";
+        property topic = "/clock";
+    };
+    
+     port _gazebo_gui_set_parameters_svc : ServiceProviderPortT = new ServiceProviderPortT extended with {
+        property svc_type : string = "unknown type";
+        property name : string = "/gazebo_gui/set_parameters";
+        property args : string = "";
+    };
+    
+        property name = "gazebo_gui";
+    };
+    
+   component spawn_urdf : ROSNodeCompT = new ROSNodeCompT extended with {
+             port _gazebo_model_states_sub : TopicSubscribePortT = new TopicSubscribePortT extended with {
+        property msg_type = "gazebo_msgs/ModelStates";
+        property topic = "/gazebo/model_states";
+    };
+    
+        property name = "spawn_urdf";
+    };
+       connector _clock_conn : TopicConnectorT = new TopicConnectorT extended with {
+         role gazebo_pub : ROSTopicAdvertiserRoleT = new ROSTopicAdvertiserRoleT;
+    
+    role gazebo_gui_sub : ROSTopicSubscriberRoleT = new ROSTopicSubscriberRoleT;
+    
+        property msg_type = "rosgraph_msgs/Clock";
+        property topic = "/clock";
+    };
+    
+   connector _gazebo_model_states_conn : TopicConnectorT = new TopicConnectorT extended with {
+         role gazebo_pub : ROSTopicAdvertiserRoleT = new ROSTopicAdvertiserRoleT;
+    
+    role spawn_urdf_sub : ROSTopicSubscriberRoleT = new ROSTopicSubscriberRoleT;
+    
+        property msg_type = "gazebo_msgs/ModelStates";
+        property topic = "/gazebo/model_states";
+    };
+      attachment gazebo._clock_pub to _clock_conn.gazebo_pub;
+  attachment gazebo_gui._clock_sub to _clock_conn.gazebo_gui_sub;
+  attachment gazebo._gazebo_model_states_pub to _gazebo_model_states_conn.gazebo_pub;
+  attachment spawn_urdf._gazebo_model_states_sub to _gazebo_model_states_conn.spawn_urdf_sub;}
