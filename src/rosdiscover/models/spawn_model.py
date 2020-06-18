@@ -3,6 +3,8 @@ from ..interpreter import model
 
 import argparse
 
+from loguru import logger
+
 
 @model('gazebo_ros', 'spawn_model')
 def spawn_model(c):
@@ -23,3 +25,8 @@ def spawn_model(c):
     parser.add_argument('-y', type=float)
     parser.add_argument('-z', type=float)
     args = parser.parse_args(c.args.split())
+
+    urdf_param_name = args.param
+    logger.debug(f'spawning model using parameter [{urdf_param_name}]')
+    urdf_contents = c.read(urdf_param_name)
+    logger.debug(f'model contents: {urdf_contents}')
