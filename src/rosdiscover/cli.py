@@ -10,7 +10,10 @@ import pkg_resources
 
 from .acme import AcmeGenerator
 from .config import Config
-from .interpreter import Interpreter
+from .interpreter import Interpreter, NodeSummary
+
+import roswire
+import time
 
 DESC = 'discovery of ROS architectures'
 CONFIG_HELP = """R|A YAML file defining the configuration.
@@ -83,6 +86,88 @@ def rosservice_list(args) -> None:
     print('\n'.join(sorted(services)))
 
 
+def toString(line):
+    s = ''
+    l1 = list(line)
+    if len(l1) == 0:
+        return '[]'
+    for i in l1:
+        (fmt, topic) = i
+        s = s + "\n  - format: " + fmt + "\n    name: " + topic + "\n"
+    return s
+
+
+def get_info(image, sources, environment):
+    rsw = roswire.ROSWire()
+    with rsw.launch(image, sources, environment=environment) as system:
+        with system.roscore() as ros:
+            ros.roslaunch('turtlebot3_house.launch',
+                          package='turtlebot3_gazebo',
+                          args={'gui': 'false'})
+
+            time.sleep(30)
+            node_names = list(ros.nodes)
+            state = ros.state
+            topic_to_type = ros.topic_to_type
+            service_to_format = {}
+            for service_name in state.services:
+                service = ros.services[service_name]
+                service_to_format[service_name] = service.format.name
+
+    return node_names, state, topic_to_type, service_to_format
+
+
+def create_dict(node_names, state, topic_to_type, service_to_format):
+    nodeSummaryDict = {}
+    for n in node_names:
+        p = []
+        for key in state.publishers:
+            pubs = state.publishers[key]
+            for i in pubs:
+                if i == n:
+                    p.append((topic_to_type[key], key))
+        s = []
+        for key in state.subscribers:
+            subs = state.subscribers[key]
+            for i in subs:
+                if i == n:
+                    s.append((topic_to_type[key], key))
+        serv = []
+        for key in service_to_format:
+            path = n + '/'
+            if path in key:
+                serv.append((service_to_format[key], key))
+        obj = NodeSummary('', n, '/', '', '', False, '', False, p, s, [], [], [], serv, [], [])
+        nodeSummaryDict.update({n: obj})
+    return nodeSummaryDict
+
+
+def dynamic_analysis(args):
+    with open(args.config, 'r') as r:
+        data = yaml.safe_load(r)
+    r.close()
+    f = open("Arch.yml", "w")
+    logger.enable('roswire')
+    image = data['image']
+    sources = data['sources']
+    if 'environment' in data:
+        environment = data['environment']
+    node_names, state, topic_to_type, service_to_format = get_info(image, sources, environment)
+    nodeSummaryDict = create_dict(node_names, state, topic_to_type, service_to_format)
+    for i in nodeSummaryDict:
+        obj = nodeSummaryDict[i]
+        f.write(f"- action-clients: {toString(obj.action_clients)}\n  ")
+        f.write(f"action-servers: {toString(obj.action_servers)}\n  ")
+        f.write(f"filename: {obj.filename}\n  fullname: {obj.fullname}\n ")
+        f.write(f"kind: {obj.kind}\n  name: {obj.name}\n")
+        f.write(f"namespace: {obj.namespace}\n  nodelet: {obj.nodelet}\n ")
+        f.write(f"package: {obj.package}\n  placeholder: {obj.placeholder}\n  ")
+        f.write(f"provides: {toString(obj.provides)}\n  pubs: {toString(obj.pubs)}\n  ")
+        f.write(f"reads: {toString(obj.reads)}\n  subs: {toString(obj.subs)}\n  ")
+        f.write(f"uses: {toString(obj.uses)}\n  writes: {toString(obj.writes)}\n\n")
+    f.close()
+
+
 class MultiLineFormatter(argparse.HelpFormatter):
     def _split_lines(self, text, width):
         if text.startswith('R|'):
@@ -112,6 +197,13 @@ def main() -> None:
     p.add_argument('config', type=argparse.FileType('r'), help=CONFIG_HELP)
 
     p.set_defaults(func=rostopic_list)
+
+    p = subparsers.add_parser(
+        'dynamic',
+        help='Generates a dynamic analysis using rosnode list',
+        formatter_class=MultiLineFormatter)
+    p.add_argument('config', type=argparse.FileType('r', help=CONFIG_HELP))
+    p.set_defaults(func=dynamic_analysis)
 
     p = subparsers.add_parser(
         'rosservice',
