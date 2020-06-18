@@ -167,7 +167,7 @@ class NodeContext:
         logger.debug(f"node [{self.__name}] reads parameter [{param}]")
         param = self.resolve(param)
         self.__reads.add((param, dynamic))
-        return self.__params.get(param, default).value
+        return self.__params.get(param, default)
 
     def write(self, param: str, val: Any) -> None:
         logger.debug(f"node [{self.__name}] writes [{val}] to "
