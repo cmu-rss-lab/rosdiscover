@@ -1,4 +1,7 @@
+# -*- coding: utf-8 -*-
 from ..interpreter import model
+
+import argparse
 
 
 @model('gazebo_ros', 'spawn_model')
@@ -11,3 +14,12 @@ def spawn_model(c):
     c.use(f'{ns_gz}/spawn_sdf_model_client', 'gazebo_msgs/SpawnModel')
     c.use(f'{ns_gz}/spawn_sdf_model_client', 'gazebo_msgs/SpawnModel')
     c.use(f'{ns_gz}/set_model_configuration', 'gazebo_msgs/SetModelConfiguration')
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-urdf', action='store_true')
+    parser.add_argument('-model', type=str)
+    parser.add_argument('-param', type=str)
+    parser.add_argument('-x', type=float)
+    parser.add_argument('-y', type=float)
+    parser.add_argument('-z', type=float)
+    args = parser.parse_args(c.args.split())
