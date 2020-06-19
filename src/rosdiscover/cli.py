@@ -97,12 +97,12 @@ def toString(line):
     return s
 
 
-def get_info(image, sources, environment):
+def get_info(image, sources, environment, file, package):
     rsw = roswire.ROSWire()
     with rsw.launch(image, sources, environment=environment) as system:
         with system.roscore() as ros:
-            ros.roslaunch('turtlebot3_house.launch',
-                          package='turtlebot3_gazebo',
+            ros.roslaunch(file,
+                          package=package,
                           args={'gui': 'false'})
 
             time.sleep(30)
@@ -153,7 +153,8 @@ def dynamic_analysis(args):
     sources = data['sources']
     if 'environment' in data:
         environment = data['environment']
-    node_names, state, topic_to_type, service_to_format = get_info(image, sources, environment)
+    node_names, state, topic_to_type, service_to_format = get_info(image, sources, environment,
+                                                          args.launchfile, args.package)
     nodeSummaryDict = create_dict(node_names, state, topic_to_type, service_to_format)
     for i in nodeSummaryDict:
         obj = nodeSummaryDict[i]
@@ -203,6 +204,8 @@ def main() -> None:
         'dynamic',
         help='Generates a dynamic analysis using rosnode list',
         formatter_class=MultiLineFormatter)
+    p.add_argument('--package', type=str, help="package for roslaunch")
+    p.add_argument('--launchfile', type=str, help="launchfile for roslaunch")
     p.add_argument('config', type=argparse.FileType('r'), help=CONFIG_HELP)
     p.set_defaults(func=dynamic_analysis)
 
