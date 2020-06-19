@@ -143,7 +143,8 @@ def create_dict(node_names, state, topic_to_type, service_to_format):
 
 
 def dynamic_analysis(args):
-    with open(args.config, 'r') as r:
+    print(args)
+    with open(args.config.name, 'r') as r:
         data = yaml.safe_load(r)
     r.close()
     f = open("Arch.yml", "w")
@@ -202,7 +203,7 @@ def main() -> None:
         'dynamic',
         help='Generates a dynamic analysis using rosnode list',
         formatter_class=MultiLineFormatter)
-    p.add_argument('config', type=argparse.FileType('r', help=CONFIG_HELP))
+    p.add_argument('config', type=argparse.FileType('r'), help=CONFIG_HELP)
     p.set_defaults(func=dynamic_analysis)
 
     p = subparsers.add_parser(
