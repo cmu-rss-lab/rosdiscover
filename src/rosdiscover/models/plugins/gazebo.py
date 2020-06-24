@@ -54,4 +54,12 @@ class LibGazeboROSLaserPlugin(GazeboPlugin):
 
     @classmethod
     def build_from_xml(cls, xml: ET.Element) -> 'GazeboPlugin':
-        raise NotImplementedError
+        xml_topic_name = xml.find('topicName')
+        xml_frame_name = xml.find('frameName')
+
+        assert xml_topic_name
+        assert xml_frame_name
+
+        topic_name = xml_topic_name.text
+        frame_name = xml_frame_name.text
+        return LibGazeboROSLaserPlugin(topic_name, frame_name)
