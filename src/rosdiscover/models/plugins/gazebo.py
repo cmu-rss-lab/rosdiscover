@@ -4,7 +4,7 @@ This file provides model plugins that represent various Gazebo plugins.
 """
 __all__ = ('GazeboPlugin',)
 
-from typing import Type
+from typing import Mapping, Type
 import abc
 import xml.etree.ElementTree as ET
 
@@ -23,9 +23,10 @@ class GazeboPlugin(_ModelPlugin):
         logger.debug(f'loading gazebo plugin [{name}] from file [{filename}]')
 
         # TODO locate the class for the plugin based on filename
-        cls: Type[GazeboPlugin]
-        raise NotImplementedError
-
+        filename_to_cls: Mapping[str, Type[GazeboPlugin]] = {
+            'libgazebo_ros_laser.so': LibGazeboROSLaserPlugin
+        }
+        cls = filename_to_cls[filename]
         return cls.build_from_xml(xml)
 
     @classmethod
@@ -37,8 +38,8 @@ class GazeboPlugin(_ModelPlugin):
 @attr.s(frozen=True, slots=True)
 class LibGazeboROSLaserPlugin(GazeboPlugin):
     """
-    Example definition
-    ------------------
+    Example
+    -------
 
     .. code:: xml
 
