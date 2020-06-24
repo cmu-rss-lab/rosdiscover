@@ -14,18 +14,17 @@ def toyaml(nodes):
                 continue
             nodes1 = description_from_node.entities
             to_yaml.update(toyaml(nodes1))
-        if isinstance(node, Node): 
+        if isinstance(node, Node):
             '''
-            Note: The code directly accesses variables since there are no getters for 
-            these specific variables in launch. 
-            
+            Note: The code directly accesses variables since there are no getters for
+            these specific variables in launch.
             This code might break with changed implementations of launch
             '''
             dic = {}
             if node._Node__node_name:
                 name_entry = node._Node__node_name
                 dic['name'] = node._Node__node_name
-            else: 
+            else:
                 name_entry = 'unknown' + str(no_name)
                 no_name += 1
                 dic['name'] = name_entry
