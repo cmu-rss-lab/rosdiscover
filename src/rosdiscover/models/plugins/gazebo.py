@@ -11,10 +11,10 @@ import xml.etree.ElementTree as ET
 from loguru import logger
 import attr
 
-from ..interpreter.plugin import ModelPlugin as _ModelPlugin
+from ..interpreter import Interpreter, ModelPlugin
 
 
-class GazeboPlugin(_ModelPlugin):
+class GazeboPlugin(ModelPlugin):
     """Represents the architectural effects of a Gazebo plugin."""
     @classmethod
     def from_xml(cls, xml: ET.Element) -> 'GazeboPlugin':
@@ -51,6 +51,9 @@ class LibGazeboROSLaserPlugin(GazeboPlugin):
     filename = 'libgazebo_ros_laser.so'
     topic_name: str = attr.ib()
     frame_name: str = attr.ib()
+
+    def load(self, interpreter: Interpreter) -> None:
+        raise NotImplementedError
 
     @classmethod
     def build_from_xml(cls, xml: ET.Element) -> 'GazeboPlugin':
