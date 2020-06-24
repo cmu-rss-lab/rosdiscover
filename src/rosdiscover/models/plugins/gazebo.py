@@ -20,7 +20,8 @@ class GazeboPlugin(ModelPlugin):
     def from_xml(cls, xml: ET.Element) -> 'GazeboPlugin':
         name = xml.attrib['name']
         filename = xml.attrib['filename']
-        logger.debug(f'loading gazebo plugin [{name}] from file [{filename}]')
+        logger.debug(f'loading gazebo plugin [{name}] from file [{filename}] '
+                     f'via XML: {ET.tostring(xml).decode("utf-8")}')
 
         # TODO locate the class for the plugin based on filename
         filename_to_cls: Mapping[str, Type[GazeboPlugin]] = {
@@ -77,8 +78,8 @@ class LibGazeboROSDiffDrivePlugin(GazeboPlugin):
         xml_command_topic = xml.find('commandTopic')
         xml_odometry_topic = xml.find('odometryTopic')
 
-        assert xml_command_topic
-        assert xml_odometry_topic
+        assert xml_command_topic is not None
+        assert xml_odometry_topic is not None
 
         command_topic = xml_command_topic.text
         odometry_topic = xml_odometry_topic.text
@@ -110,8 +111,8 @@ class LibGazeboROSLaserPlugin(GazeboPlugin):
         xml_topic_name = xml.find('topicName')
         xml_frame_name = xml.find('frameName')
 
-        assert xml_topic_name
-        assert xml_frame_name
+        assert xml_topic_name is not None
+        assert xml_frame_name is not None
 
         topic_name = xml_topic_name.text
         frame_name = xml_frame_name.text
