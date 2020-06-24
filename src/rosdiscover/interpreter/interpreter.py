@@ -4,7 +4,6 @@ import contextlib
 
 from loguru import logger
 from roswire.proxy.roslaunch.reader import LaunchFileReader
-import dockerblade
 import roswire
 
 from .context import NodeContext
@@ -14,9 +13,16 @@ from .parameter import ParameterServer
 
 
 class Interpreter:
-    @staticmethod
+    """
+    Attributes
+    ----------
+    params: ParameterServer
+        The simulated parameter server for this interpreter.
+    """
+    @classmethod
     @contextlib.contextmanager
-    def for_image(image: str,
+    def for_image(cls,
+                  image: str,
                   sources: Sequence[str],
                   *,
                   environment: Optional[Mapping[str, str]] = None
@@ -24,36 +30,27 @@ class Interpreter:
         """Constructs an interpreter for a given Docker image."""
         rsw = roswire.ROSWire()  # TODO don't maintain multiple instances
         with rsw.launch(image, sources, environment=environment) as app:
-            yield Interpreter(app.files, app.shell)
+            yield Interpreter(app)
 
-    def __init__(self,
-                 files: dockerblade.files.FileSystem,
-                 shell: dockerblade.shell.Shell
-                 ) -> None:
-        self.__files = files
-        self.__shell = shell
-        self.__params = ParameterServer()
-        self.__nodes: Set[NodeSummary] = set()
-
-    @property
-    def parameters(self) -> ParameterServer:
-        """The simulated parameter server for this interpreter."""
-        return self.__params
+    def __init__(self, app: roswire.System) -> None:
+        self._app = app
+        self.params = ParameterServer()
+        self._nodes: Set[NodeSummary] = set()
 
     @property
     def nodes(self) -> Iterator[NodeSummary]:
         """Returns an iterator of summaries for each ROS node."""
-        yield from self.__nodes
+        yield from self._nodes
 
-    def launch(self, fn: str) -> None:
+    def launch(self, filename: str) -> None:
         """Simulates the effects of `roslaunch` using a given launch file."""
         # NOTE this method also supports command-line arguments
-        reader = LaunchFileReader(shell=self.__shell,
-                                  files=self.__files)
-        config = reader.read(fn)
+        reader = LaunchFileReader(shell=self._app.shell,
+                                  files=self._app.files)
+        config = reader.read(filename)
 
         for key, value in config.params.items():
-            self.__params[key] = value
+            self.params[key] = value
 
         for node in config.nodes:
             if not node.filename:
@@ -209,10 +206,10 @@ class Interpreter:
                           args=args,
                           launch_filename=launch_filename,
                           remappings=remappings,
-                          files=self.__files,
-                          params=self.__params)
+                          files=self._app.files,
+                          params=self.params)
         model.eval(ctx)
         if hasattr(model, '__placeholder') and model.__placeholder:
             model.mark_placeholder()
 
-        self.__nodes.add(ctx.summarize())
+        self._nodes.add(ctx.summarize())
