@@ -73,6 +73,11 @@ class Interpreter:
                 logger.exception(f"failed to launch node: {node.name}")
                 raise
 
+        # now that all nodes have been initialised, load all plugins
+        for node in self._nodes:
+            for plugin in node._plugins:
+                plugin.load(self)
+
     def create_nodelet_manager(self, name: str) -> None:
         """Creates a nodelet manager with a given name."""
         logger.info('launched nodelet manager: %s', name)
