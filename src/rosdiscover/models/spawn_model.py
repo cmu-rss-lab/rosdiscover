@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
-from ..interpreter import model
-
 import argparse
 import xml.etree.ElementTree as ET
 
 from loguru import logger
+
+from .plugins.gazebo import GazeboPlugin
+from ..interpreter import model
 
 
 @model('gazebo_ros', 'spawn_model')
@@ -43,11 +44,6 @@ def spawn_model(c):
         f.write(urdf_contents)
 
     urdf_xml = ET.fromstring(urdf_contents)
-
     for plugin_xml in urdf_xml.findall('.//plugin'):
-        plugin_name = plugin_xml.attrib['name']
-        plugin_filename = plugin_xml.attrib['filename']
-        logger.debug(f'loading gazebo plugin [{plugin_name}] '
-                     f'from file [{plugin_filename}]')
-
-    c.load_gazebo_plugin(plugin_xml)
+        plugin = GazeboPlugin.from_xml(plugin_xml)
+        c.load_plugin(plugin)
