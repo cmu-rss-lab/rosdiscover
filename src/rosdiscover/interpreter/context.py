@@ -1,13 +1,17 @@
 # -*- coding: utf-8 -*-
-from typing import Any, Mapping, Optional, Set, Tuple
+from typing import Any, List, Mapping, Optional, Set, Tuple
 
 from loguru import logger
 import attr
 import dockerblade
 import roswire.name as rosname
+import typing
 
 from .summary import NodeSummary
 from .parameter import ParameterServer
+
+if typing.TYPE_CHECKING:
+    from .plugin import ModelPlugin
 
 
 @attr.s(slots=True, auto_attribs=True)
@@ -33,6 +37,7 @@ class NodeContext:
     # and dynamic is whether the node reacts to updates to the parameter via reconfigure
     _reads: Set[Tuple[str, bool]] = attr.ib(factory=set, repr=False)
     _writes: Set[str] = attr.ib(factory=set, repr=False)
+    _plugins: List['ModelPlugin'] = attr.ib(factory=list)
 
     def __attrs_post_init__(self) -> None:
         assert rosname.name_is_legal(self.namespace)
@@ -212,6 +217,11 @@ class NodeContext:
         self.sub(f'{ns}/status', 'actionlib_msgs/GoalStatusArray')
         self.sub(f'{ns}/feedback', f'{fmt}Feedback')
         self.sub(f'{ns}/result', f'{fmt}Result')
+
+    def load_plugin(self, plugin: 'ModelPlugin') -> None:
+        """Loads a given dynamic plugin."""
+        logger.debug(f'loading plugin in node [{self.name}]: {plugin}')
+        self._plugins.append(plugin)
 
     def mark_nodelet(self) -> None:
         self._nodelet = True
