@@ -26,7 +26,8 @@ class GazeboPlugin(ModelPlugin):
         # TODO locate the class for the plugin based on filename
         filename_to_cls: Mapping[str, Type[GazeboPlugin]] = {
             'libgazebo_ros_laser.so': LibGazeboROSLaserPlugin,
-            'libgazebo_ros_diff_drive.so': LibGazeboROSDiffDrivePlugin
+            'libgazebo_ros_diff_drive.so': LibGazeboROSDiffDrivePlugin,
+            'libgazebo_ros_imu.so': LibGazeboROSIMUPlugin
         }
         cls = filename_to_cls[filename]
         return cls.build_from_xml(xml)
@@ -35,6 +36,61 @@ class GazeboPlugin(ModelPlugin):
     @abc.abstractmethod
     def build_from_xml(cls, xml: ET.Element) -> 'GazeboPlugin':
         ...
+
+
+@attr.s(frozen=True, slots=True)
+class LibGazeboROSIMUPlugin(GazeboPlugin):
+    """
+    Example
+    -------
+
+    .. code:: xml
+
+        <plugin filename="libgazebo_ros_imu.so" name="imu_plugin">
+          <alwaysOn>true</alwaysOn>
+          <bodyName>imu_link</bodyName>
+          <frameName>imu_link</frameName>
+          <topicName>imu</topicName>
+          <serviceName>imu_service</serviceName>
+          <gaussianNoise>0.0</gaussianNoise>
+          <updateRate>200</updateRate>
+          <imu>
+            <noise>
+              <type>gaussian</type>
+              <rate>
+                <mean>0.0</mean>
+                <stddev>2e-4</stddev>
+                <bias_mean>0.0000075</bias_mean>
+                <bias_stddev>0.0000008</bias_stddev>
+              </rate>
+              <accel>
+                <mean>0.0</mean>
+                <stddev>1.7e-2</stddev>
+                <bias_mean>0.1</bias_mean>
+                <bias_stddev>0.001</bias_stddev>
+              </accel>
+            </noise>
+          </imu>
+        </plugin>
+    """
+    filename = 'libgazebo_ros_imu.so'
+    topic_name: str = attr.ib()
+    service_name: str = attr.ib()
+
+    def load(self, interpreter: Interpreter) -> None:
+        raise NotImplementedError
+
+    @classmethod
+    def build_from_xml(cls, xml: ET.Element) -> 'GazeboPlugin':
+        xml_topic_name = xml.find('topicName')
+        xml_service_name = xml.find('serviceName')
+
+        assert xml_topic_name is not None
+        assert xml_service_name is not None
+
+        topic_name = xml_topic_name.text
+        service_name = xml_service_name.text
+        return LibGazeboROSIMUPlugin(topic_name, service_name)
 
 
 @attr.s(frozen=True, slots=True)
