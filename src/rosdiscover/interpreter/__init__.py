@@ -11,5 +11,5 @@ from .context import NodeContext
 from .model import model, Model
 from .parameter import ParameterServer
 from .plugin import ModelPlugin
-from .summary import NodeSummary
+from .summary import NodeSummary, SystemSummary
 from .interpreter import Interpreter

@@ -65,7 +65,7 @@ class NodeContext:
                 name = name_new
         return name
 
-    def summarize(self) -> NodeSummary:
+    def summarise(self) -> NodeSummary:
         return NodeSummary(name=self.name,
                            fullname=self.fullname,
                            filename=self.launch_filename,
