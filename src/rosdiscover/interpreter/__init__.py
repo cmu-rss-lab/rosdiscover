@@ -10,5 +10,6 @@ model evaluator / virtual machine for a ROS architecture.
 from .context import NodeContext
 from .model import model, Model
 from .parameter import ParameterServer
-from .summary import NodeSummary
+from .plugin import ModelPlugin
+from .summary import NodeSummary, SystemSummary
 from .interpreter import Interpreter
