@@ -50,14 +50,6 @@ class Interpreter:
         # NOTE this method also supports command-line arguments
         reader = LaunchFileReader(shell=self.__shell,
                                   files=self.__files)
-
-        # Workaround:
-        # https://answers.ros.org/question/299232/roslaunch-python-arg-substitution-finds-wrong-package-folder-path/
-        # https://github.com/ros/ros_comm/blob/e96c407c64e1c17b0dd2bb85b67f388380527097/tools/roslaunch/src/roslaunch/substitution_args.py#L141L145
-        sed_command = 's#$(find xacro)/xacro #$(find xacro)/xacro.py #g'
-        sed_command = f'sed -i "{sed_command}" {fn}'
-        self.__shell.check_output(sed_command)
-
         config = reader.read(fn)
 
         for key, value in config.params.items():
