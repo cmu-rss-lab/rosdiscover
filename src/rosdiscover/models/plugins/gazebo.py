@@ -11,7 +11,7 @@ import xml.etree.ElementTree as ET
 from loguru import logger
 import attr
 
-from ..interpreter import Interpreter, ModelPlugin
+from ...interpreter import Interpreter, ModelPlugin
 
 
 class GazeboPlugin(ModelPlugin):
