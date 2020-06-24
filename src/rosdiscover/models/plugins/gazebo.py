@@ -9,6 +9,7 @@ import abc
 import xml.etree.ElementTree as ET
 
 from loguru import logger
+from roswire.name import namespace_join
 import attr
 
 from ...interpreter import Interpreter, ModelPlugin
@@ -30,7 +31,10 @@ class GazeboPlugin(ModelPlugin):
             'libgazebo_ros_imu.so': LibGazeboROSIMUPlugin
         }
         cls = filename_to_cls[filename]
-        return cls.build_from_xml(xml)
+        plugin = cls.build_from_xml(xml)
+        logger.debug(f'loaded gazebo plugin [{name}] from file [{filename}]: '
+                     f'{plugin}')
+        return plugin
 
     @classmethod
     @abc.abstractmethod
@@ -158,18 +162,28 @@ class LibGazeboROSLaserPlugin(GazeboPlugin):
     filename = 'libgazebo_ros_laser.so'
     topic_name: str = attr.ib()
     frame_name: str = attr.ib()
+    robot_namespace: str = attr.ib()
 
     def load(self, interpreter: Interpreter) -> None:
-        raise NotImplementedError
+        gazebo = interpreter.nodes['/gazebo']
+        topic_name = namespace_join(self.robot_namespace, self.topic_name)
+        gazebo.pub(topic_name, 'sensor_msgs/LaserScan')
 
     @classmethod
     def build_from_xml(cls, xml: ET.Element) -> 'GazeboPlugin':
         xml_topic_name = xml.find('topicName')
         xml_frame_name = xml.find('frameName')
+        xml_robot_namespace = xml.find('robotNamespace')
 
         assert xml_topic_name is not None
         assert xml_frame_name is not None
 
         topic_name = xml_topic_name.text
         frame_name = xml_frame_name.text
-        return LibGazeboROSLaserPlugin(topic_name, frame_name)
+        if xml_robot_namespace is None:
+            robot_namespace = '/'
+        else:
+            robot_namespace = xml_robot_namespace.text
+        return LibGazeboROSLaserPlugin(topic_name=topic_name,
+                                       frame_name=frame_name,
+                                       robot_namespace=robot_namespace)
