@@ -24,7 +24,8 @@ class GazeboPlugin(ModelPlugin):
 
         # TODO locate the class for the plugin based on filename
         filename_to_cls: Mapping[str, Type[GazeboPlugin]] = {
-            'libgazebo_ros_laser.so': LibGazeboROSLaserPlugin
+            'libgazebo_ros_laser.so': LibGazeboROSLaserPlugin,
+            'libgazebo_ros_diff_drive.so': LibGazeboROSDiffDrivePlugin
         }
         cls = filename_to_cls[filename]
         return cls.build_from_xml(xml)
@@ -33,6 +34,55 @@ class GazeboPlugin(ModelPlugin):
     @abc.abstractmethod
     def build_from_xml(cls, xml: ET.Element) -> 'GazeboPlugin':
         ...
+
+
+@attr.s(frozen=True, slots=True)
+class LibGazeboROSDiffDrivePlugin(GazeboPlugin):
+    """
+    Example
+    -------
+
+    .. code:: xml
+
+        <plugin filename="libgazebo_ros_diff_drive.so" name="turtlebot3_burger_controller">
+          <commandTopic>cmd_vel</commandTopic>
+          <odometryTopic>odom</odometryTopic>
+          <odometryFrame>odom</odometryFrame>
+          <odometrySource>world</odometrySource>
+          <publishOdomTF>true</publishOdomTF>
+          <robotBaseFrame>base_footprint</robotBaseFrame>
+          <publishWheelTF>false</publishWheelTF>
+          <publishTf>true</publishTf>
+          <publishWheelJointState>true</publishWheelJointState>
+          <legacyMode>false</legacyMode>
+          <updateRate>30</updateRate>
+          <leftJoint>wheel_left_joint</leftJoint>
+          <rightJoint>wheel_right_joint</rightJoint>
+          <wheelSeparation>0.160</wheelSeparation>
+          <wheelDiameter>0.066</wheelDiameter>
+          <wheelAcceleration>1</wheelAcceleration>
+          <wheelTorque>10</wheelTorque>
+          <rosDebugLevel>na</rosDebugLevel>
+        </plugin>
+    """
+    filename = 'libgazebo_ros_diff_drive.so'
+    command_topic: str = attr.ib()
+    odometry_topic: str = attr.ib()
+
+    def load(self, interpreter: Interpreter) -> None:
+        raise NotImplementedError
+
+    @classmethod
+    def build_from_xml(cls, xml: ET.Element) -> 'GazeboPlugin':
+        xml_command_topic = xml.find('commandTopic')
+        xml_odometry_topic = xml.find('odometryTopic')
+
+        assert xml_command_topic
+        assert xml_odometry_topic
+
+        command_topic = xml_command_topic.text
+        odometry_topic = xml_odometry_topic.text
+        return LibGazeboROSDiffDrivePlugin(command_topic, odometry_topic)
 
 
 @attr.s(frozen=True, slots=True)
