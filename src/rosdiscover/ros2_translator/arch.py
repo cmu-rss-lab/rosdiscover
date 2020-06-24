@@ -3,6 +3,7 @@ from launch.actions import IncludeLaunchDescription
 from launch_ros.actions import Node
 from launch.launch_description_sources import get_launch_description_from_python_launch_file
 
+
 def toyaml(nodes):
     to_yaml = {}
     no_name = 0
@@ -13,12 +14,18 @@ def toyaml(nodes):
                 continue
             nodes1 = description_from_node.entities
             to_yaml.update(toyaml(nodes1))
-        if isinstance(node, Node):
+        if isinstance(node, Node): 
+            '''
+            Note: The code directly accesses variables since there are no getters for 
+            these specific variables in launch. 
+            
+            This code might break with changed implementations of launch
+            '''
             dic = {}
-            if node._Node__node_name is not None:
+            if node._Node__node_name:
                 name_entry = node._Node__node_name
                 dic['name'] = node._Node__node_name
-            else:
+            else: 
                 name_entry = 'unknown' + str(no_name)
                 no_name += 1
                 dic['name'] = name_entry
@@ -27,9 +34,10 @@ def toyaml(nodes):
             if node._Node__node_executable:
                 dic['executable'] = node._Node__node_executable
             if node._Node__package:
-                dic['package'] =  node._Node__package
+                dic['package'] = node._Node__package
             to_yaml[name_entry] = dic
     return to_yaml
+
 
 if __name__ == '__main__':
     description = get_launch_description_from_python_launch_file('robot.launch.py')
