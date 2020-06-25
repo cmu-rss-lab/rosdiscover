@@ -16,9 +16,9 @@ def toyaml(nodes):
             nodes1 = description_from_node.entities
             to_yaml.update(toyaml(nodes1))
         if isinstance(node, Node):
-            #Note: The code directly accesses variables since there are no getters for
-            #these specific variables in launch.
-            #This code might break with changed implementations of launch
+            # Note: The code directly accesses variables since there are no getters for
+            # these specific variables in launch.
+            # This code might break with changed implementations of launch
             dic = {}
             if node._Node__node_name:
                 name_entry = node._Node__node_name
