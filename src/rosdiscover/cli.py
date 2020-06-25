@@ -14,6 +14,7 @@ from .interpreter import Interpreter, NodeSummary
 
 import roswire
 import time
+import json
 
 DESC = 'discovery of ROS architectures'
 CONFIG_HELP = """R|A YAML file defining the configuration.
@@ -97,7 +98,7 @@ def toString(line):
     return s
 
 
-def get_info(image, sources, environment):
+def get_info(image, sources, environment, time):
     rsw = roswire.ROSWire()
     with rsw.launch(image, sources, environment=environment) as system:
         with system.roscore() as ros:
@@ -105,7 +106,7 @@ def get_info(image, sources, environment):
                           package='turtlebot3_gazebo',
                           args={'gui': 'false'})
 
-            time.sleep(30)
+            time.sleep(time)
             node_names = list(ros.nodes)
             state = ros.state
             topic_to_type = ros.topic_to_type
@@ -143,28 +144,23 @@ def create_dict(node_names, state, topic_to_type, service_to_format):
 
 
 def dynamic_analysis(args):
-    with open(args.config, 'r') as r:
-        data = yaml.safe_load(r)
-    r.close()
-    f = open("Arch.yml", "w")
+    with open(args.config, 'r') as f:
+        data = yaml.safe_load(f)
+    if args.output:
+        f = open(args.output, "w")
+    else:
+        f = open("arch.yml", "w")
     logger.enable('roswire')
     image = data['image']
     sources = data['sources']
     if 'environment' in data:
         environment = data['environment']
-    node_names, state, topic_to_type, service_to_format = get_info(image, sources, environment)
+    if args.sleep:
+        node_names, state, topic_to_type, service_to_format = get_info(image, sources, environment, args.sleep)
+    else:
+        node_names, state, topic_to_type, service_to_formate = get_info(image, sources, environment, 30)
     nodeSummaryDict = create_dict(node_names, state, topic_to_type, service_to_format)
-    for i in nodeSummaryDict:
-        obj = nodeSummaryDict[i]
-        f.write(f"- action-clients: {toString(obj.action_clients)}\n  ")
-        f.write(f"action-servers: {toString(obj.action_servers)}\n  ")
-        f.write(f"filename: {obj.filename}\n  fullname: {obj.fullname}\n ")
-        f.write(f"kind: {obj.kind}\n  name: {obj.name}\n")
-        f.write(f"namespace: {obj.namespace}\n  nodelet: {obj.nodelet}\n ")
-        f.write(f"package: {obj.package}\n  placeholder: {obj.placeholder}\n  ")
-        f.write(f"provides: {toString(obj.provides)}\n  pubs: {toString(obj.pubs)}\n  ")
-        f.write(f"reads: {toString(obj.reads)}\n  subs: {toString(obj.subs)}\n  ")
-        f.write(f"uses: {toString(obj.uses)}\n  writes: {toString(obj.writes)}\n\n")
+    f.write(json.dumps(nodeSummaryDict, indent=4, separators=(". ", " = ")))
     f.close()
 
 
@@ -203,6 +199,8 @@ def main() -> None:
         help='Generates a dynamic analysis using rosnode list',
         formatter_class=MultiLineFormatter)
     p.add_argument('config', type=argparse.FileType('r', help=CONFIG_HELP))
+    p.add_argument('--output', type=str)
+    p.add_argument('--sleep', type=int)
     p.set_defaults(func=dynamic_analysis)
 
     p = subparsers.add_parser(

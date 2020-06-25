@@ -3,7 +3,7 @@ import collections
 import sys
 
 sys.path.append("/interpreter")
-from summary import NodeSummary
+from .interpreter import NodeSummary
 
 
 from loguru import logger
