@@ -1,4 +1,5 @@
 import json
+import argparse
 from launch.actions import IncludeLaunchDescription
 from launch_ros.actions import Node
 from launch.launch_description_sources import get_launch_description_from_python_launch_file
@@ -39,7 +40,10 @@ def toyaml(nodes):
 
 
 if __name__ == '__main__':
-    description = get_launch_description_from_python_launch_file('robot.launch.py')
+    parser = argparse.ArgumentParser(description='Find nodes')
+    parser.add_argument('--launchfile', type=str)
+    args = parser.parse_args()
+    description = get_launch_description_from_python_launch_file(args.launchfile)
     nodes = description.entities
     with open('Arch.yml', 'w') as f:
         f.write(json.dumps(toyaml(nodes), indent=4, separators=(". ", " = ")))
