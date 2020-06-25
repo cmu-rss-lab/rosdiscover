@@ -39,9 +39,14 @@ def toyaml(nodes):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Find nodes')
-    parser.add_argument('--launchfile', type=str)
+    parser.add_argument('launchfile', type=str)
+    parser.add_argument('--output', type=str)
+    if args.output:
+        yaml_file = args.output
+    else: 
+        yaml_file = 'arch.yml'
     args = parser.parse_args()
     description = get_launch_description_from_python_launch_file(args.launchfile)
     nodes = description.entities
-    with open('Arch.yml', 'w') as f:
+    with open(yml_file, 'w') as f:
         f.write(json.dumps(toyaml(nodes), indent=4, separators=(". ", " = ")))
