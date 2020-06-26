@@ -1,0 +1,18 @@
+language: python
+services:
+- docker
+matrix:
+  include:
+  - python: 3.6
+    env: TOXENV=py36
+install:
+- pip install -r requirements.dev.txt
+- pip install -e .
+# see #337: flag potential twine issues before attempting to upload to PyPI
+- python setup.py sdist
+- python setup.py bdist_wheel
+- twine check dist/*
+script:
+- tox
+notifications:
+  email: false

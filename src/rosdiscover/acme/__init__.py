@@ -27,12 +27,10 @@ SERVICE_CONNECTOR = """  connector {conn_name} : ServiceConnT = new ServiceConnT
     {roles}
     }};
    """
-
 ACTION_CONNECTOR = """  connector {conn_name} : ActionServerConnT = new ActionServerConnT extended with {{
     {roles}
     }};
    """
-
 NODE_COMPONENT = """   component {comp_name} : ROSNodeCompT = new ROSNodeCompT extended with {{
         {ports}
         property name = "{node_name}";
@@ -44,31 +42,25 @@ NODE_PLACEHOLDER_COMPONENT = """   component {comp_name} : ROSNodeCompT, Placeho
         property placeholder = true;
     }};
 """
-
+ATTACHMENT = "  attachment {comp}.{port} to {conn}.{role};"
+SERVICE_ATTACHMENT = "  attachment {qualified_port} to {conn}.{role};"
 SUBSCRIBER_ROLE = """    role {role_name} : ROSTopicSubscriberRoleT = new ROSTopicSubscriberRoleT;
     """
-
 ADVERTISER_ROLE = """     role {role_name} : ROSTopicAdvertiserRoleT = new ROSTopicAdvertiserRoleT;
     """
-
 PROVIDER_ROLE = """     role {role_name} : ROSServiceCallRoleT = new ROSServiceCallRoleT;
     """
-
 CLIENT_ROLE = """       role {role_name} : ROSServiceProviderRoleT = new ROSServiceProviderRoleT;
     """
-
 ACTION_CLIENT_ROLE = """      role {role_name} : ROSActionCallerRoleT = new ROSActionCallRoleT;
     """
-
 ACTION_SERVER_ROLE = """      role {role_name} : ROSActionResponderRoleT = new ROSActionResponderRoleT;
     """
-
 TOPIC_PORT = """     port {port_name} : ${port_type} = new ${port_type} extended with {{
         property msg_type = "{msg_type}";
         property topic = "{topic}";
     }};
     """
-
 SUBSCRIBER_PORT = """     port {port_name} : TopicSubscribePortT = new TopicSubscribePortT extended with {{
         property msg_type = "{msg_type}";
         property topic = "{topic}";
@@ -79,25 +71,21 @@ ADVERTISER_PORT = """     port {port_name} : TopicAdvertisePortT = new TopicAdve
         property topic = "{topic}";
     }};
     """
-
 PROVIDER_PORT = """     port {port_name} : ServiceProviderPortT = new ServiceProviderPortT extended with {{
         property svc_type : string = "{svc_type}";
         property name : string = "{service}";
         property args : string = "";
     }};
     """
-
 REQUIRER_PORT = """     port {port_name} : ServiceClientPortT = new ServiceClientPortT extended with {{
         property svc_type : string = "{svc_type}";
         property persistency : boolean = {persistence}
     }};
     """
-
 ACTION_CLIENT_PORT = """    port {port_name} : ActionClientPortT = new ActionClientPortT extended with {{
         property action_type : string = "{action_type}";
     }};
     """
-
 ACTION_SERVER_PORT = """    port {port_name}: ActionServerPortT = new ActionServerPortT extended with {{
         property action_type : string = "{action_type}";
     }};
@@ -110,9 +98,6 @@ def update_service_conn(conns, service, port_qualified, is_provider) -> None:
         s = conns[service]
     else:
         s = {"name": service, 'callers': set(), 'providers': set()}
-        # s.name = service
-        # s.callers= {}
-        # s.providers = {}
         conns[service] = s
     if is_provider:
         s['providers'].add(port_qualified)
@@ -152,29 +137,29 @@ class AcmeGenerator:
         actions: Dict[str, dict] = {}
 
         for node in self.__nodes:
-            for pTopic, pType in node.pubs:
+            for p_topic, p_type in node.pubs:
                 topic = {}
-                if pTopic in topics:
-                    topic = topics[pTopic]
+                if p_topic in topics:
+                    topic = topics[p_topic]
                 else:
-                    topic = {'details': {'name': pTopic, 'format': pType}, "pubs": [], "subs": []}
-                    topics[pTopic] = topic
+                    topic = {'details': {'name': p_topic, 'format': p_type}, "pubs": [], "subs": []}
+                    topics[p_topic] = topic
                 topic["pubs"].append(node.name)
-            for sTopic, sType in node.subs:
+            for sub_topic, sub_type in node.subs:
                 topic = {}
-                if sTopic in topics:
-                    topic = topics[sTopic]
+                if sub_topic in topics:
+                    topic = topics[sub_topic]
                 else:
-                    topic = {'details': {'name': sTopic, 'format': sType}, "pubs": [], "subs": []}
-                    topics[sTopic] = topic
+                    topic = {'details': {'name': sub_topic, 'format': sub_type}, "pubs": [], "subs": []}
+                    topics[sub_topic] = topic
                 topic["subs"].append(node.name)
-            for sName, sType in node.provides:
+            for service_name, service_type in node.provides:
                 service = {}
-                if sName in services:
-                    service = services[sName]
+                if service_name in services:
+                    service = services[service_name]
                 else:
-                    service = {'details': {'name': sName, 'format': sType}, "provs": [], "reqs": []}
-                    services[sName] = service
+                    service = {'details': {'name': service_name, 'format': service_type}, "provs": [], "reqs": []}
+                    services[service_name] = service
                 service["provs"].append(node.name)
             # for call in node()['requires']:
             #     service={}
@@ -184,21 +169,21 @@ class AcmeGenerator:
             #         service = {'details' : call, "provs": [], "reqs" : []}
             #         services[call["name"]] = service
             #     service["reqs"].append(node()["name"])
-            for aName, aType in node.action_servers:
+            for action_name, action_type in node.action_servers:
                 action = {}
-                if aName in actions:
-                    action = actions[aName]
+                if action_name in actions:
+                    action = actions[action_name]
                 else:
-                    action = {'details': {'name': aName, 'type': aType}, "servers": [], "clients": []}
-                    actions[aName] = action
+                    action = {'details': {'name': action_name, 'type': action_type}, "servers": [], "clients": []}
+                    actions[action_name] = action
                 action["servers"].append(node.name)
-            for aName, aType in node.action_clients:
+            for action_name, action_type in node.action_clients:
                 action = {}
-                if aName in actions:
-                    action = actions[aName]
+                if action_name in actions:
+                    action = actions[action_name]
                 else:
-                    action = {'details': {'name': aName, 'format': aType}, "servers": [], "clients": []}
-                    actions[aName] = action
+                    action = {'details': {'name': action_name, 'format': action_type}, "servers": [], "clients": []}
+                    actions[action_name] = action
                 action["clients"].append(node.name)
             components.append(node)
         return components, topics, services, actions
@@ -220,22 +205,20 @@ class AcmeGenerator:
         service_conns: Dict[str, dict] = {}
         action_conns: Dict[str, dict] = {}
         attachments_to_topic: Dict[str, List[str]] = {}
-        ATTACHMENT = "  attachment {comp}.{port} to {conn}.{role};"
-        SERVICE_ATTACHMENT = "  attachment {qualified_port} to {conn}.{role};"
         for c in components:
             ports = []
             comp_name = self.to_acme_name(c.name)
 
-            for (pTopic, pType) in c.pubs:
-                if pTopic not in attachments_to_topic:
-                    attachments_to_topic[pTopic] = []
-                pname = f'{self.to_acme_name(pTopic)}_pub'
-                port = ADVERTISER_PORT.format(port_name=pname, msg_type=pType, topic=pTopic)
+            for (p_topic, p_type) in c.pubs:
+                if p_topic not in attachments_to_topic:
+                    attachments_to_topic[p_topic] = []
+                pname = f'{self.to_acme_name(p_topic)}_pub'
+                port = ADVERTISER_PORT.format(port_name=pname, msg_type=p_type, topic=p_topic)
                 ports.append(port)
-                attachments_to_topic[pTopic].append(
+                attachments_to_topic[p_topic].append(
                     ATTACHMENT.format(comp=comp_name,
                                       port=pname,
-                                      conn=f"{AcmeGenerator.to_acme_name(pTopic)}_conn",
+                                      conn=f"{AcmeGenerator.to_acme_name(p_topic)}_conn",
                                       role=f"{comp_name}_pub"))
             for name, fmt in c.subs:
                 if name not in attachments_to_topic:
