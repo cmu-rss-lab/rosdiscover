@@ -98,12 +98,13 @@ def toString(line):
     return s
 
 
-def get_info(image, sources, environment, time):
+
+def get_info(image, sources, environment, file, package, time):
     rsw = roswire.ROSWire()
     with rsw.launch(image, sources, environment=environment) as system:
         with system.roscore() as ros:
-            ros.roslaunch('turtlebot3_house.launch',
-                          package='turtlebot3_gazebo',
+            ros.roslaunch(file,
+                          package=package,
                           args={'gui': 'false'})
 
             time.sleep(time)
@@ -156,9 +157,11 @@ def dynamic_analysis(args):
     if 'environment' in data:
         environment = data['environment']
     if args.sleep:
-        node_names, state, topic_to_type, service_to_format = get_info(image, sources, environment, args.sleep)
+        time = args.sleep
     else:
-        node_names, state, topic_to_type, service_to_formate = get_info(image, sources, environment, 30)
+        time = 30
+    node_names, state, topic_to_type, service_to_format = get_info(image, sources, environment,
+                                                          args.launchfile, args.package, time)
     nodeSummaryDict = create_dict(node_names, state, topic_to_type, service_to_format)
     f.write(json.dumps(nodeSummaryDict, indent=4, separators=(". ", " = ")))
     f.close()
@@ -198,9 +201,14 @@ def main() -> None:
         'dynamic',
         help='Generates a dynamic analysis using rosnode list',
         formatter_class=MultiLineFormatter)
+
     p.add_argument('config', type=argparse.FileType('r', help=CONFIG_HELP))
     p.add_argument('--output', type=str)
     p.add_argument('--sleep', type=int)
+    p.add_argument('--package', type=str, help="package for roslaunch")
+    p.add_argument('--launchfile', type=str, help="launchfile for roslaunch")
+    p.add_argument('config', type=argparse.FileType('r'), help=CONFIG_HELP)
+
     p.set_defaults(func=dynamic_analysis)
 
     p = subparsers.add_parser(
