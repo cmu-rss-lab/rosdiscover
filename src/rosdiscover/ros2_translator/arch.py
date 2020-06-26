@@ -7,9 +7,9 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.actions import IncludeLaunchDescription
 from launch_ros.actions import Node
 NodeDescription = Dict[str, Any]
+
+
 class NodeDescriptionExtractor:
-
-
     def __init__(self) -> None:
         self.__unnamed_nodes = 0
 
