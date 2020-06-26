@@ -11,7 +11,7 @@ import pkg_resources
 from .acme import AcmeGenerator
 from .config import Config
 
-from .interpreter import Interpreter, NodeSummary
+from .interpreter import Interpreter, SystemSummary, NodeSummary
 
 import roswire
 import time
@@ -86,19 +86,7 @@ def rosservice_list(args) -> None:
     print('\n'.join(sorted(services)))
 
 
-def toString(line):
-    s = ''
-    l1 = list(line)
-    if len(l1) == 0:
-        return '[]'
-    for i in l1:
-        (fmt, topic) = i
-        s = s + "\n  - format: " + fmt + "\n    name: " + topic + "\n"
-    return s
-
-
-
-def get_info(image, sources, environment, file, package, time):
+def get_info(image, sources, environment, file, package, sleep_time):
     rsw = roswire.ROSWire()
     with rsw.launch(image, sources, environment=environment) as system:
         with system.roscore() as ros:
@@ -106,7 +94,7 @@ def get_info(image, sources, environment, file, package, time):
                           package=package,
                           args={'gui': 'false'})
 
-            time.sleep(time)
+            time.sleep(sleep_time)
             node_names = list(ros.nodes)
             state = ros.state
             topic_to_type = ros.topic_to_type
@@ -119,7 +107,7 @@ def get_info(image, sources, environment, file, package, time):
 
 
 def create_dict(node_names, state, topic_to_type, service_to_format):
-    nodeSummaryDict = {}
+    node_summary_dict = {}
     for n in node_names:
         p = []
         for key in state.publishers:
@@ -139,8 +127,8 @@ def create_dict(node_names, state, topic_to_type, service_to_format):
             if path in key:
                 serv.append((service_to_format[key], key))
         obj = NodeSummary('', n, '/', '', '', False, '', False, p, s, [], [], [], serv, [], [])
-        nodeSummaryDict.update({n: obj})
-    return nodeSummaryDict
+        node_summary_dict.update({n: obj})
+    return node_summary_dict
 
 
 def dynamic_analysis(args):
@@ -156,13 +144,13 @@ def dynamic_analysis(args):
     if 'environment' in data:
         environment = data['environment']
     if args.sleep:
-        time = args.sleep
+        sleep_time = args.sleep
     else:
-        time = 30
+        sleep_time = 30
     node_names, state, topic_to_type, service_to_format = get_info(image, sources, environment,
-                                                          args.launchfile, args.package, time)
-    nodeSummaryDict = create_dict(node_names, state, topic_to_type, service_to_format)
-    f.write(json.dumps(nodeSummaryDict, indent=4, separators=(". ", " = ")))
+                                                                   args.launchfile, args.package, sleep_time)
+    node_summary_dict = create_dict(node_names, state, topic_to_type, service_to_format)
+    f.write(json.dumps(node_summary_dict, indent=4, separators=(". ", " = ")))
     f.close()
 
 
