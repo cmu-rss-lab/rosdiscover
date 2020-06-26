@@ -189,7 +189,7 @@ def main() -> None:
         help='Generates a dynamic analysis using rosnode list',
         formatter_class=MultiLineFormatter)
 
-    p.add_argument('config', type=argparse.FileType('r', help=CONFIG_HELP))
+    p.add_argument('config', type=argparse.FileType('r') help=CONFIG_HELP)
     p.add_argument('--output', type=str)
     p.add_argument('--sleep', type=int)
     p.add_argument('--package', type=str, help="package for roslaunch")
