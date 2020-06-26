@@ -8,8 +8,11 @@ from launch.actions import IncludeLaunchDescription
 from launch_ros.actions import Node
 NodeDescription = Dict[str, Any]
 class NodeDescriptionExtractor:
+
+
     def __init__(self) -> None:
         self.__unnamed_nodes = 0
+
     def _node_to_description(self, node: Node) -> NodeDescription:
         # Note: The code directly accesses variables since there are no getters for
         # these specific variables in launch.
@@ -29,6 +32,7 @@ class NodeDescriptionExtractor:
         if node._Node__package:
             output['package'] = node._Node__package
         return output
+
     def _extract_descriptions(self,
                               entity: LaunchDescriptionEntity,
                               context: LaunchContext
@@ -42,6 +46,7 @@ class NodeDescriptionExtractor:
         else:
             print(f'UNKNOWN ENTITY: {type(entity)}')
         return descriptions
+
     def extract(self, filename: str) -> List[NodeDescription]:
         context = LaunchContext()
         launch_description_source = \
@@ -50,6 +55,8 @@ class NodeDescriptionExtractor:
             IncludeLaunchDescription(launch_description_source)
         ])
         return self._extract_descriptions(launch_description, context)
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Find nodes')
     parser.add_argument('launchfile', type=str)
