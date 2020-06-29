@@ -9,7 +9,7 @@ import abc
 import xml.etree.ElementTree as ET
 
 from loguru import logger
-from roswire.name import namespace_join
+from roswire.name import namespace_join, name_is_global
 import attr
 
 from ...interpreter import Interpreter, ModelPlugin
@@ -142,7 +142,18 @@ class LibGazeboROSDiffDrivePlugin(GazeboPlugin):
     odometry_topic: str = attr.ib()
 
     def load(self, interpreter: Interpreter) -> None:
-        raise NotImplementedError
+        namespace = self.robot_namespace
+        gazebo = interpreter.nodes['/gazebo']
+
+        command_topic = self.command_topic:
+        if not name_is_global(command_topic):
+            command_topic = namespace_join(namespace, command_topic)
+        gazebo.pub(command_topic, 'geometry_msgs/Twist')
+
+        odometry_topic = self.odometry_topic:
+        if not name_is_global(odometry_topic):
+            odometry_topic = namespace_join(namespace, odometry_topic)
+        gazebo.pub(odometry_topic, 'nav_msgs/Odometry')
 
     @classmethod
     def build_from_xml(cls, xml: ET.Element) -> 'GazeboPlugin':
