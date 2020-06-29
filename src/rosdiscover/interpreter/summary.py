@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
-__all__ = ('NodeSummary',)
+__all__ = ('NodeSummary', 'SystemSummary')
 
-from typing import Any, Collection, Dict, Tuple
+from typing import Any, Collection, Dict, Iterator, List, Mapping, Tuple
 
 import attr
 
 
 @attr.s(frozen=True, slots=True, auto_attribs=True)
 class NodeSummary:
+    """Summarises the architectural effects of a given node."""
     name: str
     fullname: str
     namespace: str
@@ -71,3 +72,23 @@ class NodeSummary:
                 'action-clients': action_clients,
                 'pubs': pubs,
                 'subs': subs}
+
+
+@attr.s(frozen=True, slots=True, auto_attribs=True)
+class SystemSummary(Mapping[str, NodeSummary]):
+    """Summarises the architectural effects of all nodes in a system.
+    Provides a mapping from node names to the architectural effects of those
+    nodes."""
+    _node_to_summary: Mapping[str, NodeSummary]
+
+    def __len__(self) -> int:
+        return len(self._node_to_summary)
+
+    def __iter__(self) -> Iterator[str]:
+        yield from self._node_to_summary
+
+    def __getitem__(self, name: str) -> NodeSummary:
+        return self._node_to_summary[name]
+
+    def to_dict(self) -> List[Dict[str, Any]]:
+        return [n.to_dict() for n in self.values()]
