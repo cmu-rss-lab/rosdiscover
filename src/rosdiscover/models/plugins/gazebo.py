@@ -82,18 +82,29 @@ class LibGazeboROSIMUPlugin(GazeboPlugin):
     service_name: str = attr.ib()
 
     def load(self, interpreter: Interpreter) -> None:
-        raise NotImplementedError
+        gazebo = interpreter.nodes['/gazebo']
+        namespace = self.robot_namespace
+
+        if self.topic_name:
+            topic_name = namespace_join(namespace, self.topic_name)
+            gazebo.pub(topic_name, 'sensor_msgs/Imu')
+            service_name = namespace_join(namespace, self.service_name)
+            gazebo.provide(service_name, 'std_srvs/Empty')
 
     @classmethod
     def build_from_xml(cls, xml: ET.Element) -> 'GazeboPlugin':
         xml_topic_name = xml.find('topicName')
+        if xml_topic_name is None:
+            topic_name = '/default_imu'
+        else:
+            topic_name = xml_topic_name.text
+
         xml_service_name = xml.find('serviceName')
+        if xml_service_name is None:
+            service_name = '/calibrate'
+        else:
+            service_name = xml_service_name.text
 
-        assert xml_topic_name is not None
-        assert xml_service_name is not None
-
-        topic_name = xml_topic_name.text
-        service_name = xml_service_name.text
         return LibGazeboROSIMUPlugin(topic_name, service_name)
 
 
