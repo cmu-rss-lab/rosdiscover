@@ -80,6 +80,7 @@ class LibGazeboROSIMUPlugin(GazeboPlugin):
     filename = 'libgazebo_ros_imu.so'
     topic_name: str = attr.ib()
     service_name: str = attr.ib()
+    robot_namespace: str = attr.ib()
 
     def load(self, interpreter: Interpreter) -> None:
         gazebo = interpreter.nodes['/gazebo']
@@ -105,7 +106,15 @@ class LibGazeboROSIMUPlugin(GazeboPlugin):
         else:
             service_name = xml_service_name.text
 
-        return LibGazeboROSIMUPlugin(topic_name, service_name)
+        xml_robot_namespace = xml.find('robotNamespace')
+        if xml_robot_namespace is None:
+            robot_namespace = ''
+        else:
+            robot_namespace = xml_robot_namespace.text
+
+        return LibGazeboROSIMUPlugin(topic_name=topic_name,
+                                     service_name=service_name,
+                                     robot_namespace=robot_namespace)
 
 
 @attr.s(frozen=True, slots=True)
