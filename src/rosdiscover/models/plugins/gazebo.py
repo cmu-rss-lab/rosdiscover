@@ -94,23 +94,20 @@ class LibGazeboROSIMUPlugin(GazeboPlugin):
 
     @classmethod
     def build_from_xml(cls, xml: ET.Element) -> 'GazeboPlugin':
+        topic_name: str = '/default_imu'
         xml_topic_name = xml.find('topicName')
-        if xml_topic_name is None:
-            topic_name = '/default_imu'
-        else:
+        if xml_topic_name is not None and xml_topic_name.text is not None:
             topic_name = xml_topic_name.text
 
+        service_name: str = '/calibrate'
         xml_service_name = xml.find('serviceName')
-        if xml_service_name is None:
-            service_name = '/calibrate'
-        else:
+        if xml_service_name is not None and xml_service_name.text is not None:
             service_name = xml_service_name.text
 
-        xml_robot_namespace = xml.find('robotNamespace')
-        if xml_robot_namespace is None:
-            robot_namespace = ''
-        else:
-            robot_namespace = xml_robot_namespace.text
+        robot_namespace: str = ''
+        xml_robot_ns = xml.find('robotNamespace')
+        if xml_robot_ns is not None and xml_robot_ns.text is not None:
+            robot_namespace = xml_robot_ns.text
 
         return LibGazeboROSIMUPlugin(topic_name=topic_name,
                                      service_name=service_name,
