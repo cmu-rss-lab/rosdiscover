@@ -142,18 +142,9 @@ class LibGazeboROSDiffDrivePlugin(GazeboPlugin):
     odometry_topic: str = attr.ib()
 
     def load(self, interpreter: Interpreter) -> None:
-        namespace = self.robot_namespace
         gazebo = interpreter.nodes['/gazebo']
-
-        command_topic = self.command_topic:
-        if not name_is_global(command_topic):
-            command_topic = namespace_join(namespace, command_topic)
-        gazebo.pub(command_topic, 'geometry_msgs/Twist')
-
-        odometry_topic = self.odometry_topic:
-        if not name_is_global(odometry_topic):
-            odometry_topic = namespace_join(namespace, odometry_topic)
-        gazebo.pub(odometry_topic, 'nav_msgs/Odometry')
+        gazebo.pub(self.command_topic, 'geometry_msgs/Twist')
+        gazebo.pub(self.odometry_topic, 'nav_msgs/Odometry')
 
     @classmethod
     def build_from_xml(cls, xml: ET.Element) -> 'GazeboPlugin':
