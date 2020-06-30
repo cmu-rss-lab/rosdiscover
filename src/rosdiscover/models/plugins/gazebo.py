@@ -6,10 +6,10 @@ __all__ = ('GazeboPlugin',)
 
 from typing import Mapping, Type
 import abc
-import xml.etree.ElementTree as ET
+import xml.etree.ElementTree as ET  # noqa
 
 from loguru import logger
-from roswire.name import namespace_join, name_is_global
+from roswire.name import namespace_join
 import attr
 
 from ...interpreter import Interpreter, ModelPlugin

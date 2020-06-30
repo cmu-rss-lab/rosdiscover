@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import argparse
-import xml.etree.ElementTree as ET
+import xml.etree.ElementTree as ET  # noqa
 
 from loguru import logger
 
