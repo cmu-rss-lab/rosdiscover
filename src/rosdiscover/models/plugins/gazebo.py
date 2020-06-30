@@ -194,17 +194,16 @@ class LibGazeboROSLaserPlugin(GazeboPlugin):
     def build_from_xml(cls, xml: ET.Element) -> 'GazeboPlugin':
         xml_topic_name = xml.find('topicName')
         xml_frame_name = xml.find('frameName')
-        xml_robot_namespace = xml.find('robotNamespace')
+        xml_robot_ns = xml.find('robotNamespace')
 
-        assert xml_topic_name is not None
-        assert xml_frame_name is not None
+        assert xml_topic_name is not None and xml_topic_name.text is not None
+        assert xml_frame_name is not None and xml_frame_name.text is not None
 
-        topic_name = xml_topic_name.text
-        frame_name = xml_frame_name.text
-        if xml_robot_namespace is None:
-            robot_namespace = '/'
-        else:
-            robot_namespace = xml_robot_namespace.text
+        topic_name: str = xml_topic_name.text
+        frame_name: str = xml_frame_name.text
+        robot_namespace: str = '/'
+        if xml_robot_ns is not None and xml_robot_ns.text is not None:
+            robot_namespace = xml_robot_ns.text
         return LibGazeboROSLaserPlugin(topic_name=topic_name,
                                        frame_name=frame_name,
                                        robot_namespace=robot_namespace)
