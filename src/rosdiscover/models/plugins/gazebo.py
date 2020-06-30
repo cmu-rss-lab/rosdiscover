@@ -158,10 +158,12 @@ class LibGazeboROSDiffDrivePlugin(GazeboPlugin):
         xml_odometry_topic = xml.find('odometryTopic')
 
         assert xml_command_topic is not None
+        assert xml_command_topic.text is not None
         assert xml_odometry_topic is not None
+        assert xml_odometry_topic.text is not None
 
-        command_topic = xml_command_topic.text
-        odometry_topic = xml_odometry_topic.text
+        command_topic: str = xml_command_topic.text
+        odometry_topic: str = xml_odometry_topic.text
         return LibGazeboROSDiffDrivePlugin(command_topic, odometry_topic)
 
 
