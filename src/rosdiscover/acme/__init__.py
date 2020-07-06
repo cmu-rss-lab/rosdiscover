@@ -36,12 +36,14 @@ ACTION_CONNECTOR = """  connector {conn_name} : ActionServerConnT = new ActionSe
 NODE_COMPONENT = """   component {comp_name} : ROSNodeCompT = new ROSNodeCompT extended with {{
         {ports}
         property name = "{node_name}";
+        property launch_file = "{filename}";
     }};
     """
 NODE_PLACEHOLDER_COMPONENT = """   component {comp_name} : ROSNodeCompT, PlaceholderT = new ROSNodeCompT, PlaceholderT extended with {{
         {ports}
         property name = "{node_name}";
         property placeholder = true;
+        property launch_file = "{filename}";
     }};
 """
 
@@ -282,7 +284,8 @@ class AcmeGenerator:
             component_template: str = NODE_COMPONENT if not c.placeholder else NODE_PLACEHOLDER_COMPONENT
             comp = component_template.format(comp_name=comp_name,
                                              ports='\n'.join(ports),
-                                             node_name=c.name)
+                                             node_name=c.name,
+                                             filename=c.filename)
             component_strs.append(comp)
         acme = acme + "\n".join(component_strs)
 
