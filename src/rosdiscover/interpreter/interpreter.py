@@ -50,8 +50,8 @@ class Interpreter:
                                   files=self._app.files)
         config = reader.read(filename)
 
-        for key, value in config.params.items():
-            self.params[key] = value
+        for param in config.params.values():
+            self.params[param.name] = param.value
 
         for node in config.nodes:
             if not node.filename:
