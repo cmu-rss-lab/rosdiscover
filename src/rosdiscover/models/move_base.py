@@ -76,7 +76,7 @@ def move_base(c):
         c.pub("~{}/local_plan".format(name), "nav_msgs/Path")
         c.sub("odom", "sensor_msgs/PointCloud2")
 
-    def plugin_DWAPlannerROS():
+    def plugin_DWAPlannerROS():  # noqa
         name = "DWAPlannerROS"
         base_plugin_local(name)
 
@@ -120,7 +120,7 @@ def move_base(c):
         c.read("~{}/oscillation_reset_dist".format(name), 0.05)
         c.read("~{}/prune_plan".format(name), True)
 
-    def plugin_TrajectoryPlannerROS():
+    def plugin_TrajectoryPlannerROS():  # noqa
         name = "TrajectoryPlannerROS"
         base_plugin_local(name)
 

@@ -1,22 +1,28 @@
 # -*- coding: utf-8 -*-
-from typing import Dict, Iterator, Mapping, Optional, Set, Sequence
+from typing import Dict, Iterator, Mapping, Optional, Sequence
 import contextlib
 
 from loguru import logger
 from roswire.proxy.roslaunch.reader import LaunchFileReader
-import dockerblade
 import roswire
 
 from .context import NodeContext
 from .model import Model
-from .summary import NodeSummary
+from .summary import SystemSummary
 from .parameter import ParameterServer
 
 
 class Interpreter:
-    @staticmethod
+    """
+    Attributes
+    ----------
+    params: ParameterServer
+        The simulated parameter server for this interpreter.
+    """
+    @classmethod
     @contextlib.contextmanager
-    def for_image(image: str,
+    def for_image(cls,
+                  image: str,
                   sources: Sequence[str],
                   *,
                   environment: Optional[Mapping[str, str]] = None
@@ -24,44 +30,28 @@ class Interpreter:
         """Constructs an interpreter for a given Docker image."""
         rsw = roswire.ROSWire()  # TODO don't maintain multiple instances
         with rsw.launch(image, sources, environment=environment) as app:
-            yield Interpreter(app.files, app.shell)
+            yield Interpreter(app)
 
-    def __init__(self,
-                 files: dockerblade.files.FileSystem,
-                 shell: dockerblade.shell.Shell
-                 ) -> None:
-        self.__files = files
-        self.__shell = shell
-        self.__params = ParameterServer()
-        self.__nodes: Set[NodeSummary] = set()
+    def __init__(self, app: roswire.System) -> None:
+        self._app = app
+        self.params = ParameterServer()
+        self.nodes: Dict[str, NodeContext] = {}
 
-    @property
-    def parameters(self) -> ParameterServer:
-        """The simulated parameter server for this interpreter."""
-        return self.__params
+    def summarise(self) -> SystemSummary:
+        """Produces an immutable description of the system architecture."""
+        node_summaries = [node.summarise() for node in self.nodes.values()]
+        node_to_summary = {s.fullname: s for s in node_summaries}
+        return SystemSummary(node_to_summary)
 
-    @property
-    def nodes(self) -> Iterator[NodeSummary]:
-        """Returns an iterator of summaries for each ROS node."""
-        yield from self.__nodes
-
-    def launch(self, fn: str) -> None:
+    def launch(self, filename: str) -> None:
         """Simulates the effects of `roslaunch` using a given launch file."""
         # NOTE this method also supports command-line arguments
-        reader = LaunchFileReader(shell=self.__shell,
-                                  files=self.__files)
-
-        # Workaround:
-        # https://answers.ros.org/question/299232/roslaunch-python-arg-substitution-finds-wrong-package-folder-path/
-        # https://github.com/ros/ros_comm/blob/e96c407c64e1c17b0dd2bb85b67f388380527097/tools/roslaunch/src/roslaunch/substitution_args.py#L141L145
-        sed_command = 's#$(find xacro)/xacro #$(find xacro)/xacro.py #g'
-        sed_command = f'sed -i "{sed_command}" {fn}'
-        self.__shell.check_output(sed_command)
-
-        config = reader.read(fn)
+        reader = LaunchFileReader(shell=self._app.shell,
+                                  files=self._app.files)
+        config = reader.read(filename)
 
         for key, value in config.params.items():
-            self.__params[key] = value
+            self.params[key] = value
 
         for node in config.nodes:
             if not node.filename:
@@ -72,31 +62,36 @@ class Interpreter:
             try:
                 args = node.args or ''
                 remappings = {old: new for (old, new) in node.remappings}
-                self.load(pkg=node.package,
-                          nodetype=node.typ,
-                          name=node.name,
-                          namespace=node.namespace,  # FIXME
-                          launch_filename=node.filename,
-                          remappings=remappings,
-                          args=args)
+                self._load(pkg=node.package,
+                           nodetype=node.typ,
+                           name=node.name,
+                           namespace=node.namespace,  # FIXME
+                           launch_filename=node.filename,
+                           remappings=remappings,
+                           args=args)
             # FIXME this is waaay too permissive
             except Exception:
                 logger.exception(f"failed to launch node: {node.name}")
                 raise
 
-    def create_nodelet_manager(self, name: str) -> None:
+        # now that all nodes have been initialised, load all plugins
+        for node_context in self.nodes.values():
+            for plugin in node_context._plugins:
+                plugin.load(self)
+
+    def _create_nodelet_manager(self, name: str) -> None:
         """Creates a nodelet manager with a given name."""
         logger.info('launched nodelet manager: %s', name)
 
-    def load_nodelet(self,
-                     pkg: str,
-                     nodetype: str,
-                     name: str,
-                     namespace: str,
-                     launch_filename: str,
-                     remappings: Dict[str, str],
-                     manager: Optional[str] = None
-                     ) -> None:
+    def _load_nodelet(self,
+                      pkg: str,
+                      nodetype: str,
+                      name: str,
+                      namespace: str,
+                      launch_filename: str,
+                      remappings: Dict[str, str],
+                      manager: Optional[str] = None
+                      ) -> None:
         """Loads a nodelet using the provided instructions.
 
         Parameters
@@ -131,23 +126,23 @@ class Interpreter:
                         f'inside manager [{manager}]')
         else:
             logger.info(f'launching standalone nodelet [{name}]')
-        return self.load(pkg=pkg,
-                         nodetype=nodetype,
-                         name=name,
-                         namespace=namespace,
-                         launch_filename=launch_filename,
-                         remappings=remappings,
-                         args='')
+        return self._load(pkg=pkg,
+                          nodetype=nodetype,
+                          name=name,
+                          namespace=namespace,
+                          launch_filename=launch_filename,
+                          remappings=remappings,
+                          args='')
 
-    def load(self,
-             pkg: str,
-             nodetype: str,
-             name: str,
-             namespace: str,
-             launch_filename: str,
-             remappings: Dict[str, str],
-             args: str
-             ) -> None:
+    def _load(self,
+              pkg: str,
+              nodetype: str,
+              name: str,
+              namespace: str,
+              launch_filename: str,
+              remappings: Dict[str, str],
+              args: str
+              ) -> None:
         """Loads a node using the provided instructions.
 
         Parameters
@@ -178,26 +173,26 @@ class Interpreter:
         args = args.strip()
         if nodetype == 'nodelet':
             if args == 'manager':
-                return self.create_nodelet_manager(name)
+                return self._create_nodelet_manager(name)
             elif args.startswith('standalone '):
                 pkg_and_nodetype = args.partition(' ')[2]
                 pkg, _, nodetype = pkg_and_nodetype.partition('/')
-                return self.load_nodelet(pkg=pkg,
-                                         nodetype=nodetype,
-                                         name=name,
-                                         namespace=namespace,
-                                         launch_filename=launch_filename,
-                                         remappings=remappings)
+                return self._load_nodelet(pkg=pkg,
+                                          nodetype=nodetype,
+                                          name=name,
+                                          namespace=namespace,
+                                          launch_filename=launch_filename,
+                                          remappings=remappings)
             else:
                 load, pkg_and_nodetype, mgr = args.split(' ')
                 pkg, _, nodetype = pkg_and_nodetype.partition('/')
-                return self.load_nodelet(pkg=pkg,
-                                         nodetype=nodetype,
-                                         name=name,
-                                         namespace=namespace,
-                                         launch_filename=launch_filename,
-                                         remappings=remappings,
-                                         manager=mgr)
+                return self._load_nodelet(pkg=pkg,
+                                          nodetype=nodetype,
+                                          name=name,
+                                          namespace=namespace,
+                                          launch_filename=launch_filename,
+                                          remappings=remappings,
+                                          manager=mgr)
 
         if remappings:
             logger.info(f"using remappings: {remappings}")
@@ -217,10 +212,10 @@ class Interpreter:
                           args=args,
                           launch_filename=launch_filename,
                           remappings=remappings,
-                          files=self.__files,
-                          params=self.__params)
+                          files=self._app.files,
+                          params=self.params)
+        self.nodes[ctx.fullname] = ctx
+
         model.eval(ctx)
         if hasattr(model, '__placeholder') and model.__placeholder:
-            model.mark_placeholder()
-
-        self.__nodes.add(ctx.summarize())
+            ctx.mark_placeholder()
