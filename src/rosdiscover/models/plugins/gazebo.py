@@ -4,19 +4,20 @@ This file provides model plugins that represent various Gazebo plugins.
 """
 __all__ = ('GazeboPlugin',)
 
-from typing import Mapping, Type
 import abc
 import xml.etree.ElementTree as ET  # noqa
+from typing import Mapping, Type
 
+import attr
 from loguru import logger
 from roswire.name import namespace_join
-import attr
 
 from ...interpreter import Interpreter, ModelPlugin
 
 
 class GazeboPlugin(ModelPlugin):
     """Represents the architectural effects of a Gazebo plugin."""
+
     @classmethod
     def from_xml(cls, xml: ET.Element) -> 'GazeboPlugin':
         name = xml.attrib['name']
@@ -28,7 +29,8 @@ class GazeboPlugin(ModelPlugin):
         filename_to_cls: Mapping[str, Type[GazeboPlugin]] = {
             'libgazebo_ros_laser.so': LibGazeboROSLaserPlugin,
             'libgazebo_ros_diff_drive.so': LibGazeboROSDiffDrivePlugin,
-            'libgazebo_ros_imu.so': LibGazeboROSIMUPlugin
+            'libgazebo_ros_imu.so': LibGazeboROSIMUPlugin,
+            'libgazebo_ros_control.so': LibGazeboROSControlPlugin
         }
         cls = filename_to_cls[filename]
         plugin = cls.build_from_xml(xml)
@@ -207,3 +209,32 @@ class LibGazeboROSLaserPlugin(GazeboPlugin):
         return LibGazeboROSLaserPlugin(topic_name=topic_name,
                                        frame_name=frame_name,
                                        robot_namespace=robot_namespace)
+
+
+@attr.s(frozen=True, slots=True)
+class LibGazeboROSControlPlugin(GazeboPlugin):
+    filename = "libgazebo_ros_control.so"
+    topic_name: str = attr.ib()
+    robot_namespace: str = attr.ib()
+
+    def load(self, interpreter: Interpreter) -> None:
+        gazebo = interpreter.nodex["/gazebo"]
+        namespace = self.robot_namespace
+
+        if self.topic_name:
+            topic_name = namespace_join(namespace, self.topic_name)
+            gazebo.pub(topic_name, "std_msgs/Boolean")
+
+    @staticmethod
+    def build_from_xml(cls, xml: ET.Element) -> 'GazeboPlugin':
+        topic_name: str = "/default_stop"
+        xml_topic_name = xml.find("eStopTopic")
+        if xml_topic_name is not None and xml_topic_name.text is not None:
+            topic_name = xml_topic_name.text
+
+        robot_namespace: str = ''
+        xml_robot_ns = xml.find("robotNamespace")
+        if xml_robot_ns is not None and xml_robot_ns.text is not None:
+            robot_namespace = xml_robot_ns.text
+
+        return LibGazeboROSControlPlugin(topic_name=topic_name, robot_namespace=robot_namespace)
