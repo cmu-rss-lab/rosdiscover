@@ -30,7 +30,8 @@ class GazeboPlugin(ModelPlugin):
             'libgazebo_ros_laser.so': LibGazeboROSLaserPlugin,
             'libgazebo_ros_diff_drive.so': LibGazeboROSDiffDrivePlugin,
             'libgazebo_ros_imu.so': LibGazeboROSIMUPlugin,
-            'libgazebo_ros_control.so': LibGazeboROSControlPlugin
+            'libgazebo_ros_control.so': LibGazeboROSControlPlugin,
+            'libhector_gazebo_ros_gps.so': LibGazeboROSGpsPlugin
         }
         cls = filename_to_cls[filename]
         plugin = cls.build_from_xml(xml)
@@ -213,19 +214,32 @@ class LibGazeboROSLaserPlugin(GazeboPlugin):
 
 @attr.s(frozen=True, slots=True)
 class LibGazeboROSControlPlugin(GazeboPlugin):
+    """
+    Example:
+
+        .. code:: xml
+
+        <plugin name="ros_control" filename="libgazebo_ros_control.so">
+            <robotNamespace>/rbcar</robotNamespace>
+            <robotParam>robot_description</robotParam>
+            <!-- controlPeriod>0.003</controlPeriod -->
+            <controlPeriod>0.001</controlPeriod>
+            <robotSimType>gazebo_ros_control/DefaultRobotHWSim</robotSimType>
+        </plugin>
+    """
     filename = "libgazebo_ros_control.so"
     topic_name: str = attr.ib()
     robot_namespace: str = attr.ib()
 
     def load(self, interpreter: Interpreter) -> None:
-        gazebo = interpreter.nodex["/gazebo"]
+        gazebo = interpreter.nodes["/gazebo"]
         namespace = self.robot_namespace
 
         if self.topic_name:
             topic_name = namespace_join(namespace, self.topic_name)
             gazebo.pub(topic_name, "std_msgs/Boolean")
 
-    @staticmethod
+    @classmethod
     def build_from_xml(cls, xml: ET.Element) -> 'GazeboPlugin':
         topic_name: str = "/default_stop"
         xml_topic_name = xml.find("eStopTopic")
@@ -238,3 +252,53 @@ class LibGazeboROSControlPlugin(GazeboPlugin):
             robot_namespace = xml_robot_ns.text
 
         return LibGazeboROSControlPlugin(topic_name=topic_name, robot_namespace=robot_namespace)
+
+@attr.s(frozen=True, slots=True)
+class LibGazeboROSGpsPlugin(GazeboPlugin):
+    """
+    Example:
+        <plugin name="${prefix}_controller" filename="libhector_gazebo_ros_gps.so">
+            <alwaysOn>1</alwaysOn>
+            <updateRate>5</updateRate>
+            <bodyName>${prefix}_base_link</bodyName> <!-- must be the link of the gps device, not the base_link or base_footprint -->
+            <frameId>/${prefix}_base_link</frameId>
+            <topicName>fix</topicName>
+            <!-- Robotnik position at Fuente del Jarro -->
+            <referenceLatitude>39.5080331</referenceLatitude>
+            <referenceLongitude>-0.4619816</referenceLongitude>
+            <!-- To set heading in ENU orientation (degrees) -->
+            <referenceHeading>90</referenceHeading>
+            <velocityTopicName>fix_velocity</velocityTopicName>
+            <drift>0.0 0.0 0.0</drift>
+            <!--<drift>0.0001 0.0001 0.0001</drift>-->
+            <!--<drift>0.3 0.3 0.3</drift>-->
+            <gaussianNoise>0.1 0.1 0.1</gaussianNoise>
+            <!--<gaussianNoise>0.00001 0.00001 0.00001</gaussianNoise>-->
+            <velocityDrift>0.00001 0.00001 0.00001</velocityDrift>
+            <!--<velocityGaussianNoise>0.1 0.1 0.1</velocityGaussianNoise>-->
+            <velocityGaussianNoise>0.00001 0.00001 0.00001</velocityGaussianNoise>
+        </plugin>
+    """
+    filename = "libhector_gazebo_ros_gps.so"
+    topicName: str = attr.ib()
+    velocityTopicName: str = attr.ib()
+
+    def load(self, interpreter : Interpreter) -> None:
+        gazebo = interpreter.nodes["/gazebo"]
+        gazebo.pub(self.topicName, 'sensor_msgs/NavSatFix')
+        gazebo.pub(self.velocityTopicName, 'geometry_msgs/Vector3Stamped')
+
+    @classmethod
+    def build_from_xml(cls, xml: ET.Element) -> 'GazeboPlugin':
+        xml_topic = xml.find('topicName')
+        xml_vel_topic = xml.find('velocityTopicName')
+
+        assert xml_topic is not None
+        assert xml_topic.text is not None
+        assert xml_vel_topic is not None
+        assert xml_vel_topic.text is not None
+
+        topicName: str =  xml_topic.text
+        velTopicName: str = xml_vel_topic.text
+
+        return LibGazeboROSGpsPlugin(topicName, velTopicName)
