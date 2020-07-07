@@ -31,7 +31,8 @@ class GazeboPlugin(ModelPlugin):
             'libgazebo_ros_diff_drive.so': LibGazeboROSDiffDrivePlugin,
             'libgazebo_ros_imu.so': LibGazeboROSIMUPlugin,
             'libgazebo_ros_control.so': LibGazeboROSControlPlugin,
-            'libhector_gazebo_ros_gps.so': LibGazeboROSGpsPlugin
+            'libhector_gazebo_ros_gps.so': LibGazeboROSGpsPlugin,
+            'libgazebo_ros_camera.so' : LibGazeboROSCameraPlugin
         }
         cls = filename_to_cls[filename]
         plugin = cls.build_from_xml(xml)
@@ -256,7 +257,11 @@ class LibGazeboROSControlPlugin(GazeboPlugin):
 @attr.s(frozen=True, slots=True)
 class LibGazeboROSGpsPlugin(GazeboPlugin):
     """
-    Example:
+    Example
+    -------
+
+    .. code:: xml
+
         <plugin name="${prefix}_controller" filename="libhector_gazebo_ros_gps.so">
             <alwaysOn>1</alwaysOn>
             <updateRate>5</updateRate>
@@ -280,13 +285,13 @@ class LibGazeboROSGpsPlugin(GazeboPlugin):
         </plugin>
     """
     filename = "libhector_gazebo_ros_gps.so"
-    topicName: str = attr.ib()
-    velocityTopicName: str = attr.ib()
+    topic_name: str = attr.ib()
+    velocity_topic_name: str = attr.ib()
 
     def load(self, interpreter : Interpreter) -> None:
         gazebo = interpreter.nodes["/gazebo"]
-        gazebo.pub(self.topicName, 'sensor_msgs/NavSatFix')
-        gazebo.pub(self.velocityTopicName, 'geometry_msgs/Vector3Stamped')
+        gazebo.pub(self.topic_name, 'sensor_msgs/NavSatFix')
+        gazebo.pub(self.velocity_topic_name, 'geometry_msgs/Vector3Stamped')
 
     @classmethod
     def build_from_xml(cls, xml: ET.Element) -> 'GazeboPlugin':
@@ -302,3 +307,50 @@ class LibGazeboROSGpsPlugin(GazeboPlugin):
         velTopicName: str = xml_vel_topic.text
 
         return LibGazeboROSGpsPlugin(topicName, velTopicName)
+
+@attr.s(frozen=True, slots=True)
+class LibGazeboROSCameraPlugin(GazeboPlugin):
+    """
+    Example
+    -------
+
+    .. code:: xml
+
+
+    """
+    filename = "libgazebo_ros_camera.so"
+    image_topic_name: str = attr.ib()
+    camera_info_topic_name: str = attr.ib()
+    frame_name: str = attr.ib()
+    robot_namespace: str = attr.ib()
+
+    def load(self, interpreter: Interpreter) -> None:
+        gazebo = interpreter.nodes['/gazebo']
+        image_topic_name = namespace_join(self.robot_namespace, self.image_topic_name)
+        camera_info_topic_name = namespace_join(self.robot_namespace, self.camera_info_topic_name)
+
+        gazebo.pub(image_topic_name, 'sensor_msgs/Image')
+        gazebo.pub(camera_info_topic_name, 'sensor_msgs/CameraInfo')
+
+    @classmethod
+    def build_from_xml(cls, xml: ET.Element) -> 'GazeboPlugin':
+        xml_topic_name = xml.find("imageTopicName")
+        xml_camera_topic_name = xml.find('cameraInfoTopicName')
+        xml_frame_name = xml.find('frameName')
+        xml_robot_ns = xml.find('robotNamesapce')
+
+        assert xml_topic_name is not None and xml_topic_name.text is not None
+        assert xml_camera_topic_name is not None and xml_camera_topic_name.text is not None
+        assert xml_frame_name is not None and xml_frame_name.text is not None
+        topic_name: str = xml_topic_name.text
+        camera_topic_name: str = xml_camera_topic_name.text
+        frame_name: str = xml_frame_name.text
+
+        robot_ns = "/"
+        if xml_robot_ns is not None and xml_robot_ns.text is not None:
+            robot_ns = xml_robot_ns.text
+
+        return LibGazeboROSCameraPlugin(image_topic_name=topic_name,
+                                        camera_info_topic_name=camera_topic_name,
+                                        frame_name=frame_name,
+                                        robot_namespace=robot_ns)
