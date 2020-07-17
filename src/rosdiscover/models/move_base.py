@@ -1,5 +1,7 @@
 from ..interpreter import model
+from loguru import logger
 
+from .plugins.navigation import NavigationPlugin
 
 @model('move_base', 'move_base')
 def move_base(c):
@@ -33,6 +35,7 @@ def move_base(c):
     # FIXME load costmap plugins
     # SEE http://wiki.ros.org/costmap_2d?distro=melodic
     def create_costmap(name):
+        logger.debug(f"Creating costmap: {name}")
         c.sub("~{}/footprint".format(name), 'geometry_msgs/Polygon')
         c.pub("~{}/costmap".format(name), 'nav_msgs/OccupancyGrid')
         c.pub("~{}/costmap_updates".format(name), 'nav_msgs/OccupancyGridUpdate')
@@ -201,3 +204,13 @@ def move_base(c):
 
     load_recovery('conservative_reset')
     load_recovery('aggressive')
+
+
+
+    # Load navigation plugins
+    global_plugins = c.read("~/global_costmap/plugins")
+    assert isinstance(global_plugins, list)
+    for plugin_dict in global_plugins:
+        assert isinstance(plugin_dict, dict)
+        plugin = NavigationPlugin.from_dict(plugin_dict)
+        c.load_plugin(plugin)
