@@ -32,7 +32,9 @@ class GazeboPlugin(ModelPlugin):
             'libgazebo_ros_imu.so': LibGazeboROSIMUPlugin,
             'libgazebo_ros_control.so': LibGazeboROSControlPlugin,
             'libhector_gazebo_ros_gps.so': LibGazeboROSGpsPlugin,
-            'libgazebo_ros_camera.so' : LibGazeboROSCameraPlugin
+            'libgazebo_ros_camera.so': LibGazeboROSCameraPlugin,
+            'libgazebo_ros_openni_kinect.so': LibGazeboROSOpenniKinectPlugin,
+            'libfetch_gazebo_plugin.so': LibFetchGazeboPlugin # Note, this should be generated
         }
         cls = filename_to_cls[filename]
         plugin = cls.build_from_xml(xml)
@@ -254,6 +256,7 @@ class LibGazeboROSControlPlugin(GazeboPlugin):
 
         return LibGazeboROSControlPlugin(topic_name=topic_name, robot_namespace=robot_namespace)
 
+
 @attr.s(frozen=True, slots=True)
 class LibGazeboROSGpsPlugin(GazeboPlugin):
     """
@@ -288,7 +291,7 @@ class LibGazeboROSGpsPlugin(GazeboPlugin):
     topic_name: str = attr.ib()
     velocity_topic_name: str = attr.ib()
 
-    def load(self, interpreter : Interpreter) -> None:
+    def load(self, interpreter: Interpreter) -> None:
         gazebo = interpreter.nodes["/gazebo"]
         gazebo.pub(self.topic_name, 'sensor_msgs/NavSatFix')
         gazebo.pub(self.velocity_topic_name, 'geometry_msgs/Vector3Stamped')
@@ -303,10 +306,11 @@ class LibGazeboROSGpsPlugin(GazeboPlugin):
         assert xml_vel_topic is not None
         assert xml_vel_topic.text is not None
 
-        topicName: str =  xml_topic.text
+        topicName: str = xml_topic.text
         velTopicName: str = xml_vel_topic.text
 
         return LibGazeboROSGpsPlugin(topicName, velTopicName)
+
 
 @attr.s(frozen=True, slots=True)
 class LibGazeboROSCameraPlugin(GazeboPlugin):
@@ -315,10 +319,23 @@ class LibGazeboROSCameraPlugin(GazeboPlugin):
     -------
 
     .. code:: xml
-
-
+      <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+        <alwaysOn>true</alwaysOn>
+        <updateRate>30.0</updateRate>
+        <cameraName>camera</cameraName>
+        <frameName>camera_rgb_optical_frame</frameName>
+        <imageTopicName>image</imageTopicName>
+        <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+        <hackBaseline>0.07</hackBaseline>
+        <distortionK1>0.0</distortionK1>
+        <distortionK2>0.0</distortionK2>
+        <distortionK3>0.0</distortionK3>
+        <distortionT1>0.0</distortionT1>
+        <distortionT2>0.0</distortionT2>
+      </plugin>
     """
     filename = "libgazebo_ros_camera.so"
+    camera_name: str = attr.ib()
     image_topic_name: str = attr.ib()
     camera_info_topic_name: str = attr.ib()
     frame_name: str = attr.ib()
@@ -326,14 +343,18 @@ class LibGazeboROSCameraPlugin(GazeboPlugin):
 
     def load(self, interpreter: Interpreter) -> None:
         gazebo = interpreter.nodes['/gazebo']
-        image_topic_name = namespace_join(self.robot_namespace, self.image_topic_name)
-        camera_info_topic_name = namespace_join(self.robot_namespace, self.camera_info_topic_name)
-
-        gazebo.pub(image_topic_name, 'sensor_msgs/Image')
+        image_topic_name = namespace_join(self.robot_namespace, namespace_join(self.camera_name, self.image_topic_name))
+        camera_info_topic_name = namespace_join(self.robot_namespace,
+                                                namespace_join(self.camera_name, self.camera_info_topic_name))
+        for image_topic in [("", "sensor_msgs/Image"), ("/compressed", "sensor_msgs/CompressedImage"),
+                            ("/compressedDepth", "sensor_msgs/CompressedImage"),
+                            ("/theora", "theora_image_transport/Packet")]:
+            gazebo.pub(image_topic + image_topic[0], image_topic[1])
         gazebo.pub(camera_info_topic_name, 'sensor_msgs/CameraInfo')
 
     @classmethod
     def build_from_xml(cls, xml: ET.Element) -> 'GazeboPlugin':
+        xml_camera_name = xml.find("cameraName")
         xml_topic_name = xml.find("imageTopicName")
         xml_camera_topic_name = xml.find('cameraInfoTopicName')
         xml_frame_name = xml.find('frameName')
@@ -342,15 +363,100 @@ class LibGazeboROSCameraPlugin(GazeboPlugin):
         assert xml_topic_name is not None and xml_topic_name.text is not None
         assert xml_camera_topic_name is not None and xml_camera_topic_name.text is not None
         assert xml_frame_name is not None and xml_frame_name.text is not None
+        assert xml_camera_name is not None and xml_camera_name.text is not None
         topic_name: str = xml_topic_name.text
         camera_topic_name: str = xml_camera_topic_name.text
+        camera_name: str = xml_camera_name.text
         frame_name: str = xml_frame_name.text
 
         robot_ns = "/"
         if xml_robot_ns is not None and xml_robot_ns.text is not None:
             robot_ns = xml_robot_ns.text
 
-        return LibGazeboROSCameraPlugin(image_topic_name=topic_name,
+        return LibGazeboROSCameraPlugin(camera_name=camera_name,
+                                        image_topic_name=topic_name,
                                         camera_info_topic_name=camera_topic_name,
                                         frame_name=frame_name,
                                         robot_namespace=robot_ns)
+
+@attr.s(frozen=True, slots=True)
+class LibGazeboROSOpenniKinectPlugin(GazeboPlugin):
+    """
+    Example
+    -------
+
+    .. code:: xml
+          <plugin name="head_camera_controller" filename="libgazebo_ros_openni_kinect.so">
+        <baseline>0.1</baseline>
+        <alwaysOn>true</alwaysOn>
+        <updateRate>15.0</updateRate>
+        <cameraName>head_camera</cameraName>
+        <imageTopicName>/head_camera/rgb/image_raw</imageTopicName>
+        <cameraInfoTopicName>/head_camera/rgb/camera_info</cameraInfoTopicName>
+        <depthImageTopicName>/head_camera/depth_registered/image_raw</depthImageTopicName>
+        <depthImageCameraInfoTopicName>/head_camera/depth_registered/camera_info</depthImageCameraInfoTopicName>
+        <pointCloudTopicName>/head_camera/depth_registered/points</pointCloudTopicName>
+        <frameName>head_camera_rgb_optical_frame</frameName>
+        <pointCloudCutoff>0.35</pointCloudCutoff>
+        <pointCloudCutoffMax>4.5</pointCloudCutoffMax>
+        <CxPrime>0</CxPrime>
+        <Cx>0</Cx>
+        <Cy>0</Cy>
+        <focalLength>0</focalLength>
+        <hackBaseline>0</hackBaseline>
+      </plugin>
+    """
+    filename="libgazebo_ros_openni_kinect.so"
+    camera_name: str = attr.ib()
+    image_topic_name: str = attr.ib()
+    camera_info_topic_name: str = attr.ib()
+    depth_image_topic_name: str = attr.ib()
+    depth_image_camera_info_topic_name: str = attr.ib()
+    point_cloud_topic_name: str = attr.ib()
+
+    def load(self, interpreter: 'Interpreter') -> None:
+        gazebo = interpreter.nodes['/gazebo']
+
+        gazebo.pub(self.image_topic_name, 'sensor_msgs/Image')
+        gazebo.pub(self.camera_info_topic_name, 'sensor_msgs/CameraInfo')
+        gazebo.pub(self.depth_image_topic_name, 'sensor_msgs/Image')
+        gazebo.pub(self.depth_image_camera_info_topic_name, 'sensor_msgs/CameraInfo')
+        gazebo.pub(self.point_cloud_topic_name, 'sensor_msgs/PointCloud2')
+
+    @classmethod
+    def build_from_xml(cls, xml: ET.Element) -> 'GazeboPlugin':
+        xml_camera_name = xml.find("cameraName")
+        xml_image = xml.find('imageTopicName')
+        xml_image_camera_info = xml.find('cameraInfoTopicName')
+        xml_depth_image = xml.find('depthImageTopicName')
+        xml_depth_image_camera_info = xml.find('depthImageCameraInfoTopicName')
+        xml_point_cloud = xml.find('pointCloudTopicName')
+        assert xml_camera_name is not None and xml_camera_name is not None
+        camera_name = xml_camera_name.text
+
+        image_t = xml_image.text if xml_image is not None and xml_image.text is not None else 'ir/image_raw'
+        image_ci_t = xml_image_camera_info.text if xml_image_camera_info is not None and xml_image_camera_info.text is not None else 'ir/camera_info'
+        depth_t = xml_depth_image.text if xml_depth_image is not None and xml_depth_image.text is not None else 'depth/image_raw'
+        depth_ci_t = xml_depth_image_camera_info.text if xml_depth_image_camera_info is not None and xml_depth_image_camera_info.text is not None else 'depth/camera_info'
+        point_cloud_t = xml_point_cloud.text if xml_point_cloud is not None and xml_point_cloud.text is not None else 'points'
+
+        return LibGazeboROSOpenniKinectPlugin(camera_name=camera_name, image_topic_name=image_t, camera_info_topic_name=image_ci_t,
+                                              depth_image_topic_name=depth_t, depth_image_camera_info_topic_name=depth_ci_t,
+                                              point_cloud_topic_name=point_cloud_t)
+
+#TODO: Generate this from source
+@attr.s(frozen=True, slots=True)
+class LibFetchGazeboPlugin(GazeboPlugin):
+    """
+    This is the gazebo plugin for the Fetch robot. It should really be generated.
+    """
+    filename = "libfectch_gazebo_plugin.so"
+    joint_state_topic: str = attr.ib()
+
+    def load(self, interpreter: 'Interpreter') -> None:
+        gazebo = interpreter.nodes['/gazebo']
+        gazebo.pub(self.joint_state_topic, 'sensor_msgs/JointState')
+
+    @classmethod
+    def build_from_xml(cls, xml: ET.Element) -> 'GazeboPlugin':
+        return LibFetchGazeboPlugin(joint_state_topic="joint_states")
