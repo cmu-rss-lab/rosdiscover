@@ -18,7 +18,8 @@ class NavigationPlugin(ModelPlugin):
         cpp_to_cls: Mapping[str, Type[NavigationPlugin]] = {
             'costmap_2d::StaticLayer': StaticLayerPlugin,
             'costmap_2d::FetchDepthLayer': FetchDepthLayerPlugin,
-            'costmap_2d::InflationLayer': InflationLayerPlugin
+            'costmap_2d::InflationLayer': InflationLayerPlugin,
+            'costmap_2d::ObstacleLayer': ObstacleLayerPlugin
         }
 
         cls = cpp_to_cls[cpp_class]
@@ -124,3 +125,45 @@ class FetchDepthLayerPlugin(NavigationPlugin):
     @classmethod
     def build(cls, name: str) -> 'NavigationPlugin':
         return FetchDepthLayerPlugin()
+
+@attr.s(frozen=True, slots=True)
+class ObstacleLayerPlugin(NavigationPlugin):
+    """
+    The obstacle layer tracks the obstacles as read by the sensor data. The ObstacleCostmapPlugin marks and raytraces
+    obstacles in two dimensions, while the VoxelCostmapPlugin does so in three dimensions.
+
+    http://wiki.ros.org/costmap_2d/hydro/obstacles
+    """
+    class_name = 'costmap_2d::ObstacleLayer'
+
+    def load(self, interpreter: 'Interpreter') -> None:
+        mb = interpreter.nodes['/move_base']
+
+        observation_sources_param = namespace_join(mb.name, namespace_join('obstacles', 'observation_sources'))
+        observation_sources = mb.read(observation_sources_param, "")
+
+        for os in observation_sources.split(" "):
+            os_ns = namespace_join(mb.name, namespace_join('obstacles', os))
+            topic = mb.read(namespace_join(os_ns, 'topic'), os)
+            mb.read(namespace_join(os_ns, 'sensor_frame'), "")
+            mb.read(namespace_join(os_ns, 'observation_persistence'), 0.0)
+            mb.read(namespace_join(os_ns, 'expected_update_rate'), 0.0)
+            data_type = mb.read(namespace_join(os_ns, 'data_type'), "PointCloud")
+            mb.read(namespace_join(os_ns, 'min_obstacle_height'), 0.0)
+            mb.read(namespace_join(os_ns, 'max_obstacle_height'), 2.0)
+            mb.read(namespace_join(os_ns, 'inf_is_valid'), False)
+            mb.read(namespace_join(os_ns, 'clearing'), False)
+            mb.read(namespace_join(os_ns, 'marking'), True)
+
+            assert data_type in ['PointCloud', 'LaserScan', 'PointCloud2']
+
+            if data_type == 'LaserScan':
+                mb.sub(topic, "sensor_msgs/LaserScan")
+            elif data_type == 'PointCloud2':
+                mb.sub(topic, 'sensor_msgs/PointCloud2')
+            elif data_type == 'PointCloud':
+                mb.sub(topic, 'sensor_msgs/PointCloud')
+
+    @classmethod
+    def build(cls, name: str) -> 'NavigationPlugin':
+        return ObstacleLayerPlugin()
