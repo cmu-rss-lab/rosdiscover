@@ -74,7 +74,8 @@ def move_base(c):
         # type: (str) -> None
         c.pub("~{}/global_plan".format(name), "nav_msgs/Path")
         c.pub("~{}/local_plan".format(name), "nav_msgs/Path")
-        c.sub("odom", "sensor_msgs/PointCloud2")
+        c.pub("~{}/cost_cloud".format(name), "sensor_msgs/PointCloud2")
+        c.sub("odom", "nav_msgs/Odometry")
 
     def plugin_DWAPlannerROS():  # noqa
         name = "DWAPlannerROS"
