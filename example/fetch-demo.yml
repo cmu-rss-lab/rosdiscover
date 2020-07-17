@@ -1,0 +1,7 @@
+image: therobotcooperative/fetch
+sources:
+- /opt/ros/melodic/setup.bash
+- /ros_ws/devel/setup.bash
+launches:
+- /ros_ws/src/fetch_gazebo/fetch_gazebo/launch/playground.launch
+- /ros_ws/src/fetch_gazebo/fetch_gazebo_demo/launch/demo.launch
