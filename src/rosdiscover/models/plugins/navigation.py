@@ -19,7 +19,8 @@ class NavigationPlugin(ModelPlugin):
             'costmap_2d::StaticLayer': StaticLayerPlugin,
             'costmap_2d::FetchDepthLayer': FetchDepthLayerPlugin,
             'costmap_2d::InflationLayer': InflationLayerPlugin,
-            'costmap_2d::ObstacleLayer': ObstacleLayerPlugin
+            'costmap_2d::ObstacleLayer': ObstacleLayerPlugin,
+            'costmap_2d::VoxelLayer': VoxelLayerPlugin
         }
 
         cls = cpp_to_cls[cpp_class]
@@ -32,6 +33,13 @@ class NavigationPlugin(ModelPlugin):
     def build(cls, name: str) -> 'NavigationPlugin':
         ...
 
+
+def get_move_base(i: Interpreter) -> 'NodeContext':
+    move_base = i.nodes['/move_base'] # TODO: could be renamed by launch?
+    if move_base is None:
+        raise ModuleNotFoundError('Could not find node "move_base" in configuration')
+    return move_base
+
 @attr.s(frozen=True, slots=True)
 class StaticLayerPlugin(NavigationPlugin):
     """
@@ -42,7 +50,7 @@ class StaticLayerPlugin(NavigationPlugin):
     class_name = 'costmap_2d::StaticLayer'
 
     def load(self, interpreter: Interpreter) -> None:
-        move_base = interpreter.nodes['/move_base'] # TODO: could be renamed by launch?
+        move_base = get_move_base(interpreter)
 
         move_base.read('unknown_cost_value', -1)
         move_base.read('lethal_cost_value', 100)
@@ -73,7 +81,7 @@ class InflationLayerPlugin(NavigationPlugin):
     class_name = 'costmap_2d::InflationLayer'
 
     def load(self, interpreter: 'Interpreter') -> None:
-        move_base = interpreter.nodes['/move_base']
+        move_base = get_move_base(interpreter)
         move_base.read('~/inflation_radius', 0.55)
         move_base.read('~/cost_scaling_factor', 10.0)
 
@@ -91,36 +99,36 @@ class FetchDepthLayerPlugin(NavigationPlugin):
     class_name = 'costmap_2d::FetchDepthLayer'
 
     def load(self, interpreter: 'Interpreter') -> None:
-        mb = interpreter.nodes['/move_base']
+        move_base = get_move_base(interpreter)
 
-        publish_observations=mb.read('publish_observations', False)
-        mb.read('observations_separation_threshold', 0.06)
-        mb.read('find_ground_plane', True)
-        mb.read('ground_orientation_threshold', 0.9)
-        mb.read('min_obstacle_height', 0.0)
-        mb.read('max_obstacle_height', 2.0)
-        mb.read('min_clearing_height', float('inf'))
-        mb.read('max_clearing_height', float('inf'))
-        mb.read('skip_rays_bottom', 20)
-        mb.read('skip_rays_top', 20)
-        mb.read('skip_rays_left', 20)
-        mb.read('skip_rays_right', 20)
-        mb.read('clear_with_skipped_rays', False)
-        mb.read('observation_persistence', 0.0)
-        mb.read('expected_update_rate', 0.0)
-        mb.read('transform_tolerance', 0.5)
-        mb.read('obstacle_range', None) #TODO is this the right way to handle this?
-        mb.read('raytrace_range', None)
+        publish_observations=move_base.read('publish_observations', False)
+        move_base.read('observations_separation_threshold', 0.06)
+        move_base.read('find_ground_plane', True)
+        move_base.read('ground_orientation_threshold', 0.9)
+        move_base.read('min_obstacle_height', 0.0)
+        move_base.read('max_obstacle_height', 2.0)
+        move_base.read('min_clearing_height', float('inf'))
+        move_base.read('max_clearing_height', float('inf'))
+        move_base.read('skip_rays_bottom', 20)
+        move_base.read('skip_rays_top', 20)
+        move_base.read('skip_rays_left', 20)
+        move_base.read('skip_rays_right', 20)
+        move_base.read('clear_with_skipped_rays', False)
+        move_base.read('observation_persistence', 0.0)
+        move_base.read('expected_update_rate', 0.0)
+        move_base.read('transform_tolerance', 0.5)
+        move_base.read('obstacle_range', None) #TODO is this the right way to handle this?
+        move_base.read('raytrace_range', None)
 
         if publish_observations:
-            mb.pub('clearing_obs', 'sensor_msgs/PointCloud')
-            mb.pub('marking_obs', 'sensor_msgs/PointCloud')
+            move_base.pub('clearing_obs', 'sensor_msgs/PointCloud')
+            move_base.pub('marking_obs', 'sensor_msgs/PointCloud')
 
-        depth_topic = mb.read('depth_topic', '/head_camera/depth_downsample/image_raw')
-        info_topic = mb.read('info_topic', "/head_camera/depth_downsample/camera_info")
+        depth_topic = move_base.read('depth_topic', '/head_camera/depth_downsample/image_raw')
+        info_topic = move_base.read('info_topic', "/head_camera/depth_downsample/camera_info")
 
-        mb.sub(depth_topic, 'sensor_msgs/Image')
-        mb.sub(info_topic, 'sensor_msgs/CameraInfo')
+        move_base.sub(depth_topic, 'sensor_msgs/Image')
+        move_base.sub(info_topic, 'sensor_msgs/CameraInfo')
 
     @classmethod
     def build(cls, name: str) -> 'NavigationPlugin':
@@ -137,33 +145,51 @@ class ObstacleLayerPlugin(NavigationPlugin):
     class_name = 'costmap_2d::ObstacleLayer'
 
     def load(self, interpreter: 'Interpreter') -> None:
-        mb = interpreter.nodes['/move_base']
+        move_base = get_move_base(interpreter)
 
-        observation_sources_param = namespace_join(mb.name, namespace_join('obstacles', 'observation_sources'))
-        observation_sources = mb.read(observation_sources_param, "")
+        observation_sources_param = namespace_join(move_base.name, namespace_join('obstacles', 'observation_sources'))
+        observation_sources = move_base.read(observation_sources_param, "")
 
         for os in observation_sources.split(" "):
-            os_ns = namespace_join(mb.name, namespace_join('obstacles', os))
-            topic = mb.read(namespace_join(os_ns, 'topic'), os)
-            mb.read(namespace_join(os_ns, 'sensor_frame'), "")
-            mb.read(namespace_join(os_ns, 'observation_persistence'), 0.0)
-            mb.read(namespace_join(os_ns, 'expected_update_rate'), 0.0)
-            data_type = mb.read(namespace_join(os_ns, 'data_type'), "PointCloud")
-            mb.read(namespace_join(os_ns, 'min_obstacle_height'), 0.0)
-            mb.read(namespace_join(os_ns, 'max_obstacle_height'), 2.0)
-            mb.read(namespace_join(os_ns, 'inf_is_valid'), False)
-            mb.read(namespace_join(os_ns, 'clearing'), False)
-            mb.read(namespace_join(os_ns, 'marking'), True)
+            os_ns = namespace_join(move_base.name, namespace_join('obstacles', os))
+            topic = move_base.read(namespace_join(os_ns, 'topic'), os)
+            move_base.read(namespace_join(os_ns, 'sensor_frame'), "")
+            move_base.read(namespace_join(os_ns, 'observation_persistence'), 0.0)
+            move_base.read(namespace_join(os_ns, 'expected_update_rate'), 0.0)
+            data_type = move_base.read(namespace_join(os_ns, 'data_type'), "PointCloud")
+            move_base.read(namespace_join(os_ns, 'min_obstacle_height'), 0.0)
+            move_base.read(namespace_join(os_ns, 'max_obstacle_height'), 2.0)
+            move_base.read(namespace_join(os_ns, 'inf_is_valid'), False)
+            move_base.read(namespace_join(os_ns, 'clearing'), False)
+            move_base.read(namespace_join(os_ns, 'marking'), True)
 
             assert data_type in ['PointCloud', 'LaserScan', 'PointCloud2']
 
             if data_type == 'LaserScan':
-                mb.sub(topic, "sensor_msgs/LaserScan")
+                move_base.sub(topic, "sensor_msgs/LaserScan")
             elif data_type == 'PointCloud2':
-                mb.sub(topic, 'sensor_msgs/PointCloud2')
+                move_base.sub(topic, 'sensor_msgs/PointCloud2')
             elif data_type == 'PointCloud':
-                mb.sub(topic, 'sensor_msgs/PointCloud')
+                move_base.sub(topic, 'sensor_msgs/PointCloud')
 
     @classmethod
     def build(cls, name: str) -> 'NavigationPlugin':
         return ObstacleLayerPlugin()
+
+@attr.s(frozen=True, slots=True)
+class VoxelLayerPlugin(ObstacleLayerPlugin):
+    """
+    Tracks obstacles in three dimensions
+    """
+    def load(self, interpreter: 'Interpreter') -> None:
+        ObstacleLayerPlugin.load(self, interpreter)
+        move_base = get_move_base(interpreter)
+        publish_voxel = move_base.read('publish_voxel_map', False)
+        if publish_voxel:
+            move_base.pub('voxel_grid', 'costmap_2d/VoxelGrid')
+
+        move_base.pub('clearing_endpoints', 'sensor_msgs/PointCloud')
+
+    @classmethod
+    def build(cls, name:str) -> 'NavigationPlugin':
+        return VoxelLayerPlugin()
