@@ -3,6 +3,7 @@ from loguru import logger
 
 from .plugins.navigation import NavigationPlugin
 
+
 @model('move_base', 'move_base')
 def move_base(c):
     c.read("~base_global_planner", "navfn/NavfnROS")

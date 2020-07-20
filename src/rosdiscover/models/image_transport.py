@@ -1,5 +1,4 @@
 from ..interpreter import model
-import argparse
 from loguru import logger
 
 

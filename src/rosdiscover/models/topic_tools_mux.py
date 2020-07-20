@@ -22,6 +22,7 @@ def mux(c):
     for in_topic in topics.intopic:
         c.sub(in_topic, "any")
 
+
 @model("topic_tools", "relay")
 def relay(c):
     c.read("~unreliable", False)

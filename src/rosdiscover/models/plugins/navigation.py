@@ -8,6 +8,8 @@ from loguru import logger
 from roswire.name import namespace_join
 
 from ...interpreter import Interpreter, ModelPlugin
+
+
 class NavigationPlugin(ModelPlugin):
     # e.g., {name: static_map, type: "costmap_2d::StaticLayer"}
     @classmethod
@@ -43,6 +45,7 @@ def get_move_base(i: Interpreter, node_name: str) -> 'NodeContext':
     if move_base is None:
         raise ModuleNotFoundError('Could not find node "move_base" in configuration')
     return move_base
+
 
 @attr.s(frozen=True, slots=True)
 class StaticLayerPlugin(NavigationPlugin):
@@ -97,6 +100,7 @@ class InflationLayerPlugin(NavigationPlugin):
     def build(cls, name: str, node_name: str) -> NavigationPlugin:
         return InflationLayerPlugin(name=name, node_name=node_name)
 
+
 @attr.s(frozen=True, slots=True)
 class FetchDepthLayerPlugin(NavigationPlugin):
     """
@@ -144,6 +148,7 @@ class FetchDepthLayerPlugin(NavigationPlugin):
     def build(cls, name: str, node_name: str) -> 'NavigationPlugin':
         return FetchDepthLayerPlugin(name=name, node_name=node_name)
 
+
 @attr.s(frozen=True, slots=True)
 class ObstacleLayerPlugin(NavigationPlugin):
     """
@@ -187,6 +192,7 @@ class ObstacleLayerPlugin(NavigationPlugin):
     @classmethod
     def build(cls, name: str, node_name: str) -> 'NavigationPlugin':
         return ObstacleLayerPlugin(name=name, node_name=node_name)
+
 
 @attr.s(frozen=True, slots=True)
 class VoxelLayerPlugin(ObstacleLayerPlugin):
