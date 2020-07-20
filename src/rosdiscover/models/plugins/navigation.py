@@ -6,6 +6,7 @@ import abc
 import attr
 from loguru import logger
 from roswire.name import namespace_join
+from ...context import NodeContext
 
 from ...interpreter import Interpreter, ModelPlugin
 
@@ -13,7 +14,7 @@ from ...interpreter import Interpreter, ModelPlugin
 class NavigationPlugin(ModelPlugin):
     # e.g., {name: static_map, type: "costmap_2d::StaticLayer"}
     @classmethod
-    def from_dict(cls, dict_: Mapping[str,str], node_name: str) -> 'NavigationPlugin':
+    def from_dict(cls, dict_: Mapping[str, str], node_name: str) -> 'NavigationPlugin':
         cpp_class = dict_['type']
         plugin_name = dict_['name']
         logger.debug(f'loading navigation plugin [{plugin_name}] from file [{cpp_class}]')
@@ -131,7 +132,7 @@ class FetchDepthLayerPlugin(NavigationPlugin):
         move_base.read('~observation_persistence', 0.0)
         move_base.read('~expected_update_rate', 0.0)
         move_base.read('~transform_tolerance', 0.5)
-        move_base.read('~obstacle_range', None) #TODO is this the right way to handle this?
+        move_base.read('~obstacle_range', None)  # TODO is this the right way to handle this?
         move_base.read('~raytrace_range', None)
 
         if publish_observations:
@@ -199,7 +200,7 @@ class VoxelLayerPlugin(ObstacleLayerPlugin):
     """
     Tracks obstacles in three dimensions
     """
-    class_name="costmap_2d::VoxelLayer"
+    class_name = "costmap_2d::VoxelLayer"
     name: str = attr.ib()
     node_name: str = attr.ib()
 

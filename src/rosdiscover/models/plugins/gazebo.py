@@ -34,7 +34,7 @@ class GazeboPlugin(ModelPlugin):
             'libhector_gazebo_ros_gps.so': LibGazeboROSGpsPlugin,
             'libgazebo_ros_camera.so': LibGazeboROSCameraPlugin,
             'libgazebo_ros_openni_kinect.so': LibGazeboROSOpenniKinectPlugin,
-            'libfetch_gazebo_plugin.so': LibFetchGazeboPlugin # Note, this should be generated
+            'libfetch_gazebo_plugin.so': LibFetchGazeboPlugin  # Note, this should be generated
         }
         cls = filename_to_cls[filename]
         plugin = cls.build_from_xml(xml)
@@ -349,7 +349,7 @@ class LibGazeboROSCameraPlugin(GazeboPlugin):
         for image_topic in [("", "sensor_msgs/Image"), ("/compressed", "sensor_msgs/CompressedImage"),
                             ("/compressedDepth", "sensor_msgs/CompressedImage"),
                             ("/theora", "theora_image_transport/Packet")]:
-            gazebo.pub(image_topic + image_topic[0], image_topic[1])
+            gazebo.pub(image_topic_name + image_topic[0], image_topic[1])
         gazebo.pub(camera_info_topic_name, 'sensor_msgs/CameraInfo')
 
     @classmethod
@@ -407,7 +407,7 @@ class LibGazeboROSOpenniKinectPlugin(GazeboPlugin):
         <hackBaseline>0</hackBaseline>
       </plugin>
     """
-    filename="libgazebo_ros_openni_kinect.so"
+    filename = "libgazebo_ros_openni_kinect.so"
     camera_name: str = attr.ib()
     image_topic_name: str = attr.ib()
     camera_info_topic_name: str = attr.ib()
@@ -454,7 +454,7 @@ class LibGazeboROSOpenniKinectPlugin(GazeboPlugin):
                                               point_cloud_topic_name=point_cloud_t)
 
 
-#TODO: Generate this from source
+# TODO: Generate this from source
 @attr.s(frozen=True, slots=True)
 class LibFetchGazeboPlugin(GazeboPlugin):
     """

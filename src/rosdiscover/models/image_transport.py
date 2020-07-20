@@ -18,7 +18,6 @@ def republish(c):
             outopic = a[5:]
         else:
             logger.error(f'"{a}" is not a valid argument for image_transport/republishZZZZ')
-
+    logger.info(f'The format for republish is {img_format}')
     c.sub(intopic, 'sensor_msgs/Image')
     c.pub(outopic, 'sensor_msgs/Image')
-
