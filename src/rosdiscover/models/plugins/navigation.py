@@ -29,7 +29,7 @@ class NavigationPlugin(ModelPlugin):
         return plugin
 
     @classmethod
-    @abc.abstracmethod
+    @abc.abstractmethod
     def build(cls, name: str) -> 'NavigationPlugin':
         ...
 
