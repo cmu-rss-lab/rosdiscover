@@ -432,7 +432,7 @@ class LibGazeboROSOpenniKinectPlugin(GazeboPlugin):
         xml_depth_image = xml.find('depthImageTopicName')
         xml_depth_image_camera_info = xml.find('depthImageCameraInfoTopicName')
         xml_point_cloud = xml.find('pointCloudTopicName')
-        assert xml_camera_name is not None and xml_camera_name is not None
+        assert xml_camera_name is not None and xml_camera_name.text is not None
         camera_name = xml_camera_name.text
 
         image_t = xml_image.text \
