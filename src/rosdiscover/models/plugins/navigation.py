@@ -11,10 +11,10 @@ from ...interpreter import Interpreter, ModelPlugin
 class NavigationPlugin(ModelPlugin):
     # e.g., {name: static_map, type: "costmap_2d::StaticLayer"}
     @classmethod
-    def from_dict(cls, dict_: Mapping[str,str]) -> 'NavigationPlugin':
+    def from_dict(cls, dict_: Mapping[str,str], node_name: str) -> 'NavigationPlugin':
         cpp_class = dict_['type']
-        name = dict_['name']
-        logger.debug(f'loading navigation plugin [{name}] from file [{cpp_class}]')
+        plugin_name = dict_['name']
+        logger.debug(f'loading navigation plugin [{plugin_name}] from file [{cpp_class}]')
         cpp_to_cls: Mapping[str, Type[NavigationPlugin]] = {
             'costmap_2d::StaticLayer': StaticLayerPlugin,
             'costmap_2d::FetchDepthLayer': FetchDepthLayerPlugin,
@@ -24,18 +24,22 @@ class NavigationPlugin(ModelPlugin):
         }
 
         cls = cpp_to_cls[cpp_class]
-        plugin = cls.build(name)
-        logger.debug(f'loaded navigation plugin [{name}] from file [{cpp_class}]: {plugin}')
+        plugin = cls.build(plugin_name, node_name)
+        logger.debug(f'loaded navigation plugin [{plugin_name}] from file [{cpp_class}]: {plugin}')
         return plugin
 
     @classmethod
     @abc.abstractmethod
-    def build(cls, name: str) -> 'NavigationPlugin':
+    def build(cls, plugin_name: str, node_name: str) -> 'NavigationPlugin':
         ...
 
 
-def get_move_base(i: Interpreter) -> 'NodeContext':
-    move_base = i.nodes['/move_base'] # TODO: could be renamed by launch?
+def get_move_base(i: Interpreter, node_name: str) -> 'NodeContext':
+    if not node_name.startswith('/'):
+        node_name = f'/{node_name}'
+    if node_name not in i.nodes.keys():
+        raise ModuleNotFoundError(f'Could not find node {node_name} in configuration')
+    move_base = i.nodes[node_name]
     if move_base is None:
         raise ModuleNotFoundError('Could not find node "move_base" in configuration')
     return move_base
@@ -48,26 +52,28 @@ class StaticLayerPlugin(NavigationPlugin):
     http://wiki.ros.org/costmap_2d/hydro/staticmap
     """
     class_name = 'costmap_2d::StaticLayer'
+    name: str = attr.ib()
+    node_name: str = attr.ib()
 
     def load(self, interpreter: Interpreter) -> None:
-        move_base = get_move_base(interpreter)
+        move_base = get_move_base(interpreter, self.node_name)
 
-        move_base.read('unknown_cost_value', -1)
-        move_base.read('lethal_cost_value', 100)
-        map_topic = move_base.read('map_topic', '/map')
-        move_base.read('first_map_only', False)
-        subscribe_to_updates = move_base.read('subscribe_to_updates', False)
-        move_base.read('track_unknown_space', True)
-        move_base.read('use_maximum', False)
-        move_base.read('trinary_costmap', True)
+        move_base.read('~unknown_cost_value', -1)
+        move_base.read('~lethal_cost_value', 100)
+        map_topic = move_base.read('~map_topic', '/map')
+        move_base.read('~first_map_only', False)
+        subscribe_to_updates = move_base.read('~subscribe_to_updates', False)
+        move_base.read('~track_unknown_space', True)
+        move_base.read('~use_maximum', False)
+        move_base.read('~trinary_costmap', True)
 
         move_base.sub(map_topic, 'nav_msgs/OccupancyGrid')
         if subscribe_to_updates:
             move_base.sub(f'{map_topic}_updates', )
 
     @classmethod
-    def build(cls) -> NavigationPlugin:
-        return StaticLayerPlugin()
+    def build(cls, name: str, node_name: str) -> NavigationPlugin:
+        return StaticLayerPlugin(name=name, node_name=node_name)
 
 
 @attr.s(frozen=True, slots=True)
@@ -79,15 +85,17 @@ class InflationLayerPlugin(NavigationPlugin):
     http://wiki.ros.org/costmap_2d/hydro/inflation
     """
     class_name = 'costmap_2d::InflationLayer'
+    name: str = attr.ib()
+    node_name: str = attr.ib()
 
     def load(self, interpreter: 'Interpreter') -> None:
-        move_base = get_move_base(interpreter)
-        move_base.read('~/inflation_radius', 0.55)
-        move_base.read('~/cost_scaling_factor', 10.0)
+        move_base = get_move_base(interpreter, self.node_name)
+        move_base.read('~inflation_radius', 0.55)
+        move_base.read('~cost_scaling_factor', 10.0)
 
     @classmethod
-    def build(cls) -> NavigationPlugin:
-        return InflationLayerPlugin()
+    def build(cls, name: str, node_name: str) -> NavigationPlugin:
+        return InflationLayerPlugin(name=name, node_name=node_name)
 
 @attr.s(frozen=True, slots=True)
 class FetchDepthLayerPlugin(NavigationPlugin):
@@ -97,28 +105,30 @@ class FetchDepthLayerPlugin(NavigationPlugin):
     from /ros_ws/src/fetch_ros/fetch_depth_layer/src/depth_layer.cpp of the Fetch container from TheRobotCooperative
     """
     class_name = 'costmap_2d::FetchDepthLayer'
+    name: str = attr.ib()
+    node_name: str = attr.ib()
 
     def load(self, interpreter: 'Interpreter') -> None:
-        move_base = get_move_base(interpreter)
+        move_base = get_move_base(interpreter, self.node_name)
 
-        publish_observations=move_base.read('publish_observations', False)
-        move_base.read('observations_separation_threshold', 0.06)
-        move_base.read('find_ground_plane', True)
-        move_base.read('ground_orientation_threshold', 0.9)
-        move_base.read('min_obstacle_height', 0.0)
-        move_base.read('max_obstacle_height', 2.0)
-        move_base.read('min_clearing_height', float('inf'))
-        move_base.read('max_clearing_height', float('inf'))
-        move_base.read('skip_rays_bottom', 20)
-        move_base.read('skip_rays_top', 20)
-        move_base.read('skip_rays_left', 20)
-        move_base.read('skip_rays_right', 20)
-        move_base.read('clear_with_skipped_rays', False)
-        move_base.read('observation_persistence', 0.0)
-        move_base.read('expected_update_rate', 0.0)
-        move_base.read('transform_tolerance', 0.5)
-        move_base.read('obstacle_range', None) #TODO is this the right way to handle this?
-        move_base.read('raytrace_range', None)
+        publish_observations = move_base.read('publish_observations', False)
+        move_base.read('~observations_separation_threshold', 0.06)
+        move_base.read('~find_ground_plane', True)
+        move_base.read('~ground_orientation_threshold', 0.9)
+        move_base.read('~min_obstacle_height', 0.0)
+        move_base.read('~max_obstacle_height', 2.0)
+        move_base.read('~min_clearing_height', float('inf'))
+        move_base.read('~max_clearing_height', float('inf'))
+        move_base.read('~skip_rays_bottom', 20)
+        move_base.read('~skip_rays_top', 20)
+        move_base.read('~skip_rays_left', 20)
+        move_base.read('~skip_rays_right', 20)
+        move_base.read('~clear_with_skipped_rays', False)
+        move_base.read('~observation_persistence', 0.0)
+        move_base.read('~expected_update_rate', 0.0)
+        move_base.read('~transform_tolerance', 0.5)
+        move_base.read('~obstacle_range', None) #TODO is this the right way to handle this?
+        move_base.read('~raytrace_range', None)
 
         if publish_observations:
             move_base.pub('clearing_obs', 'sensor_msgs/PointCloud')
@@ -131,8 +141,8 @@ class FetchDepthLayerPlugin(NavigationPlugin):
         move_base.sub(info_topic, 'sensor_msgs/CameraInfo')
 
     @classmethod
-    def build(cls, name: str) -> 'NavigationPlugin':
-        return FetchDepthLayerPlugin()
+    def build(cls, name: str, node_name: str) -> 'NavigationPlugin':
+        return FetchDepthLayerPlugin(name=name, node_name=node_name)
 
 @attr.s(frozen=True, slots=True)
 class ObstacleLayerPlugin(NavigationPlugin):
@@ -143,9 +153,11 @@ class ObstacleLayerPlugin(NavigationPlugin):
     http://wiki.ros.org/costmap_2d/hydro/obstacles
     """
     class_name = 'costmap_2d::ObstacleLayer'
+    name: str = attr.ib()
+    node_name: str = attr.ib()
 
     def load(self, interpreter: 'Interpreter') -> None:
-        move_base = get_move_base(interpreter)
+        move_base = get_move_base(interpreter, self.node_name)
 
         observation_sources_param = namespace_join(move_base.name, namespace_join('obstacles', 'observation_sources'))
         observation_sources = move_base.read(observation_sources_param, "")
@@ -173,23 +185,27 @@ class ObstacleLayerPlugin(NavigationPlugin):
                 move_base.sub(topic, 'sensor_msgs/PointCloud')
 
     @classmethod
-    def build(cls, name: str) -> 'NavigationPlugin':
-        return ObstacleLayerPlugin()
+    def build(cls, name: str, node_name: str) -> 'NavigationPlugin':
+        return ObstacleLayerPlugin(name=name, node_name=node_name)
 
 @attr.s(frozen=True, slots=True)
 class VoxelLayerPlugin(ObstacleLayerPlugin):
     """
     Tracks obstacles in three dimensions
     """
+    class_name="costmap_2d::VoxelLayer"
+    name: str = attr.ib()
+    node_name: str = attr.ib()
+
     def load(self, interpreter: 'Interpreter') -> None:
         ObstacleLayerPlugin.load(self, interpreter)
-        move_base = get_move_base(interpreter)
-        publish_voxel = move_base.read('publish_voxel_map', False)
+        move_base = get_move_base(interpreter, self.node_name)
+        publish_voxel = move_base.read('~/publish_voxel_map', False)
         if publish_voxel:
             move_base.pub('voxel_grid', 'costmap_2d/VoxelGrid')
 
         move_base.pub('clearing_endpoints', 'sensor_msgs/PointCloud')
 
     @classmethod
-    def build(cls, name:str) -> 'NavigationPlugin':
-        return VoxelLayerPlugin()
+    def build(cls, name: str, node_name: str) -> 'NavigationPlugin':
+        return VoxelLayerPlugin(name=name, node_name=node_name)

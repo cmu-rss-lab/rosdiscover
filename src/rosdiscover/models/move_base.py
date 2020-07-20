@@ -205,12 +205,18 @@ def move_base(c):
     load_recovery('conservative_reset')
     load_recovery('aggressive')
 
-
-
     # Load navigation plugins
-    global_plugins = c.read("~/global_costmap/plugins")
-    assert isinstance(global_plugins, list)
-    for plugin_dict in global_plugins:
-        assert isinstance(plugin_dict, dict)
-        plugin = NavigationPlugin.from_dict(plugin_dict)
-        c.load_plugin(plugin)
+    global_plugins = c.read("/global_costmap/plugins")
+    if global_plugins is not None:
+        assert isinstance(global_plugins, list)
+        for plugin_dict in global_plugins:
+            assert isinstance(plugin_dict, dict)
+            plugin = NavigationPlugin.from_dict(plugin_dict, c.name)
+            c.load_plugin(plugin)
+
+    local_plugins = c.read("/local_costmap/plugins")
+    if isinstance(local_plugins, list):
+        for plugin_dict in local_plugins:
+            assert isinstance(plugin_dict, dict)
+            plugin = NavigationPlugin.from_dict(plugin_dict, c.name)
+            c.load_plugin(plugin)
