@@ -319,6 +319,7 @@ class LibGazeboROSCameraPlugin(GazeboPlugin):
     -------
 
     .. code:: xml
+
       <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
         <alwaysOn>true</alwaysOn>
         <updateRate>30.0</updateRate>
