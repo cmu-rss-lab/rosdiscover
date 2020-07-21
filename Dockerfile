@@ -1,7 +1,5 @@
 FROM alpine:3.7
-COPY . /tmp/rosdiscover
-RUN cd /tmp/rosdiscover \
- && apk add --no-cache \
+RUN apk add --no-cache \
       git \
       python3 \
       python3-dev \
@@ -10,6 +8,9 @@ RUN cd /tmp/rosdiscover \
       docker \
       gcc \
       linux-headers \
- && pip3 install --no-cache . \
+      openjdk8 \
+ && rm -rf /tmp/*
+COPY . /opt/rosdiscover
+RUN pip3 install --no-cache -e /opt/rosdiscover \
  && rm -rf /tmp/*
 ENTRYPOINT ["rosdiscover"]

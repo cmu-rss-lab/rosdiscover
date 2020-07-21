@@ -1,10 +1,11 @@
+# -*- coding: utf-8 -*-
 from ..interpreter import model
+
+M_PI = 3.14159265358979323846
 
 
 @model('amcl', 'amcl')
 def amcl(c):
-    M_PI = 3.14159265358979323846
-
     c.read('~use_map_topic', False)
     c.read('~first_map_only', False)
     c.read('~gui_publish_rate', -1.0)
@@ -37,7 +38,7 @@ def amcl(c):
     c.read("~laser_model_type", "likelihood_field")
     c.read("~odom_model_type", "diff")
     c.read("~update_min_d", 0.2)
-    c.read("~update_min_a", M_PI/6.0)
+    c.read("~update_min_a", M_PI / 6.0)
     c.read("~odom_frame_id", "odom")
     c.read("~base_frame_id", "base_link")
     c.read("~global_frame_id", "map")

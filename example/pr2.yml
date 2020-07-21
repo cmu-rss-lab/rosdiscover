@@ -1,4 +1,4 @@
-image: pr2
+image: therobotcooperative/pr2
 sources:
 - /opt/ros/kinetic/setup.bash
 - /ros_ws/devel/setup.bash

@@ -57,13 +57,14 @@ class Config:
         if has_environment and not isinstance(dict_['environment'], dict):
             raise ValueError("expected 'environment' to be a mapping")
 
-        image: str = dict_['image'] 
+        image: str = dict_['image']
         sources: Sequence[str] = dict_['sources']
         launches: Sequence[str] = dict_['launches']
-        environment: Mapping[str, str] = dict_.get('environment', {})
+        environment: Mapping[str, str] = dict(dict_.get('environment', {}))
         return Config(image=image,
                       sources=sources,
-                      launches=launches)
+                      launches=launches,
+                      environment=environment)
 
     @classmethod
     def from_yaml_file(cls, filename: str) -> 'Config':
@@ -73,5 +74,5 @@ class Config:
     def __attrs_post_init__(self) -> None:
         object.__setattr__(self, 'sources', tuple(self.sources))
         object.__setattr__(self, 'launches', tuple(self.launches))
-        environment = MappingProxyType(self.environment.copy())
+        environment = MappingProxyType(dict(self.environment))
         object.__setattr__(self, 'environment', environment)

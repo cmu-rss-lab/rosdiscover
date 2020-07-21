@@ -1,4 +1,4 @@
-image: christimperley/robots:rbcar
+image: therobotcooperative/rbcar
 sources:
 - /opt/ros/kinetic/setup.bash
 - /ros_ws/devel/setup.bash 
