@@ -71,7 +71,7 @@ class StaticLayerPlugin(NavigationPlugin):
 
         move_base.sub(map_topic, 'nav_msgs/OccupancyGrid')
         if subscribe_to_updates:
-            move_base.sub(f'{map_topic}_updates', )
+            move_base.sub(f'{map_topic}_updates', 'map_msgs/OccupancyGridUpdate')
 
     @classmethod
     def build(cls, name: str, node_name: str) -> NavigationPlugin:
