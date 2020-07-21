@@ -44,8 +44,8 @@ def spawn_model(c):
         f.write(urdf_contents)
     # Non XML stuff can appear at the end, so strip it out by finding the position of the last
     # end tag and then stripping everything after that tag
-    end_tags_endposition = [i.end() for i in re.finditer(r'</.*>', urdf_contents)]
-    last_end_tag_position = end_tags_endposition[-1]
+    end_tags_end_position = [i.end() for i in re.finditer(r'</.*>', urdf_contents)]
+    last_end_tag_position = end_tags_end_position[-1]
     urdf_contents = urdf_contents[:last_end_tag_position]
     urdf_xml = ET.fromstring(urdf_contents)
     for plugin_xml in urdf_xml.findall('.//plugin'):

@@ -10,14 +10,14 @@ def republish(c):
     img_format: str = 'raw'
 
     for a in args:
-        if a in ["raw", "compressed", "theora"]:
+        if a in ("raw", "compressed", "theora"):
             img_format = a
         elif a.startswith("in:="):
             intopic = a[4:]
         elif a.startswith("out:="):
             outopic = a[5:]
         else:
-            logger.error(f'"{a}" is not a valid argument for image_transport/republishZZZZ')
+            logger.error(f'"{a}" is not a valid argument for image_transport/republish')
     logger.info(f'The format for republish is {img_format}')
     c.sub(intopic, 'sensor_msgs/Image')
     c.pub(outopic, 'sensor_msgs/Image')
