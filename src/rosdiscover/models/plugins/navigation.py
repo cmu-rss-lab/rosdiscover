@@ -6,9 +6,7 @@ import abc
 import attr
 from loguru import logger
 from roswire.name import namespace_join
-from ...context import NodeContext
-
-from ...interpreter import Interpreter, ModelPlugin
+from ...interpreter import Interpreter, ModelPlugin, NodeContext
 
 
 class NavigationPlugin(ModelPlugin):
