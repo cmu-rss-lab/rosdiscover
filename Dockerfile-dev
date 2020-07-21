@@ -1,0 +1,26 @@
+FROM alpine:3.7
+RUN apk add --no-cache \
+      git \
+      python3 \
+      python3-dev \
+      libffi-dev \
+      libressl-dev \
+      py3-pip \
+      build-base \
+      docker \
+      gcc \
+      linux-headers \
+      openjdk8 \
+      bash \
+      less \
+ && rm -rf /tmp/*
+
+WORKDIR /code
+COPY requirements.dev.txt /tmp
+RUN pip3 install -r /tmp/requirements.dev.txt && rm -f /tmp/*
+
+ENTRYPOINT ["/bin/bash"]
+
+# docker run --rm -v d:/ROSDiscover/rosdiscover:/code -v d:/ROSDiscover/cache:/root/.roswire -v //var/run/docker.sock:/var/run/docker.sock -it build/rosdiscover-dev
+# pip3 install -e .
+# rosdiscover acme --acme fetch-demo.acme --check example/fetch-demo.yml
