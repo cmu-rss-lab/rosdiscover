@@ -151,33 +151,46 @@ The :code:`launch` command is used to simulate the effects of a sequence of
 .. code::
 
    $ rosdiscover launch example/fetch.yml
-   
+
+
 Docker Development Setup (for Windows 10)
 -----------------------------------------
 
-If you are planning to develop on Windows 10, then you will need to mount rosdiscover source directories into a Docker container. You can use your favorite Python IDE in Windows, but run and test rosdiscover inside the container.
+If you are planning to develop on Windows 10, then you will need to mount
+rosdiscover source directories into a Docker container. You can use your
+favorite Python IDE in Windows, but run and test rosdiscover inside the
+container.
 
-We provide a Docker build file for setting up this development environment. To run inside the image you need to mount (i) the source directory that is the top of this repository as `/code` on the container, (ii) the socket/port that the host docker daemon connects to (so that rosdiscover can find other, (iii) (recommended) a host folder that can be used to cache some of the rosdiscover builds, so that there is no need to start from scratch with rosdiscover each time. 
+We provide a Docker build file for setting up this development environment. To
+run inside the image you need to mount (i) the source directory that is the top
+of this repository as :code:`/code` in the container, (ii) the socket/port that the
+host docker daemon connects to (so that rosdiscover can find other, (iii)
+(recommended) a host folder that can be used to cache some of the rosdiscover
+builds, so that there is no need to start from scratch with rosdiscover each
+time.
 
-To run rosdiscover on Windows 10, where the source code is mounted on `D:/rosdiscover`, and you want to store the cache on `D:/cache`:
+To run rosdiscover on Windows 10, where the source code is mounted on
+:code:`D:/rosdiscover`, and you want to store the cache on :code:`D:/cache`:
 
-1. Ensure that the folders to mount are shared. This needs to be done through the Docker settings on your host. (This is done through the Dashboard or through settings on Windows Docker)
+1. Ensure that the folders to mount are shared. This needs to be done through
+   the Docker settings on your host. (This is done through the Dashboard or
+   through settings on Windows Docker)
 2. Build the development docker image:
 
-.. code::
+   .. code::
 
-  $ docker build -t build/rosdiscover-dev -f .\Dockerfile-dev .
-  
+      $ docker build -t build/rosdiscover-dev -f .\Dockerfile-dev .
+
 3. Run the docker image:
 
-.. code::
+   .. code::
 
-  $ docker run --rm -v d:/rosdiscover:/code -v d:/cache:/root/.roswire -v //var/run/docker.sock:/var/run/docker.sock -it build/rosdiscover-dev
-  
+      $ docker run --rm -v d:/rosdiscover:/code -v d:/cache:/root/.roswire -v //var/run/docker.sock:/var/run/docker.sock -it build/rosdiscover-dev
+
 4. Once the shell has started and you are inside the container, you will need to install `rosdiscover` locally:
 
-.. code::
+   .. code::
 
-  bash-4.4# pip install -e .
-  
-You will then be able to  run `rosdiscover` from the command line
+      bash-4.4# pip install -e .
+
+You will then be able to  run `rosdiscover` from the command line.
