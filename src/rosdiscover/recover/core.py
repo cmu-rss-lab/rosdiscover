@@ -32,4 +32,4 @@ class RecoveredNodeModel:
     publishers: Collection[PublisherDefinition]
 
     def __attrs_post_init__(self) -> None:
-        object.__setattr__(self, 'publishers', tuple(publishers))
+        object.__setattr__(self, 'publishers', tuple(self.publishers))
