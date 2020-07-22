@@ -23,11 +23,11 @@ class PythonModelExtractor:
         logger.debug(f"extracting model from Python source:\n{self._source}")
 
     def extract(self) -> RecoveredNodeModel:
-        publishers = list(self.publishers)
+        publishers = list(self._publishers)
         raise NotImplementedError
 
     @property
-    def publishers(self) -> Iterator[PublisherDefinition]:
+    def _publishers(self) -> Iterator[PublisherDefinition]:
         logger.debug('extracting publishers')
         comby = self._comby
         template = _PUBLISHER_TEMPLATE
