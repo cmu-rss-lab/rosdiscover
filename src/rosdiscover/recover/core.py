@@ -6,6 +6,7 @@ architectural models that have been recovered from nodes.
 __all__ = ('PublisherDefinition',
            'ParameterDelete',
            'ParameterRead',
+           'ParameterExistence',
            'ParameterWrite',
            'RecoveredNodeModel')
 
@@ -60,6 +61,18 @@ class ParameterDelete:
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
+class ParameterExistence:
+    """Describes a parameter existence operation.
+
+    Attributes
+    ----------
+    parameter_name: str
+        The name of the parameter.
+    """
+    parameter_name: str
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
 class ParameterWrite:
     """Describes a parameter write operation.
 
@@ -77,11 +90,16 @@ class ParameterWrite:
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class RecoveredNodeModel:
     publishers: Collection[PublisherDefinition]
+    parameter_deletes: Collection[ParameterDelete]
+    parameter_existences: Collection[ParameterExistence]
     parameter_reads: Collection[ParameterRead]
     parameter_writes: Collection[ParameterWrite]
-    parameter_deletes: Collection[ParameterDelete]
 
     def __attrs_post_init__(self) -> None:
         object.__setattr__(self, 'publishers', tuple(self.publishers))
+        object.__setattr__(self, 'parameter_deletes',
+                           tuple(self.parameter_deletes))
+        object.__setattr__(self, 'parameter_existences',
+                           tuple(self.parameter_existences))
         object.__setattr__(self, 'parameter_reads', tuple(self.parameter_reads))
         object.__setattr__(self, 'parameter_writes', tuple(self.parameter_writes))
