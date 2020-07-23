@@ -5,8 +5,9 @@ architectural models that have been recovered from nodes.
 """
 __all__ = ('PublisherDefinition',
            'ParameterDelete',
-           'ParameterRead',
            'ParameterExistence',
+           'ParameterRead',
+           'ParameterSearch',
            'ParameterWrite',
            'RecoveredNodeModel')
 
@@ -34,6 +35,30 @@ class PublisherDefinition:
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
+class ParameterDelete:
+    """Describes a parameter delete operation.
+
+    Attributes
+    ----------
+    parameter_name: str
+        The name of the parameter.
+    """
+    parameter_name: str
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class ParameterExistence:
+    """Describes a parameter existence operation.
+
+    Attributes
+    ----------
+    parameter_name: str
+        The name of the parameter.
+    """
+    parameter_name: str
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
 class ParameterRead:
     """Describes a parameter read operation.
 
@@ -49,20 +74,8 @@ class ParameterRead:
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
-class ParameterDelete:
-    """Describes a parameter delete operation.
-
-    Attributes
-    ----------
-    parameter_name: str
-        The name of the parameter.
-    """
-    parameter_name: str
-
-
-@attr.s(slots=True, frozen=True, auto_attribs=True)
-class ParameterExistence:
-    """Describes a parameter existence operation.
+class ParameterSearch:
+    """Describes a parameter search operation.
 
     Attributes
     ----------
