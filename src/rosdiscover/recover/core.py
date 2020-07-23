@@ -14,6 +14,7 @@ __all__ = ('PublisherDefinition',
            'ServiceDefinition',
            'ServiceProxyDefinition',
            'SimpleActionClientDefinition',
+           'SimpleActionServerDefinition',
            'SubscriberDefinition')
 
 from typing import Any, Collection, Optional
@@ -81,6 +82,23 @@ class ServiceProxyDefinition(RecoveredNodeModelElement):
 @attr.s(slots=True, frozen=True, auto_attribs=True)
 class SimpleActionClientDefinition(RecoveredNodeModelElement):
     """Describes the creation of a simple action client.
+
+    Attributes
+    ----------
+    type_: str
+        The name of the type used by the action server.
+    server: str
+        The name of the action server.
+    """
+    source: str
+    location: sourcelocation.FileLocationRange
+    type_: str
+    server: str
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class SimpleActionServerDefinition(RecoveredNodeModelElement):
+    """Describes the creation of a simple action server.
 
     Attributes
     ----------
@@ -218,6 +236,7 @@ class RecoveredNodeModel:
     services: Collection[ServiceDefinition]
     service_proxies: Collection[ServiceProxyDefinition]
     simple_action_clients: Collection[SimpleActionClientDefinition]
+    simple_action_servers: Collection[SimpleActionServerDefinition]
     subscribers: Collection[SubscriberDefinition]
 
     def __attrs_post_init__(self) -> None:
@@ -233,4 +252,6 @@ class RecoveredNodeModel:
                            tuple(self.service_proxies))
         object.__setattr__(self, 'simple_action_clients',
                            tuple(self.simple_action_clients))
+        object.__setattr__(self, 'simple_action_servers',
+                           tuple(self.simple_action_servers))
         object.__setattr__(self, 'subscribers', tuple(self.subscribers))
