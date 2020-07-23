@@ -28,9 +28,7 @@ def relay(c):
     c.read("~unreliable", False)
     c.read('~lazy', False)
     stealth = c.read('~stealth', False)
-    # TODO: Chris: how should we treat this? I think this means a topic is created
-    # that by default is the same is intopic, but could be set by a parameter
-    # http://wiki.ros.org/topic_tools/relay
+
     topic = c.read('~monitor_topic', 'intopic')
     c.read('~monitor_rate', 1.0)
 
@@ -39,7 +37,13 @@ def relay(c):
     parser.add_argument("outtopic", type=str)
     topics = parser.parse_args(c.args.split())
 
-    if stealth:
-        c.pub(topic, 'any')
+
     c.pub(topics.outtopic, 'any')
     c.sub(topics.intopic, 'any')
+    # Stealth mode and monitor topic means a topic is relayed
+    # that by default is the same is intopic, but could be set by a parameter
+    # http://wiki.ros.org/topic_tools/relay
+    # relay monitors the topic and if there is a subscriber only then will it
+    # relay the topic. This is out of scope because it is dynamic.
+    # if stealth:
+    #     c.pub(topic, 'any')
