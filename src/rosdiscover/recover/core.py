@@ -9,7 +9,8 @@ __all__ = ('PublisherDefinition',
            'ParameterRead',
            'ParameterSearch',
            'ParameterWrite',
-           'RecoveredNodeModel')
+           'RecoveredNodeModel',
+           'RecoveredNodeModelElement')
 
 from typing import Any, Collection, Optional
 import abc
