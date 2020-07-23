@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 import argparse
+import re
 import xml.etree.ElementTree as ET  # noqa
 
 from loguru import logger
 
 from .plugins.gazebo import GazeboPlugin
 from ..interpreter import model
-import re
 
 
 @model('gazebo_ros', 'spawn_model')

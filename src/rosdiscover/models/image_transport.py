@@ -1,5 +1,6 @@
-from ..interpreter import model
 from loguru import logger
+
+from ..interpreter import model
 
 
 @model('image_transport', 'republish')
