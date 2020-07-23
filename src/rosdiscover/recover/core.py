@@ -12,12 +12,37 @@ __all__ = ('PublisherDefinition',
            'RecoveredNodeModel')
 
 from typing import Any, Collection, Optional
+import abc
 
 import attr
+import sourcelocation
+
+# TODO WaitForMessage
+
+
+class RecoveredNodeModelElement(abc.ABC):
+    """Represents an element of a recovered node model.
+
+    Attributes
+    ----------
+    source: str
+        The associated source code for this element.
+    location: sourcelocation.FileLocationRange
+        The location of the source code for the element.
+    """
+    @abc.abstractmethod
+    @property
+    def source(self) -> str:
+        ...
+
+    @abc.abstractmethod
+    @property
+    def location(self) -> sourcelocation.FileLocationRange:
+        ...
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
-class PublisherDefinition:
+class PublisherDefinition(RecoveredNodeModelElement):
     """Describes a topic publish call.
 
     Attributes
@@ -29,13 +54,15 @@ class PublisherDefinition:
     queue_size: int
         The queue size for the publisher.
     """
+    source: str
+    location: sourcelocation.FileLocationRange
     type_: str
     topic: str
     queue_size: int
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
-class ParameterDelete:
+class ParameterDelete(RecoveredNodeModelElement):
     """Describes a parameter delete operation.
 
     Attributes
@@ -43,11 +70,13 @@ class ParameterDelete:
     parameter_name: str
         The name of the parameter.
     """
+    source: str
+    location: sourcelocation.FileLocationRange
     parameter_name: str
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
-class ParameterExistence:
+class ParameterExistence(RecoveredNodeModelElement):
     """Describes a parameter existence operation.
 
     Attributes
@@ -55,11 +84,13 @@ class ParameterExistence:
     parameter_name: str
         The name of the parameter.
     """
+    source: str
+    location: sourcelocation.FileLocationRange
     parameter_name: str
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
-class ParameterRead:
+class ParameterRead(RecoveredNodeModelElement):
     """Describes a parameter read operation.
 
     Attributes
@@ -69,12 +100,14 @@ class ParameterRead:
     default_value: Optional[Any]
         The default value of the parameter, if any.
     """
+    source: str
+    location: sourcelocation.FileLocationRange
     parameter_name: str
     default_value: Optional[Any]
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
-class ParameterSearch:
+class ParameterSearch(RecoveredNodeModelElement):
     """Describes a parameter search operation.
 
     Attributes
@@ -82,11 +115,13 @@ class ParameterSearch:
     parameter_name: str
         The name of the parameter.
     """
+    source: str
+    location: sourcelocation.FileLocationRange
     parameter_name: str
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
-class ParameterWrite:
+class ParameterWrite(RecoveredNodeModelElement):
     """Describes a parameter write operation.
 
     Attributes
@@ -96,6 +131,8 @@ class ParameterWrite:
     value_expression: str
         The expression used to obtain the parameter value.
     """
+    source: str
+    location: sourcelocation.FileLocationRange
     parameter_name: str
     value_expression: str
 
