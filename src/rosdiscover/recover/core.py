@@ -11,6 +11,8 @@ __all__ = ('PublisherDefinition',
            'ParameterWrite',
            'RecoveredNodeModel',
            'RecoveredNodeModelElement',
+           'ServiceDefinition',
+           'ServiceProxyDefinition',
            'SimpleActionClientDefinition',
            'SubscriberDefinition')
 
@@ -40,6 +42,40 @@ class RecoveredNodeModelElement(abc.ABC):
     @property
     def location(self) -> sourcelocation.FileLocationRange:
         ...
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class ServiceDefinition(RecoveredNodeModelElement):
+    """Describes the creation of a service.
+
+    Attributes
+    ----------
+    type_: str
+        The name of the type used by the service.
+    service: str
+        The name of the service.
+    """
+    source: str
+    location: sourcelocation.FileLocationRange
+    type_: str
+    service: str
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class ServiceProxyDefinition(RecoveredNodeModelElement):
+    """Describes the creation of a service proxy.
+
+    Attributes
+    ----------
+    type_: str
+        The name of the type used by the service.
+    service: str
+        The name of the service.
+    """
+    source: str
+    location: sourcelocation.FileLocationRange
+    type_: str
+    service: str
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
@@ -179,6 +215,8 @@ class RecoveredNodeModel:
     parameter_existences: Collection[ParameterExistence]
     parameter_reads: Collection[ParameterRead]
     parameter_writes: Collection[ParameterWrite]
+    services: Collection[ServiceDefinition]
+    service_proxies: Collection[ServiceProxyDefinition]
     simple_action_clients: Collection[SimpleActionClientDefinition]
     subscribers: Collection[SubscriberDefinition]
 
@@ -190,6 +228,9 @@ class RecoveredNodeModel:
                            tuple(self.parameter_existences))
         object.__setattr__(self, 'parameter_reads', tuple(self.parameter_reads))
         object.__setattr__(self, 'parameter_writes', tuple(self.parameter_writes))
+        object.__setattr__(self, 'services', tuple(self.services))
+        object.__setattr__(self, 'service_proxies',
+                           tuple(self.service_proxies))
         object.__setattr__(self, 'simple_action_clients',
                            tuple(self.simple_action_clients))
         object.__setattr__(self, 'subscribers', tuple(self.subscribers))
