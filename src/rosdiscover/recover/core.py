@@ -5,7 +5,7 @@ architectural models that have been recovered from nodes.
 """
 __all__ = ('PublisherDefinition', 'RecoveredNodeModel')
 
-from typing import Collection
+from typing import Any, Collection, Optional
 
 import attr
 
@@ -29,8 +29,25 @@ class PublisherDefinition:
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
+class ParameterRead:
+    """Describes a parameter read operation.
+
+    Attributes
+    ----------
+    parameter_name: str
+        The name of the parameter.
+    default_value: Optional[Any]
+        The default value of the parameter, if any.
+    """
+    parameter_name: str
+    default_value: Optional[Any]
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
 class RecoveredNodeModel:
     publishers: Collection[PublisherDefinition]
+    parameter_reads: Collection[ParameterRead]
 
     def __attrs_post_init__(self) -> None:
         object.__setattr__(self, 'publishers', tuple(self.publishers))
+        object.__setattr__(self, 'parameter_reads', tuple(self.parameter_reads))
