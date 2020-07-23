@@ -3,7 +3,8 @@
 This module provides several data structures that are used to describe
 architectural models that have been recovered from nodes.
 """
-__all__ = ('PublisherDefinition', 'RecoveredNodeModel')
+__all__ = ('PublisherDefinition', 'ParameterRead', 'ParameterWrite',
+           'RecoveredNodeModel')
 
 from typing import Any, Collection, Optional
 
@@ -44,10 +45,27 @@ class ParameterRead:
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
+class ParameterWrite:
+    """Describes a parameter write operation.
+
+    Attributes
+    ----------
+    parameter_name: str
+        The name of the parameter.
+    value_expression: str
+        The expression used to obtain the parameter value.
+    """
+    parameter_name: str
+    value_expression: str
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
 class RecoveredNodeModel:
     publishers: Collection[PublisherDefinition]
     parameter_reads: Collection[ParameterRead]
+    parameter_writes: Collection[ParameterWrite]
 
     def __attrs_post_init__(self) -> None:
         object.__setattr__(self, 'publishers', tuple(self.publishers))
         object.__setattr__(self, 'parameter_reads', tuple(self.parameter_reads))
+        object.__setattr__(self, 'parameter_writes', tuple(self.parameter_writes))
