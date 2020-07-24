@@ -12,7 +12,7 @@ __all__ = ('PublisherDefinition',
            'RecoveredNodeModel',
            'RecoveredNodeModelElement',
            'ServiceDefinition',
-           'ServiceProxyDefinition',
+           'ServiceClientDefinition',
            'SimpleActionClientDefinition',
            'SimpleActionServerDefinition',
            'SubscriberDefinition')
@@ -63,8 +63,8 @@ class ServiceDefinition(RecoveredNodeModelElement):
 
 
 @attr.s(slots=True, frozen=True, auto_attribs=True)
-class ServiceProxyDefinition(RecoveredNodeModelElement):
-    """Describes the creation of a service proxy.
+class ServiceClientDefinition(RecoveredNodeModelElement):
+    """Describes the creation of a service client.
 
     Attributes
     ----------
@@ -234,7 +234,7 @@ class RecoveredNodeModel:
     parameter_reads: Collection[ParameterRead]
     parameter_writes: Collection[ParameterWrite]
     services: Collection[ServiceDefinition]
-    service_proxies: Collection[ServiceProxyDefinition]
+    service_clients: Collection[ServiceClientDefinition]
     simple_action_clients: Collection[SimpleActionClientDefinition]
     simple_action_servers: Collection[SimpleActionServerDefinition]
     subscribers: Collection[SubscriberDefinition]
@@ -248,8 +248,8 @@ class RecoveredNodeModel:
         object.__setattr__(self, 'parameter_reads', tuple(self.parameter_reads))
         object.__setattr__(self, 'parameter_writes', tuple(self.parameter_writes))
         object.__setattr__(self, 'services', tuple(self.services))
-        object.__setattr__(self, 'service_proxies',
-                           tuple(self.service_proxies))
+        object.__setattr__(self, 'service_clients',
+                           tuple(self.service_clients))
         object.__setattr__(self, 'simple_action_clients',
                            tuple(self.simple_action_clients))
         object.__setattr__(self, 'simple_action_servers',
