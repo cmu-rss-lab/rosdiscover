@@ -8,3 +8,4 @@ to simple nodes with static models (rather than nodes that may publish and
 subscribe to different topics at run-time depending on their configuration).
 """
 from .core import RecoveredNodeModel
+from .tool import NodeRecoveryTool
