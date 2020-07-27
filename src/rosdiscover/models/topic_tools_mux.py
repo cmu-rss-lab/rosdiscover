@@ -35,7 +35,6 @@ def relay(c):
     parser.add_argument("outtopic", type=str)
     topics = parser.parse_args(c.args.split())
 
-
     c.pub(topics.outtopic, 'any')
     c.sub(topics.intopic, 'any')
     # Stealth mode and monitor topic means a topic is relayed
