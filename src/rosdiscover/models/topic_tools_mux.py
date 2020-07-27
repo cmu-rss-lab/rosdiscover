@@ -27,9 +27,7 @@ def mux(c):
 def relay(c):
     c.read("~unreliable", False)
     c.read('~lazy', False)
-    stealth = c.read('~stealth', False)
 
-    topic = c.read('~monitor_topic', 'intopic')
     c.read('~monitor_rate', 1.0)
 
     parser = argparse.ArgumentParser("topic_tools/relay")
@@ -45,5 +43,11 @@ def relay(c):
     # http://wiki.ros.org/topic_tools/relay
     # relay monitors the topic and if there is a subscriber only then will it
     # relay the topic. This is out of scope because it is dynamic.
+    # The code below is just here to remind that we do not handle this and
+    # how we might.
+
+    # stealth = c.read('~stealth', False)
+
+    # topic = c.read('~monitor_topic', 'intopic')
     # if stealth:
     #     c.pub(topic, 'any')
