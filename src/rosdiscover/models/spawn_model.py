@@ -43,6 +43,11 @@ def spawn_model(c):
     with open('urdf.xml', 'w') as f:
         f.write(urdf_contents)
 
+    # #94 workaround to deal with inclusion of warning when xacro.py is used
+    end_tag = '</robot>'
+    end_tag_starts_at = urdf_contents.rfind(end_tag)
+    end_tag_ends_at = end_tag_starts_at + len(end_tag)
+    urdf_contents = urdf_contents[:end_tag_ends_at]
     urdf_xml = ET.fromstring(urdf_contents)
     for plugin_xml in urdf_xml.findall('.//plugin'):
         plugin = GazeboPlugin.from_xml(plugin_xml)
