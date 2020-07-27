@@ -31,7 +31,7 @@ def _launch(config: Config) -> SystemSummary:
 
 
 def _launch_config(args) -> SystemSummary:
-    config = Config.from_yaml_file(args.config)
+    config = Config.from_yaml_string(args.config)
     return _launch(config)
 
 

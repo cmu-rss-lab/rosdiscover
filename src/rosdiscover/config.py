@@ -4,7 +4,9 @@ __all__ = ('Config',)
 from types import MappingProxyType
 from typing import Any, Mapping, Sequence
 
+from loguru import logger
 import attr
+import roswire
 import yaml
 
 
@@ -23,11 +25,14 @@ class Config:
         application.
     environment: Mapping[str, str]
         A set of environment variables that should be used by the application.
+    app: roswire.app.App
+        The ROSWire application for this configuration.
     """
     image: str
     sources: Sequence[str]
     launches: Sequence[str]
     environment: Mapping[str, str] = attr.ib(factory=dict)
+    app: roswire.app.App = attr.ib(init=False)
 
     @classmethod
     def from_dict(cls, dict_: Mapping[str, Any]) -> 'Config':
@@ -67,12 +72,31 @@ class Config:
                       environment=environment)
 
     @classmethod
-    def from_yaml_file(cls, filename: str) -> 'Config':
-        dict_ = yaml.load(filename, Loader=yaml.SafeLoader)
-        return cls.from_dict(dict_)
+    def from_yaml_string(cls, yml: str) -> 'Config':
+        logger.debug(f'loading config from YAML string:\n{yml}')
+        dict_ = yaml.load(yml, Loader=yaml.SafeLoader)
+        config = cls.from_dict(dict_)
+        logger.debug(f'loaded config from YAML string: {config}')
+        return config
+
+    @classmethod
+    def load(cls, filename: str) -> 'Config':
+        logger.debug(f'loading config from file: {filename}')
+        with open(filename, 'r') as f:
+            contents = f.read()
+        config = cls.from_yaml_string(contents)
+        logger.debug(f'loaded config from file [{filename}]: {config}')
+        return config
 
     def __attrs_post_init__(self) -> None:
         object.__setattr__(self, 'sources', tuple(self.sources))
         object.__setattr__(self, 'launches', tuple(self.launches))
         environment = MappingProxyType(dict(self.environment))
         object.__setattr__(self, 'environment', environment)
+
+        # TODO allow this context to be passed in
+        rsw = roswire.ROSWire()
+        app = roswire.App(roswire=rsw,
+                          image=self.image,
+                          sources=self.sources)
+        object.__setattr__(self, 'app', app)
