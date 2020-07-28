@@ -7,6 +7,7 @@ IMAGE_PROC_PKG = 'image_proc'
 
 @model(IMAGE_PROC_PKG, "image_proc")
 def image_proc(c):
+    c.mark_nodelet()
     c.sub('image_raw', IMAGE_TOPIC_TYPE)
     c.sub('camera_info', 'sensor_msgs/CameraInfo')
 
