@@ -34,7 +34,7 @@ class GazeboPlugin(ModelPlugin):
             'libhector_gazebo_ros_gps.so': LibGazeboROSGpsPlugin,
             'libgazebo_ros_camera.so': LibGazeboROSCameraPlugin,
             'libgazebo_ros_openni_kinect.so': LibGazeboROSOpenniKinectPlugin,
-            'libfetch_gazebo_plugin.so': LibFetchGazeboPlugin # Note, this should be generated
+            'libfetch_gazebo_plugin.so': LibFetchGazeboPlugin  # Note, this should be generated
         }
         cls = filename_to_cls[filename]
         plugin = cls.build_from_xml(xml)
@@ -306,10 +306,10 @@ class LibGazeboROSGpsPlugin(GazeboPlugin):
         assert xml_vel_topic is not None
         assert xml_vel_topic.text is not None
 
-        topicName: str = xml_topic.text
-        velTopicName: str = xml_vel_topic.text
+        topic_name: str = xml_topic.text
+        vel_topic_name: str = xml_vel_topic.text
 
-        return LibGazeboROSGpsPlugin(topicName, velTopicName)
+        return LibGazeboROSGpsPlugin(topic_name=topic_name, velocity_topic_name=vel_topic_name)
 
 
 @attr.s(frozen=True, slots=True)
@@ -319,6 +319,7 @@ class LibGazeboROSCameraPlugin(GazeboPlugin):
     -------
 
     .. code:: xml
+
       <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
         <alwaysOn>true</alwaysOn>
         <updateRate>30.0</updateRate>
@@ -349,7 +350,7 @@ class LibGazeboROSCameraPlugin(GazeboPlugin):
         for image_topic in [("", "sensor_msgs/Image"), ("/compressed", "sensor_msgs/CompressedImage"),
                             ("/compressedDepth", "sensor_msgs/CompressedImage"),
                             ("/theora", "theora_image_transport/Packet")]:
-            gazebo.pub(image_topic + image_topic[0], image_topic[1])
+            gazebo.pub(image_topic_name + image_topic[0], image_topic[1])
         gazebo.pub(camera_info_topic_name, 'sensor_msgs/CameraInfo')
 
     @classmethod
@@ -379,6 +380,7 @@ class LibGazeboROSCameraPlugin(GazeboPlugin):
                                         frame_name=frame_name,
                                         robot_namespace=robot_ns)
 
+
 @attr.s(frozen=True, slots=True)
 class LibGazeboROSOpenniKinectPlugin(GazeboPlugin):
     """
@@ -406,7 +408,7 @@ class LibGazeboROSOpenniKinectPlugin(GazeboPlugin):
         <hackBaseline>0</hackBaseline>
       </plugin>
     """
-    filename="libgazebo_ros_openni_kinect.so"
+    filename = "libgazebo_ros_openni_kinect.so"
     camera_name: str = attr.ib()
     image_topic_name: str = attr.ib()
     camera_info_topic_name: str = attr.ib()
@@ -431,20 +433,29 @@ class LibGazeboROSOpenniKinectPlugin(GazeboPlugin):
         xml_depth_image = xml.find('depthImageTopicName')
         xml_depth_image_camera_info = xml.find('depthImageCameraInfoTopicName')
         xml_point_cloud = xml.find('pointCloudTopicName')
-        assert xml_camera_name is not None and xml_camera_name is not None
+        assert xml_camera_name is not None and xml_camera_name.text is not None
         camera_name = xml_camera_name.text
 
-        image_t = xml_image.text if xml_image is not None and xml_image.text is not None else 'ir/image_raw'
-        image_ci_t = xml_image_camera_info.text if xml_image_camera_info is not None and xml_image_camera_info.text is not None else 'ir/camera_info'
-        depth_t = xml_depth_image.text if xml_depth_image is not None and xml_depth_image.text is not None else 'depth/image_raw'
-        depth_ci_t = xml_depth_image_camera_info.text if xml_depth_image_camera_info is not None and xml_depth_image_camera_info.text is not None else 'depth/camera_info'
-        point_cloud_t = xml_point_cloud.text if xml_point_cloud is not None and xml_point_cloud.text is not None else 'points'
+        image_t = xml_image.text \
+            if xml_image is not None and xml_image.text is not None else 'ir/image_raw'
+        image_ci_t = xml_image_camera_info.text \
+            if xml_image_camera_info is not None and xml_image_camera_info.text is not None else 'ir/camera_info'
+        depth_t = xml_depth_image.text \
+            if xml_depth_image is not None and xml_depth_image.text is not None else 'depth/image_raw'
+        depth_ci_t = xml_depth_image_camera_info.text \
+            if xml_depth_image_camera_info is not None and xml_depth_image_camera_info.text is not None \
+            else 'depth/camera_info'
+        point_cloud_t = xml_point_cloud.text \
+            if xml_point_cloud is not None and xml_point_cloud.text is not None else 'points'
 
-        return LibGazeboROSOpenniKinectPlugin(camera_name=camera_name, image_topic_name=image_t, camera_info_topic_name=image_ci_t,
-                                              depth_image_topic_name=depth_t, depth_image_camera_info_topic_name=depth_ci_t,
+        return LibGazeboROSOpenniKinectPlugin(camera_name=camera_name, image_topic_name=image_t,
+                                              camera_info_topic_name=image_ci_t,
+                                              depth_image_topic_name=depth_t,
+                                              depth_image_camera_info_topic_name=depth_ci_t,
                                               point_cloud_topic_name=point_cloud_t)
 
-#TODO: Generate this from source
+
+# TODO: Generate this from source
 @attr.s(frozen=True, slots=True)
 class LibFetchGazeboPlugin(GazeboPlugin):
     """
