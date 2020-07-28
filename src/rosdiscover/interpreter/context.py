@@ -9,6 +9,7 @@ import typing
 
 from .summary import NodeSummary
 from .parameter import ParameterServer
+from .topic import Topic
 
 if typing.TYPE_CHECKING:
     from .plugin import ModelPlugin
@@ -29,8 +30,8 @@ class NodeContext:
     _placeholder: bool = attr.ib(default=False, repr=False)
     _uses: Set[Tuple[str, str]] = attr.ib(factory=set, repr=False)
     _provides: Set[Tuple[str, str]] = attr.ib(factory=set, repr=False)
-    _subs: Set[Tuple[str, str, bool]] = attr.ib(factory=set, repr=False)
-    _pubs: Set[Tuple[str, str, bool]] = attr.ib(factory=set, repr=False)
+    _subs: Set[Topic] = attr.ib(factory=set, repr=False)
+    _pubs: Set[Topic] = attr.ib(factory=set, repr=False)
     _action_servers: Set[Tuple[str, str]] = attr.ib(factory=set, repr=False)
     _action_clients: Set[Tuple[str, str]] = attr.ib(factory=set, repr=False)
     # The tuple is (name, dynamic) where name is the name of the parameter
@@ -141,7 +142,7 @@ class NodeContext:
         topic_name_full = self.resolve(topic_name)
         logger.debug(f"node [{self.name}] subscribes to topic "
                      f"[{topic_name}] with format [{fmt}]")
-        self._subs.add((topic_name_full, fmt, implicit))
+        self._subs.add(Topic(name=topic_name_full, format=fmt, implicit=implicit))
 
     def pub(self, topic_name: str, fmt: str, implicit: bool = False) -> None:
         """Instructs the node to publish to a given topic.
@@ -159,7 +160,7 @@ class NodeContext:
         topic_name_full = self.resolve(topic_name)
         logger.debug(f"node [{self.name}] publishes to topic "
                      f"[{topic_name}] with format [{fmt}]")
-        self._pubs.add((topic_name_full, fmt, implicit))
+        self._pubs.add(Topic(name=topic_name_full, format=fmt, implicit=implicit))
 
     def read(self,
              param: str,

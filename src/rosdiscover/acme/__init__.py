@@ -139,21 +139,21 @@ class AcmeGenerator:
         actions: Dict[str, dict] = {}
 
         for node in self.__nodes:
-            for p_topic, p_type in node.pubs:
+            for pub in [t for t in node.pubs if not t.implicit]:
                 topic = {}
-                if p_topic in topics:
-                    topic = topics[p_topic]
+                if pub.name in topics:
+                    topic = topics[pub.name]
                 else:
-                    topic = {'details': {'name': p_topic, 'format': p_type}, "pubs": [], "subs": []}
-                    topics[p_topic] = topic
+                    topic = {'details': {'name': pub.name, 'format': pub.format}, "pubs": [], "subs": []}
+                    topics[pub.name] = topic
                 topic["pubs"].append(node.name)
-            for sub_topic, sub_type in node.subs:
+            for sub in [t for t in node.subs if not t.implicit]:
                 topic = {}
-                if sub_topic in topics:
-                    topic = topics[sub_topic]
+                if sub.name in topics:
+                    topic = topics[sub.name]
                 else:
-                    topic = {'details': {'name': sub_topic, 'format': sub_type}, "pubs": [], "subs": []}
-                    topics[sub_topic] = topic
+                    topic = {'details': {'name': sub.name, 'format': sub.format}, "pubs": [], "subs": []}
+                    topics[sub.name] = topic
                 topic["subs"].append(node.name)
             for service_name, service_type in node.provides:
                 service = {}
@@ -211,27 +211,27 @@ class AcmeGenerator:
             ports = []
             comp_name = self.to_acme_name(c.name)
 
-            for (p_topic, p_type) in c.pubs:
-                if p_topic not in attachments_to_topic:
-                    attachments_to_topic[p_topic] = []
-                pname = f'{self.to_acme_name(p_topic)}_pub'
-                port = ADVERTISER_PORT.format(port_name=pname, msg_type=p_type, topic=p_topic)
+            for pub in [t for t in c.pubs if not t.implicit]:
+                if pub.name not in attachments_to_topic:
+                    attachments_to_topic[pub.name] = []
+                pname = f'{self.to_acme_name(pub.name)}_pub'
+                port = ADVERTISER_PORT.format(port_name=pname, msg_type=pub.format, topic=pub.name)
                 ports.append(port)
-                attachments_to_topic[p_topic].append(
+                attachments_to_topic[pub.name].append(
                     ATTACHMENT.format(comp=comp_name,
                                       port=pname,
-                                      conn=f"{AcmeGenerator.to_acme_name(p_topic)}_conn",
+                                      conn=f"{AcmeGenerator.to_acme_name(pub.name)}_conn",
                                       role=f"{comp_name}_pub"))
-            for name, fmt in c.subs:
-                if name not in attachments_to_topic:
-                    attachments_to_topic[name] = []
-                pname = f"{AcmeGenerator.to_acme_name(name)}_sub"
-                port = SUBSCRIBER_PORT.format(port_name=pname, msg_type=fmt, topic=name)
+            for sub in [t for t in c.subs if not t.implicit]:
+                if sub.name not in attachments_to_topic:
+                    attachments_to_topic[sub.name] = []
+                pname = f"{AcmeGenerator.to_acme_name(sub.name)}_sub"
+                port = SUBSCRIBER_PORT.format(port_name=pname, msg_type=sub.format, topic=sub.name)
                 ports.append(port)
-                attachments_to_topic[name].append(
+                attachments_to_topic[sub.name].append(
                     ATTACHMENT.format(comp=comp_name,
                                       port=pname,
-                                      conn=f"{self.to_acme_name(name)}_conn",
+                                      conn=f"{self.to_acme_name(sub.name)}_conn",
                                       role=f"{comp_name}_sub"))
             for name, fmt in c.provides:
                 pname = f"{AcmeGenerator.to_acme_name(name)}_svc"
