@@ -198,6 +198,9 @@ class NodeContext:
         ns = self.resolve(ns)
         self._action_servers.add((ns, fmt))
 
+        # Topics are implicit because they are created by the action server
+        # and are only really intended for interaction between the
+        # action client and action server.
         self.sub(f'{ns}/goal', f'{fmt}Goal', implicit=True)
         self.sub(f'{ns}/cancel', 'actionlib_msgs/GoalID', implicit=True)
         self.pub(f'{ns}/status', 'actionlib_msgs/GoalStatusArray', implicit=True)
@@ -219,6 +222,9 @@ class NodeContext:
         ns = self.resolve(ns)
         self._action_clients.add((ns, fmt))
 
+        # Topics are implicit because they are created by the action client
+        # and are only really intended for interaction between the
+        # action client and action server.
         self.pub(f'{ns}/goal', f'{fmt}Goal', implicit=True)
         self.pub(f'{ns}/cancel', 'actionlib_msgs/GoalID', implicit=True)
         self.sub(f'{ns}/status', 'actionlib_msgs/GoalStatusArray', implicit=True)
