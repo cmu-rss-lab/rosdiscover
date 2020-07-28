@@ -34,14 +34,14 @@ ACTION_CONNECTOR = """  connector {conn_name} : ActionServerConnT = new ActionSe
 NODE_COMPONENT = """   component {comp_name} : ROSNodeCompT = new ROSNodeCompT extended with {{
         {ports}
         property name = "{node_name}";
-        property launch_file = "{filename}";
+        property launchedBy = "{filename}";
     }};
     """
 NODE_PLACEHOLDER_COMPONENT = """   component {comp_name} : ROSNodeCompT, PlaceholderT = new ROSNodeCompT, PlaceholderT extended with {{
         {ports}
         property name = "{node_name}";
         property placeholder = true;
-        property launch_file = "{filename}";
+        property launchedBy = "{filename}";
     }};
 """
 ATTACHMENT = "  attachment {comp}.{port} to {conn}.{role};"
