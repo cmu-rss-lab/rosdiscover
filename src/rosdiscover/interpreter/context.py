@@ -191,6 +191,14 @@ class NodeContext:
         ns = self.resolve(ns)
         self._action_servers.add((ns, fmt))
 
+        # These topics should not be here (they are assumed by the
+        # fact that this is an action server).
+        self.sub(f'{ns}/goal', f'{fmt}Goal')
+        self.sub(f'{ns}/cancel', 'actionlib_msgs/GoalID')
+        self.pub(f'{ns}/status', 'actionlib_msgs/GoalStatusArray')
+        self.pub(f'{ns}/feedback', f'{fmt}Feedback')
+        self.pub(f'{ns}/result', f'{fmt}Result')
+
     def action_client(self, ns: str, fmt: str) -> None:
         """Creates a new action client.
 
@@ -205,6 +213,14 @@ class NodeContext:
                      f"[{ns}] with format [{fmt}]")
         ns = self.resolve(ns)
         self._action_clients.add((ns, fmt))
+
+        # These topics should not be here (they are assumed by the
+        # fact that this is an action client).
+        self.pub(f'{ns}/goal', f'{fmt}Goal')
+        self.pub(f'{ns}/cancel', 'actionlib_msgs/GoalID')
+        self.sub(f'{ns}/status', 'actionlib_msgs/GoalStatusArray')
+        self.sub(f'{ns}/feedback', f'{fmt}Feedback')
+        self.sub(f'{ns}/result', f'{fmt}Result')
 
     def load_plugin(self, plugin: 'ModelPlugin') -> None:
         """Loads a given dynamic plugin."""
