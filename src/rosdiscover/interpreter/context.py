@@ -29,8 +29,8 @@ class NodeContext:
     _placeholder: bool = attr.ib(default=False, repr=False)
     _uses: Set[Tuple[str, str]] = attr.ib(factory=set, repr=False)
     _provides: Set[Tuple[str, str]] = attr.ib(factory=set, repr=False)
-    _subs: Set[Tuple[str, str]] = attr.ib(factory=set, repr=False)
-    _pubs: Set[Tuple[str, str]] = attr.ib(factory=set, repr=False)
+    _subs: Set[Tuple[str, str, bool]] = attr.ib(factory=set, repr=False)
+    _pubs: Set[Tuple[str, str, bool]] = attr.ib(factory=set, repr=False)
     _action_servers: Set[Tuple[str, str]] = attr.ib(factory=set, repr=False)
     _action_clients: Set[Tuple[str, str]] = attr.ib(factory=set, repr=False)
     # The tuple is (name, dynamic) where name is the name of the parameter
@@ -125,7 +125,7 @@ class NodeContext:
         service_name_full = self.resolve(service)
         self._uses.add((service_name_full, fmt))
 
-    def sub(self, topic_name: str, fmt: str) -> None:
+    def sub(self, topic_name: str, fmt: str, implicit: bool = True) -> None:
         """Subscribes the node to a given topic.
 
         Parameters
@@ -134,13 +134,15 @@ class NodeContext:
             The unqualified name of the topic.
         fmt: str
             The name of message format used by the topic.
+        implicit: bool
+            Whether the topic is implicit (used for action topics)
         """
         topic_name_full = self.resolve(topic_name)
         logger.debug(f"node [{self.name}] subscribes to topic "
                      f"[{topic_name}] with format [{fmt}]")
-        self._subs.add((topic_name_full, fmt))
+        self._subs.add((topic_name_full, fmt, implicit))
 
-    def pub(self, topic_name: str, fmt: str) -> None:
+    def pub(self, topic_name: str, fmt: str, implicit: bool = True) -> None:
         """Instructs the node to publish to a given topic.
 
         Parameters
@@ -149,11 +151,13 @@ class NodeContext:
             the unqualified name of the topic.
         fmt: str
             the message format used by the topic.
+        implicit: bool
+            Whether the topic is implicit (used for action topics)
         """
         topic_name_full = self.resolve(topic_name)
         logger.debug(f"node [{self.name}] publishes to topic "
                      f"[{topic_name}] with format [{fmt}]")
-        self._pubs.add((topic_name_full, fmt))
+        self._pubs.add((topic_name_full, fmt, implicit))
 
     def read(self,
              param: str,
