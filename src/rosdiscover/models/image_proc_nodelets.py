@@ -17,6 +17,7 @@ def image_proc(c):
 
     c.read('~queue_size', 5)
 
+
 @model(IMAGE_PROC_PKG, "debayer")
 def debayer(c):
     c.mark_nodelet()
