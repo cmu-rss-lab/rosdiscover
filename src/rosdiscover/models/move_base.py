@@ -1,4 +1,7 @@
+from loguru import logger
+
 from ..interpreter import model
+from .plugins.navigation import NavigationPlugin
 
 
 @model('move_base', 'move_base')
@@ -33,24 +36,25 @@ def move_base(c):
     # FIXME load costmap plugins
     # SEE http://wiki.ros.org/costmap_2d?distro=melodic
     def create_costmap(name):
-        c.sub("~{}/footprint".format(name), 'geometry_msgs/Polygon')
-        c.pub("~{}/costmap".format(name), 'nav_msgs/OccupancyGrid')
-        c.pub("~{}/costmap_updates".format(name), 'nav_msgs/OccupancyGridUpdate')
-        c.pub("~{}/voxel_grid".format(name), 'costmap_2d/VoxelGrid')
+        logger.debug(f"Creating costmap: {name}")
+        c.sub(f"~{name}/footprint", 'geometry_msgs/Polygon')
+        c.pub(f"~{name}/costmap", 'nav_msgs/OccupancyGrid')
+        c.pub(f"~{name}/costmap_updates", 'nav_msgs/OccupancyGridUpdate')
+        c.pub(f"~{name}/voxel_grid", 'costmap_2d/VoxelGrid')
 
-        c.read("~{}/global_frame".format(name), "/map")
-        c.read("~{}/global_frame".format(name), "base_link")
-        c.read("~{}/transform_tolerance".format(name), 0.2)
-        c.read("~{}/update_frequency".format(name), 5.0)
-        c.read("~{}/publish_frequency".format(name), 0.0)
-        c.read("~{}/rolling_window".format(name), False)
-        c.read("~{}/always_send_full_costmap".format(name), True)
+        c.read(f"~{name}/global_frame", "/map")
+        c.read(f"~{name}/global_frame", "base_link")
+        c.read(f"~{name}/transform_tolerance", 0.2)
+        c.read(f"~{name}/update_frequency", 5.0)
+        c.read(f"~{name}/publish_frequency", 0.0)
+        c.read(f"~{name}/rolling_window", False)
+        c.read(f"~{name}/always_send_full_costmap", True)
 
-        c.read("~{}/width".format(name), 10)
-        c.read("~{}/height".format(name), 10)
-        c.read("~{}/resolution".format(name), 0.05)
-        c.read("~{}/origin_x".format(name), 0.0)
-        c.read("~{}/origin_y".format(name), 0.0)
+        c.read(f"~{name}/width", 10)
+        c.read(f"~{name}/height", 10)
+        c.read(f"~{name}/resolution", 0.05)
+        c.read(f"~{name}/origin_x", 0.0)
+        c.read(f"~{name}/origin_y", 0.0)
 
     create_costmap("global_costmap")
     create_costmap("local_costmap")
@@ -58,12 +62,12 @@ def move_base(c):
     # load the global planner plugin
     def plugin_navfn():
         name = "NavfnROS"
-        c.pub("~{}/plan".format(name), "nav_msgs/Path")
-        c.read("~{}/allow_unknown".format(name), True)
-        c.read("~{}/planner_window_x".format(name), 0.0)
-        c.read("~{}/planner_window_y".format(name), 0.0)
-        c.read("~{}/default_tolerance".format(name), 0.0)
-        c.read("~{}/visualize_potential".format(name), False)
+        c.pub(f"~{name}/plan", "nav_msgs/Path")
+        c.read(f"~{name}/allow_unknown", True)
+        c.read(f"~{name}/planner_window_x", 0.0)
+        c.read(f"~{name}/planner_window_y", 0.0)
+        c.read(f"~{name}/default_tolerance", 0.0)
+        c.read(f"~{name}/visualize_potential", False)
 
     type_global_planner = c.read("~base_global_planner", "navfn/NavfnROS")
     assert type_global_planner == 'navfn/NavfnROS'
@@ -72,101 +76,101 @@ def move_base(c):
     # load the local planner plugin
     def base_plugin_local(name):
         # type: (str) -> None
-        c.pub("~{}/global_plan".format(name), "nav_msgs/Path")
-        c.pub("~{}/local_plan".format(name), "nav_msgs/Path")
-        c.sub("odom", "sensor_msgs/PointCloud2")
+        c.pub(f"~{name}/global_plan", "nav_msgs/Path")
+        c.pub(f"~{name}/local_plan", "nav_msgs/Path")
+        c.sub("odom", "nav_msgs/Odometry")
 
     def plugin_DWAPlannerROS():  # noqa
         name = "DWAPlannerROS"
         base_plugin_local(name)
 
-        c.read("~{}/acc_lim_x".format(name), 2.5)
-        c.read("~{}/acc_lim_y".format(name), 2.5)
-        c.read("~{}/acc_lim_th".format(name), 3.2)
+        c.read(f"~{name}/acc_lim_x", 2.5)
+        c.read(f"~{name}/acc_lim_y", 2.5)
+        c.read(f"~{name}/acc_lim_th", 3.2)
 
-        c.read("~{}/min_trans_vel".format(name), 0.1)
-        c.read("~{}/max_trans_vel".format(name), 0.55)
+        c.read(f"~{name}/min_trans_vel", 0.1)
+        c.read(f"~{name}/max_trans_vel", 0.55)
 
-        c.read("~{}/max_vel_x".format(name), 0.55)
-        c.read("~{}/min_vel_x".format(name), 0.0)
-        c.read("~{}/max_vel_y".format(name), 0.1)
-        c.read("~{}/min_vel_y".format(name), -0.1)
+        c.read(f"~{name}/max_vel_x", 0.55)
+        c.read(f"~{name}/min_vel_x", 0.0)
+        c.read(f"~{name}/max_vel_y", 0.1)
+        c.read(f"~{name}/min_vel_y", -0.1)
 
-        c.read("~{}/max_rot_vel".format(name), 1.0)
-        c.read("~{}/min_rot_vel".format(name), 0.4)
+        c.read(f"~{name}/max_rot_vel", 1.0)
+        c.read(f"~{name}/min_rot_vel", 0.4)
 
-        c.read("~{}/yaw_goal_tolerance".format(name), 0.05)
-        c.read("~{}/xy_goal_tolerance".format(name), 0.10)
-        c.read("~{}/latch_xy_goal_tolerance".format(name), False)
+        c.read(f"~{name}/yaw_goal_tolerance", 0.05)
+        c.read(f"~{name}/xy_goal_tolerance", 0.10)
+        c.read(f"~{name}/latch_xy_goal_tolerance", False)
 
-        c.read("~{}/sim_time".format(name), 1.7)
-        c.read("~{}/sim_granularity".format(name), 0.025)
-        c.read("~{}/vx_samples".format(name), 3)
-        c.read("~{}/vy_samples".format(name), 10)
-        c.read("~{}/vth_samples".format(name), 20)
-        c.read("~{}/controller_frequency".format(name), 20.0)
+        c.read(f"~{name}/sim_time", 1.7)
+        c.read(f"~{name}/sim_granularity", 0.025)
+        c.read(f"~{name}/vx_samples", 3)
+        c.read(f"~{name}/vy_samples", 10)
+        c.read(f"~{name}/vth_samples", 20)
+        c.read(f"~{name}/controller_frequency", 20.0)
 
-        c.read("~{}/path_distance_bias".format(name), 32.0)
-        c.read("~{}/goal_distance_bias".format(name), 24.0)
-        c.read("~{}/occdist_scale".format(name), 0.01)
-        c.read("~{}/forward_point_distance".format(name), 0.325)
-        c.read("~{}/stop_time_buffer".format(name), 0.2)
-        c.read("~{}/scaling_speed".format(name), 0.25)
-        c.read("~{}/max_scaling_factor".format(name), 0.2)
+        c.read(f"~{name}/path_distance_bias", 32.0)
+        c.read(f"~{name}/goal_distance_bias", 24.0)
+        c.read(f"~{name}/occdist_scale", 0.01)
+        c.read(f"~{name}/forward_point_distance", 0.325)
+        c.read(f"~{name}/stop_time_buffer", 0.2)
+        c.read(f"~{name}/scaling_speed", 0.25)
+        c.read(f"~{name}/max_scaling_factor", 0.2)
 
-        if c.read("~{}/publish_cost_grid".format(name), False):
-            c.pub("~{}/cost_cloud".format(name), "sensor_msgs/PointCloud2")
+        if c.read(f"~{name}/publish_cost_grid", False):
+            c.pub(f"~{name}/cost_cloud", "sensor_msgs/PointCloud2")
 
-        c.read("~{}/oscillation_reset_dist".format(name), 0.05)
-        c.read("~{}/prune_plan".format(name), True)
+        c.read(f"~{name}/oscillation_reset_dist", 0.05)
+        c.read(f"~{name}/prune_plan", True)
 
     def plugin_TrajectoryPlannerROS():  # noqa
         name = "TrajectoryPlannerROS"
         base_plugin_local(name)
 
-        if c.read("~{}/publish_cost_grid_pc".format(name), False):
-            c.pub("~{}/cost_cloud".format(name), "sensor_msgs/PointCloud2")
+        if c.read(f"~{name}/publish_cost_grid_pc", False):
+            c.pub(f"~{name}/cost_cloud", "sensor_msgs/PointCloud2")
 
-        c.read("~{}/acc_lim_x".format(name), 2.5)
-        c.read("~{}/acc_lim_y".format(name), 2.5)
-        c.read("~{}/acc_lim_theta".format(name), 2.5)
-        c.read("~{}/max_vel_x".format(name), 2.5)
-        c.read("~{}/min_vel_x".format(name), 2.5)
-        c.read("~{}/max_vel_theta".format(name), 2.5)
-        c.read("~{}/min_vel_theta".format(name), 2.5)
-        c.read("~{}/min_in_place_cel_theta".format(name), 0.4)
+        c.read(f"~{name}/acc_lim_x", 2.5)
+        c.read(f"~{name}/acc_lim_y", 2.5)
+        c.read(f"~{name}/acc_lim_theta", 2.5)
+        c.read(f"~{name}/max_vel_x", 2.5)
+        c.read(f"~{name}/min_vel_x", 2.5)
+        c.read(f"~{name}/max_vel_theta", 2.5)
+        c.read(f"~{name}/min_vel_theta", 2.5)
+        c.read(f"~{name}/min_in_place_cel_theta", 0.4)
 
         # replaces ~<name>/backup_vel since v1.3.1 of navigation stack
-        c.read("~{}/escape_vel".format(name), -0.1)
+        c.read(f"~{name}/escape_vel", -0.1)
 
-        if c.read("~{}/holonomic_robot".format(name), True):
-            c.read("~{}/y_vels".format(name), [-0.3, -0.1, 0.1, 0.3])
+        if c.read(f"~{name}/holonomic_robot", True):
+            c.read(f"~{name}/y_vels", [-0.3, -0.1, 0.1, 0.3])
 
-        c.read("~{}/yaw_goal_tolerance".format(name), 0.05)
-        c.read("~{}/xy_goal_tolerance".format(name), 0.10)
-        c.read("~{}/latch_xy_goal_tolerance".format(name), False)
+        c.read(f"~{name}/yaw_goal_tolerance", 0.05)
+        c.read(f"~{name}/xy_goal_tolerance", 0.10)
+        c.read(f"~{name}/latch_xy_goal_tolerance", False)
 
-        c.read("~{}/sim_time".format(name), 1.0)
-        sim_granularity = c.read("~{}/sim_granularity".format(name), 0.025)
-        c.read("~{}/angular_sim_granularity".format(name), sim_granularity)
+        c.read(f"~{name}/sim_time", 1.0)
+        sim_granularity = c.read(f"~{name}/sim_granularity", 0.025)
+        c.read(f"~{name}/angular_sim_granularity", sim_granularity)
 
-        c.read("~{}/vx_samples".format(name), 3)
-        c.read("~{}/vtheta_samples".format(name), 20)
+        c.read(f"~{name}/vx_samples", 3)
+        c.read(f"~{name}/vtheta_samples", 20)
 
         # FIXME see http://wiki.ros.org/base_local_planner?distro=melodic
         # searches parent namespaces for controller_frequency if not present
         # in private namespace
-        c.read("~{}/controller_frequency".format(name), 20.0)
+        c.read(f"~{name}/controller_frequency", 20.0)
 
-        c.read("~{}/meter_scoring".format(name), False)
-        c.read("~{}/pdist_scale".format(name), 0.6)
-        c.read("~{}/gdist_scale".format(name), 0.8)
-        c.read("~{}/occdist_scale".format(name), 0.01)
-        c.read("~{}/heading_lookahead".format(name), 0.325)
-        c.read("~{}/heading_scoring".format(name), False)
-        c.read("~{}/heading_scoring_timestep".format(name), 0.8)
-        c.read("~{}/dwa".format(name), True)
-        c.read("~{}/global_frame_id".format(name), "odom")
+        c.read(f"~{name}/meter_scoring", False)
+        c.read(f"~{name}/pdist_scale", 0.6)
+        c.read(f"~{name}/gdist_scale", 0.8)
+        c.read(f"~{name}/occdist_scale", 0.01)
+        c.read(f"~{name}/heading_lookahead", 0.325)
+        c.read(f"~{name}/heading_scoring", False)
+        c.read(f"~{name}/heading_scoring_timestep", 0.8)
+        c.read(f"~{name}/dwa", True)
+        c.read(f"~{name}/global_frame_id", "odom")
 
         c.read("~{}/oscillation_reset_dist", 0.05)
 
@@ -179,7 +183,7 @@ def move_base(c):
     elif type_local_planner == 'dwa_local_planner/DWAPlannerROS':
         plugin_DWAPlannerROS()
     else:
-        m = "unsupported local planner: {}".format(type_local_planner)
+        m = f"unsupported local planner: {type_local_planner}"
         raise Exception(m)
 
     c.provide("make_plan", 'nav_msgs/GetPlan')
@@ -190,14 +194,30 @@ def move_base(c):
     # load_plugin('', 'clear_costmap_recovery/ClearCostmapRecovery') [conservative_reset]
     def load_recovery(name):
         # type: (str) -> None
-        nh_p = "~{}".format(name)
+        nh_p = f"~{name}"
         nh_blp = "~TrajectoryPlannerROS"
-        c.read("{}/sim_granularity".format(nh_p), 0.017)
-        c.read("{}/frequency".format(nh_p), 20.0)
-        c.read("{}/acc_lim_th".format(nh_blp), 3.2)
-        c.read("{}/max_rotational_vel".format(nh_blp), 1.0)
-        c.read("{}/min_in_place_rotational_vel".format(nh_blp), 0.4)
-        c.read("{}/yaw_goal_tolerance".format(nh_blp), 0.10)
+        c.read(f"{nh_p}/sim_granularity", 0.017)
+        c.read(f"{nh_p}/frequency", 20.0)
+        c.read(f"{nh_blp}/acc_lim_th", 3.2)
+        c.read(f"{nh_blp}/max_rotational_vel", 1.0)
+        c.read(f"{nh_blp}/min_in_place_rotational_vel", 0.4)
+        c.read(f"{nh_blp}/yaw_goal_tolerance", 0.10)
 
     load_recovery('conservative_reset')
     load_recovery('aggressive')
+
+    # Load navigation plugins
+    global_plugins = c.read("/global_costmap/plugins")
+    if global_plugins is not None:
+        assert isinstance(global_plugins, list)
+        for plugin_dict in global_plugins:
+            assert isinstance(plugin_dict, dict)
+            plugin = NavigationPlugin.from_dict(plugin_dict, c.name)
+            c.load_plugin(plugin)
+
+    local_plugins = c.read("/local_costmap/plugins")
+    if isinstance(local_plugins, list):
+        for plugin_dict in local_plugins:
+            assert isinstance(plugin_dict, dict)
+            plugin = NavigationPlugin.from_dict(plugin_dict, c.name)
+            c.load_plugin(plugin)

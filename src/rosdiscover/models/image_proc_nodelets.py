@@ -5,6 +5,19 @@ IMAGE_TOPIC_TYPE = 'sensor_msgs/Image'
 IMAGE_PROC_PKG = 'image_proc'
 
 
+@model(IMAGE_PROC_PKG, "image_proc")
+def image_proc(c):
+    c.sub('image_raw', IMAGE_TOPIC_TYPE)
+    c.sub('camera_info', 'sensor_msgs/CameraInfo')
+
+    c.pub('image_mono', IMAGE_TOPIC_TYPE)
+    c.pub('image_rect', IMAGE_TOPIC_TYPE)
+    c.pub('image_color', IMAGE_TOPIC_TYPE)
+    c.pub('image_rect_color', IMAGE_TOPIC_TYPE)
+
+    c.read('~queue_size', 5)
+
+
 @model(IMAGE_PROC_PKG, "debayer")
 def debayer(c):
     c.mark_nodelet()
