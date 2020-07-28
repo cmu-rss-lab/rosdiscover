@@ -23,8 +23,8 @@ class NodeSummary:
     # discovered otherwise. Typically, placeholders will have no information
     # about topics, services, etc.
     placeholder: bool
-    pubs: Collection[Tuple[str, str, bool]]
-    subs: Collection[Tuple[str, str, bool]]
+    pubs: Collection[Tuple[str, str]]
+    subs: Collection[Tuple[str, str]]
     # The tuple is (name, dynamic) where name is the name of the parameter
     # and dynamic is whether the node reacts to updates to the parameter via reconfigure
     reads: Collection[Tuple[str, bool]]
@@ -45,8 +45,8 @@ class NodeSummary:
         object.__setattr__(self, 'action_clients', frozenset(self.action_clients))
 
     def to_dict(self) -> Dict[str, Any]:
-        pubs = [{'name': n, 'format': f, 'implicit': i} for (n, f, i) in self.pubs]
-        subs = [{'name': n, 'format': f, 'implicit': i} for (n, f, i) in self.subs]
+        pubs = [{'name': n, 'format': f} for (n, f) in self.pubs]
+        subs = [{'name': n, 'format': f} for (n, f) in self.subs]
         provides = \
             [{'name': n, 'format': f} for (n, f) in self.provides]
         uses = \

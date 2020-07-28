@@ -29,8 +29,8 @@ class NodeContext:
     _placeholder: bool = attr.ib(default=False, repr=False)
     _uses: Set[Tuple[str, str]] = attr.ib(factory=set, repr=False)
     _provides: Set[Tuple[str, str]] = attr.ib(factory=set, repr=False)
-    _subs: Set[Tuple[str, str, bool]] = attr.ib(factory=set, repr=False)
-    _pubs: Set[Tuple[str, str, bool]] = attr.ib(factory=set, repr=False)
+    _subs: Set[Tuple[str, str]] = attr.ib(factory=set, repr=False)
+    _pubs: Set[Tuple[str, str]] = attr.ib(factory=set, repr=False)
     _action_servers: Set[Tuple[str, str]] = attr.ib(factory=set, repr=False)
     _action_clients: Set[Tuple[str, str]] = attr.ib(factory=set, repr=False)
     # The tuple is (name, dynamic) where name is the name of the parameter
@@ -125,7 +125,7 @@ class NodeContext:
         service_name_full = self.resolve(service)
         self._uses.add((service_name_full, fmt))
 
-    def sub(self, topic_name: str, fmt: str, implicit: bool = True) -> None:
+    def sub(self, topic_name: str, fmt: str) -> None:
         """Subscribes the node to a given topic.
 
         Parameters
@@ -134,15 +134,13 @@ class NodeContext:
             The unqualified name of the topic.
         fmt: str
             The name of message format used by the topic.
-        implicit: bool
-            Whether the topic is implicit (used for action topics)
         """
         topic_name_full = self.resolve(topic_name)
         logger.debug(f"node [{self.name}] subscribes to topic "
                      f"[{topic_name}] with format [{fmt}]")
-        self._subs.add((topic_name_full, fmt, implicit))
+        self._subs.add((topic_name_full, fmt))
 
-    def pub(self, topic_name: str, fmt: str, implicit: bool = True) -> None:
+    def pub(self, topic_name: str, fmt: str) -> None:
         """Instructs the node to publish to a given topic.
 
         Parameters
@@ -151,13 +149,11 @@ class NodeContext:
             the unqualified name of the topic.
         fmt: str
             the message format used by the topic.
-        implicit: bool
-            Whether the topic is implicit (used for action topics)
         """
         topic_name_full = self.resolve(topic_name)
         logger.debug(f"node [{self.name}] publishes to topic "
                      f"[{topic_name}] with format [{fmt}]")
-        self._pubs.add((topic_name_full, fmt, implicit))
+        self._pubs.add((topic_name_full, fmt))
 
     def read(self,
              param: str,
@@ -198,11 +194,11 @@ class NodeContext:
         # Topics are implicit because they are created by the action server
         # and are only really intended for interaction between the
         # action client and action server.
-        self.sub(f'{ns}/goal', f'{fmt}Goal', implicit=True)
-        self.sub(f'{ns}/cancel', 'actionlib_msgs/GoalID', implicit=True)
-        self.pub(f'{ns}/status', 'actionlib_msgs/GoalStatusArray', implicit=True)
-        self.pub(f'{ns}/feedback', f'{fmt}Feedback', implicit=True)
-        self.pub(f'{ns}/result', f'{fmt}Result', implicit=True)
+        self.sub(f'{ns}/goal', f'{fmt}Goal')
+        self.sub(f'{ns}/cancel', 'actionlib_msgs/GoalID')
+        self.pub(f'{ns}/status', 'actionlib_msgs/GoalStatusArray')
+        self.pub(f'{ns}/feedback', f'{fmt}Feedback')
+        self.pub(f'{ns}/result', f'{fmt}Result')
 
     def action_client(self, ns: str, fmt: str) -> None:
         """Creates a new action client.
@@ -222,11 +218,11 @@ class NodeContext:
         # Topics are implicit because they are created by the action client
         # and are only really intended for interaction between the
         # action client and action server.
-        self.pub(f'{ns}/goal', f'{fmt}Goal', implicit=True)
-        self.pub(f'{ns}/cancel', 'actionlib_msgs/GoalID', implicit=True)
-        self.sub(f'{ns}/status', 'actionlib_msgs/GoalStatusArray', implicit=True)
-        self.sub(f'{ns}/feedback', f'{fmt}Feedback', implicit=True)
-        self.sub(f'{ns}/result', f'{fmt}Result', implicit=True)
+        self.pub(f'{ns}/goal', f'{fmt}Goal')
+        self.pub(f'{ns}/cancel', 'actionlib_msgs/GoalID')
+        self.sub(f'{ns}/status', 'actionlib_msgs/GoalStatusArray')
+        self.sub(f'{ns}/feedback', f'{fmt}Feedback')
+        self.sub(f'{ns}/result', f'{fmt}Result')
 
     def load_plugin(self, plugin: 'ModelPlugin') -> None:
         """Loads a given dynamic plugin."""
