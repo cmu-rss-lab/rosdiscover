@@ -5,7 +5,7 @@ import attr
 import roswire
 
 from .core import RecoveredNodeModel
-from .config import Config
+from ..config import Config
 
 
 @attr.s(frozen=True, auto_attribs=True)

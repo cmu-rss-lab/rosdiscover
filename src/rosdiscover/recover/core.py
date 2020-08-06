@@ -34,13 +34,13 @@ class RecoveredNodeModelElement(abc.ABC):
     location: sourcelocation.FileLocationRange
         The location of the source code for the element.
     """
-    @abc.abstractmethod
     @property
+    @abc.abstractmethod
     def source(self) -> str:
         ...
 
-    @abc.abstractmethod
     @property
+    @abc.abstractmethod
     def location(self) -> sourcelocation.FileLocationRange:
         ...
 
