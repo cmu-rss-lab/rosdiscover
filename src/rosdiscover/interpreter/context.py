@@ -9,7 +9,7 @@ import typing
 
 from .summary import NodeSummary
 from .parameter import ParameterServer
-from .topic import Topic
+from ..core import Topic
 
 if typing.TYPE_CHECKING:
     from .plugin import ModelPlugin
