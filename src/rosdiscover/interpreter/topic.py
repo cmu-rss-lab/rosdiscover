@@ -8,7 +8,18 @@ import attr
 
 @attr.s(frozen=True, slots=True, auto_attribs=True)
 class Topic:
-    """Describes a topic"""
+    """Describes a topic.
+
+    Attributes
+    ----------
+    name: str
+        The fully-qualified name of the topic.
+    format: str
+        The name of the format used by messages published to the topic.
+    implicit: bool
+        If :code:`True`, the topic is implicitly created by an associated
+        action server.
+    """
     name: str
     format: str
     implicit: bool
