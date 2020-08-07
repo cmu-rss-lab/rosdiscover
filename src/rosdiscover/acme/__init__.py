@@ -155,7 +155,9 @@ class AcmeGenerator:
                     topic = {'details': {'name': sub.name, 'format': sub.format}, "pubs": [], "subs": []}
                     topics[sub.name] = topic
                 topic["subs"].append(node.name)
-            for service_name, service_type in node.provides:
+            for service_object in node.provides:
+                service_name = service_object.name
+                service_type = service_object.format
                 service = {}
                 if service_name in services:
                     service = services[service_name]
@@ -171,7 +173,9 @@ class AcmeGenerator:
             #         service = {'details' : call, "provs": [], "reqs" : []}
             #         services[call["name"]] = service
             #     service["reqs"].append(node()["name"])
-            for action_name, action_type in node.action_servers:
+            for action_object in node.action_servers:
+                action_name = action_object.name
+                action_type = action_object.format
                 action = {}
                 if action_name in actions:
                     action = actions[action_name]
@@ -179,7 +183,9 @@ class AcmeGenerator:
                     action = {'details': {'name': action_name, 'type': action_type}, "servers": [], "clients": []}
                     actions[action_name] = action
                 action["servers"].append(node.name)
-            for action_name, action_type in node.action_clients:
+            for action_object in node.action_clients:
+                action_name = action_object.name
+                action_type = action_object.format
                 action = {}
                 if action_name in actions:
                     action = actions[action_name]
@@ -233,7 +239,9 @@ class AcmeGenerator:
                                       port=pname,
                                       conn=f"{self.to_acme_name(sub.name)}_conn",
                                       role=f"{comp_name}_sub"))
-            for name, fmt in c.provides:
+            for service in c.provides:
+                name = service.name
+                fmt = service.format
                 pname = f"{AcmeGenerator.to_acme_name(name)}_svc"
                 port = PROVIDER_PORT.format(port_name=pname, svc_type=fmt, service=name)
                 ports.append(port)
@@ -245,7 +253,9 @@ class AcmeGenerator:
             #     ports.append(port)
             #     self.update_service_conn(service_conns,s['name'], "%s.%s" %(comp_name, pname), False)
 
-            for name, fmt in c.action_servers:
+            for action in c.action_servers:
+                name = action.name
+                fmt = action.format
                 pname = f"{AcmeGenerator.to_acme_name(name)}_srvr"
                 port = ACTION_SERVER_PORT.format(port_name=pname,
                                                  action_type=name)
@@ -255,7 +265,9 @@ class AcmeGenerator:
                                    f"{comp_name}.{pname}",
                                    True)
 
-            for name, fmt in c.action_clients:
+            for action in c.action_clients:
+                name = action.name
+                fmt = action.format
                 pname = f"{AcmeGenerator.to_acme_name(name)}_cli"
                 port = ACTION_CLIENT_PORT.format(port_name=pname,
                                                  action_type=name)

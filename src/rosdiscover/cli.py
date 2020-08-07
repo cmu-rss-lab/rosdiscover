@@ -77,7 +77,7 @@ def rosservice_list(args) -> None:
     summary = _launch_config(args)
     services = set()
     for node in summary.values():
-        services |= set(s for (s, _) in node.provides)
+        services |= set(s.name for s in node.provides)
     print('\n'.join(sorted(services)))
 
 

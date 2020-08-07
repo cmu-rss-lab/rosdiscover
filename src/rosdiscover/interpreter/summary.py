@@ -5,7 +5,7 @@ from typing import Any, Collection, Dict, Iterator, List, Mapping, Tuple
 
 import attr
 
-from ..core import Service, Topic
+from ..core import Action, Service, Topic
 
 
 @attr.s(frozen=True, slots=True, auto_attribs=True)
@@ -33,8 +33,8 @@ class NodeSummary:
     writes: Collection[str]
     uses: Collection[Service]
     provides: Collection[Service]
-    action_servers: Collection[Tuple[str, str]]
-    action_clients: Collection[Tuple[str, str]]
+    action_servers: Collection[Action]
+    action_clients: Collection[Action]
 
     def __attrs_post_init__(self) -> None:
         object.__setattr__(self, 'pubs', frozenset(self.pubs))
@@ -51,10 +51,8 @@ class NodeSummary:
         subs = [t.to_dict() for t in self.subs]
         provides = [s.to_dict() for s in self.provides]
         uses = [s.to_dict() for s in self.uses]
-        action_servers = [{'name': n, 'format': f}
-                          for (n, f) in self.action_servers]
-        action_clients = [{'name': n, 'format': f}
-                          for (n, f) in self.action_clients]
+        action_servers = [a.to_dict() for a in self.action_servers]
+        action_clients = [a.to_dict() for a in self.action_clients]
         reads = [{'name': n, 'dynamic': d} for (n, d) in self.reads]
         return {'name': self.name,
                 'fullname': self.fullname,
