@@ -9,7 +9,7 @@ import typing
 
 from .summary import NodeSummary
 from .parameter import ParameterServer
-from ..core import Service, Topic
+from ..core import Action, Service, Topic
 
 if typing.TYPE_CHECKING:
     from .plugin import ModelPlugin
@@ -32,8 +32,8 @@ class NodeContext:
     _provides: Set[Service] = attr.ib(factory=set, repr=False)
     _subs: Set[Topic] = attr.ib(factory=set, repr=False)
     _pubs: Set[Topic] = attr.ib(factory=set, repr=False)
-    _action_servers: Set[Tuple[str, str]] = attr.ib(factory=set, repr=False)
-    _action_clients: Set[Tuple[str, str]] = attr.ib(factory=set, repr=False)
+    _action_servers: Set[Action] = attr.ib(factory=set, repr=False)
+    _action_clients: Set[Action] = attr.ib(factory=set, repr=False)
     # The tuple is (name, dynamic) where name is the name of the parameter
     # and dynamic is whether the node reacts to updates to the parameter via reconfigure
     _reads: Set[Tuple[str, bool]] = attr.ib(factory=set, repr=False)
@@ -196,7 +196,7 @@ class NodeContext:
         logger.debug(f"node [{self.name}] provides action server "
                      f"[{ns}] with format [{fmt}]")
         ns = self.resolve(ns)
-        self._action_servers.add((ns, fmt))
+        self._action_servers.add(Action(name=ns, format=fmt))
 
         # Topics are implicit because they are created by the action server
         # and are only really intended for interaction between the
@@ -220,7 +220,7 @@ class NodeContext:
         logger.debug(f"node [{self.name}] provides action client "
                      f"[{ns}] with format [{fmt}]")
         ns = self.resolve(ns)
-        self._action_clients.add((ns, fmt))
+        self._action_clients.add(Action(name=ns, format=fmt))
 
         # Topics are implicit because they are created by the action client
         # and are only really intended for interaction between the
