@@ -9,7 +9,7 @@ import typing
 
 from .summary import NodeSummary
 from .parameter import ParameterServer
-from ..core import Topic
+from ..core import Service, Topic
 
 if typing.TYPE_CHECKING:
     from .plugin import ModelPlugin
@@ -28,8 +28,8 @@ class NodeContext:
     _files: dockerblade.files.FileSystem = attr.ib(repr=False)
     _nodelet: bool = attr.ib(default=False, repr=False)
     _placeholder: bool = attr.ib(default=False, repr=False)
-    _uses: Set[Tuple[str, str]] = attr.ib(factory=set, repr=False)
-    _provides: Set[Tuple[str, str]] = attr.ib(factory=set, repr=False)
+    _uses: Set[Service] = attr.ib(factory=set, repr=False)
+    _provides: Set[Service] = attr.ib(factory=set, repr=False)
     _subs: Set[Topic] = attr.ib(factory=set, repr=False)
     _pubs: Set[Topic] = attr.ib(factory=set, repr=False)
     _action_servers: Set[Tuple[str, str]] = attr.ib(factory=set, repr=False)
@@ -117,14 +117,14 @@ class NodeContext:
         logger.debug(f"node [{self.name}] provides service [{service}] "
                      f"using format [{fmt}]")
         service_name_full = self.resolve(service)
-        self._provides.add((service_name_full, fmt))
+        self._provides.add(Service(name=service_name_full, format=fmt))
 
     def use(self, service: str, fmt: str) -> None:
         """Instructs the node to use a given service."""
         logger.debug(f"node [{self.name}] uses a service [{service}] "
                      f"with format [{fmt}]")
         service_name_full = self.resolve(service)
-        self._uses.add((service_name_full, fmt))
+        self._uses.add(Service(name=service_name_full, format=fmt))
 
     def sub(self, topic_name: str, fmt: str, implicit: bool = False) -> None:
         """Subscribes the node to a given topic.

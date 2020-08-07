@@ -5,7 +5,7 @@ from typing import Any, Collection, Dict, Iterator, List, Mapping, Tuple
 
 import attr
 
-from .topic import Topic
+from ..core import Service, Topic
 
 
 @attr.s(frozen=True, slots=True, auto_attribs=True)
@@ -31,8 +31,8 @@ class NodeSummary:
     # and dynamic is whether the node reacts to updates to the parameter via reconfigure
     reads: Collection[Tuple[str, bool]]
     writes: Collection[str]
-    uses: Collection[Tuple[str, str]]
-    provides: Collection[Tuple[str, str]]
+    uses: Collection[Service]
+    provides: Collection[Service]
     action_servers: Collection[Tuple[str, str]]
     action_clients: Collection[Tuple[str, str]]
 
@@ -49,10 +49,8 @@ class NodeSummary:
     def to_dict(self) -> Dict[str, Any]:
         pubs = [t.to_dict() for t in self.pubs]
         subs = [t.to_dict() for t in self.subs]
-        provides = \
-            [{'name': n, 'format': f} for (n, f) in self.provides]
-        uses = \
-            [{'name': n, 'format': f} for (n, f) in self.uses]
+        provides = [s.to_dict() for s in self.provides]
+        uses = [s.to_dict() for s in self.uses]
         action_servers = [{'name': n, 'format': f}
                           for (n, f) in self.action_servers]
         action_clients = [{'name': n, 'format': f}

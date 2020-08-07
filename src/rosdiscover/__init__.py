@@ -3,3 +3,4 @@ from .version import __version__
 from .config import Config
 from .interpreter import Model, Interpreter
 from . import models
+from .recover import RecoveredNodeModel, NodeRecoveryTool
