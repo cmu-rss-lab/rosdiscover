@@ -5,6 +5,7 @@
 # - alias analysis!
 #
 # some sort of exotic visitor is _probably_ the best way to handle this
+# - use stacks to maintain scopes
 from typing import List, Optional, Tuple
 
 import attr
