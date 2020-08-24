@@ -11,6 +11,8 @@ class ParsoVisitor:
         visit_method = getattr(self, visit_method_name, None)
         if callable(visit_method):
             visit_method(node)
+        else:
+            self.generic_visit(node)
 
     def generic_visit(self, node: parso.tree.NodeOrLeaf) -> None:
         for child in node.children:
