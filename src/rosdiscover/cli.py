@@ -10,7 +10,12 @@ import pkg_resources
 
 from .acme import AcmeGenerator
 from .config import Config
-from .interpreter import Interpreter, SystemSummary
+
+from .interpreter import Interpreter, SystemSummary, NodeSummary
+
+import roswire
+import time
+import json
 
 DESC = 'discovery of ROS architectures'
 CONFIG_HELP = """R|A YAML file defining the configuration.
@@ -81,6 +86,74 @@ def rosservice_list(args) -> None:
     print('\n'.join(sorted(services)))
 
 
+def get_info(image, sources, environment, file, package, sleep_time):
+    rsw = roswire.ROSWire()
+    with rsw.launch(image, sources, environment=environment) as system:
+        with system.roscore() as ros:
+            ros.roslaunch(file,
+                          package=package,
+                          args={'gui': 'false'})
+
+            time.sleep(sleep_time)
+            node_names = list(ros.nodes)
+            state = ros.state
+            topic_to_type = ros.topic_to_type
+            service_to_format = {}
+            for service_name in state.services:
+                service = ros.services[service_name]
+                service_to_format[service_name] = service.format.name
+
+    return node_names, state, topic_to_type, service_to_format
+
+
+def create_dict(node_names, state, topic_to_type, service_to_format):
+    node_summary_dict = {}
+    for n in node_names:
+        p = []
+        for key in state.publishers:
+            pubs = state.publishers[key]
+            for i in pubs:
+                if i == n:
+                    p.append((topic_to_type[key], key))
+        s = []
+        for key in state.subscribers:
+            subs = state.subscribers[key]
+            for i in subs:
+                if i == n:
+                    s.append((topic_to_type[key], key))
+        serv = []
+        for key in service_to_format:
+            path = n + '/'
+            if path in key:
+                serv.append((service_to_format[key], key))
+        obj = NodeSummary('', n, '/', '', '', False, '', False, p, s, [], [], [], serv, [], [])
+        node_summary_dict.update({n: obj})
+    return node_summary_dict
+
+
+def dynamic_analysis(args):
+    with open(args.config, 'r') as f:
+        data = yaml.safe_load(f)
+    if args.output:
+        f = open(args.output, "w")
+    else:
+        f = open("arch.yml", "w")
+    logger.enable('roswire')
+    image = data['image']
+    sources = data['sources']
+    if 'environment' in data:
+        environment = data['environment']
+    if args.sleep:
+        sleep_time = args.sleep
+    else:
+        sleep_time = 30
+    node_names, state, topic_to_type, service_to_format = get_info(image, sources, environment,
+                                                                   args.launchfile, args.package, sleep_time)
+    node_summary_dict = create_dict(node_names, state, topic_to_type, service_to_format)
+    f.write(json.dumps(node_summary_dict, indent=4, separators=(". ", " = ")))
+    f.close()
+
+
 class MultiLineFormatter(argparse.HelpFormatter):
     def _split_lines(self, text, width):
         if text.startswith('R|'):
@@ -110,6 +183,20 @@ def main() -> None:
     p.add_argument('config', type=argparse.FileType('r'), help=CONFIG_HELP)
 
     p.set_defaults(func=rostopic_list)
+
+    p = subparsers.add_parser(
+        'dynamic',
+        help='Generates a dynamic analysis using rosnode list',
+        formatter_class=MultiLineFormatter)
+
+    p.add_argument('config', type=argparse.FileType('r'), help=CONFIG_HELP)
+    p.add_argument('--output', type=str)
+    p.add_argument('--sleep', type=int)
+    p.add_argument('--package', type=str, help="package for roslaunch")
+    p.add_argument('--launchfile', type=str, help="launchfile for roslaunch")
+    p.add_argument('config', type=argparse.FileType('r'), help=CONFIG_HELP)
+
+    p.set_defaults(func=dynamic_analysis)
 
     p = subparsers.add_parser(
         'rosservice',
