@@ -7,4 +7,4 @@ tox==3.15.1
 coveralls==2.0.0
 twine==3.1.1
 wheel==0.34.2
-git+git://github.com/ChrisTimperley/roswire.git@e69dc7949ca456829d0b5da1caa39d1be7085aa7
+git+git://github.com/ChrisTimperley/roswire.git@db2bcac0f903313dc22d7a5b919fe99c4a2c53f5

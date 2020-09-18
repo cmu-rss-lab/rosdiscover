@@ -4,6 +4,7 @@ from typing import Any, List, Mapping, Optional, Set, Tuple
 from loguru import logger
 import attr
 import dockerblade
+from roswire import App
 import roswire.name as rosname
 import typing
 
@@ -24,6 +25,7 @@ class NodeContext:
     args: str
     remappings: Mapping[str, str]
     launch_filename: str
+    app: "App" = attr.ib(repr=False)
     _params: ParameterServer = attr.ib(repr=False)
     _files: dockerblade.files.FileSystem = attr.ib(repr=False)
     _nodelet: bool = attr.ib(default=False, repr=False)
