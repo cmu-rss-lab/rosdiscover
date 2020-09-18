@@ -10,6 +10,7 @@ from .context import NodeContext
 from .model import Model
 from .summary import SystemSummary
 from .parameter import ParameterServer
+from ..config import Config
 
 
 class Interpreter:
@@ -43,7 +44,7 @@ class Interpreter:
         node_to_summary = {s.fullname: s for s in node_summaries}
         return SystemSummary(node_to_summary)
 
-    def launch(self, filename: str) -> None:
+    def launch(self, filename: str, configuration: Config) -> None:
         """Simulates the effects of `roslaunch` using a given launch file."""
         # NOTE this method also supports command-line arguments
         reader = LaunchFileReader(shell=self._app.shell,
@@ -68,7 +69,8 @@ class Interpreter:
                            namespace=node.namespace,  # FIXME
                            launch_filename=node.filename,
                            remappings=remappings,
-                           args=args)
+                           args=args,
+                           config=configuration)
             # FIXME this is waaay too permissive
             except Exception:
                 logger.exception(f"failed to launch node: {node.name}")
@@ -90,6 +92,7 @@ class Interpreter:
                       namespace: str,
                       launch_filename: str,
                       remappings: Dict[str, str],
+                      config: Config,
                       manager: Optional[str] = None
                       ) -> None:
         """Loads a nodelet using the provided instructions.
@@ -132,7 +135,8 @@ class Interpreter:
                           namespace=namespace,
                           launch_filename=launch_filename,
                           remappings=remappings,
-                          args='')
+                          args='',
+                          config=config)
 
     def _load(self,
               pkg: str,
@@ -141,7 +145,8 @@ class Interpreter:
               namespace: str,
               launch_filename: str,
               remappings: Dict[str, str],
-              args: str
+              args: str,
+              config: Config
               ) -> None:
         """Loads a node using the provided instructions.
 
@@ -182,7 +187,8 @@ class Interpreter:
                                           name=name,
                                           namespace=namespace,
                                           launch_filename=launch_filename,
-                                          remappings=remappings)
+                                          remappings=remappings,
+                                          config=config)
             else:
                 load, pkg_and_nodetype, mgr = args.split(' ')
                 pkg, _, nodetype = pkg_and_nodetype.partition('/')
@@ -192,7 +198,8 @@ class Interpreter:
                                           namespace=namespace,
                                           launch_filename=launch_filename,
                                           remappings=remappings,
-                                          manager=mgr)
+                                          manager=mgr,
+                                          config=config)
 
         if remappings:
             logger.info(f"using remappings: {remappings}")
@@ -213,7 +220,8 @@ class Interpreter:
                           launch_filename=launch_filename,
                           remappings=remappings,
                           files=self._app.files,
-                          params=self.params)
+                          params=self.params,
+                          app=config.app)
         self.nodes[ctx.fullname] = ctx
 
         model.eval(ctx)

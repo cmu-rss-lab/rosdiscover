@@ -26,7 +26,7 @@ def _launch(config: Config) -> SystemSummary:
                                ) as interpreter:
         for fn_launch in config.launches:
             logger.info(f"simulating launch [{fn_launch}]")
-            interpreter.launch(fn_launch)
+            interpreter.launch(fn_launch, config)
         return interpreter.summarise()
 
 
