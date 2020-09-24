@@ -4,7 +4,7 @@ from typing import Any, List, Mapping, Optional, Set, Tuple
 from loguru import logger
 import attr
 import dockerblade
-from roswire import App
+from roswire import AppInstance, ROSVersion
 import roswire.name as rosname
 import typing
 
@@ -25,7 +25,7 @@ class NodeContext:
     args: str
     remappings: Mapping[str, str]
     launch_filename: str
-    app: "App" = attr.ib(repr=False)
+    app: "AppInstance" = attr.ib(repr=False)
     _params: ParameterServer = attr.ib(repr=False)
     _files: dockerblade.files.FileSystem = attr.ib(repr=False)
     _nodelet: bool = attr.ib(default=False, repr=False)
@@ -199,15 +199,15 @@ class NodeContext:
                      f"[{ns}] with format [{fmt}]")
         ns = self.resolve(ns)
         self._action_servers.add(Action(name=ns, format=fmt))
-
-        # Topics are implicit because they are created by the action server
-        # and are only really intended for interaction between the
-        # action client and action server.
-        self.sub(f'{ns}/goal', f'{fmt}Goal', implicit=True)
-        self.sub(f'{ns}/cancel', 'actionlib_msgs/GoalID', implicit=True)
-        self.pub(f'{ns}/status', 'actionlib_msgs/GoalStatusArray', implicit=True)
-        self.pub(f'{ns}/feedback', f'{fmt}Feedback', implicit=True)
-        self.pub(f'{ns}/result', f'{fmt}Result', implicit=True)
+        if self.app.description.distribution.ros == ROSVersion.ROS1:
+            # Topics are implicit because they are created by the action server
+            # and are only really intended for interaction between the
+            # action client and action server.
+            self.sub(f'{ns}/goal', f'{fmt}Goal', implicit=True)
+            self.sub(f'{ns}/cancel', 'actionlib_msgs/GoalID', implicit=True)
+            self.pub(f'{ns}/status', 'actionlib_msgs/GoalStatusArray', implicit=True)
+            self.pub(f'{ns}/feedback', f'{fmt}Feedback', implicit=True)
+            self.pub(f'{ns}/result', f'{fmt}Result', implicit=True)
 
     def action_client(self, ns: str, fmt: str) -> None:
         """Creates a new action client.
@@ -224,14 +224,15 @@ class NodeContext:
         ns = self.resolve(ns)
         self._action_clients.add(Action(name=ns, format=fmt))
 
-        # Topics are implicit because they are created by the action client
-        # and are only really intended for interaction between the
-        # action client and action server.
-        self.pub(f'{ns}/goal', f'{fmt}Goal', implicit=True)
-        self.pub(f'{ns}/cancel', 'actionlib_msgs/GoalID', implicit=True)
-        self.sub(f'{ns}/status', 'actionlib_msgs/GoalStatusArray', implicit=True)
-        self.sub(f'{ns}/feedback', f'{fmt}Feedback', implicit=True)
-        self.sub(f'{ns}/result', f'{fmt}Result', implicit=True)
+        if self.app.description.distribution.ros == ROSVersion.ROS1:
+            # Topics are implicit because they are created by the action client
+            # and are only really intended for interaction between the
+            # action client and action server.
+            self.pub(f'{ns}/goal', f'{fmt}Goal', implicit=True)
+            self.pub(f'{ns}/cancel', 'actionlib_msgs/GoalID', implicit=True)
+            self.sub(f'{ns}/status', 'actionlib_msgs/GoalStatusArray', implicit=True)
+            self.sub(f'{ns}/feedback', f'{fmt}Feedback', implicit=True)
+            self.sub(f'{ns}/result', f'{fmt}Result', implicit=True)
 
     def load_plugin(self, plugin: 'ModelPlugin') -> None:
         """Loads a given dynamic plugin."""

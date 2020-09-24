@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from typing import Dict, Iterator, Mapping, Optional, Sequence
+from typing import Dict, Iterator, Optional
 import contextlib
 
 from loguru import logger
@@ -22,15 +22,12 @@ class Interpreter:
     """
     @classmethod
     @contextlib.contextmanager
-    def for_image(cls,
-                  image: str,
-                  sources: Sequence[str],
-                  *,
-                  environment: Optional[Mapping[str, str]] = None
-                  ) -> Iterator['Interpreter']:
-        """Constructs an interpreter for a given Docker image."""
+    def for_config(cls,
+                   config: Config
+                   ) -> Iterator['Interpreter']:
+        """Constructs an interpreter for a given configuration"""
         rsw = roswire.ROSWire()  # TODO don't maintain multiple instances
-        with rsw.launch(image, sources, environment=environment) as app:
+        with rsw.launch(config.image, config.sources, environment=config.environment) as app:
             yield Interpreter(app)
 
     def __init__(self, app: roswire.System) -> None:
@@ -44,7 +41,7 @@ class Interpreter:
         node_to_summary = {s.fullname: s for s in node_summaries}
         return SystemSummary(node_to_summary)
 
-    def launch(self, filename: str, configuration: Config) -> None:
+    def launch(self, filename: str) -> None:
         """Simulates the effects of `roslaunch` using a given launch file."""
         # NOTE this method also supports command-line arguments
         reader = LaunchFileReader(shell=self._app.shell,
@@ -69,8 +66,8 @@ class Interpreter:
                            namespace=node.namespace,  # FIXME
                            launch_filename=node.filename,
                            remappings=remappings,
-                           args=args,
-                           config=configuration)
+                           args=args
+                           )
             # FIXME this is waaay too permissive
             except Exception:
                 logger.exception(f"failed to launch node: {node.name}")
@@ -92,7 +89,6 @@ class Interpreter:
                       namespace: str,
                       launch_filename: str,
                       remappings: Dict[str, str],
-                      config: Config,
                       manager: Optional[str] = None
                       ) -> None:
         """Loads a nodelet using the provided instructions.
@@ -135,8 +131,8 @@ class Interpreter:
                           namespace=namespace,
                           launch_filename=launch_filename,
                           remappings=remappings,
-                          args='',
-                          config=config)
+                          args=''
+                          )
 
     def _load(self,
               pkg: str,
@@ -146,7 +142,6 @@ class Interpreter:
               launch_filename: str,
               remappings: Dict[str, str],
               args: str,
-              config: Config
               ) -> None:
         """Loads a node using the provided instructions.
 
@@ -187,8 +182,8 @@ class Interpreter:
                                           name=name,
                                           namespace=namespace,
                                           launch_filename=launch_filename,
-                                          remappings=remappings,
-                                          config=config)
+                                          remappings=remappings
+                                          )
             else:
                 load, pkg_and_nodetype, mgr = args.split(' ')
                 pkg, _, nodetype = pkg_and_nodetype.partition('/')
@@ -198,8 +193,8 @@ class Interpreter:
                                           namespace=namespace,
                                           launch_filename=launch_filename,
                                           remappings=remappings,
-                                          manager=mgr,
-                                          config=config)
+                                          manager=mgr
+                                          )
 
         if remappings:
             logger.info(f"using remappings: {remappings}")
@@ -221,7 +216,7 @@ class Interpreter:
                           remappings=remappings,
                           files=self._app.files,
                           params=self.params,
-                          app=config.app)
+                          app=self._app)
         self.nodes[ctx.fullname] = ctx
 
         model.eval(ctx)
