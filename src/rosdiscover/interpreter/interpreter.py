@@ -35,6 +35,10 @@ class Interpreter:
         self.params = ParameterServer()
         self.nodes: Dict[str, NodeContext] = {}
 
+    @property
+    def system(self) -> roswire.System:
+        return self._app
+
     def summarise(self) -> SystemSummary:
         """Produces an immutable description of the system architecture."""
         node_summaries = [node.summarise() for node in self.nodes.values()]
