@@ -22,7 +22,7 @@ def _launch(config: Config) -> SystemSummary:
     logger.info(f"reconstructing architecture for image [{config.image}]")
     with Interpreter.for_config(config) as interpreter:
         ros_dist = interpreter.system.description.distribution
-        logger.info(f'Detected ROS {ros_dist.ros} version: {ros_dist.name}')
+        logger.info(f'Detected {ros_dist.ros} version: {ros_dist.name}')
         for fn_launch in config.launches:
             logger.info(f"simulating launch [{fn_launch}]")
             interpreter.launch(fn_launch)
