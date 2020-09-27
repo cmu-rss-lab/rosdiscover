@@ -3,6 +3,7 @@ from typing import Dict, Iterator, Optional
 import contextlib
 
 from loguru import logger
+from roswire import AppInstance
 from roswire.proxy.roslaunch.reader import LaunchFileReader
 import roswire
 
@@ -36,7 +37,7 @@ class Interpreter:
         self.nodes: Dict[str, NodeContext] = {}
 
     @property
-    def system(self) -> roswire.System:
+    def app(self) -> AppInstance:
         return self._app
 
     def summarise(self) -> SystemSummary:
