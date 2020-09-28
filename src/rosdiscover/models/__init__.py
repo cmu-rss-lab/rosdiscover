@@ -53,3 +53,6 @@ from . import placeholder
 from . import gazebo_gui
 from . import joy
 from . import twist_mux
+
+# ROS2 additions
+from . import navigation2
