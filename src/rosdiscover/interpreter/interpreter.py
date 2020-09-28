@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
-from typing import Dict, Iterator, Mapping, Optional, Sequence
+from typing import Dict, Iterator, Optional
 import contextlib
 
 from loguru import logger
+from roswire import AppInstance
 from roswire.proxy.roslaunch.reader import LaunchFileReader
 import roswire
 
@@ -10,6 +11,7 @@ from .context import NodeContext
 from .model import Model
 from .summary import SystemSummary
 from .parameter import ParameterServer
+from ..config import Config
 
 
 class Interpreter:
@@ -21,21 +23,22 @@ class Interpreter:
     """
     @classmethod
     @contextlib.contextmanager
-    def for_image(cls,
-                  image: str,
-                  sources: Sequence[str],
-                  *,
-                  environment: Optional[Mapping[str, str]] = None
-                  ) -> Iterator['Interpreter']:
-        """Constructs an interpreter for a given Docker image."""
+    def for_config(cls,
+                   config: Config
+                   ) -> Iterator['Interpreter']:
+        """Constructs an interpreter for a given configuration"""
         rsw = roswire.ROSWire()  # TODO don't maintain multiple instances
-        with rsw.launch(image, sources, environment=environment) as app:
+        with rsw.launch(config.image, config.sources, environment=config.environment) as app:
             yield Interpreter(app)
 
     def __init__(self, app: roswire.System) -> None:
         self._app = app
         self.params = ParameterServer()
         self.nodes: Dict[str, NodeContext] = {}
+
+    @property
+    def app(self) -> AppInstance:
+        return self._app
 
     def summarise(self) -> SystemSummary:
         """Produces an immutable description of the system architecture."""
@@ -68,7 +71,8 @@ class Interpreter:
                            namespace=node.namespace,  # FIXME
                            launch_filename=node.filename,
                            remappings=remappings,
-                           args=args)
+                           args=args
+                           )
             # FIXME this is waaay too permissive
             except Exception:
                 logger.exception(f"failed to launch node: {node.name}")
@@ -132,7 +136,8 @@ class Interpreter:
                           namespace=namespace,
                           launch_filename=launch_filename,
                           remappings=remappings,
-                          args='')
+                          args=''
+                          )
 
     def _load(self,
               pkg: str,
@@ -141,7 +146,7 @@ class Interpreter:
               namespace: str,
               launch_filename: str,
               remappings: Dict[str, str],
-              args: str
+              args: str,
               ) -> None:
         """Loads a node using the provided instructions.
 
@@ -182,7 +187,8 @@ class Interpreter:
                                           name=name,
                                           namespace=namespace,
                                           launch_filename=launch_filename,
-                                          remappings=remappings)
+                                          remappings=remappings
+                                          )
             else:
                 load, pkg_and_nodetype, mgr = args.split(' ')
                 pkg, _, nodetype = pkg_and_nodetype.partition('/')
@@ -192,7 +198,8 @@ class Interpreter:
                                           namespace=namespace,
                                           launch_filename=launch_filename,
                                           remappings=remappings,
-                                          manager=mgr)
+                                          manager=mgr
+                                          )
 
         if remappings:
             logger.info(f"using remappings: {remappings}")
@@ -213,7 +220,8 @@ class Interpreter:
                           launch_filename=launch_filename,
                           remappings=remappings,
                           files=self._app.files,
-                          params=self.params)
+                          params=self.params,
+                          app=self._app)
         self.nodes[ctx.fullname] = ctx
 
         model.eval(ctx)

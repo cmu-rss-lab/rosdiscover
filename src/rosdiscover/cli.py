@@ -20,10 +20,9 @@ CONFIG_HELP = """R|A YAML file defining the configuration.
 
 def _launch(config: Config) -> SystemSummary:
     logger.info(f"reconstructing architecture for image [{config.image}]")
-    with Interpreter.for_image(config.image,
-                               config.sources,
-                               environment=config.environment
-                               ) as interpreter:
+    with Interpreter.for_config(config) as interpreter:
+        ros_dist = interpreter.app.description.distribution
+        logger.info(f'Detected {ros_dist.ros} version: {ros_dist.name}')
         for fn_launch in config.launches:
             logger.info(f"simulating launch [{fn_launch}]")
             interpreter.launch(fn_launch)
