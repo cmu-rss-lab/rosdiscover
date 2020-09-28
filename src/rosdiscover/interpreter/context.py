@@ -199,9 +199,7 @@ class NodeContext:
                      f"[{ns}] with format [{fmt}]")
         ns = self.resolve(ns)
         self._action_servers.add(Action(name=ns, format=fmt))
-        if (self.app.description.distribution.ros == ROSVersion.ROS1) or (
-                self.app.description.distribution.ros == ROSVersion.ROS2 and
-                self.app.description.distribution.name < ROSDistribution.FOXY):
+        if self.actions_have_topics():
             # Topics are implicit because they are created by the action server
             # and are only really intended for interaction between the
             # action client and action server.
@@ -226,9 +224,7 @@ class NodeContext:
         ns = self.resolve(ns)
         self._action_clients.add(Action(name=ns, format=fmt))
 
-        if (self.app.description.distribution.ros == ROSVersion.ROS1) or (
-                self.app.description.distribution.ros == ROSVersion.ROS2 and
-                self.app.description.distribution.name < ROSDistribution.FOXY):
+        if self.actions_have_topics():
             # Topics are implicit because they are created by the action client
             # and are only really intended for interaction between the
             # action client and action server.
@@ -237,6 +233,11 @@ class NodeContext:
             self.sub(f'{ns}/status', 'actionlib_msgs/GoalStatusArray', implicit=True)
             self.sub(f'{ns}/feedback', f'{fmt}Feedback', implicit=True)
             self.sub(f'{ns}/result', f'{fmt}Result', implicit=True)
+
+    def actions_have_topics(self):
+        return (self.app.description.distribution.ros == ROSVersion.ROS1) or (
+                self.app.description.distribution.ros == ROSVersion.ROS2 and
+                self.app.description.distribution.name < ROSDistribution.FOXY)
 
     def load_plugin(self, plugin: 'ModelPlugin') -> None:
         """Loads a given dynamic plugin."""
