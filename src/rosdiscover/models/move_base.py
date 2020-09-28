@@ -1,11 +1,15 @@
 from loguru import logger
+from roswire import ROSVersion
 
-from ..interpreter import model
+from ..interpreter import model, NodeContext
 from .plugins.navigation import NavigationPlugin
 
 
 @model('move_base', 'move_base')
-def move_base(c):
+def move_base(c: NodeContext):
+    if c.app.description.distribution.ros != ROSVersion.ROS1:
+        raise Exception("move_base is only supported in ROS1")
+
     c.read("~base_global_planner", "navfn/NavfnROS")
     c.read("~base_local_planner", "base_local_planner/TrajectoryPlannerROS")
     c.read("~global_costmap/robot_base_frame", "base_link")
