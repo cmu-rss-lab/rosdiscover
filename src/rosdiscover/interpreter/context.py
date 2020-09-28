@@ -236,8 +236,10 @@ class NodeContext:
 
     def actions_have_topics(self):
         distribution = self.app.description.distribution
-        return (distribution.ros == ROSVersion.ROS1) or (
-            distribution.ros == ROSVersion.ROS2 and distribution.name < ROSDistribution.FOXY)
+        if distribution == ROSVersion.ROS1:
+            return True
+        else:
+            return distribution.ros == ROSVersion.ROS2 and distribution.name < ROSDistribution.FOXY
 
     def load_plugin(self, plugin: 'ModelPlugin') -> None:
         """Loads a given dynamic plugin."""
