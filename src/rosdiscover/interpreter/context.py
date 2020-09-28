@@ -4,7 +4,7 @@ from typing import Any, List, Mapping, Optional, Set, Tuple
 from loguru import logger
 import attr
 import dockerblade
-from roswire import AppInstance, ROSVersion
+from roswire import AppInstance, ROSVersion, ROSDistribution
 import roswire.name as rosname
 import typing
 
@@ -199,7 +199,9 @@ class NodeContext:
                      f"[{ns}] with format [{fmt}]")
         ns = self.resolve(ns)
         self._action_servers.add(Action(name=ns, format=fmt))
-        if self.app.description.distribution.ros == ROSVersion.ROS1:
+        if (self.app.description.distribution.ros == ROSVersion.ROS1) or (
+                self.app.description.distribution.ros == ROSVersion.ROS2 and
+                self.app.description.distribution.name < ROSDistribution.FOXY):
             # Topics are implicit because they are created by the action server
             # and are only really intended for interaction between the
             # action client and action server.
@@ -224,7 +226,9 @@ class NodeContext:
         ns = self.resolve(ns)
         self._action_clients.add(Action(name=ns, format=fmt))
 
-        if self.app.description.distribution.ros == ROSVersion.ROS1:
+        if (self.app.description.distribution.ros == ROSVersion.ROS1) or (
+                self.app.description.distribution.ros == ROSVersion.ROS2 and
+                self.app.description.distribution.name < ROSDistribution.FOXY):
             # Topics are implicit because they are created by the action client
             # and are only really intended for interaction between the
             # action client and action server.
