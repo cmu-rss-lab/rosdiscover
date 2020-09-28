@@ -88,7 +88,7 @@ class LibGazeboROSIMUPlugin(GazeboPlugin):
     service_name: str = attr.ib()
     robot_namespace: str = attr.ib()
 
-    def load(self, interpreter: Interpreter) -> None:
+    def load(self, interpreter: Interpreter, c) -> None:
         gazebo = interpreter.nodes['/gazebo']
         namespace = self.robot_namespace
 
@@ -153,7 +153,7 @@ class LibGazeboROSDiffDrivePlugin(GazeboPlugin):
     command_topic: str = attr.ib()
     odometry_topic: str = attr.ib()
 
-    def load(self, interpreter: Interpreter) -> None:
+    def load(self, interpreter: Interpreter, c) -> None:
         gazebo = interpreter.nodes['/gazebo']
         gazebo.pub(self.command_topic, 'geometry_msgs/Twist')
         gazebo.pub(self.odometry_topic, 'nav_msgs/Odometry')
@@ -191,7 +191,7 @@ class LibGazeboROSLaserPlugin(GazeboPlugin):
     frame_name: str = attr.ib()
     robot_namespace: str = attr.ib()
 
-    def load(self, interpreter: Interpreter) -> None:
+    def load(self, interpreter: Interpreter, c) -> None:
         gazebo = interpreter.nodes['/gazebo']
         topic_name = namespace_join(self.robot_namespace, self.topic_name)
         gazebo.pub(topic_name, 'sensor_msgs/LaserScan')
@@ -234,7 +234,7 @@ class LibGazeboROSControlPlugin(GazeboPlugin):
     topic_name: str = attr.ib()
     robot_namespace: str = attr.ib()
 
-    def load(self, interpreter: Interpreter) -> None:
+    def load(self, interpreter: Interpreter, c) -> None:
         gazebo = interpreter.nodes["/gazebo"]
         namespace = self.robot_namespace
 
@@ -291,7 +291,7 @@ class LibGazeboROSGpsPlugin(GazeboPlugin):
     topic_name: str = attr.ib()
     velocity_topic_name: str = attr.ib()
 
-    def load(self, interpreter: Interpreter) -> None:
+    def load(self, interpreter: Interpreter, c) -> None:
         gazebo = interpreter.nodes["/gazebo"]
         gazebo.pub(self.topic_name, 'sensor_msgs/NavSatFix')
         gazebo.pub(self.velocity_topic_name, 'geometry_msgs/Vector3Stamped')
@@ -342,7 +342,7 @@ class LibGazeboROSCameraPlugin(GazeboPlugin):
     frame_name: str = attr.ib()
     robot_namespace: str = attr.ib()
 
-    def load(self, interpreter: Interpreter) -> None:
+    def load(self, interpreter: Interpreter, c) -> None:
         gazebo = interpreter.nodes['/gazebo']
         image_topic_name = namespace_join(self.robot_namespace, namespace_join(self.camera_name, self.image_topic_name))
         camera_info_topic_name = namespace_join(self.robot_namespace,
@@ -416,7 +416,7 @@ class LibGazeboROSOpenniKinectPlugin(GazeboPlugin):
     depth_image_camera_info_topic_name: str = attr.ib()
     point_cloud_topic_name: str = attr.ib()
 
-    def load(self, interpreter: 'Interpreter') -> None:
+    def load(self, interpreter: 'Interpreter', c) -> None:
         gazebo = interpreter.nodes['/gazebo']
 
         gazebo.pub(self.image_topic_name, 'sensor_msgs/Image')
@@ -464,7 +464,7 @@ class LibFetchGazeboPlugin(GazeboPlugin):
     filename = "libfectch_gazebo_plugin.so"
     joint_state_topic: str = attr.ib()
 
-    def load(self, interpreter: 'Interpreter') -> None:
+    def load(self, interpreter: 'Interpreter', c) -> None:
         gazebo = interpreter.nodes['/gazebo']
         gazebo.pub(self.joint_state_topic, 'sensor_msgs/JointState')
 

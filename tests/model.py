@@ -33,18 +33,14 @@ def test_fake_launch():
 
     workspace = Workspace('/home/chris/brass/tbot')
     vm = VM(workspace)
-    vm.load('stage_ros', 'stage_ros', 'stage_ros')
-    vm.load('joint_state_publisher', 'joint_state_publisher', 'joint_state_publisher')
-    vm.load('amcl', 'amcl', 'amcl')
-    vm.load('move_base', 'move_base', 'move_base')
+    vm.load('stage_ros', None)
+    vm.load('joint_state_publisher', None)
+    vm.load('amcl', None)
+    vm.load('move_base', None)
 
     # FIXME nodelets
-    vm.load('yocs_velocity_smoother',
-            'velocity_smoother',
-            'navigation_velocity_smoother')
-    vm.load('kobuki_safety_controller',
-            'kobuki_safety_controller',
-            'safety_controller')
+    vm.load('yocs_velocity_smoother', None)
+    vm.load('kobuki_safety_controller', None)
 
     print(list(vm.nodes))
     # print(list(vm.topics))

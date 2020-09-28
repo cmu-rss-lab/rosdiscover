@@ -35,17 +35,6 @@ class NavigationPlugin(ModelPlugin):
         ...
 
 
-def get_move_base(i: Interpreter, node_name: str) -> 'NodeContext':
-    if not node_name.startswith('/'):
-        node_name = f'/{node_name}'
-    if node_name not in i.nodes.keys():
-        raise ModuleNotFoundError(f'Could not find node {node_name} in configuration')
-    move_base = i.nodes[node_name]
-    if move_base is None:
-        raise ModuleNotFoundError('Could not find node "move_base" in configuration')
-    return move_base
-
-
 @attr.s(frozen=True, slots=True)
 class StaticLayerPlugin(NavigationPlugin):
     """
@@ -57,8 +46,8 @@ class StaticLayerPlugin(NavigationPlugin):
     name: str = attr.ib()
     node_name: str = attr.ib()
 
-    def load(self, interpreter: Interpreter) -> None:
-        move_base = get_move_base(interpreter, self.node_name)
+    def load(self, interpreter: Interpreter, c: 'NodeContext') -> None:
+        move_base = c
 
         move_base.read('~unknown_cost_value', -1)
         move_base.read('~lethal_cost_value', 100)
@@ -90,8 +79,8 @@ class InflationLayerPlugin(NavigationPlugin):
     name: str = attr.ib()
     node_name: str = attr.ib()
 
-    def load(self, interpreter: 'Interpreter') -> None:
-        move_base = get_move_base(interpreter, self.node_name)
+    def load(self, interpreter: 'Interpreter', c: 'NodeContext') -> None:
+        move_base = c
         move_base.read('~inflation_radius', 0.55)
         move_base.read('~cost_scaling_factor', 10.0)
 
@@ -111,8 +100,8 @@ class FetchDepthLayerPlugin(NavigationPlugin):
     name: str = attr.ib()
     node_name: str = attr.ib()
 
-    def load(self, interpreter: 'Interpreter') -> None:
-        move_base = get_move_base(interpreter, self.node_name)
+    def load(self, interpreter: 'Interpreter', c: 'NodeContext') -> None:
+        move_base = c
 
         publish_observations = move_base.read('publish_observations', False)
         move_base.read('~observations_separation_threshold', 0.06)
@@ -160,8 +149,8 @@ class ObstacleLayerPlugin(NavigationPlugin):
     name: str = attr.ib()
     node_name: str = attr.ib()
 
-    def load(self, interpreter: 'Interpreter') -> None:
-        move_base = get_move_base(interpreter, self.node_name)
+    def load(self, interpreter: 'Interpreter', c: 'NodeContext') -> None:
+        move_base = c
 
         observation_sources_param = namespace_join(move_base.name, namespace_join('obstacles', 'observation_sources'))
         observation_sources = move_base.read(observation_sources_param, "")
@@ -202,9 +191,9 @@ class VoxelLayerPlugin(ObstacleLayerPlugin):
     name: str = attr.ib()
     node_name: str = attr.ib()
 
-    def load(self, interpreter: 'Interpreter') -> None:
-        ObstacleLayerPlugin.load(self, interpreter)
-        move_base = get_move_base(interpreter, self.node_name)
+    def load(self, interpreter: 'Interpreter', c: 'NodeContext') -> None:
+        ObstacleLayerPlugin.load(self, interpreter, c)
+        move_base = c
         publish_voxel = move_base.read('~/publish_voxel_map', False)
         if publish_voxel:
             move_base.pub('voxel_grid', 'costmap_2d/VoxelGrid')
