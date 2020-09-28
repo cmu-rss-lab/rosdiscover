@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
+import typing
 from typing import Any, List, Mapping, Optional, Set, Tuple
 
-from loguru import logger
 import attr
 import dockerblade
-from roswire import AppInstance, ROSVersion, ROSDistribution
 import roswire.name as rosname
-import typing
+from loguru import logger
+from roswire import AppInstance, ROSVersion, ROSDistribution
 
-from .summary import NodeSummary
 from .parameter import ParameterServer
+from .summary import NodeSummary
 from ..core import Action, Service, Topic
 
 if typing.TYPE_CHECKING:
@@ -47,7 +47,7 @@ class NodeContext:
         self.namespace = rosname.global_name(self.namespace)
         self.remappings = {
             self._resolve_without_remapping(x):
-            self._resolve_without_remapping(y)
+                self._resolve_without_remapping(y)
             for (x, y) in self.remappings.items()
         }
 
@@ -235,9 +235,9 @@ class NodeContext:
             self.sub(f'{ns}/result', f'{fmt}Result', implicit=True)
 
     def actions_have_topics(self):
-        return (self.app.description.distribution.ros == ROSVersion.ROS1) or (
-                self.app.description.distribution.ros == ROSVersion.ROS2 and
-                self.app.description.distribution.name < ROSDistribution.FOXY)
+        distribution = self.app.description.distribution
+        return (distribution.ros == ROSVersion.ROS1) or (
+            distribution.ros == ROSVersion.ROS2 and distribution.name < ROSDistribution.FOXY)
 
     def load_plugin(self, plugin: 'ModelPlugin') -> None:
         """Loads a given dynamic plugin."""
