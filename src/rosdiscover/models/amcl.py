@@ -1,11 +1,93 @@
 # -*- coding: utf-8 -*-
-from ..interpreter import model
+from roswire import ROSVersion
+
+from ..interpreter import model, NodeContext
 
 M_PI = 3.14159265358979323846
 
 
 @model('amcl', 'amcl')
-def amcl(c):
+def amcl(c: NodeContext):
+    if c.app.description.distribution.ros == ROSVersion.ROS1:
+        amcl_ros1(c)
+    else:
+        amcl_ros2(c)
+
+
+def amcl_ros2(c: NodeContext):
+    # Derived from:
+    #   https://github.com/ros-planning/navigation2/blob/foxy-devel/nav2_amcl/src/amcl_node.cpp
+
+    # These are in the source but might be dummies
+    c.read('~alpha1', 0.2)
+    c.read('~alpha2', 0.2)
+    c.read('~alpha3', 0.2)
+    c.read('~alpha4', 0.2)
+    c.read('~alpha5', 0.2)
+
+    # Parameters to do with the robot frame and laser scan
+    c.read('~base_frame_id', 'base_footprint')
+    c.read('~beam_skip_difference', 0.5)
+    c.read('~beam_skip_error_threshold', 0.9)
+    c.read('~beam_skip_threshold', 0.3)
+    c.read('~do_beamskip', False)
+
+    c.read('~global_frame_id', 'map')
+    c.read('~lambda_short', 0.1)
+
+    # Laser scan parameters
+    c.read('~laser_likelihood_max_dist', 2.0)
+    c.read('~laser_max_range', 100.0)
+    c.read('~laser_min_range', -1.0)
+    c.read('~laser_model_type', 'likelihood_field')
+
+    # Initial pose parameters, if set by the parameter file
+    c.read('~set_initial_pose', False)
+    c.read('~initial_pose.x', 0.0)
+    c.read('~initial_pose.y', 0.0)
+    c.read('~initial_pose.z', 0.0)
+    c.read('~initial_pose.yaw', 0.0)
+
+    c.read('~max_beams', 60)
+    c.read('~max_particles', 2000)
+    c.read('~min_particles', 500)
+    c.read('~odom_frame_id', 'odom')
+    c.read('~pf_err', 0.05)
+    c.read('~pf_z', 0.99)
+
+    c.read('~recovery_alpha_fast', 0.0)
+    c.read('~recovery_alpha_slow', 0.0)
+    c.read('~resample_interval', 1)
+    c.read('~robot_model_type', 'differential')
+
+    c.read('~save_pose_rate', 0.5)
+    c.read('~sigma_hit', 0.2)
+    c.read('~tf_broadcast', True)
+    c.read('~transform_tolerance', 1.0)
+    c.read('~update_min_a', 0.2)
+    c.read('~update_min_d', 0.25)
+    c.read('~z_hit', 0.5)
+    c.read('~z_max', 0.05)
+    c.read('~z_rand', 0.5)
+    c.read('~z_short', 0.05)
+
+    c.read('~always_reset_initial_pose', False)
+    c.read('~scan_topic', 'scan')
+    map_topic = c.read('~map_topic', '/map')
+
+    c.pub('/particlecloud', 'nav2_msgs/msg/PoseArray')
+    c.pub('/particle_clound', 'nav2_msgs/msg/ParticleCloud')
+    c.pub('/amcl_pose', 'geometry_msgs/msg/PoseWithCovarianceStamped')
+
+    c.sub('/clock', 'rosgraph_msgs/msg/Clock')
+    c.sub('/initial_pose', 'geometry_msgs/msg/PoseWithCovarianceStamped')
+    c.sub(map_topic, 'nav_msgs/msg/OccupancyGrid')
+
+    c.provide('/reinitialize_global_localization', 'std_srvs/srv/Empty')
+    c.provide('/request_nomotion_update', 'std_srvs/srv/Empty')
+
+
+def amcl_ros1(c: NodeContext):
     c.read('~use_map_topic', False)
     c.read('~first_map_only', False)
     c.read('~gui_publish_rate', -1.0)
