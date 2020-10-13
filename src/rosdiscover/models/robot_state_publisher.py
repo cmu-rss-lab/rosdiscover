@@ -5,7 +5,7 @@ from ..interpreter import model, NodeContext
 
 @model('robot_state_publisher', 'robot_state_publisher')
 def robot_state_publisher(c: NodeContext):
-    if c.app.app.description.distribution.ros == ROSVersion.ROS1:
+    if c.app.description.distribution.ros == ROSVersion.ROS1:
         # FIXME required!
         # c.read('robot_description')
 
@@ -23,7 +23,7 @@ def robot_state_publisher(c: NodeContext):
 
         c.sub('joint_states', 'sensor_msgs/JointState')
 
-    elif c.app.app.description().distribution.ros == ROSVersion.ROS2:
+    elif c.app.description.distribution.ros == ROSVersion.ROS2:
         c.sub("/clock", "rosgraph_msgs/msg/Clock")
         c.sub('/joint_states', 'sensor_msgs/msg/JointState')
 
