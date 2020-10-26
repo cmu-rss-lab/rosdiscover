@@ -1,8 +1,32 @@
-from ..interpreter import model
+from roswire import ROSVersion
+
+from ..interpreter import model, NodeContext
+
 
 
 @model('gazebo_ros', 'gzserver')
-def gzserver(c):
+def gzserver(c: NodeContext):
+    if c.app.description.distribution.ros == ROSVersion.ROS1:
+        gzserver_ros1(c)
+    else:
+        gzserver_ros2(c)
+
+
+def gzserver_ros2(c):
+    c.read('~publish_rate', 10.0)
+    c.read('~use_sim_time', True)
+
+    c.sub('/clock', 'rosgraph_msgs/Clock')
+
+    c.pub('/clock', 'rosgraph_msgs/Clock')
+
+    c.provide('/pause_physics', 'std_srvs/srv/Empty')
+    c.provide('/reset_simulation', 'std_srvs/srv/Empty')
+    c.provide('/reset_world', 'std_srvs/srv/Empty')
+    c.provide('/unpause_physics', 'std_srvs/srv/Empty')
+
+
+def gzserver_ros1(c: NodeContext):
     c.pub('/clock', 'rosgraph_msgs/Clock')
     c.pub('~factory', 'gazebo_msgs/Factory')
     c.pub('~factory/light', 'gazebo_msgs/Light')
