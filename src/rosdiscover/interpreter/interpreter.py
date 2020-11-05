@@ -3,9 +3,10 @@ from typing import Dict, Iterator, Optional
 import contextlib
 
 from loguru import logger
-from roswire import AppInstance
-from roswire.proxy.roslaunch.reader import LaunchFileReader
 import roswire
+from roswire import AppInstance, ROSVersion
+from roswire.ros1.launch.reader import ROS1LaunchFileReader
+from roswire.ros2.launch.reader import ROS2LaunchFileReader
 
 from .context import NodeContext
 from .model import Model
@@ -49,8 +50,11 @@ class Interpreter:
     def launch(self, filename: str) -> None:
         """Simulates the effects of `roslaunch` using a given launch file."""
         # NOTE this method also supports command-line arguments
-        reader = LaunchFileReader(shell=self._app.shell,
-                                  files=self._app.files)
+        if self._app.description.distribution.ros == ROSVersion.ros1:
+            reader = ROS1LaunchFileReader.build(self._app)
+        else:
+            reader = ROS2LaunchFileReader.build(self._app)
+
         config = reader.read(filename)
 
         for param in config.params.values():
