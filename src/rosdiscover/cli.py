@@ -63,6 +63,9 @@ def generate_acme(args):
         if args.check:
             acme_gen.check_acme()
 
+def observe(args):
+    app = roswire.
+
 
 def rostopic_list(args) -> None:
     summary = _launch_config(args)
@@ -128,6 +131,19 @@ def main() -> None:
 
     p.add_argument('config', type=argparse.FileType('r'), help=CONFIG_HELP)
     p.set_defaults(func=generate_acme)
+
+    p = subparsers.add_parser('observe',
+                              help='observes a robot running in a container and produces an '
+                                   'architecture',
+                              formatter_class=MultiLineFormatter)
+    p.add_argument('--container', type=str, help='The container where the ROS system is running')
+    p.add_argument('--acme', type=str, help='Generate an Acme file instead of the JSON')
+    p.add_argument('config', type=argparse.FileType('r'),
+                   help="""R|A YAML file defining the configuration (only the environment 
+                   information will be used).
+                    - indicates stdin.
+                   {Config.__doc__}""")
+    p.set_defaults(func=observe)
 
     args = parser.parse_args()
     if 'func' in args:
