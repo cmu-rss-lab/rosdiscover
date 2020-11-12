@@ -50,10 +50,10 @@ class Interpreter:
     def launch(self, filename: str) -> None:
         """Simulates the effects of `roslaunch` using a given launch file."""
         # NOTE this method also supports command-line arguments
-        if self._app.description.distribution.ros == ROSVersion.ros1:
-            reader = ROS1LaunchFileReader.build(self._app)
+        if self._app.description.distribution.ros == ROSVersion.ROS1:
+            reader = ROS1LaunchFileReader.for_app_instance(self._app)
         else:
-            reader = ROS2LaunchFileReader.build(self._app)
+            reader = ROS2LaunchFileReader.for_app_instance(self._app)
 
         config = reader.read(filename)
 
