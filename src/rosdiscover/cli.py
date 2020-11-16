@@ -11,6 +11,7 @@ import pkg_resources
 from .acme import AcmeGenerator
 from .config import Config
 from .interpreter import Interpreter, SystemSummary
+from .observer import Observer
 
 DESC = 'discovery of ROS architectures'
 CONFIG_HELP = """R|A YAML file defining the configuration.
@@ -63,8 +64,22 @@ def generate_acme(args):
         if args.check:
             acme_gen.check_acme()
 
+
+def _observe(args):
+    with Observer.for_container(args.container, args.config) as obs:
+        obs.observe()
+        summary = obs.summarize()
+    return summary
+
+
 def observe(args):
-    app = roswire.
+    summary = _observe(args)
+    output = summary.to_dict()
+    if args.output:
+        with open(args.output, 'w') as f:
+            yaml.dump(output, f, default_flow_style=False)
+    else:
+        print(yaml.dump(output, default_flow_style=False))
 
 
 def rostopic_list(args) -> None:

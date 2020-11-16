@@ -4,8 +4,10 @@ import os
 from typing import Dict, Iterator
 
 import roswire
-from roswire import AppInstance, ROSVersion
+from roswire import App, AppInstance, ROSVersion
 
+from .ros1 import ROS1ObserverConnection
+from .ros2 import ROS2ObserverConnection
 from ..config import Config
 from ..interpreter import NodeContext, SystemSummary
 
@@ -21,13 +23,13 @@ class Observer:
                       config: Config,
                       ) -> Iterator['Observer']:
         """Constructs and interpreter for a given running container"""
+        app: App = App(config, None)
         rsw = roswire.ROSWire()
-        container_app = rsw._dockerblade.attach(container)
-        instance = AppInstance(None, dockerblade=container_app)
+        instance = app.attach(container, require_description=False)
         yield Observer(instance, config)
 
-    def __init__(self, app: roswire.System, config: Config):
-        self._app = app
+    def __init__(self, app: AppInstance, config: Config):
+        self._app_instance = app
         self._config = config
         self.nodes: Dict[str, NodeContext] = {}
 
@@ -38,10 +40,10 @@ class Observer:
         return SystemSummary(node_to_summary)
 
     def observe(self):
-        if self._app.description.distribution.ros == ROSVersion.ROS1:
-            observer = ROS1Observer(self._app, self._config.sources)
+        if self._app_instance.description.distribution.ros == ROSVersion.ROS1:
+            observer = ROS1ObserverConnection(self._app_instance, self._config.sources)
         else:
-            observer = ROS2Observer(self._app, self._config.sources)
+            observer = ROS2ObserverConnection(self._app_instance, self._config.sources)
 
         nodes = observer.get_nodes()
         self.nodes = nodes
