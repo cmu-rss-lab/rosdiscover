@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
+__all__ = ("Observer",)
 import contextlib
 import os
 from typing import Dict, Iterator
 
-import roswire
 from roswire import App, AppInstance, ROSVersion
 
 from .ros1 import ROS1ObserverConnection
@@ -24,7 +24,6 @@ class Observer:
                       ) -> Iterator['Observer']:
         """Constructs and interpreter for a given running container"""
         app: App = App(config, None)
-        rsw = roswire.ROSWire()
         instance = app.attach(container, require_description=False)
         yield Observer(instance, config)
 
@@ -47,5 +46,3 @@ class Observer:
 
         nodes = observer.get_nodes()
         self.nodes = nodes
-
-

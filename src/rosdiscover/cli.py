@@ -154,7 +154,7 @@ def main() -> None:
     p.add_argument('--container', type=str, help='The container where the ROS system is running')
     p.add_argument('--acme', type=str, help='Generate an Acme file instead of the JSON')
     p.add_argument('config', type=argparse.FileType('r'),
-                   help="""R|A YAML file defining the configuration (only the environment 
+                   help="""R|A YAML file defining the configuration (only the environment
                    information will be used).
                     - indicates stdin.
                    {Config.__doc__}""")
