@@ -1,20 +1,16 @@
 # -*- coding: utf-8 -*-
 __all__ = ("Observer",)
 import contextlib
-import os
+from abc import ABC, abstractmethod
 from typing import Dict, Iterator
 
 from roswire import App, AppInstance, ROSVersion
 
-from .ros1 import ROS1ObserverConnection
-from .ros2 import ROS2ObserverConnection
 from ..config import Config
 from ..interpreter import NodeContext, SystemSummary
 
-_DEFAULT_URL = os.environ.get("DOCKER_HOST", "unix://var/run/docker.sock")
 
-
-class Observer:
+class Observer(ABC):
 
     @classmethod
     @contextlib.contextmanager
@@ -24,25 +20,25 @@ class Observer:
                       ) -> Iterator['Observer']:
         """Constructs and interpreter for a given running container"""
         app: App = App(config, None)
-        instance = app.attach(container, require_description=False)
-        yield Observer(instance, config)
+        instance = app.attach(container, require_description=True)
+        if app.description.distribution.ros == ROSVersion.ROS1:
+            from .ros1 import ROS1Observer
+            yield ROS1Observer(instance, config)
+        else:
+            from .ros2 import ROS2Observer
+            yield ROS2Observer(instance, config)
 
     def __init__(self, app: AppInstance, config: Config):
         self._app_instance = app
         self._config = config
-        self.nodes: Dict[str, NodeContext] = {}
+        self._nodes: Dict[str, NodeContext] = {}
 
     def summarise(self):
         """Produces an immutable description of the system architecture."""
-        node_summaries = [node.summarise() for node in self.nodes.values()]
+        node_summaries = [node.summarise() for node in self._nodes.values()]
         node_to_summary = {s.fullname: s for s in node_summaries}
         return SystemSummary(node_to_summary)
 
-    def observe(self):
-        if self._app_instance.description.distribution.ros == ROSVersion.ROS1:
-            observer = ROS1ObserverConnection(self._app_instance, self._config.sources)
-        else:
-            observer = ROS2ObserverConnection(self._app_instance, self._config.sources)
-
-        nodes = observer.get_nodes()
-        self.nodes = nodes
+    @abstractmethod
+    def observe_and_summarise(self):
+        ...

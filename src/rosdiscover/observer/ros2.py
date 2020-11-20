@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-from .connection import ObserverConnection
+from .observer import Observer
 
 
-class ROS2ObserverConnection(ObserverConnection):
-    def get_nodes(self):
+class ROS2Observer(Observer):
+    def observe_and_summarise(self):
         pass
