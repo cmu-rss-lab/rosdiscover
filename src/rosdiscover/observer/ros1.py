@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import re
-from typing import Dict
+from typing import Dict, Optional
 
 from loguru import logger
 
@@ -8,12 +8,14 @@ from .observer import Observer
 from ..core import Topic
 from ..interpreter import NodeContext, ParameterServer
 
-_GOAL = re.compile(r'(.*)/goal$')
-_GOAL_FMT = re.compile(r'(.*)Goal$')
-_CANCEL = re.compile(r'(.*)/cancel$')
-_STATUS = re.compile(r'(.*)/status$')
-_FEEDBACK = re.compile(r'(.*)/feedback$')
-_RESULT = re.compile(r'(.*)result$')
+_GOAL = re.compile(r'(.*)/goal')
+_GOAL_FMT = re.compile(r'(.*)Goal')
+_CANCEL = re.compile(r'(.*)/cancel')
+_STATUS = re.compile(r'(.*)/status')
+_FEEDBACK = re.compile(r'(.*)/feedback')
+_FEEDBACK_FMT = re.compile(r'(.*)Feedback')
+_RESULT = re.compile(r'(.*)/result')
+_RESULT_FMT = re.compile(r'(.*)Result')
 
 _NODES_TO_FILTER_OUT = {'/rosout'}
 _TOPICS_TO_FILTER_OUT = {'/rosout', '/rosout_agg'}
@@ -21,17 +23,22 @@ _SERVICES_TO_FILTER_OUT = {'set_logger_level', 'get_loggers'}
 
 
 class ActionCandidate:
-    goal: Topic
-    cancel: Topic
-    status: Topic
-    feedback: Topic
-    result: Topic
+    goal: Optional[Topic]
+    cancel: Optional[Topic]
+    status: Optional[Topic]
+    feedback: Optional[Topic]
+    result: Optional[Topic]
 
     def __init__(self,
                  action_name: str,
                  is_server: bool):
         self._action_name = action_name
         self._server = is_server
+        self.goal = None
+        self.cancel = None
+        self.status = None
+        self.feedback = None
+        self.result = None
 
     @property
     def name(self):
@@ -161,8 +168,10 @@ def action_candidate(node: str,
         an action and the candidate isn't already known.
     """
     goal = _GOAL.match(topic)
+    format_match = _GOAL_FMT.match(fmt)
+
     a_c = None
-    if goal is not None and fmt == goal.group(1) + "Goal":
+    if goal is not None and format_match is not None:
         action_name = goal.group(1)
         a_c = get_action_candidate(node, action_name, existing, not publishes)
         a_c.goal = Topic(topic, fmt, False)
@@ -181,13 +190,15 @@ def action_candidate(node: str,
         return True
 
     feedback = _FEEDBACK.match(topic)
-    if feedback is not None and fmt == f"{feedback.group(1)}Feedback":
+    format_match = _FEEDBACK_FMT.match(fmt)
+    if feedback is not None and format_match is not None:
         a_c = get_action_candidate(node, feedback.group(1), existing, publishes)
         a_c.feedback = Topic(topic, fmt, False)
         return True
 
     result = _RESULT.match(topic)
-    if result is not None and fmt == f"{result.group(1)}Result":
+    format_match = _RESULT_FMT.match(fmt)
+    if result is not None and format_match is not None:
         a_c = get_action_candidate(node, result.group(1), existing, publishes)
         a_c.result = Topic(topic, fmt, False)
         return True
@@ -200,17 +211,24 @@ def update_node_contexts_with_topics(nodecontexts, items, publishes,
                                      action_server_candidates, ros):
     for topic, nodes in items:
         if topic not in _TOPICS_TO_FILTER_OUT:
-            fmt = ros.topic_to_type[topic]
-            for node in nodes:
-                # Work out if this is a topic for a candidate action
-                could_be_action = action_candidate(node, topic, fmt,
-                                                   publishes, action_server_candidates)
-                could_be_action |= action_candidate(node, topic, fmt,
-                                                    publishes, action_client_candidates)
+            if topic not in ros.topic_to_type:
+                logger.error(f'Could not find the type for topic: {topic} in the AppInstance')
+            else:
+                fmt = ros.topic_to_type[topic]
+                for node in [n for n in nodes if n not in _NODES_TO_FILTER_OUT]:
+                    # Work out if this is a topic for a candidate action
+                    could_be_action = action_candidate(node, topic, fmt,
+                                                       publishes, action_server_candidates)
+                    could_be_action = could_be_action or action_candidate(node, topic, fmt,
+                                                                          publishes,
+                                                                          action_client_candidates)
 
-                # If not, add the topic to the context
-                if not could_be_action:
-                    nodecontexts[node].pub(topic, fmt)
+                    # If not, add the topic to the context
+                    if not could_be_action:
+                        if publishes:
+                            nodecontexts[node].pub(topic, fmt)
+                        else:
+                            nodecontexts[node].sub(topic, fmt)
 
 
 class ROS1Observer(Observer):
@@ -256,15 +274,28 @@ class ROS1Observer(Observer):
 
                 # Check if action candidates are complete (i.e., have all their topics)
                 # and add action if they are, or add the topics back in if they're not
-                for name, action_server in action_server_candidates.items():
-                    if action_server.is_complete():
-                        nodecontexts[node].action_server(action_server.name, action_server.fmt)
-                    else:
-                        action_server.add_unfinished_to_context(nodecontexts[node])
+                for node, action_servers in action_server_candidates.items():
+                    for action_server in action_servers.values():
+                        if action_server.is_complete():
+                            nodecontexts[node].action_server(action_server.name, action_server.fmt)
+                        else:
+                            logger.warning(f"Action {action_server._action_name} is incomplete")
+                            logger.debug(
+                                f"goal({action_server.goal}), cancel({action_server.cancel}), "
+                                f"status({action_server.status}), feedback("
+                                f"{action_server.feedback}), result({action_server.result}")
+                            action_server.add_unfinished_to_context(nodecontexts[node])
 
-                for name, action_client in action_client_candidates.items():
-                    if action_client.is_complete():
-                        nodecontexts[node].action_client(action_client.name, action_client.fmt)
+                for node, action_clients in action_client_candidates.items():
+                    for action_client in action_clients.values():
+                        if action_client.is_complete():
+                            nodecontexts[node].action_client(action_client.name, action_client.fmt)
+                            logger.warning(f"Action {action_client._action_name} is incomplete")
+                            logger.debug(
+                                f"goal({action_client.goal}), cancel({action_client.cancel}), "
+                                f"status({action_client.status}), feedback("
+                                f"{action_client.feedback}), result({action_client.result}")
+
                     else:
                         action_client.add_unfinished_to_context(nodecontexts[node])
             self._nodes = nodecontexts
