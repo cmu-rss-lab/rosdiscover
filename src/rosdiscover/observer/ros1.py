@@ -205,17 +205,18 @@ class ROS1Observer(Observer):
                 # Create a context for each node
                 # TODO: missing information?
                 nodecontexts = dict((node,
-                                     NodeContext(name=node,
-                                                 namespace=node,
-                                                 kind="",
-                                                 package="unknown",
-                                                 args="unknown",
-                                                 remappings={},
-                                                 launch_filename="unknown",
-                                                 app=self._app_instance,
-                                                 files=self._app_instance.files,
-                                                 params=ParameterServer(),
-                                                 ))
+                                     NodeContext(
+                                         name=node[1:] if node.startswith('/') else node,
+                                         namespace="",
+                                         kind="",
+                                         package="unknown",
+                                         args="unknown",
+                                         remappings={},
+                                         launch_filename="unknown",
+                                         app=self._app_instance,
+                                         files=self._app_instance.files,
+                                         params=ParameterServer(),
+                                     ))
                                     for node in nodes)
                 # Places to store bits of actions, which only appear as topics
                 action_server_candidates = dict()
@@ -225,30 +226,30 @@ class ROS1Observer(Observer):
                     fmt = ros.topic_to_type[topic]
                     for node in nodes:
                         # Work out if this is a topic for a candidate action
-                        add_topic = action_candidate(node, topic, fmt,
-                                                          True, action_server_candidates)
-                        add_topic |= action_candidate(node, topic, fmt,
-                                                           True, action_client_candidates)
+                        could_be_action = action_candidate(node, topic, fmt,
+                                                           True, action_server_candidates)
+                        could_be_action |= action_candidate(node, topic, fmt,
+                                                            True, action_client_candidates)
 
                         # If not, add the topic to the context
-                        if add_topic:
+                        if not could_be_action:
                             nodecontexts[node].pub(topic, fmt)
 
                 for topic, nodes in info.subscribers.items():
                     fmt = ros.topic_to_type[topic]
                     for node in nodes:
                         # Work out if this is a topic for a candidate action
-                        add_topic = action_candidate(node, topic, fmt,
-                                                          False, action_server_candidates)
-                        add_topic |= action_candidate(node, topic, fmt,
-                                                           False, action_client_candidates)
+                        could_be_action = action_candidate(node, topic, fmt,
+                                                           False, action_server_candidates)
+                        could_be_action |= action_candidate(node, topic, fmt,
+                                                            False, action_client_candidates)
                         # If not, add the topic to the context
-                        if add_topic:
+                        if not could_be_action:
                             nodecontexts[node].sub(topic, fmt)
 
                 for service, nodes in info.services.items():
                     for node in nodes:
-                        nodecontexts[node].provide(service, "Not known")
+                        nodecontexts[node].provide(service, ros.services[service].format.fullname)
 
                 # Check if action candidates are complete (i.e., have all their topics)
                 # and add action if they are, or add the topics back in if they're not
