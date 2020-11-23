@@ -66,9 +66,9 @@ def generate_acme(args):
 
 
 def _observe(args):
-    with Observer.for_container(args.container, args.config) as obs:
-        obs.observe()
-        summary = obs.summarize()
+    config = Config.from_yaml_string(args.config)
+    with Observer.for_container(args.container, config) as obs:
+        summary = obs.observe_and_summarise()
     return summary
 
 
@@ -152,7 +152,8 @@ def main() -> None:
                                    'architecture',
                               formatter_class=MultiLineFormatter)
     p.add_argument('--container', type=str, help='The container where the ROS system is running')
-    p.add_argument('--acme', type=str, help='Generate an Acme file instead of the JSON')
+    p.add_argument('--acme', action='store_true', help='Generate an Acme file instead of the JSON')
+    p.add_argument('--output', type=str, help='What file to output')
     p.add_argument('config', type=argparse.FileType('r'),
                    help="""R|A YAML file defining the configuration (only the environment
                    information will be used).

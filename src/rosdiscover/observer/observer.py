@@ -3,7 +3,7 @@ __all__ = ("Observer",)
 import contextlib
 from abc import ABC, abstractmethod
 from typing import Dict, Iterator
-
+import roswire
 from roswire import App, AppInstance, ROSVersion
 
 from ..config import Config
@@ -19,7 +19,8 @@ class Observer(ABC):
                       config: Config,
                       ) -> Iterator['Observer']:
         """Constructs and interpreter for a given running container"""
-        app: App = App(config, None)
+        rsw = roswire.ROSWire()
+        app = rsw.app(config.image, config.sources)
         instance = app.attach(container, require_description=True)
         if app.description.distribution.ros == ROSVersion.ROS1:
             from .ros1 import ROS1Observer
