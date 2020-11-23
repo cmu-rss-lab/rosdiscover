@@ -196,6 +196,24 @@ def action_candidate(node: str,
     return False
 
 
+def update_node_contexts_with_topics(nodecontexts, items, publishes,
+                                     action_client_candidates,
+                                     action_server_candidates, ros):
+    for topic, nodes in items:
+        if topic not in _TOPICS_TO_FILTER_OUT:
+            fmt = ros.topic_to_type[topic]
+            for node in nodes:
+                # Work out if this is a topic for a candidate action
+                could_be_action = action_candidate(node, topic, fmt,
+                                                   publishes, action_server_candidates)
+                could_be_action |= action_candidate(node, topic, fmt,
+                                                    publishes, action_client_candidates)
+
+                # If not, add the topic to the context
+                if not could_be_action:
+                    nodecontexts[node].pub(topic, fmt)
+
+
 class ROS1Observer(Observer):
 
     def observe_and_summarise(self):
@@ -224,37 +242,18 @@ class ROS1Observer(Observer):
                 action_server_candidates = dict()
                 action_client_candidates = dict()
 
-                for topic, nodes in info.publishers.items():
-                    if topic not in _TOPICS_TO_FILTER_OUT:
-                        fmt = ros.topic_to_type[topic]
-                        for node in nodes:
-                            # Work out if this is a topic for a candidate action
-                            could_be_action = action_candidate(node, topic, fmt,
-                                                               True, action_server_candidates)
-                            could_be_action |= action_candidate(node, topic, fmt,
-                                                                True, action_client_candidates)
-
-                            # If not, add the topic to the context
-                            if not could_be_action:
-                                nodecontexts[node].pub(topic, fmt)
-
-                for topic, nodes in info.subscribers.items():
-                    if topic not in _TOPICS_TO_FILTER_OUT:
-                        fmt = ros.topic_to_type[topic]
-                        for node in nodes:
-                            # Work out if this is a topic for a candidate action
-                            could_be_action = action_candidate(node, topic, fmt,
-                                                               False, action_server_candidates)
-                            could_be_action |= action_candidate(node, topic, fmt,
-                                                                False, action_client_candidates)
-                            # If not, add the topic to the context
-                            if not could_be_action:
-                                nodecontexts[node].sub(topic, fmt)
+                update_node_contexts_with_topics(nodecontexts, info.publishers.items(), True,
+                                                 action_client_candidates,
+                                                 action_server_candidates, ros)
+                update_node_contexts_with_topics(nodecontexts, info.subscribers.items(), False,
+                                                 action_client_candidates,
+                                                 action_server_candidates, ros)
 
                 for service, nodes in info.services.items():
                     if service.split('/')[-1] not in _SERVICES_TO_FILTER_OUT:
                         for node in nodes:
-                            nodecontexts[node].provide(service, ros.services[service].format.fullname)
+                            nodecontexts[node].provide(service,
+                                                       ros.services[service].format.fullname)
 
                 # Check if action candidates are complete (i.e., have all their topics)
                 # and add action if they are, or add the topics back in if they're not
