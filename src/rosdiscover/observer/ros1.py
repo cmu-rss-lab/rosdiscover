@@ -16,7 +16,9 @@ _STATUS = re.compile(r'(.*)/status$')
 _FEEDBACK = re.compile(r'(.*)/feedback$')
 _RESULT = re.compile(r'(.*)result$')
 
-_ACTION_FILTER_PATTERNS = [_GOAL, _CANCEL, _STATUS, _FEEDBACK, _RESULT]
+_NODES_TO_FILTER_OUT = {'/rosout'}
+_TOPICS_TO_FILTER_OUT = {'/rosout', '/rosout_agg'}
+_SERVICES_TO_FILTER_OUT = {'set_logger_level', 'get_loggers'}
 
 
 class ActionCandidate:
@@ -200,7 +202,7 @@ class ROS1Observer(Observer):
         try:
             nodecontexts: Dict[str, NodeContext] = {}
             with self._app_instance.ros1() as ros:
-                nodes = ros.nodes
+                nodes = [n for n in ros.nodes if n not in _NODES_TO_FILTER_OUT]
                 info = ros.state
                 # Create a context for each node
                 # TODO: missing information?
@@ -223,33 +225,36 @@ class ROS1Observer(Observer):
                 action_client_candidates = dict()
 
                 for topic, nodes in info.publishers.items():
-                    fmt = ros.topic_to_type[topic]
-                    for node in nodes:
-                        # Work out if this is a topic for a candidate action
-                        could_be_action = action_candidate(node, topic, fmt,
-                                                           True, action_server_candidates)
-                        could_be_action |= action_candidate(node, topic, fmt,
-                                                            True, action_client_candidates)
+                    if topic not in _TOPICS_TO_FILTER_OUT:
+                        fmt = ros.topic_to_type[topic]
+                        for node in nodes:
+                            # Work out if this is a topic for a candidate action
+                            could_be_action = action_candidate(node, topic, fmt,
+                                                               True, action_server_candidates)
+                            could_be_action |= action_candidate(node, topic, fmt,
+                                                                True, action_client_candidates)
 
-                        # If not, add the topic to the context
-                        if not could_be_action:
-                            nodecontexts[node].pub(topic, fmt)
+                            # If not, add the topic to the context
+                            if not could_be_action:
+                                nodecontexts[node].pub(topic, fmt)
 
                 for topic, nodes in info.subscribers.items():
-                    fmt = ros.topic_to_type[topic]
-                    for node in nodes:
-                        # Work out if this is a topic for a candidate action
-                        could_be_action = action_candidate(node, topic, fmt,
-                                                           False, action_server_candidates)
-                        could_be_action |= action_candidate(node, topic, fmt,
-                                                            False, action_client_candidates)
-                        # If not, add the topic to the context
-                        if not could_be_action:
-                            nodecontexts[node].sub(topic, fmt)
+                    if topic not in _TOPICS_TO_FILTER_OUT:
+                        fmt = ros.topic_to_type[topic]
+                        for node in nodes:
+                            # Work out if this is a topic for a candidate action
+                            could_be_action = action_candidate(node, topic, fmt,
+                                                               False, action_server_candidates)
+                            could_be_action |= action_candidate(node, topic, fmt,
+                                                                False, action_client_candidates)
+                            # If not, add the topic to the context
+                            if not could_be_action:
+                                nodecontexts[node].sub(topic, fmt)
 
                 for service, nodes in info.services.items():
-                    for node in nodes:
-                        nodecontexts[node].provide(service, ros.services[service].format.fullname)
+                    if service.split('/')[-1] not in _SERVICES_TO_FILTER_OUT:
+                        for node in nodes:
+                            nodecontexts[node].provide(service, ros.services[service].format.fullname)
 
                 # Check if action candidates are complete (i.e., have all their topics)
                 # and add action if they are, or add the topics back in if they're not
