@@ -4,7 +4,7 @@ import contextlib
 from abc import ABC, abstractmethod
 from typing import Dict, Iterator
 import roswire
-from roswire import App, AppInstance, ROSVersion
+from roswire import AppInstance, ROSVersion
 
 from ..config import Config
 from ..interpreter import NodeContext, SystemSummary

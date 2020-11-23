@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 import re
-from typing import Dict, Optional, Tuple
+from typing import Dict
 
-from attr import attr
 from loguru import logger
 
 from .observer import Observer
@@ -52,7 +51,7 @@ class ActionCandidate:
             Whether the action is complete
         """
         return self.goal is not None and self.cancel is not None and self.status is not None \
-               and self.feedback is not None and self.result is not None
+            and self.feedback is not None and self.result is not None
 
     def add(self,
             nc: NodeContext,
@@ -70,7 +69,7 @@ class ActionCandidate:
             Indicate wheter to subscribe or publish if this was expected to be a server
             or a client
         """
-        if self.server:
+        if self._server:
             if sub_if_server:
                 nc.sub(topic.name, topic.format)
             else:
@@ -166,31 +165,31 @@ def action_candidate(node: str,
     if goal is not None and fmt == goal.group(1) + "Goal":
         action_name = goal.group(1)
         a_c = get_action_candidate(node, action_name, existing, not publishes)
-        a_c.goal = Topic(topic, fmt)
+        a_c.goal = Topic(topic, fmt, False)
         return True
 
     cancel = _CANCEL.match(topic)
     if cancel is not None and fmt == 'actionlib_msgs/GoalID':
         a_c = get_action_candidate(node, cancel.group(1), existing, not publishes)
-        a_c.cancel = Topic(topic, fmt)
+        a_c.cancel = Topic(topic, fmt, False)
         return True
 
     status = _STATUS.match(topic)
     if status is not None and fmt == 'actionlib_msgs/GoalStatusArray':
         a_c = get_action_candidate(node, status.group(1), existing, publishes)
-        a_c.status = Topic(topic, fmt)
+        a_c.status = Topic(topic, fmt, False)
         return True
 
     feedback = _FEEDBACK.match(topic)
     if feedback is not None and fmt == f"{feedback.group(1)}Feedback":
         a_c = get_action_candidate(node, feedback.group(1), existing, publishes)
-        a_c.feedback = Topic(topic, fmt)
+        a_c.feedback = Topic(topic, fmt, False)
         return True
 
     result = _RESULT.match(topic)
     if result is not None and fmt == f"{result.group(1)}Result":
         a_c = get_action_candidate(node, result.group(1), existing, publishes)
-        a_c.result = Topic(topic, fmt)
+        a_c.result = Topic(topic, fmt, False)
         return True
 
     return False
