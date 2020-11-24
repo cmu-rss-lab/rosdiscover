@@ -26,7 +26,12 @@ class ROS1Observer(Observer):
 
         Returns
         -------
-            The summary of the instantaneous state of the ROS system
+        The summary of the instantaneous state of the ROS system
+
+        Raises
+        ------
+        TimeoutException
+            If a connection cannot be made to the container
         """
         try:
             nodecontexts: Dict[str, NodeContext] = {}
@@ -50,11 +55,12 @@ class ROS1Observer(Observer):
                                      ))
                                     for node in nodes)
                 # Places to store bits of actions, which only appear as topics
-                action_server_candidates = dict()
-                action_client_candidates = dict()
+                action_server_candidates: Dict[str, Dict[str, ActionCandidate]] = dict()
+                action_client_candidates: Dict[str, Dict[str, ActionCandidate]] = dict()
                 # Only include topics that we care about
-                significant_publishers = self._filter_out_topics_and_nodes(info.publishers)
-                significant_subscribers = self._filter_out_topics_and_nodes(info.subscribers)
+                significant_publishers = ROS1Observer._filter_out_topics_and_nodes(info.publishers)
+                significant_subscribers = ROS1Observer._filter_out_topics_and_nodes(
+                    info.subscribers)
 
                 # Process the topics
                 separate_topics_from_action(nodecontexts,
@@ -86,6 +92,7 @@ class ROS1Observer(Observer):
             return self.summarise()
         except TimeoutError:
             logger.exception("failed to connect to the ROS master. Is a robot running?")
+            raise
 
     def process_action_candidates(self,
                                   action_candidates: Dict[str, Dict[str, ActionCandidate]],
@@ -105,8 +112,8 @@ class ROS1Observer(Observer):
         nodecontexts: Dict[str, NodeContext]
             The node contexts to add actions parts to
         """
-        for node, action_candidates in action_candidates.items():
-            for action_candidate in action_candidates.values():
+        for node, candidates in action_candidates.items():
+            for action_candidate in candidates.values():
                 if action_candidate.is_complete():
                     add_function(node)(action_candidate.name, action_candidate.fmt)
                 else:
@@ -118,10 +125,10 @@ class ROS1Observer(Observer):
                     action_candidate.add_unfinished_to_context(nodecontexts[node])
 
     @staticmethod
-    def _filter_out_topics_and_nodes(self,
-                                     topics_and_nodes: Mapping[str, Collection[str]]
-                                     ) -> Dict[str, Collection[str]]:
-        filtered = dict()
+    def _filter_out_topics_and_nodes(
+            topics_and_nodes: Mapping[str, Collection[str]]
+    ) -> Dict[str, Collection[str]]:
+        filtered: Dict[str, Collection[str]] = dict()
         for topic, nodes in topics_and_nodes.items():
             if topic not in _TOPICS_TO_FILTER_OUT:
                 filtered[topic] = [node for node in nodes if node not in _NODES_TO_FILTER_OUT]

@@ -11,7 +11,7 @@ from roswire import AppInstance, ROSVersion
 
 from ..interpreter import NodeContext, SystemSummary
 
-if typing.TYPECHECKING:
+if typing.TYPE_CHECKING:
     from ..config import Config
 
 

@@ -2,7 +2,7 @@
 __all__ = ("separate_topics_from_action", "ActionCandidate")
 
 import re
-from typing import Collection, Dict, Iterable, Tuple
+from typing import Collection, Dict
 
 import attr
 from loguru import logger
@@ -39,7 +39,9 @@ class ActionCandidate:
     @property
     def fmt(self) -> str:
         assert self.is_complete()
-        return _GOAL_FMT.match(self.goal.format).group(1)
+        match = _GOAL_FMT.match(self.goal.format)
+        assert match is not None
+        return match.group(1)
 
     def is_complete(self) -> bool:
         """Check if all information is there for an action.
