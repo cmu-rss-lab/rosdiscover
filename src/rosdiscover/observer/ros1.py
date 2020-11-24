@@ -22,7 +22,7 @@ class ROS1Observer(Observer):
     def observe_and_summarise(self) -> SystemSummary:
         """
         Takes a snapshot of the ROS system running in the container referred to by
-        ``self.app_instance`` and returns the architecture summary for that system.
+        :code:``self.app_instance`` and returns the architecture summary for that system.
 
         Returns
         -------
@@ -107,8 +107,8 @@ class ROS1Observer(Observer):
         action_candidates: Dict[str, Dict[str, ActionCandidate]]
             The set of candidates to process, keyed by node and action name
         add_function: Callable[[str], Callable[[str, str], None]]
-            The function used to add the action to a node (either ``action_client`` or
-            ``action_server``
+            The function used to add the action to a node (either :code:``action_client`` or
+            :code:``action_server``
         nodecontexts: Dict[str, NodeContext]
             The node contexts to add actions parts to
         """

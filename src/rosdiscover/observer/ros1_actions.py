@@ -148,7 +148,7 @@ def action_candidate(node: str,
                      existing: Dict[str, Dict[str, ActionCandidate]]):
     """
     Check if the topic might belong to an action. The parameter
-    :code:'existing' is updated with a new candidate if it is created. The topic is added to
+    :code:``existing`` is updated with a new candidate if it is created. The topic is added to
     the action if it patches one of the action patterns.
 
     Parameters
