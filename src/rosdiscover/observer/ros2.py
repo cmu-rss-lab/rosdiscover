@@ -11,4 +11,4 @@ class ROS2Observer(Observer):
         super().__init__(app, config)
 
     def observe_and_summarise(self):
-        pass
+        raise NotImplementedError

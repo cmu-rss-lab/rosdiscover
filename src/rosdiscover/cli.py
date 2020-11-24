@@ -46,7 +46,7 @@ def launch(args) -> None:
         print(yaml.dump(output, default_flow_style=False))
 
 
-def generate_acme(args):
+def generate_acme(args) -> None:
     """Generates an Acme description for a given roslaunch command."""
     summary = _launch_config(args)
     node_summaries = summary.values()
@@ -65,14 +65,14 @@ def generate_acme(args):
             acme_gen.check_acme()
 
 
-def _observe(args):
+def _observe(args) -> SystemSummary:
     config = Config.from_yaml_string(args.config)
     with Observer.for_container(args.container, config) as obs:
         summary = obs.observe_and_summarise()
     return summary
 
 
-def observe(args):
+def observe(args) -> None:
     summary = _observe(args)
     output = summary.to_dict()
     if args.output:
