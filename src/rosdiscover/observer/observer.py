@@ -1,13 +1,18 @@
 # -*- coding: utf-8 -*-
 __all__ = ("Observer",)
+
 import contextlib
 from abc import ABC, abstractmethod
+import typing
 from typing import Dict, Iterator
+
 import roswire
 from roswire import AppInstance, ROSVersion
 
-from ..config import Config
 from ..interpreter import NodeContext, SystemSummary
+
+if typing.TYPECHECKING:
+    from ..config import Config
 
 
 class Observer(ABC):
@@ -29,6 +34,7 @@ class Observer(ABC):
             from .ros2 import ROS2Observer
             yield ROS2Observer(instance, config)
 
+    @abstractmethod
     def __init__(self, app: AppInstance, config: Config):
         self._app_instance = app
         self._config = config
