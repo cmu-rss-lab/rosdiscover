@@ -21,7 +21,7 @@ class Observer(ABC):
     @contextlib.contextmanager
     def for_container(cls,
                       container: str,
-                      config: Config,
+                      config: 'Config',
                       ) -> Iterator['Observer']:
         """Constructs and interpreter for a given running container"""
         rsw = roswire.ROSWire()
@@ -35,7 +35,7 @@ class Observer(ABC):
             yield ROS2Observer(instance, config)
 
     @abstractmethod
-    def __init__(self, app: AppInstance, config: Config):
+    def __init__(self, app: AppInstance, config: 'Config'):
         self._app_instance = app
         self._config = config
         self._nodes: Dict[str, NodeContext] = {}

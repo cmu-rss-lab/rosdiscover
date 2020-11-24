@@ -2,7 +2,7 @@
 __all__ = ("separate_topics_from_action", "ActionCandidate")
 
 import re
-from typing import Collection, Dict
+from typing import Collection, Dict, Optional
 
 import attr
 from loguru import logger
@@ -30,11 +30,11 @@ class ActionCandidate:
     """
     name: str
     is_server: bool
-    goal: Topic = attr.ib(init=False)
-    cancel: Topic = attr.ib(init=False)
-    status: Topic = attr.ib(init=False)
-    feedback: Topic = attr.ib(init=False)
-    result: Topic = attr.ib(init=False)
+    goal: Optional[Topic] = attr.ib(default=None)
+    cancel: Optional[Topic] = attr.ib(default=None)
+    status: Optional[Topic] = attr.ib(default=None)
+    feedback: Optional[Topic] = attr.ib(default=None)
+    result: Optional[Topic] = attr.ib(default=None)
 
     @property
     def fmt(self) -> str:
@@ -133,10 +133,10 @@ def get_action_candidate(node: str,
         if action_name in existing[node]:
             a_s = existing[node][action_name]
         else:
-            a_s = ActionCandidate(action_name, is_server)
+            a_s = ActionCandidate(name=action_name, is_server=is_server)
             existing[node][action_name] = a_s
     else:
-        a_s = ActionCandidate(action_name, is_server)
+        a_s = ActionCandidate(name=action_name, is_server=is_server)
         existing[node] = {action_name: a_s}
     return a_s
 
@@ -245,7 +245,7 @@ def separate_topics_from_action(nodecontexts: Dict[str, NodeContext],
     ros: ROS1
         Access the underlying connection to ROS on the container
     """
-    for topic, nodes in topics:
+    for topic, nodes in topics.items():
         if topic not in ros.topic_to_type:
             logger.error(f'Could not find the type for topic: {topic} in the AppInstance')
         else:
