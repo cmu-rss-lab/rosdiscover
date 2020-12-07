@@ -39,6 +39,7 @@ class ActionCandidate:
     @property
     def fmt(self) -> str:
         assert self.is_complete()
+        assert self.goal is not None  # Needed for mypy
         match = _GOAL_FMT.match(self.goal.format)
         assert match is not None
         return match.group(1)

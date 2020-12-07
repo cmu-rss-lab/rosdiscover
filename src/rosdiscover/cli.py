@@ -59,7 +59,7 @@ def generate_acme(args) -> None:
     if args.acme is None:
         print(acme)
         if args.check:
-            acme_gen.check_acme(acme)
+            acme_gen.check_acme()
     else:
         if args.check:
             acme_gen.check_acme()
