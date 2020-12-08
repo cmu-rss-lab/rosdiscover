@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 __all__ = ("separate_topics_from_action", "ActionCandidate")
-
+"""
+This module (not intended for public consumption) is an internal model that defines a class and 
+utility method for 
+"""
 import re
 from typing import Collection, Dict, Optional
 
