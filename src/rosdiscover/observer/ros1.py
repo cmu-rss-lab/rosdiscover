@@ -99,9 +99,9 @@ class _Node:
                               result_related_topics: Collection[str]) -> bool:
         """Check that the non-goal related topics are in the right collections."""
         return _Node.has_cancel(action, ros, goal_related_topics) and \
-               _Node.has_status(action, ros, result_related_topics) and \
-               _Node.has_feedback(action, fmt, ros, result_related_topics) and \
-               _Node.has_result(action, fmt, ros, result_related_topics)
+            _Node.has_status(action, ros, result_related_topics) and \
+            _Node.has_feedback(action, fmt, ros, result_related_topics) and \
+            _Node.has_result(action, fmt, ros, result_related_topics)
 
     @staticmethod
     def has_cancel(action: str, ros: ROS1, topics: Collection[str]) -> bool:
