@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import re
-from typing import Callable, Collection, Dict, Mapping, Set
+from typing import Collection, Mapping, Set
 
 import attr
 from loguru import logger
@@ -8,7 +8,6 @@ from roswire import AppInstance, ROS1
 from roswire.common import SystemState
 
 from .observer import Observer
-from .ros1_actions import ActionCandidate, separate_topics_from_action
 from ..interpreter import NodeContext, ParameterServer, SystemSummary
 
 _NODES_TO_FILTER_OUT = ('/rosout',)
@@ -186,114 +185,4 @@ class ROS1Observer(Observer):
 
         return reorganized_nodes.values()
 
-    def _observe_and_summarise(self) -> SystemSummary:
-        """
-        Takes a snapshot of the ROS system running in the container referred to by
-        :code:``self.app_instance`` and returns the architecture summary for that system.
 
-        Returns
-        -------
-        The summary of the instantaneous state of the ROS system
-
-        """
-        with self._app_instance.ros1() as ros:
-            info = ros.state
-            nodecontexts = self._fetch_node_contexts(ros)
-            # Places to store bits of actions, which only appear as topics
-            action_server_candidates: Dict[str, Dict[str, ActionCandidate]] = dict()
-            action_client_candidates: Dict[str, Dict[str, ActionCandidate]] = dict()
-            # Only include topics that we care about
-            significant_publishers = ROS1Observer._filter_out_topics_and_nodes(info.publishers)
-            significant_subscribers = ROS1Observer._filter_out_topics_and_nodes(
-                info.subscribers)
-
-            # Process the topics
-            separate_topics_from_action(nodecontexts,
-                                        significant_publishers, True,
-                                        action_client_candidates,
-                                        action_server_candidates, ros)
-            separate_topics_from_action(nodecontexts,
-                                        significant_subscribers, False,
-                                        action_client_candidates,
-                                        action_server_candidates, ros)
-
-            # Process the services
-            for service, nodes in info.services.items():
-                if service.split('/')[-1] not in _SERVICES_TO_FILTER_OUT:
-                    for node in nodes:
-                        nodecontexts[node].provide(service,
-                                                   ros.services[service].format.fullname)
-
-            # Check if action candidates are complete (i.e., have all their topics)
-            # and add action if they are, or add the topics back in if they're not
-            self._process_action_candidates(action_server_candidates,
-                                            lambda node: nodecontexts[node].action_server,
-                                            nodecontexts)
-            self._process_action_candidates(action_client_candidates,
-                                            lambda node: nodecontexts[node].action_client,
-                                            nodecontexts)
-
-        self._nodes = nodecontexts
-        return self.summarise()
-
-    def _fetch_node_contexts(self, ros):
-        """Creates node contexts for each interesting node"""
-        nodes = [n for n in ros.nodes if n not in _NODES_TO_FILTER_OUT]
-        # Create a context for each node
-        # TODO: missing information?
-        nodecontexts = dict((node,
-                             NodeContext(
-                                 name=node[1:] if node.startswith('/') else node,
-                                 namespace="",
-                                 kind="",
-                                 package="unknown",
-                                 args="unknown",
-                                 remappings={},
-                                 launch_filename="unknown",
-                                 app=self._app_instance,
-                                 files=self._app_instance.files,
-                                 params=ParameterServer(),
-                             ))
-                            for node in nodes)
-        return nodecontexts
-
-    def _process_action_candidates(self,
-                                   action_candidates: Dict[str, Dict[str, ActionCandidate]],
-                                   add_function: Callable[[str], Callable[[str, str], None]],
-                                   nodecontexts: Dict[str, NodeContext]) -> None:
-        """
-        Processes action candidates, adding actions if the candidates are complete or adding
-        the topics back in if the action is incomplete.
-
-        Parameters
-        ----------
-        action_candidates: Dict[str, Dict[str, ActionCandidate]]
-            The set of candidates to process, keyed by node and action name
-        add_function: Callable[[str], Callable[[str, str], None]]
-            The function used to add the action to a node (either :code:``action_client`` or
-            :code:``action_server``
-        nodecontexts: Dict[str, NodeContext]
-            The node contexts to add actions parts to
-        """
-        for node, candidates in action_candidates.items():
-            for action_candidate in candidates.values():
-                if action_candidate.is_complete():
-                    add_function(node)(action_candidate.name, action_candidate.fmt)
-                else:
-                    logger.warning(f"Action {action_candidate.name} is incomplete")
-                    logger.debug(
-                        f"goal({action_candidate.goal}), cancel({action_candidate.cancel}), "
-                        f"status({action_candidate.status}), feedback("
-                        f"{action_candidate.feedback}), result({action_candidate.result}")
-                    action_candidate.add_unfinished_to_context(nodecontexts[node])
-
-    @staticmethod
-    def _filter_out_topics_and_nodes(
-            topics_and_nodes: Mapping[str, Collection[str]]
-    ) -> Dict[str, Collection[str]]:
-        """Filter out topics and nodes that are not architecturally significant (e.g., rosout)."""
-        filtered: Dict[str, Collection[str]] = {}
-        for topic, nodes in topics_and_nodes.items():
-            if topic not in _TOPICS_TO_FILTER_OUT:
-                filtered[topic] = [node for node in nodes if node not in _NODES_TO_FILTER_OUT]
-        return filtered
