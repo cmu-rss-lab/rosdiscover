@@ -1,14 +1,18 @@
 # -*- coding: utf-8 -*-
 import re
-from typing import Collection, Mapping, Set
+from typing import Collection, Set, Dict
 
 import attr
+import typing
 from loguru import logger
 from roswire import AppInstance, ROS1
 from roswire.common import SystemState
 
 from .observer import Observer
 from ..interpreter import NodeContext, ParameterServer, SystemSummary
+
+if typing.TYPE_CHECKING:
+    from ..config import Config
 
 _NODES_TO_FILTER_OUT = ('/rosout',)
 _TOPICS_TO_FILTER_OUT = ('/rosout', '/rosout_agg')
@@ -65,39 +69,39 @@ class _Node:
 
     @staticmethod
     def has_cancel(action: str, ros: ROS1, topics: Collection[str]) -> bool:
+        cancel = f"{action}/cancel"
         try:
-            cancel = f"{action}/cancel"
             return cancel in topics and ros.topic_to_type[cancel] == "actionlib_msgs/GoalID"
         except KeyError:
-            logger.error(f"Topic {t} does not have a type.")
+            logger.error(f"Topic {cancel} does not have a type.")
             return False
 
     @staticmethod
     def has_status(action: str, ros: ROS1, topics: Collection[str]) -> bool:
+        status = f"{action}/status"
         try:
-            status = f"{action}/status"
             return status in topics and ros.topic_to_type[
                 status] == "actionlib_msgs/GoalStatusArray"
         except KeyError:
-            logger.error(f"Topic {t} does not have a type.")
+            logger.error(f"Topic {status} does not have a type.")
             return False
 
     @staticmethod
     def has_feedback(action: str, fmt: str, ros: ROS1, topics: Collection[str]) -> bool:
+        feedback = f"{action}/feedback"
         try:
-            feedback = f"{action}/feedback"
             return feedback in topics and ros.topic_to_type[feedback] == f"{fmt}Feedback"
         except KeyError:
-            logger.error(f"Topic {t} does not have a type.")
+            logger.error(f"Topic {feedback} does not have a type.")
             return False
 
     @staticmethod
     def has_result(action: str, fmt: str, ros: ROS1, topics: Collection[str]) -> bool:
+        result = f"{action}/result"
         try:
-            result = f"{action}/result"
             return result in topics and ros.topic_to_type[result] == f"{fmt}Result"
         except KeyError:
-            logger.error(f"Topic {t} does not have a type.")
+            logger.error(f"Topic {result} does not have a type.")
             return False
 
 
@@ -155,12 +159,12 @@ class ROS1Observer(Observer):
         return nodecontext
 
     def _transform_info(self, ros: SystemState) -> Collection[_Node]:
-        reorganized_nodes: Mapping[str, _Node] = dict()
+        reorganized_nodes: Dict[str, _Node] = dict()
 
         # Create the node placeholders
         for n in ros.nodes:
             if n not in _NODES_TO_FILTER_OUT:
-                node = _Node(name=n[1:] if n.startswith('/') else n)
+                node: _Node = _Node(name=n[1:] if n.startswith('/') else n)
                 reorganized_nodes[n] = node
 
         # Add in topics
@@ -178,11 +182,8 @@ class ROS1Observer(Observer):
 
         for service, nodes in ros.services.items():
             if service.split('/')[-1] not in _SERVICES_TO_FILTER_OUT:
-                for node in nodes:
-                    if node in reorganized_nodes:
-                        # print(f"Adding service {service} to {node}")
-                        reorganized_nodes[node].provides.add(service)
+                for n in nodes:
+                    if n in reorganized_nodes:
+                        reorganized_nodes[n].provides.add(service)
 
         return reorganized_nodes.values()
-
-
