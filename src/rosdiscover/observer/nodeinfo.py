@@ -29,12 +29,11 @@ class _Action:
 class NodeInfo:
     """Class for partial node information."""
     name: str
-    ros: ROS1
     publishers: Set[str] = attr.ib(factory=set)
     subscribers: Set[str] = attr.ib(factory=set)
     provides: Set[str] = attr.ib(factory=set)
 
-    def identify_action_servers(self) -> Collection[_Action]:
+    def _identify_action_servers(self, ros: ROS1) -> Collection[_Action]:
         """Identify the action servers for the node.
 
         Looks in the set of publishers for topics related to results, feedback, status and in the
@@ -46,9 +45,9 @@ class NodeInfo:
         Collection[_Action]
             A collection of information about each action server
         """
-        return NodeInfo.filter_topics_for_action(self.ros, self.subscribers, self.publishers)
+        return NodeInfo._filter_topics_for_action(ros, self.subscribers, self.publishers)
 
-    def identify_action_clients(self) -> Collection[_Action]:
+    def _identify_action_clients(self, ros: ROS1) -> Collection[_Action]:
         """Identify the action clients for the node.
 
         Looks in the set of subscribers for topics related to results, feedback, status and in the
@@ -60,13 +59,13 @@ class NodeInfo:
         Collection[_Action]
             A collection of information about each action client
         """
-        return NodeInfo.filter_topics_for_action(self.ros, self.publishers, self.subscribers)
+        return NodeInfo._filter_topics_for_action(ros, self.publishers, self.subscribers)
 
     @classmethod
-    def filter_topics_for_action(cls,
-                                 ros: ROS1,
-                                 goal_related_topics: Set[str],
-                                 result_related_topics: Set[str]) -> Collection[_Action]:
+    def _filter_topics_for_action(cls,
+                                  ros: ROS1,
+                                  goal_related_topics: Set[str],
+                                  result_related_topics: Set[str]) -> Collection[_Action]:
         """
         Filter the topics in :code:`goal_related_topics` and `:code:result_related_topics` to
         pull out action-related topics.
@@ -99,8 +98,8 @@ class NodeInfo:
                     # Have the right goal and format matches. Check if other topics are there
                     action = goal_match.group(1)
                     fmt = fmt_match.group(1)
-                    if cls.has_all_action_topics(action, fmt,
-                                                 ros, goal_related_topics, result_related_topics):
+                    if cls._has_all_action_topics(action, fmt,
+                                                  ros, goal_related_topics, result_related_topics):
                         # Remove the topics from the right collections and replace as an action
                         goal_related_topics.remove(f"{action}/goal")
                         goal_related_topics.remove(f"{action}/cancel")
@@ -111,20 +110,20 @@ class NodeInfo:
         return actions
 
     @classmethod
-    def has_all_action_topics(cls,
-                              action: str,
-                              fmt: str,
-                              ros: ROS1,
-                              goal_related_topics: Collection[str],
-                              result_related_topics: Collection[str]) -> bool:
+    def _has_all_action_topics(cls,
+                               action: str,
+                               fmt: str,
+                               ros: ROS1,
+                               goal_related_topics: Collection[str],
+                               result_related_topics: Collection[str]) -> bool:
         """Check that the non-goal related topics are in the right collections."""
-        return cls.has_cancel(action, ros, goal_related_topics) and \
-            cls.has_status(action, ros, result_related_topics) and \
-            cls.has_feedback(action, fmt, ros, result_related_topics) and \
-            cls.has_result(action, fmt, ros, result_related_topics)
+        return cls._has_cancel(action, ros, goal_related_topics) and \
+            cls._has_status(action, ros, result_related_topics) and \
+            cls._has_feedback(action, fmt, ros, result_related_topics) and \
+            cls._has_result(action, fmt, ros, result_related_topics)
 
     @classmethod
-    def has_cancel(cls, action: str, ros: ROS1, topics: Collection[str]) -> bool:
+    def _has_cancel(cls, action: str, ros: ROS1, topics: Collection[str]) -> bool:
         cancel = f"{action}/cancel"
         try:
             return cancel in topics and ros.topic_to_type[cancel] == "actionlib_msgs/GoalID"
@@ -133,7 +132,7 @@ class NodeInfo:
             return False
 
     @classmethod
-    def has_status(cls, action: str, ros: ROS1, topics: Collection[str]) -> bool:
+    def _has_status(cls, action: str, ros: ROS1, topics: Collection[str]) -> bool:
         status = f"{action}/status"
         try:
             return status in topics and ros.topic_to_type[
@@ -143,7 +142,7 @@ class NodeInfo:
             return False
 
     @classmethod
-    def has_feedback(cls, action: str, fmt: str, ros: ROS1, topics: Collection[str]) -> bool:
+    def _has_feedback(cls, action: str, fmt: str, ros: ROS1, topics: Collection[str]) -> bool:
         feedback = f"{action}/feedback"
         try:
             return feedback in topics and ros.topic_to_type[feedback] == f"{fmt}Feedback"
@@ -152,7 +151,7 @@ class NodeInfo:
             return False
 
     @classmethod
-    def has_result(cls, action: str, fmt: str, ros: ROS1, topics: Collection[str]) -> bool:
+    def _has_result(cls, action: str, fmt: str, ros: ROS1, topics: Collection[str]) -> bool:
         result = f"{action}/result"
         try:
             return result in topics and ros.topic_to_type[result] == f"{fmt}Result"
@@ -193,8 +192,8 @@ class NodeInfo:
         )
 
         # Process the action servers and clients, which mutates that publishers and subscribers
-        act_srvrs = self.identify_action_servers()
-        act_clnts = self.identify_action_clients()
+        act_srvrs = self._identify_action_servers(ros)
+        act_clnts = self._identify_action_clients(ros)
 
         for action in act_srvrs:
             nodecontext.action_server(action.name, action.fmt)

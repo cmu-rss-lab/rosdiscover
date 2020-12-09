@@ -4,7 +4,7 @@ __all__ = ('ROS1Observer',)
 import typing
 from typing import Collection, Dict
 
-from roswire import ROS1
+from roswire.common import SystemState
 
 from .nodeinfo import NodeInfo
 from .observer import Observer
@@ -24,7 +24,7 @@ class ROS1Observer(Observer):
         """Observe the state of the running system and produce a summary of the architecture."""
         nodecontexts = []
         with self._app_instance.ros1() as ros:
-            nodes = self._transform_state_to_nodeinfo(ros)
+            nodes = self._transform_state_to_nodeinfo(ros.state)
             for node in nodes:
                 nodecontext = node.make_node_context(ros, self._app_instance)
                 nodecontexts.append(nodecontext)
@@ -50,7 +50,7 @@ class ROS1Observer(Observer):
         node_to_summary = {s.fullname: s for s in summaries}
         return SystemSummary(node_to_summary)
 
-    def _transform_state_to_nodeinfo(self, ros: ROS1) -> Collection[NodeInfo]:
+    def _transform_state_to_nodeinfo(self, info: SystemState) -> Collection[NodeInfo]:
         """
         Produce information about ros keyed by node.
 
@@ -69,13 +69,11 @@ class ROS1Observer(Observer):
             A collection of nodes with publishers and subscribers and services attacbed
         """
         reorganized_nodes: Dict[str, NodeInfo] = dict()
-        info = ros.state
         # Create the node placeholders
-        for node_name in ros.nodes:
+        for node_name in info.nodes:
             if node_name not in _NODES_TO_FILTER_OUT:
                 node: NodeInfo = NodeInfo(
-                    name=node_name[1:] if node_name.startswith('/') else node_name,
-                    ros=ros
+                    name=node_name[1:] if node_name.startswith('/') else node_name
                 )
                 reorganized_nodes[node_name] = node
 
