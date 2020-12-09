@@ -58,11 +58,9 @@ def generate_acme(args) -> None:
 
     if args.acme is None:
         print(acme)
-        if args.check:
-            acme_gen.check_acme()
-    else:
-        if args.check:
-            acme_gen.check_acme()
+
+    if args.check:
+        acme_gen.check_acme()
 
 
 def _observe(args) -> SystemSummary:
@@ -151,14 +149,14 @@ def main() -> None:
                               help='observes a robot running in a container and produces an '
                                    'architecture',
                               formatter_class=MultiLineFormatter)
-    p.add_argument('--container', type=str, help='The container where the ROS system is running')
     p.add_argument('--acme', action='store_true', help='Generate an Acme file instead of the JSON')
     p.add_argument('--output', type=str, help='What file to output')
+    p.add_argument('container', type=str, help='The container where the ROS system is running')
     p.add_argument('config', type=argparse.FileType('r'),
-                   help="""R|A YAML file defining the configuration (only the environment
-                   information will be used).
-                    - indicates stdin.
-                   {Config.__doc__}""")
+                   help='R|A YAML file defining the configuration (only the environment'
+                   'information will be used).'
+                   '- indicates stdin.'
+                   '{Config.__doc__}')
     p.set_defaults(func=observe)
 
     args = parser.parse_args()
