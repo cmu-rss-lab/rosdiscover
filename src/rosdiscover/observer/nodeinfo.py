@@ -30,9 +30,9 @@ class NodeInfo:
     """Class for partial node information."""
     name: str
     ros: ROS1
-    publishers: Set[str] = attr.ib(default=set())
-    subscribers: Set[str] = attr.ib(default=set())
-    provides: Set[str] = attr.ib(default=set())
+    publishers: Set[str] = attr.ib(factory=set)
+    subscribers: Set[str] = attr.ib(factory=set)
+    provides: Set[str] = attr.ib(factory=set)
 
     def identify_action_servers(self) -> Collection[_Action]:
         """Identify the action servers for the node.
