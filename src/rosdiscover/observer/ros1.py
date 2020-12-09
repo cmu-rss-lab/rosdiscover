@@ -10,9 +10,6 @@ from .nodeinfo import NodeInfo
 from .observer import Observer
 from ..interpreter import NodeContext, SystemSummary
 
-if typing.TYPE_CHECKING:
-    pass
-
 _NODES_TO_FILTER_OUT = ('/rosout',)
 _TOPICS_TO_FILTER_OUT = ('/rosout', '/rosout_agg')
 _SERVICES_TO_FILTER_OUT = ('set_logger_level', 'get_loggers')

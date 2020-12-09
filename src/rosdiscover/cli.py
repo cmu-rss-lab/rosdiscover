@@ -149,7 +149,7 @@ def main() -> None:
                               help='observes a robot running in a container and produces an '
                                    'architecture',
                               formatter_class=MultiLineFormatter)
-    p.add_argument('--acme', action='store_true', help='Generate an Acme file instead of the JSON')
+    p.add_argument('--acme', action='store_true', help='Generate an Acme file instead of the YAML')
     p.add_argument('--output', type=str, help='What file to output')
     p.add_argument('container', type=str, help='The container where the ROS system is running')
     p.add_argument('config', type=argparse.FileType('r'),
