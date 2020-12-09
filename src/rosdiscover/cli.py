@@ -68,7 +68,7 @@ def generate_acme(args) -> None:
 def _observe(args) -> SystemSummary:
     config = Config.from_yaml_string(args.config)
     with Observer.for_container(args.container, config) as obs:
-        summary = obs.observe_and_summarise()
+        summary = obs.observe()
     return summary
 
 

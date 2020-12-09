@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
 __all__ = ('ROS1Observer',)
 
-import re
-from typing import Collection, Set, Dict
-
-import attr
 import typing
+from typing import Collection, Dict, Set
+
 from loguru import logger
 from roswire import AppInstance, ROS1
 from roswire.common import SystemState
 
+from .nodeinfo import NodeInfo
 from .observer import Observer
 from ..interpreter import NodeContext, ParameterServer, SystemSummary
 
@@ -20,148 +19,48 @@ _NODES_TO_FILTER_OUT = ('/rosout',)
 _TOPICS_TO_FILTER_OUT = ('/rosout', '/rosout_agg')
 _SERVICES_TO_FILTER_OUT = ('set_logger_level', 'get_loggers')
 
-_GOAL = re.compile(r'(.*)/goal')
-_GOAL_FMT = re.compile(r'(.*)Goal')
-_CANCEL = re.compile(r'(.*)/cancel')
-_STATUS = re.compile(r'(.*)/status')
-_FEEDBACK = re.compile(r'(.*)/feedback')
-_FEEDBACK_FMT = re.compile(r'(.*)Feedback')
-_RESULT = re.compile(r'(.*)/result')
-_RESULT_FMT = re.compile(r'(.*)Result')
-
-
-@attr.s(slots=True, auto_attribs=True)
-class _Action:
-    """Class for action information."""
-    name: str
-    fmt: str
-
-
-@attr.s(slots=True, auto_attribs=True)
-class _Node:
-    """Class for partial node information."""
-    name: str
-    publishers: Set[str] = attr.ib(default=set())
-    subscribers: Set[str] = attr.ib(default=set())
-    provides: Set[str] = attr.ib(default=set())
-
-    @staticmethod
-    def filter_topics_for_action(ros: ROS1, goal_related_topics: Set[str],
-                                 result_related_topics: Set[str]) -> Collection[_Action]:
-        """
-        Filter the topics in :code:`goal_related_topics` and `:code:result_related_topics` to
-        pull out action-related topics.
-
-        Parameters
-        ----------
-        ros: ROS1
-            Information about the state of the ROS system.
-        goal_related_topics: Set[str]
-            The topics where the action goal is meant to be. Servers will subscribe to this,
-            clients will publish.
-        result_related_topics: Set[str]
-            The topics where the action result should be. Servers will publish, clients will
-            subscribe.
-
-        Returns
-        -------
-        A collection of actions that were removed from the topic collections.
-        """
-        actions = []
-        # Copy the topic set containing the goal because we are going to mutate it
-        topic_copy = set(goal_related_topics)
-
-        # Process the nodes for topics that are action related
-        for topic in topic_copy:
-            goal_match = _GOAL.match(topic)
-            if goal_match:  # The topic might be a action goal
-                fmt_match = _GOAL_FMT.match(ros.topic_to_type[topic])
-                if fmt_match:  # The topic is an action goal
-                    # Have the right goal and format matches. Check if other topics are there
-                    action = goal_match.group(1)
-                    fmt = fmt_match.group(1)
-                    if _Node.has_all_action_topics(action, fmt,
-                                                   ros, goal_related_topics, result_related_topics):
-                        # Remove the topics from the right collections and replace as an action
-                        goal_related_topics.remove(f"{action}/goal")
-                        goal_related_topics.remove(f"{action}/cancel")
-                        result_related_topics.remove(f"{action}/status")
-                        result_related_topics.remove(f"{action}/feedback")
-                        result_related_topics.remove(f"{action}/result")
-                        actions.append(_Action(action, fmt))
-        return actions
-
-    @staticmethod
-    def has_all_action_topics(action: str,
-                              fmt: str,
-                              ros: ROS1,
-                              goal_related_topics: Collection[str],
-                              result_related_topics: Collection[str]) -> bool:
-        """Check that the non-goal related topics are in the right collections."""
-        return _Node.has_cancel(action, ros, goal_related_topics) and \
-            _Node.has_status(action, ros, result_related_topics) and \
-            _Node.has_feedback(action, fmt, ros, result_related_topics) and \
-            _Node.has_result(action, fmt, ros, result_related_topics)
-
-    @staticmethod
-    def has_cancel(action: str, ros: ROS1, topics: Collection[str]) -> bool:
-        cancel = f"{action}/cancel"
-        try:
-            return cancel in topics and ros.topic_to_type[cancel] == "actionlib_msgs/GoalID"
-        except KeyError:
-            logger.error(f"Topic {cancel} does not have a type.")
-            return False
-
-    @staticmethod
-    def has_status(action: str, ros: ROS1, topics: Collection[str]) -> bool:
-        status = f"{action}/status"
-        try:
-            return status in topics and ros.topic_to_type[
-                status] == "actionlib_msgs/GoalStatusArray"
-        except KeyError:
-            logger.error(f"Topic {status} does not have a type.")
-            return False
-
-    @staticmethod
-    def has_feedback(action: str, fmt: str, ros: ROS1, topics: Collection[str]) -> bool:
-        feedback = f"{action}/feedback"
-        try:
-            return feedback in topics and ros.topic_to_type[feedback] == f"{fmt}Feedback"
-        except KeyError:
-            logger.error(f"Topic {feedback} does not have a type.")
-            return False
-
-    @staticmethod
-    def has_result(action: str, fmt: str, ros: ROS1, topics: Collection[str]) -> bool:
-        result = f"{action}/result"
-        try:
-            return result in topics and ros.topic_to_type[result] == f"{fmt}Result"
-        except KeyError:
-            logger.error(f"Topic {result} does not have a type.")
-            return False
-
 
 class ROS1Observer(Observer):
 
-    def __init__(self, app: AppInstance, config: 'Config'):
+    def __init__(self, app: AppInstance, config: 'Config') -> None:
         super().__init__(app, config)
 
-    def observe_and_summarise(self) -> SystemSummary:
+    def observe(self) -> SystemSummary:
+        """Observe the state of the running system and produce a summery of the archtiecture."""
+        nodecontexts: Set[NodeContext] = set()
         with self._app_instance.ros1() as ros:
             info = ros.state
             nodes = self._transform_info(info)
             for node in nodes:
                 nodecontext = self._make_node_context(node, ros)
-                self._nodes[nodecontext.name] = nodecontext
-            return self.summarise()
+                nodecontexts.add(nodecontext)
 
-    def _make_node_context(self, node: _Node, ros: ROS1) -> NodeContext:
+        return self._summarise(nodecontexts)
+
+    def _summarise(self, contexts: Collection[NodeContext]) -> SystemSummary:
+        """Produces an immutable description of the system architecture.
+
+        Parameters
+        ----------
+        contexts: Collection[NodeContext]
+            A collection of contexts that are to be summarised.
+
+        Returns
+        -------
+        SystemSummary
+            A summary of the system architecture.
+        """
+        summaries = [node.summarise() for node in contexts]
+        node_to_summary = {s.fullname: s for s in summaries}
+        return SystemSummary(node_to_summary)
+
+    def _make_node_context(self, node: NodeInfo, ros: ROS1) -> NodeContext:
         """
         Construct a NodeContext used in rosdiscover from the processed information from roswire.
 
         Parameters
         ----------
-        node: _Node
+        node: NodeInfo
             The processed node information from roswire
         ros: ROS1
             Information about the state (used for getting types)
@@ -184,8 +83,8 @@ class ROS1Observer(Observer):
         )
 
         # Process the action servers and clients, which mutates that publishers and subscribers
-        act_srvrs = _Node.filter_topics_for_action(ros, node.subscribers, node.publishers)
-        act_clnts = _Node.filter_topics_for_action(ros, node.publishers, node.subscribers)
+        act_srvrs = NodeInfo.filter_topics_for_action(ros, node.subscribers, node.publishers)
+        act_clnts = NodeInfo.filter_topics_for_action(ros, node.publishers, node.subscribers)
 
         for action in act_srvrs:
             nodecontext.action_server(action.name, action.fmt)
@@ -212,7 +111,7 @@ class ROS1Observer(Observer):
 
         return nodecontext
 
-    def _transform_info(self, ros: SystemState) -> Collection[_Node]:
+    def _transform_info(self, ros: SystemState) -> Collection[NodeInfo]:
         """
         Produce information about ros keyed by node.
 
@@ -227,15 +126,15 @@ class ROS1Observer(Observer):
 
         Returns
         -------
-        Collection[_Node]
+        Collection[NodeInfo]
             A collection of nodes with publishers and subscribers and services attacbed
         """
-        reorganized_nodes: Dict[str, _Node] = dict()
+        reorganized_nodes: Dict[str, NodeInfo] = dict()
 
         # Create the node placeholders
         for n in ros.nodes:
             if n not in _NODES_TO_FILTER_OUT:
-                node: _Node = _Node(name=n[1:] if n.startswith('/') else n)
+                node: NodeInfo = NodeInfo(name=n[1:] if n.startswith('/') else n)
                 reorganized_nodes[n] = node
 
         # Add in topics

@@ -6,3 +6,5 @@ The main class within this module is :class:`Observer`, which acts as a mediator
 executing commands to extract the architecture
 """
 from .observer import Observer
+from .ros1 import ROS1Observer
+from .ros2 import ROS2Observer

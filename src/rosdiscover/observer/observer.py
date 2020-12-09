@@ -4,12 +4,12 @@ __all__ = ("Observer",)
 import contextlib
 from abc import ABC, abstractmethod
 import typing
-from typing import Dict, Iterator
+from typing import Iterator
 
 import roswire
 from roswire import AppInstance, ROSVersion
 
-from ..interpreter import NodeContext, SystemSummary
+from ..interpreter import SystemSummary
 
 if typing.TYPE_CHECKING:
     from ..config import Config
@@ -23,7 +23,23 @@ class Observer(ABC):
                       container: str,
                       config: 'Config',
                       ) -> Iterator['Observer']:
-        """Constructs and interpreter for a given running container"""
+        """Constructs and interpreter for a given running container
+
+        Parameters
+        ----------
+        container: str
+            The image id or name of a container running a ROS system
+        config: Config
+            The configuration information that gives information about how to set up the
+            environment.
+
+
+        Returns
+        -------
+        Iterator[Observer]
+            An observer that is appropriate for the kind of ROS system that is running in the
+            container.
+        """
         rsw = roswire.ROSWire()
         app = rsw.app(config.image, config.sources)
         instance = app.attach(container, require_description=True)
@@ -35,17 +51,17 @@ class Observer(ABC):
             yield ROS2Observer(instance, config)
 
     @abstractmethod
-    def __init__(self, app: AppInstance, config: 'Config'):
+    def __init__(self, app: AppInstance, config: 'Config') -> None:
         self._app_instance = app
         self._config = config
-        self._nodes: Dict[str, NodeContext] = {}
-
-    def summarise(self):
-        """Produces an immutable description of the system architecture."""
-        node_summaries = [node.summarise() for node in self._nodes.values()]
-        node_to_summary = {s.fullname: s for s in node_summaries}
-        return SystemSummary(node_to_summary)
 
     @abstractmethod
-    def observe_and_summarise(self):
+    def observe(self) -> SystemSummary:
+        """Dynamically observe the system and produce a summary of the architecture.
+
+        Returns
+        -------
+        SystemSummmary
+            An immutable representation of the system architecture.
+        """
         ...
