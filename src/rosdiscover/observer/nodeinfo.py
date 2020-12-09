@@ -4,7 +4,9 @@ from typing import Collection, Set
 
 import attr
 from loguru import logger
-from roswire import ROS1
+from roswire import AppInstance, ROS1
+
+from rosdiscover.interpreter import NodeContext, ParameterServer
 
 _GOAL = re.compile(r'(.*)/goal')
 _GOAL_FMT = re.compile(r'(.*)Goal')
@@ -27,13 +29,43 @@ class _Action:
 class NodeInfo:
     """Class for partial node information."""
     name: str
+    ros: ROS1
     publishers: Set[str] = attr.ib(default=set())
     subscribers: Set[str] = attr.ib(default=set())
     provides: Set[str] = attr.ib(default=set())
 
+    def identify_action_servers(self) -> Collection[_Action]:
+        """Identify the action servers for the node.
+
+        Looks in the set of publishers for topics related to results, feedback, status and in the
+        set of subscribers for cancel, goal. If these exist, then create an action server and
+        remove the topics from the node.
+
+        Returns
+        -------
+        Collection[_Action]
+            A collection of information about each action server
+        """
+        return NodeInfo.filter_topics_for_action(self.ros, self.subscribers, self.publishers)
+
+    def identify_action_clients(self) -> Collection[_Action]:
+        """Identify the action clients for the node.
+
+        Looks in the set of subscribers for topics related to results, feedback, status and in the
+        set of publishers for cancel, goal. If these exist, then create an action client and
+        remove the topics from the node.
+
+        Returns
+        -------
+        Collection[_Action]
+            A collection of information about each action client
+        """
+        return NodeInfo.filter_topics_for_action(self.ros, self.publishers, self.subscribers)
+
     @classmethod
     def filter_topics_for_action(cls,
-                                 ros: ROS1, goal_related_topics: Set[str],
+                                 ros: ROS1,
+                                 goal_related_topics: Set[str],
                                  result_related_topics: Set[str]) -> Collection[_Action]:
         """
         Filter the topics in :code:`goal_related_topics` and `:code:result_related_topics` to
@@ -127,3 +159,67 @@ class NodeInfo:
         except KeyError:
             logger.error(f"Topic {result} does not have a type.")
             return False
+
+    def make_node_context(self, ros: ROS1, app_instance: AppInstance) -> NodeContext:
+        """
+        Construct a NodeContext used in rosdiscover from the processed information from roswire.
+        NodeContext is required by rosdiscover to produce the system summary.
+        See Also :class:`rosdiscover.interpreter.context.NodeContext`
+
+        Parameters
+        ----------
+        node: NodeInfo
+            The processed node information from roswire
+        ros: ROS1
+            Information about the state (used for getting types)
+        app_instance: AppInstance
+            The instance the context will be associated with
+
+        Returns
+        -------
+            A NodeContext
+        """
+        nodecontext = NodeContext(
+            name=self.name,
+            namespace="",
+            kind="",
+            package="unknown",
+            args="unknown",
+            remappings={},
+            launch_filename="unknown",
+            app=app_instance,
+            files=app_instance.files,
+            params=ParameterServer()
+        )
+
+        # Process the action servers and clients, which mutates that publishers and subscribers
+        act_srvrs = self.identify_action_servers()
+        act_clnts = self.identify_action_clients()
+
+        for action in act_srvrs:
+            nodecontext.action_server(action.name, action.fmt)
+
+        for action in act_clnts:
+            nodecontext.action_client(action.name, action.fmt)
+
+        # Process the topics
+        for topic in self.publishers:
+            try:
+                nodecontext.pub(topic, ros.topic_to_type[topic])
+            except KeyError:
+                logger.error(f"Topic {topic} does not have a type.")
+
+        for topic in self.subscribers:
+            try:
+                nodecontext.sub(topic, ros.topic_to_type[topic])
+            except KeyError:
+                logger.error(f"Topic {topic} does not have a type.")
+
+        # Process the service information. Note, ROS1 state has no knowledge of clients
+        for service in self.provides:
+            nodecontext.provide(service, ros.services[service].format.fullname)
+
+        return nodecontext
+
+    def to_string(self):
+        return f"name: {self.name}, publishers={self.publishers}, services={self.provides}"

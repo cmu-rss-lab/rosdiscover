@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 __all__ = ("Observer",)
 
-import contextlib
 from abc import ABC, abstractmethod
 import typing
-from typing import Iterator
 
 import roswire
 from roswire import AppInstance, ROSVersion
@@ -18,25 +16,22 @@ if typing.TYPE_CHECKING:
 class Observer(ABC):
 
     @classmethod
-    @contextlib.contextmanager
     def for_container(cls,
                       container: str,
                       config: 'Config',
-                      ) -> Iterator['Observer']:
-        """Constructs and interpreter for a given running container
+                      ) -> 'Observer':
+        """Constructs an Observer for a given running container.
 
         Parameters
         ----------
         container: str
-            The image id or name of a container running a ROS system
+            The image id or name of a container running a ROS system.
         config: Config
-            The configuration information that gives information about how to set up the
-            environment.
-
+            A description of the configuration used by the running container.
 
         Returns
         -------
-        Iterator[Observer]
+        Observer
             An observer that is appropriate for the kind of ROS system that is running in the
             container.
         """
@@ -45,12 +40,11 @@ class Observer(ABC):
         instance = app.attach(container, require_description=True)
         if app.description.distribution.ros == ROSVersion.ROS1:
             from .ros1 import ROS1Observer
-            yield ROS1Observer(instance, config)
+            return ROS1Observer(instance, config)
         else:
             from .ros2 import ROS2Observer
-            yield ROS2Observer(instance, config)
+            return ROS2Observer(instance, config)
 
-    @abstractmethod
     def __init__(self, app: AppInstance, config: 'Config') -> None:
         self._app_instance = app
         self._config = config

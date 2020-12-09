@@ -2,18 +2,16 @@
 __all__ = ('ROS1Observer',)
 
 import typing
-from typing import Collection, Dict, Set
+from typing import Collection, Dict
 
-from loguru import logger
-from roswire import AppInstance, ROS1
-from roswire.common import SystemState
+from roswire import ROS1
 
 from .nodeinfo import NodeInfo
 from .observer import Observer
-from ..interpreter import NodeContext, ParameterServer, SystemSummary
+from ..interpreter import NodeContext, SystemSummary
 
 if typing.TYPE_CHECKING:
-    from ..config import Config
+    pass
 
 _NODES_TO_FILTER_OUT = ('/rosout',)
 _TOPICS_TO_FILTER_OUT = ('/rosout', '/rosout_agg')
@@ -22,23 +20,21 @@ _SERVICES_TO_FILTER_OUT = ('set_logger_level', 'get_loggers')
 
 class ROS1Observer(Observer):
 
-    def __init__(self, app: AppInstance, config: 'Config') -> None:
-        super().__init__(app, config)
-
     def observe(self) -> SystemSummary:
-        """Observe the state of the running system and produce a summery of the archtiecture."""
-        nodecontexts: Set[NodeContext] = set()
+        """Observe the state of the running system and produce a summary of the architecture."""
+        nodecontexts = []
         with self._app_instance.ros1() as ros:
-            info = ros.state
-            nodes = self._transform_info(info)
+            nodes = self._transform_state_to_nodeinfo(ros)
             for node in nodes:
-                nodecontext = self._make_node_context(node, ros)
-                nodecontexts.add(nodecontext)
+                nodecontext = node.make_node_context(ros, self._app_instance)
+                nodecontexts.append(nodecontext)
 
         return self._summarise(nodecontexts)
 
     def _summarise(self, contexts: Collection[NodeContext]) -> SystemSummary:
-        """Produces an immutable description of the system architecture.
+        """
+        Produce an immutable description of the system architecture from the collection of
+        NodeContexts.
 
         Parameters
         ----------
@@ -54,64 +50,7 @@ class ROS1Observer(Observer):
         node_to_summary = {s.fullname: s for s in summaries}
         return SystemSummary(node_to_summary)
 
-    def _make_node_context(self, node: NodeInfo, ros: ROS1) -> NodeContext:
-        """
-        Construct a NodeContext used in rosdiscover from the processed information from roswire.
-
-        Parameters
-        ----------
-        node: NodeInfo
-            The processed node information from roswire
-        ros: ROS1
-            Information about the state (used for getting types)
-
-        Returns
-        -------
-            A NodeContext
-        """
-        nodecontext = NodeContext(
-            name=node.name,
-            namespace="",
-            kind="",
-            package="unknown",
-            args="unknown",
-            remappings={},
-            launch_filename="unknown",
-            app=self._app_instance,
-            files=self._app_instance.files,
-            params=ParameterServer()
-        )
-
-        # Process the action servers and clients, which mutates that publishers and subscribers
-        act_srvrs = NodeInfo.filter_topics_for_action(ros, node.subscribers, node.publishers)
-        act_clnts = NodeInfo.filter_topics_for_action(ros, node.publishers, node.subscribers)
-
-        for action in act_srvrs:
-            nodecontext.action_server(action.name, action.fmt)
-
-        for action in act_clnts:
-            nodecontext.action_client(action.name, action.fmt)
-
-        # Process the topics
-        for t in node.publishers:
-            try:
-                nodecontext.pub(t, ros.topic_to_type[t])
-            except KeyError:
-                logger.error(f"Topic {t} does not have a type.")
-
-        for t in node.subscribers:
-            try:
-                nodecontext.sub(t, ros.topic_to_type[t])
-            except KeyError:
-                logger.error(f"Topic {t} does not have a type.")
-
-        # Process the service information. Note, ROS1 state has no knowledge of clients
-        for s in node.provides:
-            nodecontext.provide(t, ros.services[s].format.fullname)
-
-        return nodecontext
-
-    def _transform_info(self, ros: SystemState) -> Collection[NodeInfo]:
+    def _transform_state_to_nodeinfo(self, ros: ROS1) -> Collection[NodeInfo]:
         """
         Produce information about ros keyed by node.
 
@@ -130,31 +69,36 @@ class ROS1Observer(Observer):
             A collection of nodes with publishers and subscribers and services attacbed
         """
         reorganized_nodes: Dict[str, NodeInfo] = dict()
-
+        info = ros.state
         # Create the node placeholders
-        for n in ros.nodes:
-            if n not in _NODES_TO_FILTER_OUT:
-                node: NodeInfo = NodeInfo(name=n[1:] if n.startswith('/') else n)
-                reorganized_nodes[n] = node
+        for node_name in ros.nodes:
+            if node_name not in _NODES_TO_FILTER_OUT:
+                node: NodeInfo = NodeInfo(
+                    name=node_name[1:] if node_name.startswith('/') else node_name,
+                    ros=ros
+                )
+                reorganized_nodes[node_name] = node
 
         # Add in topics
-        for topic, nodes in ros.publishers.items():
+        for topic in info.publishers:
             if topic not in _TOPICS_TO_FILTER_OUT:
-                for n in nodes:
-                    if n in reorganized_nodes:
-                        reorganized_nodes[n].publishers.add(topic)
+                for node_name in info.publishers[topic]:
+                    if node_name in reorganized_nodes:
+                        reorganized_nodes[node_name].publishers.add(topic)
 
-        for topic, nodes in ros.subscribers.items():
+        for topic in info.subscribers:
             if topic not in _TOPICS_TO_FILTER_OUT:
-                for n in nodes:
-                    if n in reorganized_nodes:
-                        reorganized_nodes[n].subscribers.add(topic)
+                for node_name in info.subscribers[topic]:
+                    if node_name in reorganized_nodes:
+                        reorganized_nodes[node_name].subscribers.add(topic)
 
         # Add in services
-        for service, nodes in ros.services.items():
+        for service in info.services:
             if service.split('/')[-1] not in _SERVICES_TO_FILTER_OUT:
-                for n in nodes:
-                    if n in reorganized_nodes:
-                        reorganized_nodes[n].provides.add(service)
+                for node_name in info.services[service]:
+                    if node_name in reorganized_nodes:
+                        reorganized_nodes[node_name].provides.add(service)
 
-        return reorganized_nodes.values()
+        for node in reorganized_nodes.values():
+            print(f"----------> {node.to_string()}")
+        return list(reorganized_nodes.values())
