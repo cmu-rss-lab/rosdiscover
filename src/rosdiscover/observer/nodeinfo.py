@@ -220,6 +220,3 @@ class NodeInfo:
             nodecontext.provide(service, ros.services[service].format.fullname)
 
         return nodecontext
-
-    def to_string(self):
-        return f"name: {self.name}, publishers={self.publishers}, services={self.provides}"

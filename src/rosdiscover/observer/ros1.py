@@ -99,6 +99,4 @@ class ROS1Observer(Observer):
                     if node_name in reorganized_nodes:
                         reorganized_nodes[node_name].provides.add(service)
 
-        for node in reorganized_nodes.values():
-            print(f"----------> {node.to_string()}")
         return list(reorganized_nodes.values())
