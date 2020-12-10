@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 __all__ = ('ROS1Observer',)
 
-import typing
 from typing import Collection, Dict
 
 from roswire.common import SystemState
