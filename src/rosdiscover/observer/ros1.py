@@ -47,7 +47,7 @@ class ROS1Observer(Observer):
         node_to_summary = {s.fullname: s for s in summaries}
         return SystemSummary(node_to_summary)
 
-    def _transform_state_to_nodeinfo(self, info: SystemState) -> Collection[NodeInfo]:
+    def _transform_state_to_nodeinfo(self, state: SystemState) -> Collection[NodeInfo]:
         """
         Produce information about ros keyed by node.
 
@@ -67,7 +67,7 @@ class ROS1Observer(Observer):
         """
         reorganized_nodes: Dict[str, NodeInfo] = dict()
         # Create the node placeholders
-        for node_name in info.nodes:
+        for node_name in state.nodes:
             if node_name not in _NODES_TO_FILTER_OUT:
                 node: NodeInfo = NodeInfo(
                     name=node_name[1:] if node_name.startswith('/') else node_name
@@ -75,22 +75,22 @@ class ROS1Observer(Observer):
                 reorganized_nodes[node_name] = node
 
         # Add in topics
-        for topic in info.publishers:
+        for topic in state.publishers:
             if topic not in _TOPICS_TO_FILTER_OUT:
-                for node_name in info.publishers[topic]:
+                for node_name in state.publishers[topic]:
                     if node_name in reorganized_nodes:
                         reorganized_nodes[node_name].publishers.add(topic)
 
-        for topic in info.subscribers:
+        for topic in state.subscribers:
             if topic not in _TOPICS_TO_FILTER_OUT:
-                for node_name in info.subscribers[topic]:
+                for node_name in state.subscribers[topic]:
                     if node_name in reorganized_nodes:
                         reorganized_nodes[node_name].subscribers.add(topic)
 
         # Add in services
-        for service in info.services:
+        for service in state.services:
             if service.split('/')[-1] not in _SERVICES_TO_FILTER_OUT:
-                for node_name in info.services[service]:
+                for node_name in state.services[service]:
                     if node_name in reorganized_nodes:
                         reorganized_nodes[node_name].provides.add(service)
 
