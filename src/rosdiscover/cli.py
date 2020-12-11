@@ -11,6 +11,7 @@ import pkg_resources
 from .acme import AcmeGenerator
 from .config import Config
 from .interpreter import Interpreter, SystemSummary
+from .observer import Observer
 
 DESC = 'discovery of ROS architectures'
 CONFIG_HELP = """R|A YAML file defining the configuration.
@@ -45,7 +46,7 @@ def launch(args) -> None:
         print(yaml.dump(output, default_flow_style=False))
 
 
-def generate_acme(args):
+def generate_acme(args) -> None:
     """Generates an Acme description for a given roslaunch command."""
     summary = _launch_config(args)
     node_summaries = summary.values()
@@ -57,11 +58,26 @@ def generate_acme(args):
 
     if args.acme is None:
         print(acme)
-        if args.check:
-            acme_gen.check_acme(acme)
+
+    if args.check:
+        acme_gen.check_acme()
+
+
+def _observe(args) -> SystemSummary:
+    config = Config.from_yaml_string(args.config)
+    obs = Observer.for_container(args.container, config)
+    summary = obs.observe()
+    return summary
+
+
+def observe(args) -> None:
+    summary = _observe(args)
+    output = summary.to_dict()
+    if args.output:
+        with open(args.output, 'w') as f:
+            yaml.dump(output, f, default_flow_style=False)
     else:
-        if args.check:
-            acme_gen.check_acme()
+        print(yaml.dump(output, default_flow_style=False))
 
 
 def rostopic_list(args) -> None:
@@ -128,6 +144,20 @@ def main() -> None:
 
     p.add_argument('config', type=argparse.FileType('r'), help=CONFIG_HELP)
     p.set_defaults(func=generate_acme)
+
+    p = subparsers.add_parser('observe',
+                              help='observes a robot running in a container and produces an '
+                                   'architecture',
+                              formatter_class=MultiLineFormatter)
+    p.add_argument('--acme', action='store_true', help='Generate an Acme file instead of the YAML')
+    p.add_argument('--output', type=str, help='What file to output')
+    p.add_argument('container', type=str, help='The container where the ROS system is running')
+    p.add_argument('config', type=argparse.FileType('r'),
+                   help='R|A YAML file defining the configuration (only the environment'
+                   'information will be used).'
+                   '- indicates stdin.'
+                   '{Config.__doc__}')
+    p.set_defaults(func=observe)
 
     args = parser.parse_args()
     if 'func' in args:
