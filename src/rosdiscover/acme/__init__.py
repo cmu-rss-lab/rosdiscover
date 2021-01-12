@@ -81,7 +81,7 @@ PROVIDER_PORT = """     port {port_name} : ServiceProviderPortT = new ServicePro
     """
 REQUIRER_PORT = """     port {port_name} : ServiceClientPortT = new ServiceClientPortT extended with {{
         property svc_type : string = "{svc_type}";
-        property persistency : boolean = {persistence}
+        property persistency : boolean = {persistence};
     }};
     """
 ACTION_CLIENT_PORT = """    port {port_name} : ActionClientPortT = new ActionClientPortT extended with {{
@@ -361,13 +361,13 @@ class AcmeGenerator:
                     role = ACTION_CLIENT_ROLE.format(role_name=rname)
                     roles.append(role)
                     attachments.append(
-                        SERVICE_ATTACHMENT.format(qualified_port=c, conn=cname, role=rname))
+                        SERVICE_ATTACHMENT.format(qualified_port=cname, conn=cname, role=rname))
                 for s in action_conns[a]['servers']:
                     rname = AcmeGenerator.to_acme_name(s)
                     role = ACTION_SERVER_ROLE.format(role_name=rname)
                     roles.append(role)
                     attachments.append(
-                        SERVICE_ATTACHMENT.format(qualified_port=c, conn=cname, role=rname))
+                        SERVICE_ATTACHMENT.format(qualified_port=cname, conn=cname, role=rname))
                 connector_strs.append(
                     ACTION_CONNECTOR.format(conn_name=cname, roles="\n".join(roles)))
         acme = acme + "\n".join(connector_strs)
@@ -375,14 +375,12 @@ class AcmeGenerator:
         self.generate_acme_file(acme)
         return acme
 
-
     @staticmethod
     def check_acme_file(filename: str) -> Tuple[bytes, bytes]:
         process = subprocess.Popen(list(['java', '-jar', 'lib/acme.standalone-ros.jar', filename]))
         (output, err) = process.communicate()
         process.wait()
         return output, err
-
 
     def check_acme_string(self, acme: str) -> Tuple[bytes, bytes]:
         f, filename = tempfile.mkstemp()
@@ -394,17 +392,14 @@ class AcmeGenerator:
         finally:
             os.unlink(filename)
 
-
     def generate_acme_file(self, acme: str):
         if self.__acme_file is not None:
             logger.info(f"Writing Acme to {self.__acme_file}")
             with open(self.__acme_file, 'w') as f:
                 f.write(acme)
 
-
     def check_acme(self):
         self._check_acme(self.__acme_file)
-
 
     def _check_acme(self, acme_file: str):
         (_, jf) = tempfile.mkstemp(suffix=".json")
