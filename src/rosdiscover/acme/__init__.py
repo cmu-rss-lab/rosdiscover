@@ -50,11 +50,11 @@ SUBSCRIBER_ROLE = """    role {role_name} : ROSTopicSubscriberRoleT = new ROSTop
     """
 ADVERTISER_ROLE = """     role {role_name} : ROSTopicAdvertiserRoleT = new ROSTopicAdvertiserRoleT;
     """
-PROVIDER_ROLE = """     role {role_name} : ROSServiceCallRoleT = new ROSServiceCallRoleT;
+PROVIDER_ROLE = """     role {role_name} : ROSServiceResponderRoleT = new ROSServiceResponderRoleT;
     """
-CLIENT_ROLE = """       role {role_name} : ROSServiceProviderRoleT = new ROSServiceProviderRoleT;
+CLIENT_ROLE = """       role {role_name} : ROSServiceCallerRoleT = new ROSServiceCallerRoleT;
     """
-ACTION_CLIENT_ROLE = """      role {role_name} : ROSActionCallerRoleT = new ROSActionCallRoleT;
+ACTION_CLIENT_ROLE = """      role {role_name} : ROSActionCallerRoleT = new ROSActionCallerRoleT;
     """
 ACTION_SERVER_ROLE = """      role {role_name} : ROSActionResponderRoleT = new ROSActionResponderRoleT;
     """
@@ -214,7 +214,7 @@ class AcmeGenerator:
 
     @staticmethod
     def to_acme_name(name: str) -> str:
-        return name.replace("/", "_")
+        return name.replace("/", "_").replace('.', "_")
 
     def generate_acme(self) -> str:
         components, topics, services, actions = \
@@ -311,11 +311,11 @@ class AcmeGenerator:
             if len(topics[t]["pubs"]) + len(topics[t]["subs"]) > 1:
                 roles = []
                 for p in topics[t]["pubs"]:
-                    rname = f"{p}_pub"
+                    rname = f"{AcmeGenerator.to_acme_name(p)}_pub"
                     role = ADVERTISER_ROLE.format(role_name=rname)
                     roles.append(role)
                 for s in topics[t]["subs"]:
-                    rname = f"{s}_sub"
+                    rname = f"{AcmeGenerator.to_acme_name(s)}_sub"
                     role = SUBSCRIBER_ROLE.format(role_name=rname)
                     roles.append(role)
                 cname = AcmeGenerator.to_acme_name(topics[t]["details"]['name']) + "_conn"
@@ -361,13 +361,13 @@ class AcmeGenerator:
                     role = ACTION_CLIENT_ROLE.format(role_name=rname)
                     roles.append(role)
                     attachments.append(
-                        SERVICE_ATTACHMENT.format(qualified_port=cname, conn=cname, role=rname))
+                        SERVICE_ATTACHMENT.format(qualified_port=cl, conn=cname, role=rname))
                 for s in action_conns[a]['servers']:
                     rname = AcmeGenerator.to_acme_name(s)
                     role = ACTION_SERVER_ROLE.format(role_name=rname)
                     roles.append(role)
                     attachments.append(
-                        SERVICE_ATTACHMENT.format(qualified_port=cname, conn=cname, role=rname))
+                        SERVICE_ATTACHMENT.format(qualified_port=s, conn=cname, role=rname))
                 connector_strs.append(
                     ACTION_CONNECTOR.format(conn_name=cname, roles="\n".join(roles)))
         acme = acme + "\n".join(connector_strs)
