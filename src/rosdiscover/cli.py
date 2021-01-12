@@ -61,7 +61,13 @@ def launch(args) -> None:
 
 def generate_acme(args) -> None:
     """Generates an Acme description for a given roslaunch command."""
-    summary = _launch_config(args)
+    summary: SystemSummary
+    if args.from_yml:
+        arr = yaml.load(args.from_yml, Loader=yaml.SafeLoader)
+        assert isinstance(arr, list)
+        summary = SystemSummary.from_dict(arr)
+    else:
+        summary = _launch_config(args)
     node_summaries = summary.values()
 
     acme_gen = AcmeGenerator(node_summaries, args.acme, args.jar)
@@ -164,8 +170,14 @@ def main() -> None:
     p = subparsers.add_parser('acme',
                               help='generates Acme from a source file',
                               formatter_class=MultiLineFormatter)
-    p.add_argument("--acme", type=str, default="generated.acme", help='Output to the named Acme file')
-
+    p.add_argument("--acme",
+                   type=str,
+                   default="generated.acme",
+                   help='Output to the named Acme file')
+    p.add_argument("--from-yml",
+                   type=argparse.FileType('r'),
+                   help=("A YML file (in the format produced by the 'launch' default command) "
+                         "from which to derive the architecture"))
     p.add_argument("--check", "-c", action='store_true')
     p.add_argument("--jar", type=str, help='Pointer to the Acme jar file', default=acme_jar_path)
 
