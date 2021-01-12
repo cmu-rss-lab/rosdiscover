@@ -70,7 +70,11 @@ def generate_acme(args) -> None:
         summary = _launch_config(args)
     node_summaries = summary.values()
 
-    acme_gen = AcmeGenerator(node_summaries, args.acme, args.jar)
+    to_ignore = []
+    if args.ignore_list:
+        to_ignore = [line.rstrip() for line in args.ignore_list]
+
+    acme_gen = AcmeGenerator(node_summaries, args.acme, args.jar, things_to_ignore=to_ignore)
     acme = acme_gen.generate_acme()
 
     acme_gen.generate_acme_file(acme)
@@ -178,6 +182,9 @@ def main() -> None:
                    type=argparse.FileType('r'),
                    help=("A YML file (in the format produced by the 'launch' default command) "
                          "from which to derive the architecture"))
+    p.add_argument('--ignore-list',
+                   type=argparse.FileType('r'),
+                   help="A file containing a list of topics, services, actions to ignore.")
     p.add_argument("--check", "-c", action='store_true')
     p.add_argument("--jar", type=str, help='Pointer to the Acme jar file', default=acme_jar_path)
 

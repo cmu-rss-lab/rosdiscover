@@ -5,12 +5,12 @@ from a launch file.
 
 The main class provided by this module is :class:`AcmeGenerator`
 """
-from typing import Dict, Iterable, Optional, Tuple, List, Sequence
+import json
 import os
 import subprocess
-from subprocess import PIPE
-import json
 import tempfile
+from subprocess import PIPE
+from typing import Collection, Dict, Iterable, List, Optional, Sequence, Tuple
 
 from loguru import logger
 
@@ -124,12 +124,14 @@ class AcmeGenerator:
     def __init__(self,
                  nodes: Iterable[NodeSummary],
                  acme_file: str,
-                 jar: Optional[str]
+                 jar: Optional[str],
+                 things_to_ignore: Optional[Collection[str]],
                  ) -> None:
         self.__nodes: Sequence[NodeSummary] = list(nodes)
         self.__acme_file = acme_file
         self.__generate_dangling_connectors = False
         self.__acme_jar = jar if jar is not None else 'lib/acme.standalone-ros.jar'
+        self.__to_ignore = things_to_ignore if things_to_ignore is not None else []
 
     def get_components_and_connectors(self) \
             -> Tuple[List[NodeSummary], Dict[str, dict], Dict[str, dict], Dict[str, dict]]:
@@ -139,62 +141,76 @@ class AcmeGenerator:
         actions: Dict[str, dict] = {}
 
         for node in self.__nodes:
-            for pub in [t for t in node.pubs if not t.implicit]:
-                topic = {}
+            for pub in [t for t in node.pubs if
+                        not t.implicit and not self._ignore(t.name)]:
                 if pub.name in topics:
                     topic = topics[pub.name]
                 else:
-                    topic = {'details': {'name': pub.name, 'format': pub.format}, "pubs": [], "subs": []}
+                    topic = {'details': {'name': pub.name, 'format': pub.format}, "pubs": [],
+                             "subs": []}
                     topics[pub.name] = topic
                 topic["pubs"].append(node.name)
-            for sub in [t for t in node.subs if not t.implicit]:
-                topic = {}
+            for sub in [t for t in node.subs if
+                        not t.implicit and t.name not in self.__to_ignore]:
                 if sub.name in topics:
                     topic = topics[sub.name]
                 else:
-                    topic = {'details': {'name': sub.name, 'format': sub.format}, "pubs": [], "subs": []}
+                    topic = {'details': {'name': sub.name, 'format': sub.format}, "pubs": [],
+                             "subs": []}
                     topics[sub.name] = topic
                 topic["subs"].append(node.name)
-            for service_object in node.provides:
+            for service_object in [s for s in node.provides if not self._ignore(s.name)]:
                 service_name = service_object.name
                 service_type = service_object.format
-                service = {}
                 if service_name in services:
                     service = services[service_name]
                 else:
-                    service = {'details': {'name': service_name, 'format': service_type}, "provs": [], "reqs": []}
+                    service = {'details': {'name': service_name, 'format': service_type},
+                               "provs": [], "reqs": []}
                     services[service_name] = service
                 service["provs"].append(node.name)
-            # for call in node()['requires']:
-            #     service={}
-            #     if call["name"] in services:
-            #         service = services[call["name"]]
-            #     else:
-            #         service = {'details' : call, "provs": [], "reqs" : []}
-            #         services[call["name"]] = service
-            #     service["reqs"].append(node()["name"])
-            for action_object in node.action_servers:
+            for call in [s for s in node.uses if not self._ignore(s.name)]:
+                if call.name in services:
+                    service = services[call.name]
+                else:
+                    service = {'details': call, "provs": [], "reqs": []}
+                    services[call.name] = service
+                service["reqs"].append(node.name)
+            for action_object in [a for a in node.action_servers if
+                                  not self._ignore(a.name)]:
                 action_name = action_object.name
                 action_type = action_object.format
-                action = {}
                 if action_name in actions:
                     action = actions[action_name]
                 else:
-                    action = {'details': {'name': action_name, 'type': action_type}, "servers": [], "clients": []}
+                    action = {'details': {'name': action_name, 'type': action_type}, "servers": [],
+                              "clients": []}
                     actions[action_name] = action
                 action["servers"].append(node.name)
-            for action_object in node.action_clients:
+            for action_object in [a for a in node.action_clients if
+                                  not self._ignore(a.name)]:
                 action_name = action_object.name
                 action_type = action_object.format
-                action = {}
                 if action_name in actions:
                     action = actions[action_name]
                 else:
-                    action = {'details': {'name': action_name, 'format': action_type}, "servers": [], "clients": []}
+                    action = {'details': {'name': action_name, 'format': action_type},
+                              "servers": [], "clients": []}
                     actions[action_name] = action
                 action["clients"].append(node.name)
             components.append(node)
         return components, topics, services, actions
+
+    def _ignore(self, name: str) -> bool:
+        ignore: bool = False
+        for i in self.__to_ignore:
+            if i.startswith('*') and name.endswith(i[1:]):
+                ignore = True
+                break
+            elif i == name:
+                ignore = True
+                break
+        return ignore
 
     @staticmethod
     def to_acme_name(name: str) -> str:
@@ -204,7 +220,8 @@ class AcmeGenerator:
         components, topics, services, actions = \
             self.get_components_and_connectors()
 
-        system_name = "RobotSystem" if self.__acme_file is None else '_'.join(self.__acme_file.split(".")[:-1])
+        system_name = "RobotSystem" if self.__acme_file is None else '_'.join(
+            self.__acme_file.split(".")[:-1])
         # system_name = os.path.basename(os.path.normpath(self.__launch_files)).split('.')[0]
 
         acme = f"import families/ROSFam.acme;\nsystem {system_name} : ROSFam = new ROSFam extended with {{\n"
@@ -217,7 +234,7 @@ class AcmeGenerator:
             ports = []
             comp_name = self.to_acme_name(c.name)
 
-            for pub in [t for t in c.pubs if not t.implicit]:
+            for pub in [t for t in c.pubs if not t.implicit and not self._ignore(t.name)]:
                 if pub.name not in attachments_to_topic:
                     attachments_to_topic[pub.name] = []
                 pname = f'{self.to_acme_name(pub.name)}_pub'
@@ -228,7 +245,7 @@ class AcmeGenerator:
                                       port=pname,
                                       conn=f"{AcmeGenerator.to_acme_name(pub.name)}_conn",
                                       role=f"{comp_name}_pub"))
-            for sub in [t for t in c.subs if not t.implicit]:
+            for sub in [t for t in c.subs if not t.implicit and not self._ignore(t.name)]:
                 if sub.name not in attachments_to_topic:
                     attachments_to_topic[sub.name] = []
                 pname = f"{AcmeGenerator.to_acme_name(sub.name)}_sub"
@@ -239,21 +256,25 @@ class AcmeGenerator:
                                       port=pname,
                                       conn=f"{self.to_acme_name(sub.name)}_conn",
                                       role=f"{comp_name}_sub"))
-            for service in c.provides:
+            for service in [s for s in c.provides if not self._ignore(s.name)]:
                 name = service.name
                 fmt = service.format
                 pname = f"{AcmeGenerator.to_acme_name(name)}_svc"
                 port = PROVIDER_PORT.format(port_name=pname, svc_type=fmt, service=name)
                 ports.append(port)
                 update_service_conn(service_conns, name, f"{comp_name}.{pname}", True)
-            # Left here for when we do calls
-            # for s in c['calls']:
-            #     pname=self.to_acme_name(s['name']) + "_call"
-            #     port = REQUIRER_PORT.format(port_name=pname, svc_type=s['format'], service=s['name'])
-            #     ports.append(port)
-            #     self.update_service_conn(service_conns,s['name'], "%s.%s" %(comp_name, pname), False)
 
-            for action in c.action_servers:
+            for s in [s for s in c.uses if not self._ignore(s.name)]:
+                service_name = s.name
+                pname = self.to_acme_name(service_name) + "_call"
+                fmt = s.format
+                port = REQUIRER_PORT.format(port_name=pname, svc_type=fmt,
+                                            service=service_name, persistence="false")
+                ports.append(port)
+                update_service_conn(service_conns, service_name, "%s.%s" % (comp_name, pname),
+                                    False)
+
+            for action in [a for a in c.action_servers if not self._ignore(a.name)]:
                 name = action.name
                 fmt = action.format
                 pname = f"{AcmeGenerator.to_acme_name(name)}_srvr"
@@ -265,7 +286,7 @@ class AcmeGenerator:
                                    f"{comp_name}.{pname}",
                                    True)
 
-            for action in c.action_clients:
+            for action in [a for a in c.action_clients if not self._ignore(a.name)]:
                 name = action.name
                 fmt = action.format
                 pname = f"{AcmeGenerator.to_acme_name(name)}_cli"
@@ -282,6 +303,7 @@ class AcmeGenerator:
                                              node_name=c.name,
                                              filename=c.filename)
             component_strs.append(comp)
+
         acme = acme + "\n".join(component_strs)
 
         connector_strs = []
@@ -308,22 +330,25 @@ class AcmeGenerator:
         for s in service_conns.keys():
             # Only create a connector for services that are connected
             if self.__generate_dangling_connectors or (
-                    len(service_conns[s]['providers']) != 0 and len(service_conns[s]['callers']) != 0):
+                    len(service_conns[s]['providers']) != 0 and len(
+                service_conns[s]['callers']) != 0):
                 roles = []
                 cname = f"{AcmeGenerator.to_acme_name(s)}_conn"
                 for p in service_conns[s]['providers']:
                     rname = AcmeGenerator.to_acme_name(p)
                     role = PROVIDER_ROLE.format(role_name=rname)
                     roles.append(role)
-                    attachments.append(SERVICE_ATTACHMENT.format(qualitifed_port=p, conn=cname, role=rname))
+                    attachments.append(
+                        SERVICE_ATTACHMENT.format(qualified_port=p, conn=cname, role=rname))
                 for p in service_conns[s]['callers']:
                     rname = AcmeGenerator.to_acme_name(p)
                     role = CLIENT_ROLE.format(role_name=rname)
                     roles.append(f"{role}\n")
-                    attachments.append(SERVICE_ATTACHMENT.format(qualitifed_port=p,
+                    attachments.append(SERVICE_ATTACHMENT.format(qualified_port=p,
                                                                  conn=cname,
                                                                  role=rname))
-                connector_strs.append(SERVICE_CONNECTOR.format(conn_name=cname, roles="\n".join(roles)))
+                connector_strs.append(
+                    SERVICE_CONNECTOR.format(conn_name=cname, roles="\n".join(roles)))
 
         for a in action_conns.keys():
             # only create a connector for actions that are connected
@@ -335,17 +360,21 @@ class AcmeGenerator:
                     rname = AcmeGenerator.to_acme_name(cl)
                     role = ACTION_CLIENT_ROLE.format(role_name=rname)
                     roles.append(role)
-                    attachments.append(SERVICE_ATTACHMENT.format(qualified_port=c, conn=cname, role=rname))
+                    attachments.append(
+                        SERVICE_ATTACHMENT.format(qualified_port=c, conn=cname, role=rname))
                 for s in action_conns[a]['servers']:
                     rname = AcmeGenerator.to_acme_name(s)
                     role = ACTION_SERVER_ROLE.format(role_name=rname)
                     roles.append(role)
-                    attachments.append(SERVICE_ATTACHMENT.format(qualified_port=c, conn=cname, role=rname))
-                connector_strs.append(ACTION_CONNECTOR.format(conn_name=cname, roles="\n".join(roles)))
+                    attachments.append(
+                        SERVICE_ATTACHMENT.format(qualified_port=c, conn=cname, role=rname))
+                connector_strs.append(
+                    ACTION_CONNECTOR.format(conn_name=cname, roles="\n".join(roles)))
         acme = acme + "\n".join(connector_strs)
         acme = acme + "\n".join(attachments) + "}"
         self.generate_acme_file(acme)
         return acme
+
 
     @staticmethod
     def check_acme_file(filename: str) -> Tuple[bytes, bytes]:
@@ -353,6 +382,7 @@ class AcmeGenerator:
         (output, err) = process.communicate()
         process.wait()
         return output, err
+
 
     def check_acme_string(self, acme: str) -> Tuple[bytes, bytes]:
         f, filename = tempfile.mkstemp()
@@ -364,21 +394,25 @@ class AcmeGenerator:
         finally:
             os.unlink(filename)
 
+
     def generate_acme_file(self, acme: str):
         if self.__acme_file is not None:
             logger.info(f"Writing Acme to {self.__acme_file}")
             with open(self.__acme_file, 'w') as f:
                 f.write(acme)
 
+
     def check_acme(self):
         self._check_acme(self.__acme_file)
+
 
     def _check_acme(self, acme_file: str):
         (_, jf) = tempfile.mkstemp(suffix=".json")
         try:
             logger.debug("Running Acme checker")
             print("Checking architecture...")
-            run = subprocess.run(list(["java", "-jar", self.__acme_jar, "-j", jf, acme_file]), stdout=PIPE, stderr=PIPE)
+            run = subprocess.run(list(["java", "-jar", self.__acme_jar, "-j", jf, acme_file]),
+                                 stdout=PIPE, stderr=PIPE)
             if run.returncode == 0:
                 logger.debug("Checking ran successfully")
                 logger.debug(run.stdout)
