@@ -329,9 +329,9 @@ class AcmeGenerator:
 
         for s in service_conns.keys():
             # Only create a connector for services that are connected
-            if self.__generate_dangling_connectors or (
-                    len(service_conns[s]['providers']) != 0 and len(
-                service_conns[s]['callers']) != 0):
+            has_providers = len(service_conns[s]['providers']) != 0
+            has_callers = len(service_conns[s]['callers']) != 0
+            if self.__generate_dangling_connectors or (has_providers and has_callers):
                 roles = []
                 cname = f"{AcmeGenerator.to_acme_name(s)}_conn"
                 for p in service_conns[s]['providers']:
@@ -352,8 +352,9 @@ class AcmeGenerator:
 
         for a in action_conns.keys():
             # only create a connector for actions that are connected
-            if self.__generate_dangling_connectors or (
-                    len(action_conns[a]['servers']) != 0 and len(action_conns[a]['clients']) != 0):
+            has_actions_srvrs = len(action_conns[a]['servers']) != 0
+            has_action_clnts = len(action_conns[a]['clients']) != 0
+            if self.__generate_dangling_connectors or (has_actions_srvrs and has_action_clnts):
                 roles = []
                 cname = f"{AcmeGenerator.to_acme_name(a)}_conn"
                 for cl in action_conns[a]['clients']:
