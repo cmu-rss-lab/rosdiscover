@@ -132,8 +132,14 @@ class SystemSummary(Mapping[str, NodeSummary]):
     def to_dict(self) -> List[Dict[str, Any]]:
         return [n.to_dict() for n in self.values()]
 
+    @classmethod
+    def from_dict(cls, arr: Collection[Any]) -> 'SystemSummary':
+        summaries = [NodeSummary.from_dict(s) for s in arr]
+        return SystemSummary(node_to_summary={summary.name: summary for summary in summaries})
+
     @property
     def unresolved(self) -> Iterator[NodeSummary]:
         for n in self._node_to_summary.values():
             if n.placeholder:
                 yield n
+
