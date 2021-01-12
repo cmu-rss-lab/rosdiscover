@@ -97,7 +97,7 @@ class NodeSummary:
                           for a in dict.get('action-clients', [])]
         return NodeSummary(name=name,
                            fullname=fullname,
-                           namepsace=namepsace,
+                           namespace=namepsace,
                            kind=kind,
                            package=package,
                            nodelet=nodelet,
