@@ -71,6 +71,47 @@ class NodeSummary:
                 'pubs': pubs,
                 'subs': subs}
 
+    @classmethod
+    def from_dict(cls, dict: Dict[str, Any]) -> 'NodeSummary':
+        name = dict["name"]
+        fullname = dict.get('fullname', name)
+        namepsace = dict.get('namespace', '')
+        kind = dict.get('kind', '')
+        package = dict.get('package', '')
+        nodelet = dict.get('nodelet', False)
+        filename = dict.get('filename', '')
+        placeholder = dict.get('placeholder', False)
+        reads = [(p['name'], p['implicit']) for p in dict.get('reads', [])]
+        writes = dict.get('writes', [])
+        pubs = [Topic(name=t['name'], format=t['format'], implicit=t.get('implicit', False))
+                for t in dict.get('pubs', [])]
+        subs = [Topic(name=t['name'], format=t['format'], implicit=t.get('implicit', False))
+                for t in dict.get('subs', [])]
+        provides = [Service(name=s['name'], format=s['format'])
+                    for s in dict.get('provides', [])]
+        uses = [Service(name=s['name'], format=s['format'])
+                for s in dict.get('uses', [])]
+        action_servers = [Action(name=a['name'], format=a['format'])
+                          for a in dict.get('action-servers', [])]
+        action_clients = [Action(name=a['name'], format=a['format'])
+                          for a in dict.get('action-clients', [])]
+        return NodeSummary(name=name,
+                           fullname=fullname,
+                           namepsace=namepsace,
+                           kind=kind,
+                           package=package,
+                           nodelet=nodelet,
+                           filename=filename,
+                           placeholder=placeholder,
+                           reads=reads,
+                           writes=writes,
+                           pubs=pubs,
+                           subs=subs,
+                           provides=provides,
+                           uses=uses,
+                           action_servers=action_servers,
+                           action_clients=action_clients)
+
 
 @attr.s(frozen=True, slots=True, auto_attribs=True)
 class SystemSummary(Mapping[str, NodeSummary]):
