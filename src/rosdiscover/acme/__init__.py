@@ -97,7 +97,6 @@ ACTION_SERVER_PORT = """    port {port_name}: ActionServerPortT = new ActionServ
 
 
 def update_service_conn(conns, service, port_qualified, is_provider) -> None:
-    s = {}
     if service in conns:
         s = conns[service]
     else:
