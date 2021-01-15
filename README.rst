@@ -8,13 +8,13 @@ Description
 -----------
 
 rosdiscover is a system for extracting the run-time software architecture from ROS system code.
-Current ROS tools like rosgraph or rosdoctor recquire the system to be running and the node
-interconnections to be observed frm the system. In contrast, rosdiscover analyzes the launch
+Current ROS tools like rosgraph or rosdoctor require the system to be running and the node
+interconnections to be observed from the system. In contrast, rosdiscover analyzes the launch
 files and source code
-of ROS systems to derive the anticipated runtime architecture (the nodes that will be started,
+of ROS systems to derive the anticipated run-time architecture (the nodes that will be started,
 the topic, service, and action connections between them, as well as parameters that are read and
 written). This architecture information can be used by downstream tools to support various kinds
-of architectural analysis, such as configuration errors.
+of architectural analysis, such as configuration error checking.
 
 This project is a research project within the Institute for Software Research at Carnegie Mellon
 University.
@@ -22,7 +22,7 @@ University.
 The currently supported output formats are a simple YML file listing the nodes in a similar way
 to what might be reported by running :code:`rosnode list` and :code:`rosnode info` but without the
 need to
-run the system, and and architecture descrioption language called `Acme <http://acme.able.cs.cmu
+run the system, and an architecture description language called `Acme <http://acme.able.cs.cmu
 .edu>`_, used within our research group.
 
 The system assumes that the ROS system is contained inside a Docker container, and uses `roswire
