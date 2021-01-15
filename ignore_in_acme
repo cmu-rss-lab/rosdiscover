@@ -1,8 +1,0 @@
-/clock
-/rosout
-/parameter_events
-*/describe_parameters
-*/get_parameter_types
-*/list_parameters
-*/set_parameters
-*/set_parameters_atomically
