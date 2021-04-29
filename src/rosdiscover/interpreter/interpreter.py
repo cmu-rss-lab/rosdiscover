@@ -61,7 +61,8 @@ class Interpreter:
             self.params[param.name] = param.value
 
         for node in config.nodes:
-            if not node.filename:
+            if not node.filename and \
+                    self._app.description.distribution.ros == ROSVersion.ROS1:
                 m = ("unable to determine associated launch file for "
                      f"node: {node}")
                 raise Exception(m)

@@ -167,6 +167,8 @@ run the following:
        rosservice          simulates the output of rosservice for a given
                            configuration.
        acme                generates Acme from a source file
+       observe             observes a robot running in a container and produces
+                           an architecture
 
    optional arguments:
      -h, --help            show this help message and exit
@@ -177,6 +179,13 @@ The :code:`launch` command is used to simulate the effects of a sequence of
 .. code::
 
    $ rosdiscover launch example/fetch.yml
+
+The :code:`observe` command is used to generate an architecture by observing a
+running ROS system inside a container.
+
+.. code::
+
+    $ rosdiscover observe d9bf9e9d3020 example/fetch.yml
 
 
 Docker Development Setup (for Windows 10)
