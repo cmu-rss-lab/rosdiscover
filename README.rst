@@ -91,11 +91,16 @@ To run :code:`rosdiscover` commands via Docker, replace in all commands shown be
 
    $ docker run --rm \
        -v /var/run/docker.sock:/var/run/docker.sock \
+       -v <path_to_config>:/configs \
        -it rosdiscover
 
 where :code:`-v /var/run/docker.sock:/var/run/docker.sock` is used to mount the
-host's Docker socket inside the :code:`rosdiscover` container.
-Optionally, you may also want to use volume mounting to persist (and reuse) the cache:
+host's Docker socket inside the :code:`rosdiscover` container and :code:`-v <path_to_config>:/configs`
+is used to mount the location of the configuration files to pass to :code:`rosdiscover` (see below).
+Optionally, you may also want to use volume mounting to persist (and reuse) the cache: :code:`-v
+d:/ROSDiscover/cache:/root/.roswire`.
+
+
 
 **TODO: requires careful handling of users/permissions.**
 
