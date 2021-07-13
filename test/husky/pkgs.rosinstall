@@ -1,0 +1,4 @@
+- git:
+    local-name: husky
+    uri: https://github.com/husky/husky.git
+    version: 0.4.2
