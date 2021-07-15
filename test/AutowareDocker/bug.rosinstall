@@ -1,0 +1,281 @@
+- git:
+    local-name: actionlib
+    uri: https://github.com/ros-gbp/actionlib-release.git
+    version: release/indigo/actionlib/1.11.5-0
+- git:
+    local-name: angles
+    uri: https://github.com/ros-gbp/geometry_angles_utils-release.git
+    version: release/indigo/angles/1.9.10-0
+- git:
+    local-name: bond_core/bond
+    uri: https://github.com/ros-gbp/bond_core-release.git
+    version: release/indigo/bond/1.7.16-0
+- git:
+    local-name: bond_core/bondcpp
+    uri: https://github.com/ros-gbp/bond_core-release.git
+    version: release/indigo/bondcpp/1.7.16-0
+- git:
+    local-name: bond_core/smclib
+    uri: https://github.com/ros-gbp/bond_core-release.git
+    version: release/indigo/smclib/1.7.16-0
+- git:
+    local-name: catkin
+    uri: https://github.com/ros-gbp/catkin-release.git
+    version: release/indigo/catkin/0.6.18-0
+- git:
+    local-name: class_loader
+    uri: https://github.com/ros-gbp/class_loader-release.git
+    version: release/indigo/class_loader/0.3.3-1
+- git:
+    local-name: cmake_modules
+    uri: https://github.com/ros-gbp/cmake_modules-release.git
+    version: release/indigo/cmake_modules/0.3.3-0
+- git:
+    local-name: common_msgs/actionlib_msgs
+    uri: https://github.com/ros-gbp/common_msgs-release.git
+    version: release/indigo/actionlib_msgs/1.11.9-0
+- git:
+    local-name: common_msgs/diagnostic_msgs
+    uri: https://github.com/ros-gbp/common_msgs-release.git
+    version: release/indigo/diagnostic_msgs/1.11.9-0
+- git:
+    local-name: common_msgs/geometry_msgs
+    uri: https://github.com/ros-gbp/common_msgs-release.git
+    version: release/indigo/geometry_msgs/1.11.9-0
+- git:
+    local-name: common_msgs/sensor_msgs
+    uri: https://github.com/ros-gbp/common_msgs-release.git
+    version: release/indigo/sensor_msgs/1.11.9-0
+- git:
+    local-name: common_msgs/visualization_msgs
+    uri: https://github.com/ros-gbp/common_msgs-release.git
+    version: release/indigo/visualization_msgs/1.11.9-0
+- git:
+    local-name: diagnostics/diagnostic_updater
+    uri: https://github.com/ros-gbp/diagnostics-release.git
+    version: release/indigo/diagnostic_updater/1.8.9-0
+- git:
+    local-name: dynamic_reconfigure
+    uri: https://github.com/ros-gbp/dynamic_reconfigure-release.git
+    version: release/indigo/dynamic_reconfigure/1.5.43-0
+- git:
+    local-name: gencpp
+    uri: https://github.com/ros-gbp/gencpp-release.git
+    version: release/indigo/gencpp/0.5.4-0
+- git:
+    local-name: genlisp
+    uri: https://github.com/ros-gbp/genlisp-release.git
+    version: release/indigo/genlisp/0.4.15-0
+- git:
+    local-name: genmsg
+    uri: https://github.com/ros-gbp/genmsg-release.git
+    version: release/indigo/genmsg/0.5.7-0
+- git:
+    local-name: genpy
+    uri: https://github.com/ros-gbp/genpy-release.git
+    version: release/indigo/genpy/0.5.8-0
+- git:
+    local-name: geometry/tf
+    uri: https://github.com/ros-gbp/geometry-release.git
+    version: release/indigo/tf/1.11.8-0
+- git:
+    local-name: geometry_experimental/tf2
+    uri: https://github.com/ros-gbp/geometry_experimental-release.git
+    version: release/indigo/tf2/0.5.13-0
+- git:
+    local-name: geometry_experimental/tf2_msgs
+    uri: https://github.com/ros-gbp/geometry_experimental-release.git
+    version: release/indigo/tf2_msgs/0.5.13-0
+- git:
+    local-name: geometry_experimental/tf2_py
+    uri: https://github.com/ros-gbp/geometry_experimental-release.git
+    version: release/indigo/tf2_py/0.5.13-0
+- git:
+    local-name: geometry_experimental/tf2_ros
+    uri: https://github.com/ros-gbp/geometry_experimental-release.git
+    version: release/indigo/tf2_ros/0.5.13-0
+- git:
+    local-name: image_common/camera_calibration_parsers
+    uri: https://github.com/ros-gbp/image_common-release.git
+    version: release/indigo/camera_calibration_parsers/1.11.10-0
+- git:
+    local-name: image_common/camera_info_manager
+    uri: https://github.com/ros-gbp/image_common-release.git
+    version: release/indigo/camera_info_manager/1.11.10-0
+- git:
+    local-name: image_common/image_transport
+    uri: https://github.com/ros-gbp/image_common-release.git
+    version: release/indigo/image_transport/1.11.10-0
+- git:
+    local-name: message_generation
+    uri: https://github.com/ros-gbp/message_generation-release.git
+    version: release/indigo/message_generation/0.2.10-0
+- git:
+    local-name: message_runtime
+    uri: https://github.com/ros-gbp/message_runtime-release.git
+    version: release/indigo/message_runtime/0.4.12-0
+- git:
+    local-name: nodelet_core/nodelet
+    uri: https://github.com/ros-gbp/nodelet_core-release.git
+    version: release/indigo/nodelet/1.9.4-0
+- git:
+    local-name: nodelet_core/nodelet_topic_tools
+    uri: https://github.com/ros-gbp/nodelet_core-release.git
+    version: release/indigo/nodelet_topic_tools/1.9.4-0
+- git:
+    local-name: pcl_conversions
+    uri: https://github.com/ros-gbp/pcl_conversions-release.git
+    version: release/indigo/pcl_conversions/0.2.1-0
+- git:
+    local-name: pcl_msgs
+    uri: https://github.com/ros-gbp/pcl_msgs-release.git
+    version: release/indigo/pcl_msgs/0.2.0-0
+- git:
+    local-name: perception_pcl/pcl_ros
+    uri: https://github.com/ros-gbp/perception_pcl-release.git
+    version: release/indigo/pcl_ros/1.2.7-0
+- git:
+    local-name: pluginlib
+    uri: https://github.com/ros-gbp/pluginlib-release.git
+    version: release/indigo/pluginlib/1.10.2-0
+- git:
+    local-name: ros/rosbash
+    uri: https://github.com/ros-gbp/ros-release.git
+    version: release/indigo/rosbash/1.11.12-0
+- git:
+    local-name: ros/rosbuild
+    uri: https://github.com/ros-gbp/ros-release.git
+    version: release/indigo/rosbuild/1.11.12-0
+- git:
+    local-name: ros/rosclean
+    uri: https://github.com/ros-gbp/ros-release.git
+    version: release/indigo/rosclean/1.11.12-0
+- git:
+    local-name: ros/roslang
+    uri: https://github.com/ros-gbp/ros-release.git
+    version: release/indigo/roslang/1.11.12-0
+- git:
+    local-name: ros/roslib
+    uri: https://github.com/ros-gbp/ros-release.git
+    version: release/indigo/roslib/1.11.12-0
+- git:
+    local-name: ros/rosunit
+    uri: https://github.com/ros-gbp/ros-release.git
+    version: release/indigo/rosunit/1.11.12-0
+- git:
+    local-name: ros_comm/message_filters
+    uri: https://github.com/ros-gbp/ros_comm-release.git
+    version: release/indigo/message_filters/1.11.18-0
+- git:
+    local-name: ros_comm/rosbag
+    uri: https://github.com/ros-gbp/ros_comm-release.git
+    version: release/indigo/rosbag/1.11.18-0
+- git:
+    local-name: ros_comm/rosbag_storage
+    uri: https://github.com/ros-gbp/ros_comm-release.git
+    version: release/indigo/rosbag_storage/1.11.18-0
+- git:
+    local-name: ros_comm/rosconsole
+    uri: https://github.com/ros-gbp/ros_comm-release.git
+    version: release/indigo/rosconsole/1.11.18-0
+- git:
+    local-name: ros_comm/roscpp
+    uri: https://github.com/ros-gbp/ros_comm-release.git
+    version: release/indigo/roscpp/1.11.18-0
+- git:
+    local-name: ros_comm/rosgraph
+    uri: https://github.com/ros-gbp/ros_comm-release.git
+    version: release/indigo/rosgraph/1.11.18-0
+- git:
+    local-name: ros_comm/roslaunch
+    uri: https://github.com/ros-gbp/ros_comm-release.git
+    version: release/indigo/roslaunch/1.11.18-0
+- git:
+    local-name: ros_comm/roslz4
+    uri: https://github.com/ros-gbp/ros_comm-release.git
+    version: release/indigo/roslz4/1.11.18-0
+- git:
+    local-name: ros_comm/rosmaster
+    uri: https://github.com/ros-gbp/ros_comm-release.git
+    version: release/indigo/rosmaster/1.11.18-0
+- git:
+    local-name: ros_comm/rosmsg
+    uri: https://github.com/ros-gbp/ros_comm-release.git
+    version: release/indigo/rosmsg/1.11.18-0
+- git:
+    local-name: ros_comm/rosnode
+    uri: https://github.com/ros-gbp/ros_comm-release.git
+    version: release/indigo/rosnode/1.11.18-0
+- git:
+    local-name: ros_comm/rosout
+    uri: https://github.com/ros-gbp/ros_comm-release.git
+    version: release/indigo/rosout/1.11.18-0
+- git:
+    local-name: ros_comm/rosparam
+    uri: https://github.com/ros-gbp/ros_comm-release.git
+    version: release/indigo/rosparam/1.11.18-0
+- git:
+    local-name: ros_comm/rospy
+    uri: https://github.com/ros-gbp/ros_comm-release.git
+    version: release/indigo/rospy/1.11.18-0
+- git:
+    local-name: ros_comm/rosservice
+    uri: https://github.com/ros-gbp/ros_comm-release.git
+    version: release/indigo/rosservice/1.11.18-0
+- git:
+    local-name: ros_comm/rostest
+    uri: https://github.com/ros-gbp/ros_comm-release.git
+    version: release/indigo/rostest/1.11.18-0
+- git:
+    local-name: ros_comm/rostopic
+    uri: https://github.com/ros-gbp/ros_comm-release.git
+    version: release/indigo/rostopic/1.11.18-0
+- git:
+    local-name: ros_comm/roswtf
+    uri: https://github.com/ros-gbp/ros_comm-release.git
+    version: release/indigo/roswtf/1.11.18-0
+- git:
+    local-name: ros_comm/topic_tools
+    uri: https://github.com/ros-gbp/ros_comm-release.git
+    version: release/indigo/topic_tools/1.11.18-0
+- git:
+    local-name: ros_comm/xmlrpcpp
+    uri: https://github.com/ros-gbp/ros_comm-release.git
+    version: release/indigo/xmlrpcpp/1.11.18-0
+- git:
+    local-name: ros_comm_msgs/rosgraph_msgs
+    uri: https://github.com/ros-gbp/ros_comm_msgs-release.git
+    version: release/indigo/rosgraph_msgs/1.11.2-0
+- git:
+    local-name: roscpp_core/cpp_common
+    uri: https://github.com/ros-gbp/roscpp_core-release.git
+    version: release/indigo/cpp_common/0.5.7-0
+- git:
+    local-name: roscpp_core/roscpp_serialization
+    uri: https://github.com/ros-gbp/roscpp_core-release.git
+    version: release/indigo/roscpp_serialization/0.5.7-0
+- git:
+    local-name: roscpp_core/roscpp_traits
+    uri: https://github.com/ros-gbp/roscpp_core-release.git
+    version: release/indigo/roscpp_traits/0.5.7-0
+- git:
+    local-name: roscpp_core/rostime
+    uri: https://github.com/ros-gbp/roscpp_core-release.git
+    version: release/indigo/rostime/0.5.7-0
+- git:
+    local-name: roslint
+    uri: https://github.com/ros-gbp/roslint-release.git
+    version: release/indigo/roslint/0.10.0-0
+- git:
+    local-name: rospack
+    uri: https://github.com/ros-gbp/rospack-release.git
+    version: release/indigo/rospack/2.2.6-0
+- git:
+    local-name: std_msgs
+    uri: https://github.com/ros-gbp/std_msgs-release.git
+    version: release/indigo/std_msgs/0.5.10-0
+- git:
+    local-name: vision_opencv/cv_bridge
+    uri: https://github.com/ros-gbp/vision_opencv-release.git
+    version: release/indigo/cv_bridge/1.11.11-0
+
