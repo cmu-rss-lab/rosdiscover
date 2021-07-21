@@ -5,6 +5,8 @@ matrix:
   include:
   - python: 3.6
     env: TOXENV=py36
+env:
+- CRYPTOGRAPHY_DONT_BUILD_RUST=1
 install:
 - pip install -r requirements.dev.txt --no-binary cryptography
 - pip install -e .
