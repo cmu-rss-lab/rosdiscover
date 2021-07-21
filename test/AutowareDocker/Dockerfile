@@ -2,7 +2,6 @@ FROM autoware/autoware:1.6.0-indigo
 
 RUN cd ~/Autoware && git checkout fc8f691c70bf62a3de0f7448d9490b2e9385e6c4
 
-COPY ./* /install/
 
 RUN sudo apt-get update 
 RUN sudo apt-get install -y build-essential checkinstall
@@ -56,6 +55,8 @@ RUN sudo apt-get update && sudo apt-get update \
  python-vcstools \
  python-wstool 
 
+COPY ./* /install/
+
 RUN sudo wstool init -j8 src_pre_bug /install/pre_bug.rosinstall \
 && rosdep update \
 && rosdep install -i -y -r --from-paths src_pre_bug \
@@ -91,9 +92,9 @@ RUN sudo apt-get update \
  && sudo apt-get clean \
  && sudo rm -rf /var/lib/apt/lists/* \
  && sudo mkdir ~/.vnc \
- && sudo /bin/bash -c "echo -e 'password\npassword\nn' | vncpasswd"
+ && sudo /bin/bash -c "echo -e 'r0sD!sc0ver\nr0sD!sc0ver\nn' | vncpasswd"
 ENV TINI_VERSION v0.9.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /bin/tini
 RUN sudo chmod +x /bin/tini
 
-
+COPY rootfs /
