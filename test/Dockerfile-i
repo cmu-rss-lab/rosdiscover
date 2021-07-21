@@ -1,0 +1,164 @@
+FROM autoware/autoware:1.6.0-indigo
+
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN sudo apt-get update \
+ && sudo apt-get install -y build-essential checkinstall\
+ && sudo apt-get install -y libreadline-gplv2-dev libncursesw5-dev libssl-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev\
+ && cd /usr/src \
+ && sudo wget https://www.python.org/ftp/python/2.7.18/Python-2.7.18.tgz \
+ && sudo tar xzf Python-2.7.18.tgz \
+ && cd Python-2.7.18 \
+ && sudo ./configure --enable-optimizations \
+ && sudo make altinstall \
+ && sudo apt update \
+ && curl https://bootstrap.pypa.io/pip/2.7/get-pip.py | sudo python2.7 \
+ && python2.7 -m pip install -U wstools 
+
+RUN sudo apt-get update \
+ && sudo apt-get install -y --no-install-recommends \
+      apt-utils \
+      bzip2 \
+      cmake \
+      clang \
+      build-essential \
+      ca-certificates \
+      curl \
+      gcc \
+      g++ \
+      mercurial \
+      python-pip \
+      "ros-indigo-cmake-modules" \
+      software-properties-common \
+      tmux \
+      vim \
+      wget 
+
+# install vncserver
+RUN sudo apt-get update \
+ && sudo apt-get install -y \
+      dialog \
+      apt-utils \
+      supervisor \
+      vnc4server \
+      xfce4 \
+      xfce4-goodies \
+      xfce4-terminal \
+      xserver-xorg-core \
+      xterm \
+      xvfb \
+      x11vnc \
+ && sudo apt-get clean \
+ && sudo rm -rf /var/lib/apt/lists/* \
+ && sudo mkdir ~/.vnc \
+ && sudo /bin/bash -c "echo -e 'r0sD!sc0ver\nr0sD!sc0ver\nn' | vncpasswd"
+ENV TINI_VERSION v0.9.0
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /bin/tini
+RUN sudo chmod +x /bin/tini
+
+ RUN sudo apt-get clean \
+ && sudo apt-get update && sudo apt-get upgrade -y --force-yes \
+ && sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -cs) main" > /etc/apt/sources.list.d/ros-latest.list' \
+ && sudo wget http://packages.ros.org/ros.key -O - | sudo apt-key add - \
+ && sudo apt-get update \
+ && sudo apt-get install python-rosinstall -y --force-yes \
+ && python2.7 -m pip install \
+      catkin-tools==0.4.5 \
+      coverage==5.1 \
+      rosinstall-generator==0.1.18 \
+ && sudo apt-get clean \
+ && sudo rm -rf /var/lib/apt/lists/*
+
+RUN sudo apt-get update && sudo apt-get update \
+&& sudo apt-get install -y python-coverage \
+ python-catkin-pkg \
+ python-rosdep \
+ python-rosdistro \
+ python-rosinstall \
+ python-rosinstall-generator \
+ python-rospkg \
+ python-vcstools \
+ python-wstool \ 
+ ros-indigo-automotive-platform-msgs 
+
+RUN curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash 
+RUN exec $SHELL \
+&& export PYENV_ROOT="$HOME/.pyenv" \
+&& export PATH="$PYENV_ROOT/bin:$PATH" \
+&& eval "$(pyenv init --path)" \
+&& eval "$(pyenv init -)" \
+&& eval "$(pyenv virtualenv-init -)" \
+&& pyenv install 2.7.18 \
+&& pyenv global 2.7.18 \
+&& sudo -H pip install setuptools
+
+COPY rootfs /
+ARG DIRECTORY
+COPY "${DIRECTORY}" /install/
+
+RUN sudo wstool init -j8 src_pre_bug /install/pre_bug.rosinstall \
+&& rosdep update \
+&& rosdep install -i -y -r --from-paths src_pre_bug \
+      --ignore-src \
+      --skip-keys="python-rosdep python-catkin-pkg python-rospkg" \
+      --rosdistro="indigo" \
+&& sudo chmod o+r+w+x -R /src_pre_bug \
+&& sudo wstool init -j8 src_bug /install/bug.rosinstall \
+&& rosdep install -i -y -r --from-paths src_bug \
+      --ignore-src \
+      --skip-keys="python-rosdep python-catkin-pkg python-rospkg" \
+      --rosdistro="indigo" \
+&& sudo chmod o+r+w+x -R /src_bug \
+&& sudo wstool init -j8 src_bug_fix /install/bug_fix.rosinstall \
+&& rosdep install -i -y -r --from-paths src_bug_fix \
+      --ignore-src \
+      --skip-keys="python-rosdep python-catkin-pkg python-rospkg" \
+      --rosdistro="indigo"  \
+&& sudo chmod o+r+w+x -R /src_bug_fix
+
+ARG BUILD_COMMAND="catkin_make"
+RUN sudo chmod o+r+w+x -R /opt/ros/ 
+
+
+RUN cd /src_pre_bug/repo/ros \
+&& . /opt/ros/indigo/setup.sh \
+&& catkin_make
+
+ENV PGUDEVFILE /etc/udev/rules.d/40-pgr.rules
+ENV HOSTNAME 41ffe82b7671
+ENV TERM xterm
+ENV ROS_ROOT /opt/ros/indigo/share/ros
+ENV ROS_PACKAGE_PATH /home/autoware/Autoware/ros/src:/opt/ros/indigo/share:/opt/ros/indigo/stacks
+ENV LIBRARY_PATH /usr/local/cuda/lib64/stubs:
+ENV ROS_MASTER_URI http://localhost:11311
+ENV OLDPWD /
+ENV PULSE_SERVER /run/pulse/native
+ENV LD_LIBRARY_PATH /opt/ros/indigo/share/euslisp/jskeus/eus//Linux64/lib:/home/autoware/Autoware/ros/devel/lib:/opt/ros/indigo/lib:/opt/ros/indigo/share/euslisp/jskeus/eus//Linux64/lib:/usr/local/nvidia/lib:/usr/local/nvidia/lib64
+ENV CPATH /home/autoware/Autoware/ros/devel/include:/opt/ros/indigo/include
+ENV USERNAME autoware
+ENV QT_X11_NO_MITSHM 1
+ENV PATH /opt/ros/indigo/share/euslisp/jskeus/eus//Linux64/bin:/opt/ros/indigo/bin:/opt/ros/indigo/share/euslisp/jskeus/eus//Linux64/bin:/usr/local/nvidia/bin:/usr/local/cuda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ENV PWD /home/autoware
+ENV ARCHDIR Linux64
+ENV CUDA_PKG_VERSION 8-0 8.0.61-1
+ENV CUDA_VERSION 8.0.61
+ENV ROSLISP_PACKAGE_DIRECTORIES /home/autoware/Autoware/ros/devel/share/common-lisp
+ENV SHLVL 1
+ENV HOME /home/autoware
+ENV ROS_DISTRO indigo
+ENV TINI_VERSION v0.9.0
+ENV EUSDIR /opt/ros/indigo/share/euslisp/jskeus/eus/
+ENV PYTHONPATH /home/autoware/Autoware/ros/devel/lib/python2.7/dist-packages:/opt/ros/indigo/lib/python2.7/dist-packages
+ENV DEBIAN_FRONTEND noninteractive
+ENV PKG_CONFIG_PATH /home/autoware/Autoware/ros/devel/lib/pkgconfig:/opt/ros/indigo/lib/pkgconfig
+ENV LESSOPEN | /usr/bin/lesspipe %s
+ENV CMAKE_PREFIX_PATH /home/autoware/Autoware/ros/devel:/opt/ros/indigo
+ENV LESSCLOSE /usr/bin/lesspipe %s %s
+ENV ROS_ETC_DIR /opt/ros/indigo/etc/ros
+
+RUN  printenv
+
+
+RUN /bin/bash -c '. /opt/ros/indigo/setup.sh; cd /src_pre_bug/repo/ros; catkin_make'
+RUN /bin/bash -c '. /opt/ros/indigo/setup.sh; cd /src_bug/repo/ros; catkin_make'
+RUN /bin/bash -c '. /opt/ros/indigo/setup.sh; cd /src_bug_fix/repo/ros; catkin_make'

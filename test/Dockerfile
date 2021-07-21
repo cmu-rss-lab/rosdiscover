@@ -124,13 +124,7 @@ ENV TINI_VERSION v0.9.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /bin/tini
 RUN chmod +x /bin/tini
 
-
-
-ARG ORG
-ARG REPO
-ARG COMMIT
 # Get commit date using `git show -s --format=%ci 84169473a3f72aea8a400464f5b673f3c77c6b8c`
-RUN git clone https://github.com/"${ORG}"/"${REPO}".git /repo && cd /repo && git checkout "${COMMIT}"
 #ENV COMMIT_DATE git show -s --format=%ci "{COMMIT}" 
 #'2016-04-15 19:41:20 +0900'
 
@@ -146,8 +140,6 @@ RUN . /opt/ros/${ROS_DISTRO}/setup.sh \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 
-
-
 # Generate package install file with time machine
 
 RUN mv /.dockerinstall/pkgs.rosinstall /ros_ws/pkgs.rosinstall \
@@ -161,46 +153,29 @@ RUN mv /.dockerinstall/pkgs.rosinstall /ros_ws/pkgs.rosinstall \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 
-COPY ./husky/install/* /install/
+ARG DIRECTORY
+COPY "${DIRECTORY}" /install/
 
-RUN cp -r /ros_ws/ /ros_ws_pre_bug
-
-RUN mv /install/pre_bug.rosinstall /ros_ws_pre_bug/pkgs.rosinstall 
-
-RUN cp -r /ros_ws/ /ros_ws_bug
-
-RUN mv /install/bug.rosinstall /ros_ws_bug/pkgs.rosinstall 
-
-RUN cp -r /ros_ws/ /ros_ws_bug_fix
-
-RUN mv /install/bug_fix.rosinstall /ros_ws_bug_fix/pkgs.rosinstall 
-
-RUN wstool init -j8 src-pre-bug ros_ws_pre_bug/pkgs.rosinstall \
- && rosdep update \
- && rosdep install -i -y -r --from-paths src-pre-bug \
+RUN sudo wstool init -j8 src_pre_bug /install/pre_bug.rosinstall \
+&& rosdep update \
+&& rosdep install -i -y -r --from-paths src_pre_bug \
       --ignore-src \
       --skip-keys="python-rosdep python-catkin-pkg python-rospkg" \
       --rosdistro="${ROS_DISTRO}" \
- && apt-get clean \
- && rm -rf /var/lib/apt/lists/*
-
-RUN wstool init -j8 src-bug /ros_ws_bug/pkgs.rosinstall \
- && rosdep update \
- && rosdep install -i -y -r --from-paths src-bug \
+&& sudo chmod o+r+w+x -R /src_pre_bug \
+&& sudo wstool init -j8 src_bug /install/bug.rosinstall \
+&& rosdep install -i -y -r --from-paths src_bug \
       --ignore-src \
       --skip-keys="python-rosdep python-catkin-pkg python-rospkg" \
       --rosdistro="${ROS_DISTRO}" \
- && apt-get clean \
- && rm -rf /var/lib/apt/lists/*
-
-RUN sudo wstool init -j8 src-post-bug /ros_ws_bug_fix/pkgs.rosinstall \
- && rosdep update \
- && rosdep install -i -y -r --from-paths src-post-bug \
+&& sudo chmod o+r+w+x -R /src_bug \
+&& sudo wstool init -j8 src_bug_fix /install/bug_fix.rosinstall \
+&& rosdep install -i -y -r --from-paths src_bug_fix \
       --ignore-src \
       --skip-keys="python-rosdep python-catkin-pkg python-rospkg" \
-      --rosdistro="${ROS_DISTRO}" \
- && apt-get clean \
- && rm -rf /var/lib/apt/lists/*
+      --rosdistro="${ROS_DISTRO}"  \
+&& sudo chmod o+r+w+x -R /src_bug_fix
+
 
 COPY "${DIRECTORY}" /.dockerinstall/
 RUN ls -al /.dockerinstall
