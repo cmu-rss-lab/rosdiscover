@@ -39,6 +39,10 @@ def launch(args) -> None:
     """Simulates the architectural effects of a `roslaunch` command."""
     summary = _launch_config(args)
     output = summary.to_dict()
+
+    # Warn of any undefined nodes
+    for node_summary in summary.unresolved:
+        print(f'Warning: {node_summary.name} in package: {node_summary.package} could not be found.')
     if args.output:
         with open(args.output, 'w') as f:
             yaml.dump(output, f, default_flow_style=False)
