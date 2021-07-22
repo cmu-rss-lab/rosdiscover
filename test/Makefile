@@ -1,4 +1,6 @@
-all = autoware-01 autoware-02 autoware-03 autoware-04 autoware-05
+all: autoware
+
+autoware: autoware-01 autoware-02 autoware-03 autoware-04 autoware-05
 
 autoware-01:
 	python analysis.py bugs/autoware-01/bug.yml Dockerfile-i

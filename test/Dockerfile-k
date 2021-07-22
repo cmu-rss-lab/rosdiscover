@@ -81,6 +81,9 @@ RUN sudo apt-get update && sudo apt-get update \
  python-wstool \ 
  ros-kinetic-automotive-platform-msgs \
  libproj-dev 
+ 
+ #ros-kinetic-autoware-msgs
+
 
 RUN curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash 
 RUN exec $SHELL \
@@ -159,6 +162,6 @@ RUN sudo chmod o+r+w+x -R /opt/ros/
 
 #RUN  printenv
 
-#RUN /bin/bash -c 'cd /src_pre_bug/repo/ros; ./catkin_make_release'
-#RUN /bin/bash -c 'cd /src_bug/repo/ros; ./catkin_make_release'
-#RUN /bin/bash -c 'cd /src_bug_fix/repo/ros; ./catkin_make_release'
+RUN /bin/bash -c 'cd /src_pre_bug/repo/ros; ./catkin_make_release'
+RUN /bin/bash -c 'cd /src_bug/repo/ros; ./catkin_make_release'
+RUN /bin/bash -c 'cd /src_bug_fix/repo/ros; ./catkin_make_release'
