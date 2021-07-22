@@ -1,0 +1,7 @@
+repo-url: https://github.com/Autoware-AI/autoware.ai.git
+repo-name: autoware.ai
+bugid: autoware-03
+pre-bug-commit: 853e292275a4d8a39ce824edf66cabc0de821246  
+bug-commit: 853e292275a4d8a39ce824edf66cabc0de821246
+bug-fix-commit: 3f29d183761d8799b176b18efc1f34d7ab1fde5c
+ros-distro: indigo

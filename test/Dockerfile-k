@@ -80,7 +80,7 @@ RUN sudo apt-get update && sudo apt-get update \
  python-vcstools \
  python-wstool \ 
  ros-kinetic-automotive-platform-msgs \
- libproj-dev
+ libproj-dev 
 
 RUN curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash 
 RUN exec $SHELL \
@@ -92,7 +92,14 @@ RUN exec $SHELL \
 && pyenv install 2.7.18 \
 && pyenv global 2.7.18 \
 && sudo -H pip install setuptools
-      
+
+ENV ROS_PACKAGE_PATH /home/autoware/Autoware/ros/src:/opt/ros/kinetic/share:/opt/ros/kinetic/stacks
+ENV PYTHONPATH /home/autoware/Autoware/ros/devel/lib/python2.7/dist-packages:/opt/ros/kinetic/lib/python2.7/dist-packages
+ENV PATH /opt/ros/kinetic/share/euslisp/jskeus/eus//Linux64/bin:/opt/ros/kinetic/bin:/opt/ros/kinetic/share/euslisp/jskeus/eus//Linux64/bin:/usr/local/nvidia/bin:/usr/local/cuda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ENV CMAKE_PREFIX_PATH /home/autoware/Autoware/ros/devel:/opt/ros/kinetic
+ENV ROS_DISTRO kinetic
+
+COPY rootfs /
 ARG DIRECTORY
 COPY "${DIRECTORY}" /install/
 
@@ -108,7 +115,7 @@ RUN sudo wstool init -j8 src_pre_bug /install/pre_bug.rosinstall \
       --ignore-src \
       --skip-keys="python-rosdep python-catkin-pkg python-rospkg" \
       --rosdistro="kinetic" \
-&& sudo chmod o+r+w+x -R /src_bug \ 
+&& sudo chmod o+r+w+x -R /src_bug \
 && sudo wstool init -j8 src_bug_fix /install/bug_fix.rosinstall \
 && rosdep install -i -y -r --from-paths src_bug_fix \
       --ignore-src \
@@ -116,9 +123,42 @@ RUN sudo wstool init -j8 src_pre_bug /install/pre_bug.rosinstall \
       --rosdistro="kinetic"  \
 && sudo chmod o+r+w+x -R /src_bug_fix
 
-COPY ../rootfs /
+ARG BUILD_COMMAND="catkin_make"
+RUN sudo chmod o+r+w+x -R /opt/ros/ 
 
-RUN source /opt/ros/indigo/setup.sh \
- && /src_pre_bug/repo/ros/catkin_make_release \
- && /src_bug/repo/ros/catkin_make_release \
- && /src_bug_fix/repo/ros/catkin_make_release 
+
+#RUN cd /src_pre_bug/repo/ros \
+#&& . /opt/ros/kinetic/setup.sh \
+#&& catkin_make
+
+#ENV PGUDEVFILE /etc/udev/rules.d/40-pgr.rules
+#ENV HOSTNAME 41ffe82b7671
+#ENV TERM xterm
+#ENV ROS_ROOT /opt/ros/kinetic/share/ros
+#ENV LIBRARY_PATH /usr/local/cuda/lib64/stubs:
+#ENV ROS_MASTER_URI http://localhost:11311
+#ENV OLDPWD /
+#ENV PULSE_SERVER /run/pulse/native
+#ENV LD_LIBRARY_PATH /opt/ros/kinetic/share/euslisp/jskeus/eus//Linux64/lib:/home/autoware/Autoware/ros/devel/lib:/opt/ros/kinetic/lib:/opt/ros/kinetic/share/euslisp/jskeus/eus//Linux64/lib:/usr/local/nvidia/lib:/usr/local/nvidia/lib64
+#ENV CPATH /home/autoware/Autoware/ros/devel/include:/opt/ros/kinetic/include
+#ENV USERNAME autoware
+#ENV QT_X11_NO_MITSHM 1
+#ENV PWD /home/autoware
+#ENV ARCHDIR Linux64
+#ENV CUDA_PKG_VERSION 8-0 8.0.61-1
+#ENV CUDA_VERSION 8.0.61
+#ENV ROSLISP_PACKAGE_DIRECTORIES /home/autoware/Autoware/ros/devel/share/common-lisp
+#ENV SHLVL 1
+#ENV HOME /home/autoware
+#ENV TINI_VERSION v0.9.0
+#ENV EUSDIR /opt/ros/kinetic/share/euslisp/jskeus/eus/
+#ENV PKG_CONFIG_PATH /home/autoware/Autoware/ros/devel/lib/pkgconfig:/opt/ros/kinetic/lib/pkgconfig
+#ENV LESSOPEN | /usr/bin/lesspipe %s
+#ENV LESSCLOSE /usr/bin/lesspipe %s %s
+#ENV ROS_ETC_DIR /opt/ros/kinetic/etc/ros
+
+#RUN  printenv
+
+#RUN /bin/bash -c 'cd /src_pre_bug/repo/ros; ./catkin_make_release'
+#RUN /bin/bash -c 'cd /src_bug/repo/ros; ./catkin_make_release'
+#RUN /bin/bash -c 'cd /src_bug_fix/repo/ros; ./catkin_make_release'

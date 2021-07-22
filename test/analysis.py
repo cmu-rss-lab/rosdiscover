@@ -46,6 +46,8 @@ if not os.path.exists(out_dir+"/pre_bug.rosinstall"):
 	c = r.commit(pre_bug_commit)
 	c_date = c.authored_datetime.isoformat()
 	g.checkout(pre_bug_commit)
+	for submodule in r.submodules:
+		submodule.update(init=True)
 	neededPackages = gp.get_packages(localRepoPath)
 	pc = ' '.join(neededPackages)
 	command = "yes | "+rgtm_dir+"/rosinstall_generator_tm.sh '"+c_date+"' "+distro+" "+pc+" --deps > "+out_dir+"/pre_bug.rosinstall"
@@ -58,6 +60,8 @@ if not os.path.exists(out_dir+"/bug.rosinstall"):
 	c = r.commit(bug_commit)
 	c_date = c.authored_datetime.isoformat()
 	g.checkout(bug_commit)
+	for submodule in r.submodules:
+		submodule.update(init=True)
 	neededPackages = gp.get_packages(localRepoPath)
 	pc = ' '.join(neededPackages)
 	command = "yes | "+rgtm_dir+"/rosinstall_generator_tm.sh '"+c_date+"' "+distro+" "+pc+" --deps > "+out_dir+"/bug.rosinstall"
@@ -70,6 +74,8 @@ if not os.path.exists(out_dir+"/bug_fix.rosinstall"):
 	c = r.commit(bug_fix_commit)
 	c_date = c.authored_datetime.isoformat()
 	g.checkout(bug_fix_commit)
+	for submodule in r.submodules:
+		submodule.update(init=True)
 	neededPackages = gp.get_packages(localRepoPath)
 	pc = ' '.join(neededPackages)
 	command = "yes | "+rgtm_dir+"/rosinstall_generator_tm.sh '"+c_date+"' "+distro+" "+pc+" --deps > "+out_dir+"/bug_fix.rosinstall"

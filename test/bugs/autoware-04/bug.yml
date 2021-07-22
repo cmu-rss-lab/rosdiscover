@@ -1,0 +1,7 @@
+repo-url: https://github.com/Autoware-AI/autoware.ai.git
+repo-name: autoware.ai
+bugid: autoware-04
+pre-bug-commit: 86f74272b0d933abb4b5d4e0a28802592843f4f1  
+bug-commit: 86f74272b0d933abb4b5d4e0a28802592843f4f1
+bug-fix-commit: 2fbad6d64f9d71e4b1b5e1de9008ca63f3b44fa1
+ros-distro: kinetic

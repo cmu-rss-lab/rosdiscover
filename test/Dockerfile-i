@@ -92,6 +92,12 @@ RUN exec $SHELL \
 && pyenv global 2.7.18 \
 && sudo -H pip install setuptools
 
+ENV ROS_PACKAGE_PATH /home/autoware/Autoware/ros/src:/opt/ros/indigo/share:/opt/ros/indigo/stacks
+ENV PYTHONPATH /home/autoware/Autoware/ros/devel/lib/python2.7/dist-packages:/opt/ros/indigo/lib/python2.7/dist-packages
+ENV PATH /opt/ros/indigo/share/euslisp/jskeus/eus//Linux64/bin:/opt/ros/indigo/bin:/opt/ros/indigo/share/euslisp/jskeus/eus//Linux64/bin:/usr/local/nvidia/bin:/usr/local/cuda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ENV CMAKE_PREFIX_PATH /home/autoware/Autoware/ros/devel:/opt/ros/indigo
+ENV ROS_DISTRO indigo
+
 COPY rootfs /
 ARG DIRECTORY
 COPY "${DIRECTORY}" /install/
@@ -120,45 +126,38 @@ ARG BUILD_COMMAND="catkin_make"
 RUN sudo chmod o+r+w+x -R /opt/ros/ 
 
 
-RUN cd /src_pre_bug/repo/ros \
-&& . /opt/ros/indigo/setup.sh \
-&& catkin_make
+#RUN cd /src_pre_bug/repo/ros \
+#&& . /opt/ros/indigo/setup.sh \
+#&& catkin_make
 
-ENV PGUDEVFILE /etc/udev/rules.d/40-pgr.rules
-ENV HOSTNAME 41ffe82b7671
-ENV TERM xterm
-ENV ROS_ROOT /opt/ros/indigo/share/ros
-ENV ROS_PACKAGE_PATH /home/autoware/Autoware/ros/src:/opt/ros/indigo/share:/opt/ros/indigo/stacks
-ENV LIBRARY_PATH /usr/local/cuda/lib64/stubs:
-ENV ROS_MASTER_URI http://localhost:11311
-ENV OLDPWD /
-ENV PULSE_SERVER /run/pulse/native
-ENV LD_LIBRARY_PATH /opt/ros/indigo/share/euslisp/jskeus/eus//Linux64/lib:/home/autoware/Autoware/ros/devel/lib:/opt/ros/indigo/lib:/opt/ros/indigo/share/euslisp/jskeus/eus//Linux64/lib:/usr/local/nvidia/lib:/usr/local/nvidia/lib64
-ENV CPATH /home/autoware/Autoware/ros/devel/include:/opt/ros/indigo/include
-ENV USERNAME autoware
-ENV QT_X11_NO_MITSHM 1
-ENV PATH /opt/ros/indigo/share/euslisp/jskeus/eus//Linux64/bin:/opt/ros/indigo/bin:/opt/ros/indigo/share/euslisp/jskeus/eus//Linux64/bin:/usr/local/nvidia/bin:/usr/local/cuda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-ENV PWD /home/autoware
-ENV ARCHDIR Linux64
-ENV CUDA_PKG_VERSION 8-0 8.0.61-1
-ENV CUDA_VERSION 8.0.61
-ENV ROSLISP_PACKAGE_DIRECTORIES /home/autoware/Autoware/ros/devel/share/common-lisp
-ENV SHLVL 1
-ENV HOME /home/autoware
-ENV ROS_DISTRO indigo
-ENV TINI_VERSION v0.9.0
-ENV EUSDIR /opt/ros/indigo/share/euslisp/jskeus/eus/
-ENV PYTHONPATH /home/autoware/Autoware/ros/devel/lib/python2.7/dist-packages:/opt/ros/indigo/lib/python2.7/dist-packages
-ENV DEBIAN_FRONTEND noninteractive
-ENV PKG_CONFIG_PATH /home/autoware/Autoware/ros/devel/lib/pkgconfig:/opt/ros/indigo/lib/pkgconfig
-ENV LESSOPEN | /usr/bin/lesspipe %s
-ENV CMAKE_PREFIX_PATH /home/autoware/Autoware/ros/devel:/opt/ros/indigo
-ENV LESSCLOSE /usr/bin/lesspipe %s %s
-ENV ROS_ETC_DIR /opt/ros/indigo/etc/ros
+#ENV PGUDEVFILE /etc/udev/rules.d/40-pgr.rules
+#ENV HOSTNAME 41ffe82b7671
+#ENV TERM xterm
+#ENV ROS_ROOT /opt/ros/indigo/share/ros
+#ENV LIBRARY_PATH /usr/local/cuda/lib64/stubs:
+#ENV ROS_MASTER_URI http://localhost:11311
+#ENV OLDPWD /
+#ENV PULSE_SERVER /run/pulse/native
+#ENV LD_LIBRARY_PATH /opt/ros/indigo/share/euslisp/jskeus/eus//Linux64/lib:/home/autoware/Autoware/ros/devel/lib:/opt/ros/indigo/lib:/opt/ros/indigo/share/euslisp/jskeus/eus//Linux64/lib:/usr/local/nvidia/lib:/usr/local/nvidia/lib64
+#ENV CPATH /home/autoware/Autoware/ros/devel/include:/opt/ros/indigo/include
+#ENV USERNAME autoware
+#ENV QT_X11_NO_MITSHM 1
+#ENV PWD /home/autoware
+#ENV ARCHDIR Linux64
+#ENV CUDA_PKG_VERSION 8-0 8.0.61-1
+#ENV CUDA_VERSION 8.0.61
+#ENV ROSLISP_PACKAGE_DIRECTORIES /home/autoware/Autoware/ros/devel/share/common-lisp
+#ENV SHLVL 1
+#ENV HOME /home/autoware
+#ENV TINI_VERSION v0.9.0
+#ENV EUSDIR /opt/ros/indigo/share/euslisp/jskeus/eus/
+#ENV PKG_CONFIG_PATH /home/autoware/Autoware/ros/devel/lib/pkgconfig:/opt/ros/indigo/lib/pkgconfig
+#ENV LESSOPEN | /usr/bin/lesspipe %s
+#ENV LESSCLOSE /usr/bin/lesspipe %s %s
+#ENV ROS_ETC_DIR /opt/ros/indigo/etc/ros
 
-RUN  printenv
+#RUN  printenv
 
-
-RUN /bin/bash -c '. /opt/ros/indigo/setup.sh; cd /src_pre_bug/repo/ros; catkin_make'
-RUN /bin/bash -c '. /opt/ros/indigo/setup.sh; cd /src_bug/repo/ros; catkin_make'
-RUN /bin/bash -c '. /opt/ros/indigo/setup.sh; cd /src_bug_fix/repo/ros; catkin_make'
+RUN /bin/bash -c 'cd /src_pre_bug/repo/ros; ./catkin_make_release'
+RUN /bin/bash -c 'cd /src_bug/repo/ros; ./catkin_make_release'
+RUN /bin/bash -c 'cd /src_bug_fix/repo/ros; ./catkin_make_release'
