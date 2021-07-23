@@ -80,14 +80,14 @@ class Config:
         A set of environment variables that should be used by the application.
     app: roswire.app.App
         The ROSWire application for this configuration.
-    sources: List[NodeSourceInfo]
+    node_sources: List[NodeSourceInfo]
         The list of information about the sources for nodes
     """
     image: str
     sources: t.Sequence[str]
     launches: t.Sequence[str]
     environment: t.Mapping[str, str] = attr.ib(factory=dict)
-    package_sources: t.Sequence[str] = attr.ib(factory=list)
+    node_sources: t.Sequence[str] = attr.ib(factory=list)
     app: roswire.app.App = attr.ib(init=False)
 
     @classmethod
@@ -118,21 +118,21 @@ class Config:
         if has_environment and not isinstance(dict_['environment'], dict):
             raise ValueError("expected 'environment' to be a mapping")
 
-        has_package_sources = 'package_sources' in dict_
-        if has_package_sources and not isinstance(dict['package_sources'], list):
-            raise ValueError("expected 'package_sources' to be a list")
+        has_node_sources = 'node_sources' in dict_
+        if has_node_sources and not isinstance(dict['node_sources'], list):
+            raise ValueError("expected 'node_sources' to be a list")
 
         image: str = dict_['image']
         sources: t.Sequence[str] = dict_['sources']
         launches: t.Sequence[str] = dict_['launches']
         environment: t.Mapping[str, str] = dict(dict_.get('environment', {}))
-        package_sources: t.Sequence[t.Dict[str, t.Any]] = list(dict_.get('package_sources', []))
+        node_sources: t.Sequence[t.Dict[str, t.Any]] = list(dict_.get('node_sources', []))
 
         return Config(image=image,
                       sources=sources,
                       launches=launches,
                       environment=environment,
-                      package_sources=[NodeSourceInfo.from_dict(d) for d in package_sources])
+                      package_sources=[NodeSourceInfo.from_dict(d) for d in node_sources])
 
     @classmethod
     def from_yaml_string(cls, yml: str) -> 'Config':
