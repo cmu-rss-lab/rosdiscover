@@ -28,7 +28,7 @@ class Model:
 
     @staticmethod
     def find(package: str, name: str) -> 'Model':
-        if (package, name) in Model._models.keys():
+        if (package, name) in Model._models:
             return Model._models[(package, name)]
         else:
             m = (f"failed to find model for node type [{name}] "
