@@ -87,7 +87,7 @@ class Config:
     sources: t.Sequence[str]
     launches: t.Sequence[str]
     environment: t.Mapping[str, str] = attr.ib(factory=dict)
-    node_sources: t.Sequence[str] = attr.ib(factory=list)
+    node_sources: t.Mapping[str, NodeSourceInfo] = attr.ib(factory=list)
     app: roswire.app.App = attr.ib(init=False)
 
     @classmethod
@@ -132,7 +132,9 @@ class Config:
                       sources=sources,
                       launches=launches,
                       environment=environment,
-                      package_sources=[NodeSourceInfo.from_dict(d) for d in node_sources])
+                      node_sources={nsi.name: nsi
+                                    for nsi in (NodeSourceInfo.from_dict(d) for d in node_sources)
+                                    })
 
     @classmethod
     def from_yaml_string(cls, yml: str) -> 'Config':
