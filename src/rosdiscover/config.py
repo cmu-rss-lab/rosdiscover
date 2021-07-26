@@ -49,7 +49,7 @@ class Config:
 
         if 'launches' not in dict_:
             raise ValueError("'launches' is undefined in configuration")
-            
+
         if 'sources' not in dict_:
             raise ValueError("'sources' is undefined in configuration")
 
@@ -72,6 +72,8 @@ class Config:
                       sources=sources,
                       launches=launches,
                       environment=environment)
+
+
 
     @classmethod
     def from_yaml_string(cls, yml: str) -> 'Config':
