@@ -20,7 +20,7 @@ class Launch:
     filename: str
     arguments: Mapping[str, str]
 
-    def get_argv(self) -> str:
+    def get_argv(self) -> List[str]:
         return [f'{argk}:={self.arguments.get(argk)}' for argk in self.arguments.keys()]
 
     @classmethod
@@ -41,7 +41,7 @@ class Launch:
         if has_arguments and not isinstance(dict_['arguments'], dict):
             raise ValueError("expected 'arguments' to be a mapping")
 
-        filename: str = dict_.get('filename')
+        filename: Optional[Any] = dict_.get('filename')
         arguments: Mapping[str, str] = dict(dict_.get('arguments', {}))
         return Launch(filename=filename,
                       arguments=arguments)
