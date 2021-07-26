@@ -58,7 +58,11 @@ class Config:
             raise ValueError("expected 'sources' to be a list")
         if not isinstance(dict_['launches'], list):
             raise ValueError("expected 'launches' to be a list")
-        if not all(type(d) in (dict, str) for d in dict_["launches"]):
+        if all(type(d) == dict for d in dict_["launches"]):
+            launch_args_provided = True
+        elif all(type(d) == str for d in dict_["launches"]):
+            launch_args_provided = False
+        else:
             raise ValueError("expected elements of 'launches' to be str or dict")
             
         has_environment = 'environment' in dict_
