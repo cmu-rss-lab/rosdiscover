@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 __all__ = ('Launch',)
 
-from typing import Any, Mapping
+from typing import Any, Mapping, List
 
 import attr
 
@@ -41,7 +41,7 @@ class Launch:
         if has_arguments and not isinstance(dict_['arguments'], dict):
             raise ValueError("expected 'arguments' to be a mapping")
 
-        filename: Optional[Any] = dict_.get('filename')
+        filename: str = dict_.get('filename') or ""
         arguments: Mapping[str, str] = dict(dict_.get('arguments', {}))
         return Launch(filename=filename,
                       arguments=arguments)
