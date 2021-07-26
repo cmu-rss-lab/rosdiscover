@@ -8,6 +8,7 @@ from loguru import logger
 import attr
 import roswire
 import yaml
+from .launch import Launch
 
 
 @attr.s(frozen=True, slots=True, auto_attribs=True)
@@ -30,7 +31,7 @@ class Config:
     """
     image: str
     sources: Sequence[str]
-    launches: Sequence[str]
+    launches: Sequence[Launch]
     environment: Mapping[str, str] = attr.ib(factory=dict)
     app: roswire.app.App = attr.ib(init=False)
 
@@ -55,8 +56,13 @@ class Config:
             raise ValueError("expected 'image' to be a string")
         if not isinstance(dict_['sources'], list):
             raise ValueError("expected 'sources' to be a list")
-        if not isinstance(dict_['launches'], list):
-            raise ValueError("expected 'launches' to be a list")
+        if isinstance(dict_['launches'], list):
+            launch_args_provided = False
+        else if isinstance(dict_['launches'], dict):
+            launch_args_provided = True
+        else 
+            raise ValueError("expected 'launches' to be a list or dict")
+            
 
         has_environment = 'environment' in dict_
         if has_environment and not isinstance(dict_['environment'], dict):
@@ -64,7 +70,12 @@ class Config:
 
         image: str = dict_['image']
         sources: Sequence[str] = dict_['sources']
-        launches: Sequence[str] = dict_['launches']
+        if launch_args_provided: 
+        	launches = map(lambda d: Launch.from_dict(d), launches_inputs) 
+        else: 
+        	launches_inputs: Sequence[str] = dict_['launches']
+        	launches = map(lambda s: Launch(filename = s, arguments = dict()), launches_inputs) 
+
         environment: Mapping[str, str] = dict(dict_.get('environment', {}))
         return Config(image=image,
                       sources=sources,
