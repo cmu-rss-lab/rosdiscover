@@ -44,7 +44,6 @@ class Launch:
             raise ValueError("expected 'arguments' to be a mapping")
 
         filename: str = dict_.get('filename')
-        logger.debug(f"FiLeNaMe: {type(filename)} {filename}")
         arguments: Mapping[str, str] = dict(dict_.get('arguments', {}))
         return Launch(filename=filename,
                       arguments=arguments)
