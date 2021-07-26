@@ -67,7 +67,7 @@ class Config:
 
         image: str = dict_['image']
         sources: Sequence[str] = dict_['sources']
-        launches_inputs: Sequence[str] = dict_['launches']
+        launches_inputs: Sequence[Any] = dict_['launches']
         if launch_args_provided: 
             launches = list(map(lambda d: Launch.from_dict(d), launches_inputs))
         else: 
