@@ -22,7 +22,7 @@ class Launch:
     filename: str
     arguments: Mapping[str, str]
 
-    def get_argv(self):
+    def get_argv(self) -> str:
         return [f'{argk}:={self.arguments.get(argk)}' for argk in self.arguments.keys()]
 
     @classmethod
