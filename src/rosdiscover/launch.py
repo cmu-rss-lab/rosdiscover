@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 __all__ = ('Launch',)
 
-from types import MappingProxyType
-from typing import Any, Mapping, Sequence
+from typing import Any, Mapping
 
-from loguru import logger
 import attr
-import yaml
+
 
 # Data class storing the file name of a launch file and its arguments
 @attr.s(frozen=True, slots=True, auto_attribs=True)

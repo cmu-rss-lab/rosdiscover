@@ -54,7 +54,7 @@ class Interpreter:
         if self._app.description.distribution.ros == ROSVersion.ROS1:
             reader = ROS1LaunchFileReader.for_app_instance(self._app)
         else:
-            reader = ROS2LaunchFileReader.for_app_instance(self._app) 
+            reader = ROS2LaunchFileReader.for_app_instance(self._app)
         logger.debug(f"get_argv: {launch_obj.get_argv()}")
         config = reader.read(launch_obj.filename, launch_obj.get_argv())
 

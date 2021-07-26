@@ -65,7 +65,7 @@ class Config:
             launch_args_provided = False
         else:
             raise ValueError("expected elements of 'launches' to be str or dict")
-            
+
         has_environment = 'environment' in dict_
         if has_environment and not isinstance(dict_['environment'], dict):
             raise ValueError("expected 'environment' to be a mapping")
@@ -73,10 +73,10 @@ class Config:
         image: str = dict_['image']
         sources: Sequence[str] = dict_['sources']
         launches_inputs: Sequence[Any] = dict_['launches']
-        if launch_args_provided: 
+        if launch_args_provided:
             launches = list(map(lambda d: Launch.from_dict(d), launches_inputs))
-        else: 
-            launches = list(map(lambda s: Launch(filename = s, arguments = dict()), launches_inputs))
+        else:
+            launches = list(map(lambda s: Launch(filename=s, arguments=dict()), launches_inputs))
         logger.debug(f'getArgV: {launches[0].get_argv()}')
         environment: Mapping[str, str] = dict(dict_.get('environment', {}))
         return Config(image=image,
