@@ -21,8 +21,8 @@ class Config:
     sources: Sequence[str]
         The sequence of source files that should be sourced to obtain the
         catkin workspace for the application.
-    launches: Sequence[str]
-        The sequence of launch files that should be used to launch the
+    launches: Sequence[Launch]
+        The sequence of Launch objects that should be used to launch the
         application.
     environment: Mapping[str, str]
         A set of environment variables that should be used by the application.
@@ -58,9 +58,9 @@ class Config:
             raise ValueError("expected 'sources' to be a list")
         if isinstance(dict_['launches'], list):
             launch_args_provided = False
-        else if isinstance(dict_['launches'], dict):
+        elif isinstance(dict_['launches'], dict):
             launch_args_provided = True
-        else 
+        else:
             raise ValueError("expected 'launches' to be a list or dict")
             
 
