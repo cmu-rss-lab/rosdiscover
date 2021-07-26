@@ -56,26 +56,27 @@ class Config:
             raise ValueError("expected 'image' to be a string")
         if not isinstance(dict_['sources'], list):
             raise ValueError("expected 'sources' to be a list")
-        if isinstance(dict_['launches'], list):
-            launch_args_provided = False
-        elif isinstance(dict_['launches'], dict):
+        if not isinstance(dict_['launches'], list):
+            raise ValueError("expected 'launches' to be a list")
+        if isinstance(dict_['launches'][0], dict):
             launch_args_provided = True
+        elif isinstance(dict_['launches'][0], list):
+            launch_args_provided = False
         else:
             raise ValueError("expected 'launches' to be a list or dict")
             
-
         has_environment = 'environment' in dict_
         if has_environment and not isinstance(dict_['environment'], dict):
             raise ValueError("expected 'environment' to be a mapping")
 
         image: str = dict_['image']
         sources: Sequence[str] = dict_['sources']
+        launches_inputs: Sequence[str] = dict_['launches']
         if launch_args_provided: 
-        	launches = map(lambda d: Launch.from_dict(d), launches_inputs) 
+            launches = list(map(lambda d: Launch.from_dict(d), launches_inputs))
         else: 
-        	launches_inputs: Sequence[str] = dict_['launches']
-        	launches = map(lambda s: Launch(filename = s, arguments = dict()), launches_inputs) 
-
+            launches = list(map(lambda s: Launch(filename = s, arguments = dict()), launches_inputs))
+        
         environment: Mapping[str, str] = dict(dict_.get('environment', {}))
         return Config(image=image,
                       sources=sources,

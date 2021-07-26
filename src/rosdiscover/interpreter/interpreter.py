@@ -13,6 +13,7 @@ from .model import Model
 from .summary import SystemSummary
 from .parameter import ParameterServer
 from ..config import Config
+from ..launch import Launch
 
 
 class Interpreter:
@@ -47,7 +48,7 @@ class Interpreter:
         node_to_summary = {s.fullname: s for s in node_summaries}
         return SystemSummary(node_to_summary)
 
-    def launch(self, filename: str) -> None:
+    def launch(self, launchObj: Launch) -> None:
         """Simulates the effects of `roslaunch` using a given launch file."""
         # NOTE this method also supports command-line arguments
         if self._app.description.distribution.ros == ROSVersion.ROS1:
@@ -55,7 +56,7 @@ class Interpreter:
         else:
             reader = ROS2LaunchFileReader.for_app_instance(self._app)
 
-        config = reader.read(filename)
+        config = reader.read(launchObj.filename, launchObj.get_argv())
 
         for param in config.params.values():
             self.params[param.name] = param.value
