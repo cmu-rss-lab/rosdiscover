@@ -46,8 +46,10 @@ class Config:
         """
         if 'image' not in dict_:
             raise ValueError("'image' is undefined in configuration")
+
         if 'launches' not in dict_:
             raise ValueError("'launches' is undefined in configuration")
+            
         if 'sources' not in dict_:
             raise ValueError("'sources' is undefined in configuration")
 
