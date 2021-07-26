@@ -47,7 +47,3 @@ class Launch:
         arguments: Mapping[str, str] = dict(dict_.get('arguments', {}))
         return Launch(filename=filename,
                       arguments=arguments)
-
-    def __attrs_post_init__(self) -> None:
-        object.__setattr__(self, 'filename', self.filename)
-        object.__setattr__(self, 'arguments', self.arguments)
