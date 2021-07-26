@@ -8,6 +8,7 @@ from loguru import logger
 import attr
 import yaml
 
+# Data class storing the file name of a launch file and its arguments
 @attr.s(frozen=True, slots=True, auto_attribs=True)
 class Launch:
     """
