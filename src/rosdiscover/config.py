@@ -60,10 +60,10 @@ class Config:
             raise ValueError("expected 'launches' to be a list")
         if isinstance(dict_['launches'][0], dict):
             launch_args_provided = True
-        elif isinstance(dict_['launches'][0], list):
+        elif isinstance(dict_['launches'][0], str):
             launch_args_provided = False
         else:
-            raise ValueError("expected 'launches' to be a list or dict")
+            raise ValueError("expected elements of 'launches' to be str or dict")
             
         has_environment = 'environment' in dict_
         if has_environment and not isinstance(dict_['environment'], dict):
@@ -76,7 +76,7 @@ class Config:
             launches = list(map(lambda d: Launch.from_dict(d), launches_inputs))
         else: 
             launches = list(map(lambda s: Launch(filename = s, arguments = dict()), launches_inputs))
-        
+        logger.debug(f'getArgV: {launches[0].get_argv()}')
         environment: Mapping[str, str] = dict(dict_.get('environment', {}))
         return Config(image=image,
                       sources=sources,

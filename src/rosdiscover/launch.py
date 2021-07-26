@@ -22,7 +22,7 @@ class Launch:
     arguments: Mapping[str, str]
 
     def get_argv(self):
-        return str(self.arguments) #list(map(lambda argk: f'{argk}:={self.arguments.get(argk)}', self.arguments.keys()))
+        return list(map(lambda argk: f'{argk}:={self.arguments.get(argk)}', self.arguments.keys()))
 
     @classmethod
     def from_dict(cls, dict_: Mapping[str, Any]) -> 'Launch':
