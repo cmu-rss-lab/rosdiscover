@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from typing import Dict, Iterator, Optional
+import typing as t
 import contextlib
 
 from loguru import logger
@@ -27,16 +27,17 @@ class Interpreter:
     @contextlib.contextmanager
     def for_config(cls,
                    config: Config
-                   ) -> Iterator['Interpreter']:
+                   ) -> t.Iterator['Interpreter']:
         """Constructs an interpreter for a given configuration"""
         rsw = roswire.ROSWire()  # TODO don't maintain multiple instances
         with rsw.launch(config.image, config.sources, environment=config.environment) as app:
             yield Interpreter(app)
 
-    def __init__(self, app: roswire.System) -> None:
+    def __init__(self, app: roswire.System, node_sources: t.Mapping[str, NodeSourceInfo]) -> None:
         self._app = app
         self.params = ParameterServer()
-        self.nodes: Dict[str, NodeContext] = {}
+        self.nodes: t.Dict[str, NodeContext] = {}
+        self._node_sources = node_sources
 
     @property
     def app(self) -> AppInstance:
@@ -98,8 +99,8 @@ class Interpreter:
                       name: str,
                       namespace: str,
                       launch_filename: str,
-                      remappings: Dict[str, str],
-                      manager: Optional[str] = None
+                      remappings: t.Dict[str, str],
+                      manager: t.Optional[str] = None
                       ) -> None:
         """Loads a nodelet using the provided instructions.
 
@@ -150,7 +151,7 @@ class Interpreter:
               name: str,
               namespace: str,
               launch_filename: str,
-              remappings: Dict[str, str],
+              remappings: t.Dict[str, str],
               args: str,
               ) -> None:
         """Loads a node using the provided instructions.
