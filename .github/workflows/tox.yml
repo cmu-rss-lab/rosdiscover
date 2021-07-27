@@ -1,0 +1,18 @@
+name: Tox lint checking
+on: [push, pull_request]
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9.5
+    - name: Install pipenv
+      run: pip install pipenv==2021.5.29
+    - name: Install package
+      run: |
+        pipenv install
+    - name: Tox
+      run: pipenv run tox -e py39
