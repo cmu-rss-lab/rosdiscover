@@ -211,6 +211,8 @@ class Interpreter:
             logger.info(f"using remappings: {remappings}")
         if (pkg, nodetype) in self._node_sources:
             sources = self._node_sources[(pkg, nodetype)]
+            logger.info(f"Found {nodetype} in {pkg}: Need to examine {str(sources.sources)}")
+            raise NotImplementedError("Call to static analysis not implemented yet")
         # TODO replace with ProjectModels.fetch(package, node)
         try:
             model = HandwrittenModel.find(pkg, nodetype)
