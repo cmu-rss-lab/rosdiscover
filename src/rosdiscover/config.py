@@ -9,6 +9,7 @@ import attr
 import roswire
 import yaml
 
+
 @attr.s(frozen=True, slots=True, auto_attribs=True)
 class NodeSourceInfo:
     """
@@ -119,14 +120,14 @@ class Config:
             raise ValueError("expected 'environment' to be a mapping")
 
         has_node_sources = 'node_sources' in dict_
-        if has_node_sources and not isinstance(dict['node_sources'], list):
+        if has_node_sources and not isinstance(dict_['node_sources'], list):
             raise ValueError("expected 'node_sources' to be a list")
 
         image: str = dict_['image']
         sources: t.Sequence[str] = dict_['sources']
         launches: t.Sequence[str] = dict_['launches']
         environment: t.Mapping[str, str] = dict(dict_.get('environment', {}))
-        node_sources: t.Sequence[t.Dict[t.Tuple[str, str], t.Any]] = list(dict_.get('node_sources', []))
+        node_sources: t.Sequence[t.Dict[str, t.Any]] = list(dict_.get('node_sources', []))
 
         return Config(image=image,
                       sources=sources,
