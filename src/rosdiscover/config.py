@@ -87,7 +87,7 @@ class Config:
     sources: t.Sequence[str]
     launches: t.Sequence[str]
     environment: t.Mapping[str, str] = attr.ib(factory=dict)
-    node_sources: t.Mapping[str, NodeSourceInfo] = attr.ib(factory=list)
+    node_sources: t.Mapping[t.Tuple[str, str], NodeSourceInfo] = attr.ib(factory=list)
     app: roswire.app.App = attr.ib(init=False)
 
     @classmethod
@@ -126,13 +126,13 @@ class Config:
         sources: t.Sequence[str] = dict_['sources']
         launches: t.Sequence[str] = dict_['launches']
         environment: t.Mapping[str, str] = dict(dict_.get('environment', {}))
-        node_sources: t.Sequence[t.Dict[str, t.Any]] = list(dict_.get('node_sources', []))
+        node_sources: t.Sequence[t.Dict[t.Tuple[str, str], t.Any]] = list(dict_.get('node_sources', []))
 
         return Config(image=image,
                       sources=sources,
                       launches=launches,
                       environment=environment,
-                      node_sources={nsi.name: nsi
+                      node_sources={(nsi.package_name, nsi.node_name): nsi
                                     for nsi in (NodeSourceInfo.from_dict(d) for d in node_sources)
                                     })
 
