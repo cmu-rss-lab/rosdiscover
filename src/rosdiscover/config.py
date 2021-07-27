@@ -127,15 +127,16 @@ class Config:
         sources: t.Sequence[str] = dict_['sources']
         launches: t.Sequence[str] = dict_['launches']
         environment: t.Mapping[str, str] = dict(dict_.get('environment', {}))
-        node_sources: t.Sequence[t.Dict[str, t.Any]] = list(dict_.get('node_sources', []))
+        node_sources_list: t.Sequence[t.Dict[str, t.Any]] = list(dict_.get('node_sources', []))
 
+        node_sources = {(nsi.package_name, nsi.node_name): nsi
+                        for nsi in (NodeSourceInfo.from_dict(d)
+                                    for d in node_sources_list)}
         return Config(image=image,
                       sources=sources,
                       launches=launches,
                       environment=environment,
-                      node_sources={(nsi.package_name, nsi.node_name): nsi
-                                    for nsi in (NodeSourceInfo.from_dict(d) for d in node_sources)
-                                    })
+                      node_sources=node_sources)
 
     @classmethod
     def from_yaml_string(cls, yml: str) -> 'Config':
