@@ -93,4 +93,6 @@ class SystemSummary(Mapping[str, NodeSummary]):
 
     @property
     def unresolved(self) -> Iterator[NodeSummary]:
-        yield (n for n in self._node_to_summary.values() if n.placeholder)
+        for n in self._node_to_summary.values():
+            if n.placeholder:
+                yield n
