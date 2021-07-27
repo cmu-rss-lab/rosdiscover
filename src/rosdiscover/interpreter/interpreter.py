@@ -33,7 +33,7 @@ class Interpreter:
         with rsw.launch(config.image, config.sources, environment=config.environment) as app:
             yield Interpreter(app)
 
-    def __init__(self, app: roswire.System, node_sources: t.Mapping[str, NodeSourceInfo]) -> None:
+    def __init__(self, app: roswire.System, node_sources: t.Mapping[t.Tuple[str, str], NodeSourceInfo]) -> None:
         self._app = app
         self.params = ParameterServer()
         self.nodes: t.Dict[str, NodeContext] = {}
@@ -209,7 +209,8 @@ class Interpreter:
 
         if remappings:
             logger.info(f"using remappings: {remappings}")
-
+        if (pkg, nodetype) in self._node_sources:
+            sources = self._node_sources[(pkg, nodetype)]
         # TODO replace with ProjectModels.fetch(package, node)
         try:
             model = HandwrittenModel.find(pkg, nodetype)
