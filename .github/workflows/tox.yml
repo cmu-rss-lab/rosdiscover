@@ -14,5 +14,6 @@ jobs:
     - name: Install package
       run: |
         pipenv install
+        pipenv install -r requirements.dev.txt
     - name: Tox
       run: pipenv run tox -e py39
