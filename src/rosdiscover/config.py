@@ -55,7 +55,7 @@ class NodeSourceInfo:
         if not isinstance(dict_['node'], str):
             raise ValueError("expected 'node' to be a string")
         if not isinstance(dict_['sources'], list):
-            raise ValueError("expected 'sources' to be a string")
+            raise ValueError("expected 'sources' to be a list")
 
         return NodeSourceInfo(
             package_name=dict_['package'],
@@ -82,13 +82,13 @@ class Config:
     app: roswire.app.App
         The ROSWire application for this configuration.
     node_sources: List[NodeSourceInfo]
-        The list of information about the sources for nodes
+        Provides instructions on how to statically recover the architecture code for individual nodes
     """
     image: str
     sources: t.Sequence[str]
     launches: t.Sequence[str]
     environment: t.Mapping[str, str] = attr.ib(factory=dict)
-    node_sources: t.Mapping[t.Tuple[str, str], NodeSourceInfo] = attr.ib(factory=list)
+    node_sources: t.Mapping[t.Tuple[str, str], NodeSourceInfo] = attr.ib(factory=dict)
     app: roswire.app.App = attr.ib(init=False)
 
     @classmethod
