@@ -30,7 +30,7 @@ class Model:
     def find(package: str, name: str) -> 'Model':
         if (package, name) in Model._models:
             return Model._models[(package, name)]
-        except Exception:
+        else:
             m = (f"failed to find model for node type [{name}] "
                  f"in package [{package}]")
             logger.warning(m)
