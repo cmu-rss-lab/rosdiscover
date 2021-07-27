@@ -11,9 +11,15 @@ jobs:
         python-version: 3.9.5
     - name: Install pipenv
       run: pip install pipenv==2021.5.29
+    - id: cache-pipenv
+        uses: actions/cache@v2
+        with:
+          path: ~/.local/share/virtualenvs
+          key: ${{ runner.os }}-pipenv-${{ hashFiles('**/Pipfile.lock') }}
     - name: Install package
+      if: steps.cache-pipenv.outputs.cache-hit != 'true'
       run: |
-        pipenv install
+        pipenv install --dev
         pipenv install -r requirements.dev.txt
     - name: Tox
       run: pipenv run tox -e py39
