@@ -9,4 +9,4 @@ twine==3.1.1
 wheel==0.34.2
 types-PyYAML==5.4.3
 types-setuptools==57.0.0
-git+git://github.com/rosqual/roswire.git@0f48a6fde75ca22919f2e1e6a73106a02f724613#egg=roswire
+git+git://github.com/rosqual/roswire.git@be8788bc998c5a2a9d25decfbf97108aaec698c8#egg=roswire
