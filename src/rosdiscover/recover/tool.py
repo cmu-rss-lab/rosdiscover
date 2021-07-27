@@ -12,13 +12,14 @@ import roswire
 from ..config import Config
 
 
-@attr.s(frozen=True, auto_attribs=True)
+@attr.s(auto_attribs=True)
 class NodeRecoveryTool:
     _app: roswire.app.App
+    _app_instance: roswire.app.AppInstance = attr.ib(init=False, repr=False)
 
     @contextlib.contextmanager
     @classmethod
-    def for_config(cls, config: Config) -> 'NodeRecoveryTool':
+    def for_config(cls, config: Config) -> "NodeRecoveryTool":
         with NodeRecoveryTool(app=config.app) as tool:
             yield tool
 
@@ -36,10 +37,20 @@ class NodeRecoveryTool:
         return
 
     def open(self) -> None:
-        return
+        volumes = {
+            "rosdiscover-cxx-extract-opt": {
+                "mode": "ro",
+                "bind": "/opt/rosdiscover",
+            },
+            "rosdiscover-cxx-extract-llvm": {
+                "mode": "ro",
+                "bind": "/opt/llvm11",
+            },
+        }
+        self._app_instance = self._app.launch(volumes=volumes)
 
     def close(self) -> None:
-        return
+        self._app_instance.close()
 
     def recover(self, node_type: str, package: str) -> None:
         raise NotImplementedError
