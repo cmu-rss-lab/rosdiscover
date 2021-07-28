@@ -15,11 +15,11 @@ from ..config import Config
 @attr.s(auto_attribs=True)
 class NodeRecoveryTool:
     _app: roswire.app.App
-    _app_instance: roswire.app.AppInstance = attr.ib(init=False, repr=False)
+    _app_instance: t.Optional[roswire.app.AppInstance] = attr.ib(default=None, repr=False)
 
     @contextlib.contextmanager
     @classmethod
-    def for_config(cls, config: Config) -> "NodeRecoveryTool":
+    def for_config(cls, config: Config) -> t.Iterator["NodeRecoveryTool"]:
         with NodeRecoveryTool(app=config.app) as tool:
             yield tool
 
@@ -34,9 +34,12 @@ class NodeRecoveryTool:
         ex_tb: t.Optional[types.TracebackType],
     ) -> None:
         self.close()
-        return
 
     def open(self) -> None:
+        if self._app_instance:
+            raise ValueError("tool has already been started")
+
+        logger.debug("launching container for static recovery")
         volumes = {
             "rosdiscover-cxx-extract-opt": {
                 "mode": "ro",
@@ -48,9 +51,14 @@ class NodeRecoveryTool:
             },
         }
         self._app_instance = self._app.launch(volumes=volumes)
+        logger.debug("launched static recovery container")
 
     def close(self) -> None:
+        if not self._app_instance:
+            raise ValueError("tool has not been started")
+
         self._app_instance.close()
+        self._app_instance = None
 
     def recover(self, node_type: str, package: str) -> None:
         raise NotImplementedError

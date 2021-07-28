@@ -5,18 +5,26 @@ Provides a simple command-line interface.
 import argparse
 
 from loguru import logger
-import yaml
 import pkg_resources
+import yaml
 
 from .acme import AcmeGenerator
 from .config import Config
 from .interpreter import Interpreter, SystemSummary
 from .observer import Observer
+from .recovery import NodeRecoveryTool
 
 DESC = 'discovery of ROS architectures'
 CONFIG_HELP = """R|A YAML file defining the configuration.
 - indicates stdin.
 {Config.__doc__}"""
+
+
+def recover(args: argparse.Namespace) -> None:
+    """Provides static recovery of dynamic architecture models."""
+    config = Config.from_yaml_string(args.config)
+    with NodeRecoveryTool.for_config(config) as tool:
+        print(f"spun up the container: {tool}")
 
 
 def _launch(config: Config) -> SystemSummary:
