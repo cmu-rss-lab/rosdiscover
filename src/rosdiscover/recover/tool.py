@@ -53,13 +53,8 @@ class NodeRecoveryTool:
                 "bind": "/opt/llvm11",
             },
         }
-        #environment = {
-        #    "PATH": "/opt/rosdiscover/bin:/opt/llvm11/bin:${PATH}",
-        #}
-        environment = {}
         self._app_instance = self._app.launch(
             volumes=volumes,
-            environment=environment,
         )
         logger.debug("launched static recovery container")
 
@@ -121,12 +116,18 @@ class NodeRecoveryTool:
         for source_file in source_file_abs_paths:
             self._prepare_source_file(source_file)
 
-        args = (
+        env = {
+            "PATH": "/opt/rosdiscover/bin:/opt/llvm11/bin:${PATH:-}",
+            "LIBRARY_PATH": "/opt/rosdiscover/lib:/opt/llvm11/lib:${LIBRARY_PATH:-}",
+            "LD_LIBRARY_PATH": "/opt/rosdiscover/lib:/opt/llvm11/lib:${LD_LIBRARY_PATH:-}",
+        }
+        env_args = [f"{var}={val}" for (var, val) in env.items()]
+        args = env_args + [
             "rosdiscover",
             "-p",
             shlex.quote(workspace_abs_path),
             ' '.join(shlex.quote(p) for p in source_file_abs_paths),
-        )
+        ]
         args_s = ' '.join(args)
         logger.debug(f"running static recovery command: {args_s}")
         outcome = shell.run(args_s, text=True, stderr=True)
