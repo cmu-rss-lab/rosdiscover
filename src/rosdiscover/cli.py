@@ -121,12 +121,22 @@ def main() -> None:
     subparsers = parser.add_subparsers()
 
     p = subparsers.add_parser(
+        'recover',
+        help='simulates the effects of a roslaunch.',
+        formatter_class=MultiLineFormatter,
+    )
+    p.add_argument('config', type=argparse.FileType('r'), help=CONFIG_HELP)
+    p.add_argument('package', type=str, help='the name of the package to which the node belongs')
+    p.add_argument('node', type=str, help='the name of the node')
+    p.add_argument('sources', nargs='+')
+    p.set_defaults(func=recover)
+
+    p = subparsers.add_parser(
         'launch',
         help='simulates the effects of a roslaunch.',
         formatter_class=MultiLineFormatter)
     p.add_argument('--output', type=str, help="file to output YAML to")
     p.add_argument('config', type=argparse.FileType('r'), help=CONFIG_HELP)
-
     p.set_defaults(func=launch)
 
     p = subparsers.add_parser(
