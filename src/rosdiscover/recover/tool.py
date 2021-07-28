@@ -30,7 +30,7 @@ class RosBuildTool(enum.Enum):
             if the name of the build tool is unrecognized
         """
         try:
-            return RosBuildTool[CATKIN]
+            return RosBuildTool[name]
         except KeyError as err:
             raise ValueError(f"unrecognized ROS build tool: {name}") from err
 
@@ -104,6 +104,7 @@ class NodeRecoveryTool:
         ValueError
             if the workspace for the given package could not be determined
         """
+        assert self._app_instance
         files = self._app_instance.files
         workspace_path = os.path.dirname(package.path)
         while workspace_path != "/":
@@ -112,7 +113,7 @@ class NodeRecoveryTool:
                 return workspace_path
             workspace_path = os.path.dirname(workspace_path)
 
-        raise ValueError(f"unable to determine workspace for package: {package_name}")
+        raise ValueError(f"unable to determine workspace for package: {package}")
 
     def _find_build_directory(self, workspace: str) -> str:
         """Determines the absolute path to the build directory within a given workspace.
@@ -122,6 +123,7 @@ class NodeRecoveryTool:
         ValueError
             if the build directory could not be found
         """
+        assert self._app_instance
         files = self._app_instance.files
 
         build_dir = os.path.join(workspace, "build")
@@ -148,14 +150,21 @@ class NodeRecoveryTool:
             if the build directory could not be found inside the workspace
         ValueError
             if the build tool used to construct the workspace was unrecognized
+        ValueError
+            if the workspace does not provide a .built_by file inside its build directory
         """
+        assert self._app_instance
         files = self._app_instance.files
         build_directory = self._find_build_directory(workspace)
 
-        # TODO raise exception if .built_by doesn't exist
-        # TODO look at .built_by file
+        built_by_path = os.path.join(build_directory, ".built_by")
 
-        raise NotImplementedError
+        try:
+            build_tool_name = files.read(built_by_path, binary=False)
+        except FileNotFoundError:
+            raise ValueError(f"unable to find expected .built_by file: {built_by_path}")
+
+        return RosBuildTool.from_string(build_tool_name)
 
     def nice_recover(
         self,
