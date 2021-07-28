@@ -108,9 +108,17 @@ class NodeRecoveryTool:
         files = self._app_instance.files
         workspace_path = os.path.dirname(package.path)
         while workspace_path != "/":
+
             catkin_marker_path = os.path.join(workspace_path, ".catkin_workspace")
+            logger.debug(f"looking for workspace marker: {catkin_marker_path}")
             if files.exists(catkin_marker_path):
                 return workspace_path
+
+            catkin_tools_dir = os.path.join(workspace_path, ".catkin_tools")
+            logger.debug(f"looking for workspace marker: {catkin_tools_dir}")
+            if files.exists(catkin_tools_dir):
+                return workspace_path
+
             workspace_path = os.path.dirname(workspace_path)
 
         raise ValueError(f"unable to determine workspace for package: {package}")
