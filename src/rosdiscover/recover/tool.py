@@ -136,13 +136,19 @@ class NodeRecoveryTool:
 
         raise ValueError(f"unable to find build directory in workspace: {workspace}")
 
-    def _detect_build_tool(self, workspace: str) -> RosBuildTool:
+    def _detect_build_tool(
+        self,
+        workspace: str,
+        build_directory: t.Optional[str] = None,
+    ) -> RosBuildTool:
         """Detects the build tool that was used to construct a given workspace.
 
         Parameters
         ----------
         workspace: str
             The absolute path to the workspace.
+        build_directory: str, optional
+            The absolute path to the build directory within the given workspace.
 
         Raises
         ------
@@ -155,7 +161,9 @@ class NodeRecoveryTool:
         """
         assert self._app_instance
         files = self._app_instance.files
-        build_directory = self._find_build_directory(workspace)
+
+        if not build_directory:
+            build_directory = self._find_build_directory(workspace)
 
         built_by_path = os.path.join(build_directory, ".built_by")
 
@@ -166,39 +174,106 @@ class NodeRecoveryTool:
 
         return RosBuildTool.from_string(build_tool_name)
 
-    def nice_recover(
+    def _find_compile_commands_file(self, package: roswire.common.Package) -> str:
+        """Locates the compile_commands.json for a given package.
+
+        Raises
+        ------
+        FileNotFoundError
+            if no compile_commands.json was found for the given package
+        ValueError
+            if the build directory could not be found inside the workspace
+        ValueError
+            if the build tool used to construct the workspace was unrecognized
+        ValueError
+            if the workspace does not provide a .built_by file inside its build directory
+
+        Returns
+        -------
+        str
+            the absolute path of the compile_commands.json file
+        """
+        assert self._app_instance
+        files = self._app_instance.files
+        workspace = self._find_package_workspace(package)
+        build_directory = self._find_build_directory(workspace)
+        build_tool = self._detect_build_tool(workspace, build_directory)
+
+        compile_commands_directory: str
+        if build_tool == RosBuildTool.CATKIN_MAKE:
+            compile_commands_directory = build_directory
+        elif build_tool in (RosBuildTool.CATKIN, RosBuildTool.CATKIN_MAKE_ISOLATED):
+            compile_commands_directory = os.path.join(build_directory, package.name)
+        else:
+            assert (
+                "attempted to find compile_commands.json for unsupported build tool: {build_tool.value}"
+            )
+
+        compile_commands_path = os.path.join(compile_commands_directory, "compile_commands.json")
+        if not files.exists(compile_commands_path):
+            raise FileNotFoundError(
+                f"failed to find compile_commands.json at expected location: {compile_commands_path}"
+            )
+        return compile_commands_path
+
+    def recover(
         self,
         package_name: str,
         node_name: str,
         sources: t.Collection[str],
     ) -> None:
+        """Statically recovers the dynamic architecture of a given node.
+
+        Parameters
+        ----------
+        package_name: str
+            The name of the package to which the node belongs
+        node_name: str
+            The name of the node
+        sources: str
+            A list of the translation unit source files for node, provided as paths
+            relative to the root of the package directory
+
+        Raises
+        ------
+        ValueError
+            if no package is found with the given name
+        FileNotFoundError
+            if no compile_commands.json was found for the given package
+        ValueError
+            if the build directory could not be found inside the workspace
+        ValueError
+            if the build tool used to construct the workspace was unrecognized
+        ValueError
+            if the workspace does not provide a .built_by file inside its build directory
+        """
         try:
             package = self._app.description.packages[package_name]
         except KeyError as err:
             raise ValueError(f"no package found with given name: {package_name}") from err
 
-        workspace = self._find_package_workspace(package)
-        build_tool = self._detect_build_tool(workspace)
+        # ensure that no absolute paths are given
+        if any(os.path.isabs(path) for path in sources):
+            raise ValueError("expected source paths to be relative to package directory")
 
-        # TODO find the build directory that holds compile_commands.json
-        # catkin tools: build/{PACKAGE_NAME}/compile_commands.json
-        # catkin_make: WS/build/compile_commands.json
-        # catkin_make_isolated: ?
+        # compute the absolute paths of each source file
+        sources = [os.path.join(package.path, path) for path in sources]
 
-        # TODO find the compile_commands.json file; raise an exception if it doesn't exist
+        compile_commands_path = self._find_compile_commands_file(package)
 
-    def recover(
+        self._recover(compile_commands_path, sources)
+
+    def _recover(
         self,
-        workspace_abs_path: str,
+        compile_commands_path: str,
         source_file_abs_paths: t.Collection[str],
     ) -> None:
-        """Statically recovers the dynamic architecture of a given node.
+        """Invokes the C++ recovery binary to recover the dynamic architecture of a given node.
 
         Parameters
         ----------
-        workspace_abs_path: str
-            The absolute path to the Catkin workspace (within the container)
-            where the source code is located
+        compile_commands_path: str
+            The absolute path to the compile_commands.json associated with the given node.
         source_file_abs_paths: str
             A list of the C++ translation unit source files (i.e., .cpp files)
             for the given node, provided as absolute paths within the container
@@ -213,11 +288,11 @@ class NodeRecoveryTool:
         if not source_file_abs_paths:
             raise ValueError("expected at least one source file")
 
-        if not os.path.isabs(workspace_abs_path):
-            raise ValueError(f"expected absolute workspace path: {workspace_abs_path}")
+        if not os.path.isabs(compile_commands_path):
+            raise ValueError(f"expected absolute compile commands path: {compile_commands_path}")
 
-        if not files.isdir(workspace_abs_path):
-            raise ValueError(f"no directory found at given workspace path: {workspace_abs_path}")
+        if not files.exists(compile_commands_path):
+            raise ValueError(f"compile_commands.json not found at given location: {compile_commands_path}")
 
         for source_file in source_file_abs_paths:
             if not os.path.isabs(source_file):
@@ -237,7 +312,7 @@ class NodeRecoveryTool:
         args = env_args + [
             "rosdiscover",
             "-p",
-            shlex.quote(workspace_abs_path),
+            shlex.quote(os.path.dirname(compile_commands_path)),
             ' '.join(shlex.quote(p) for p in source_file_abs_paths),
         ]
         args_s = ' '.join(args)
