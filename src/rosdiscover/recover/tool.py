@@ -2,6 +2,7 @@
 __all__ = ('NodeRecoveryTool',)
 
 import contextlib
+import shlex
 import types
 import typing as t
 
@@ -50,7 +51,13 @@ class NodeRecoveryTool:
                 "bind": "/opt/llvm11",
             },
         }
-        self._app_instance = self._app.launch(volumes=volumes)
+        environment = {
+            "PATH": "/opt/rosdiscover/bin:/opt/llvm11/bin:${PATH}",
+        }
+        self._app_instance = self._app.launch(
+            volumes=volumes,
+            environment=environment,
+        )
         logger.debug("launched static recovery container")
 
     def close(self) -> None:
@@ -60,5 +67,33 @@ class NodeRecoveryTool:
         self._app_instance.close()
         self._app_instance = None
 
-    def recover(self, node_type: str, package: str) -> None:
-        raise NotImplementedError
+    def recover(
+        self,
+        workspace_abs_path: str,
+        source_file_abs_paths: t.Collection[str],
+    ) -> None:
+        """Statically recovers the dynamic architecture of a given node.
+
+        Parameters
+        ----------
+        workspace_abs_path: str
+            The absolute path to the Catkin workspace (within the container)
+            where the source code is located
+        source_file_abs_paths: str
+            A list of the C++ translation unit source files (i.e., .cpp files)
+            for the given node, provided as absolute paths within the container
+        """
+        if not self._app_instance:
+            raise ValueError("tool has not been started")
+
+        logger.debug("beginning static recovery process")
+        shell = self._app_instance.shell
+        args = (
+            "rosdiscover",
+            "-p",
+            shlex.quote(workspace_abs_path),
+            ' '.join(shlex.quote(p) for p in source_file_abs_paths),
+        )
+        args_s = ' '.join(args)
+        print(shell.check_output(args_s, text=True))
+        logger.debug("finished static recovery process")
