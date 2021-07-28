@@ -17,8 +17,8 @@ class NodeRecoveryTool:
     _app: roswire.app.App
     _app_instance: t.Optional[roswire.app.AppInstance] = attr.ib(default=None, repr=False)
 
-    @contextlib.contextmanager
     @classmethod
+    @contextlib.contextmanager
     def for_config(cls, config: Config) -> t.Iterator["NodeRecoveryTool"]:
         with NodeRecoveryTool(app=config.app) as tool:
             yield tool
