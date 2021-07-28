@@ -112,12 +112,12 @@ class NodeRecoveryTool:
         if not files.isdir(workspace_abs_path):
             raise ValueError(f"no directory found at given workspace path: {workspace_abs_path}")
 
-        # check that the source files are absolute paths and all of them exist
         for source_file in source_file_abs_paths:
             if not os.path.isabs(source_file):
                 raise ValueError(f"expected absolute source file path: {source_file}")
+            if not files.exists(source_file):
+                raise ValueError(f"source file was not found: {source_file}")
 
-        # add the necessary instrumentation to the source code files
         for source_file in source_file_abs_paths:
             self._prepare_source_file(source_file)
 
