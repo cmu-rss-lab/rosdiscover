@@ -75,6 +75,30 @@ class NodeRecoveryTool:
         shell.run(f'sed -i "s#isnan#__STDISNAN__#g" {escaped_abs_path}')
         shell.run(f'sed -i "s#__STDISNAN__#std::isnan#g" {escaped_abs_path}')
 
+    def _find_package_workspace(self, package_name: str) -> str:
+        """Determines the absolute path of the workspace to which a given package belongs.
+
+        Raises
+        ------
+        ValueError
+            if no package was found with the given name.
+        """
+        files = self._app_instance.files
+
+        try:
+            package = self._app.description.packages[package_name]
+        except KeyError as err:
+            raise ValueError(f"no package found with given name: {package_name}") from err
+
+        workspace_path = os.path.dirname(package.path)
+        while workspace_path != "/":
+            catkin_marker_path = os.path.join(workspace_path, ".catkin_workspace")
+            if files.exists(catkin_marker_path):
+                return workspace_path
+            workspace_path = os.path.dirname(workspace_path)
+
+        raise ValueError(f"unable to determine workspace for package: {package_name}")
+
     def recover(
         self,
         workspace_abs_path: str,
@@ -98,6 +122,7 @@ class NodeRecoveryTool:
         shell = self._app_instance.shell
         files = self._app_instance.files
 
+
         if not source_file_abs_paths:
             raise ValueError("expected at least one source file")
 
@@ -108,6 +133,11 @@ class NodeRecoveryTool:
             raise ValueError(f"no directory found at given workspace path: {workspace_abs_path}")
 
         # TODO find the build directory within the given workspace
+
+        # TODO find the catkin workspace based on the package directory?
+
+        # catkin tools: build/{PACKAGE_NAME}/compile_commands.json
+        # catkin_make: build/compile_commands.json
 
         # TODO find the compile_commands.json file; raise an exception if it doesn't exist
 
