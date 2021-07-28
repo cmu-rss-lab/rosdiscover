@@ -2,6 +2,7 @@
 __all__ = ('NodeRecoveryTool',)
 
 import contextlib
+import enum
 import shlex
 import os
 import types
@@ -12,6 +13,26 @@ import attr
 import roswire
 
 from ..config import Config
+
+
+class RosBuildTool(enum.Enum):
+    CATKIN = "catkin"
+    CATKIN_MAKE = "catkin_make"
+    CATKIN_MAKE_ISOLATED = "catkin_make_isolated"
+
+    @classmethod
+    def from_string(cls, name: str) -> "RosBuildTool":
+        """Finds the build tool with the given name.
+
+        Raises
+        ------
+        ValueError
+            if the name of the build tool is unrecognized
+        """
+        try:
+            return RosBuildTool[CATKIN]
+        except KeyError as err:
+            raise ValueError(f"unrecognized ROS build tool: {name}") from err
 
 
 @attr.s(auto_attribs=True)
@@ -75,21 +96,15 @@ class NodeRecoveryTool:
         shell.run(f'sed -i "s#isnan#__STDISNAN__#g" {escaped_abs_path}')
         shell.run(f'sed -i "s#__STDISNAN__#std::isnan#g" {escaped_abs_path}')
 
-    def _find_package_workspace(self, package_name: str) -> str:
+    def _find_package_workspace(self, package: roswire.common.Package) -> str:
         """Determines the absolute path of the workspace to which a given package belongs.
 
         Raises
         ------
         ValueError
-            if no package was found with the given name.
+            if the workspace for the given package could not be determined
         """
         files = self._app_instance.files
-
-        try:
-            package = self._app.description.packages[package_name]
-        except KeyError as err:
-            raise ValueError(f"no package found with given name: {package_name}") from err
-
         workspace_path = os.path.dirname(package.path)
         while workspace_path != "/":
             catkin_marker_path = os.path.join(workspace_path, ".catkin_workspace")
@@ -98,6 +113,37 @@ class NodeRecoveryTool:
             workspace_path = os.path.dirname(workspace_path)
 
         raise ValueError(f"unable to determine workspace for package: {package_name}")
+
+    def _detect_build_tool(self, workspace: str) -> RosBuildTool:
+        """Detects the build tool that was used to construct a given workspace.
+
+        Parameters
+        ----------
+        workspace: str
+            The absolute path to the workspace.
+        """
+        raise NotImplementedError
+
+    def nice_recover(
+        self,
+        package_name: str,
+        node_name: str,
+        sources: t.Collection[str],
+    ) -> None:
+        try:
+            package = self._app.description.packages[package_name]
+        except KeyError as err:
+            raise ValueError(f"no package found with given name: {package_name}") from err
+
+        workspace = self._find_package_workspace(package)
+        build_tool = self._detect_build_tool(workspace)
+
+        # TODO find the build directory that holds compile_commands.json
+        # catkin tools: build/{PACKAGE_NAME}/compile_commands.json
+        # catkin_make: WS/build/compile_commands.json
+        # catkin_make_isolated: ?
+
+        # TODO find the compile_commands.json file; raise an exception if it doesn't exist
 
     def recover(
         self,
@@ -122,7 +168,6 @@ class NodeRecoveryTool:
         shell = self._app_instance.shell
         files = self._app_instance.files
 
-
         if not source_file_abs_paths:
             raise ValueError("expected at least one source file")
 
@@ -131,15 +176,6 @@ class NodeRecoveryTool:
 
         if not files.isdir(workspace_abs_path):
             raise ValueError(f"no directory found at given workspace path: {workspace_abs_path}")
-
-        # TODO find the build directory within the given workspace
-
-        # TODO find the catkin workspace based on the package directory?
-
-        # catkin tools: build/{PACKAGE_NAME}/compile_commands.json
-        # catkin_make: build/compile_commands.json
-
-        # TODO find the compile_commands.json file; raise an exception if it doesn't exist
 
         for source_file in source_file_abs_paths:
             if not os.path.isabs(source_file):
