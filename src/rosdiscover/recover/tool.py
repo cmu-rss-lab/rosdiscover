@@ -72,10 +72,6 @@ class NodeRecoveryTool:
                 "mode": "ro",
                 "bind": "/opt/rosdiscover",
             },
-            "rosdiscover-cxx-extract-llvm": {
-                "mode": "ro",
-                "bind": "/opt/llvm11",
-            },
         }
         self._app_instance = self._app.launch(
             volumes=volumes,
@@ -316,9 +312,9 @@ class NodeRecoveryTool:
             self._prepare_source_file(source_file)
 
         env = {
-            "PATH": "/opt/rosdiscover/bin:/opt/llvm11/bin:${PATH:-}",
-            "LIBRARY_PATH": "/opt/rosdiscover/lib:/opt/llvm11/lib:${LIBRARY_PATH:-}",
-            "LD_LIBRARY_PATH": "/opt/rosdiscover/lib:/opt/llvm11/lib:${LD_LIBRARY_PATH:-}",
+            "PATH": "/opt/rosdiscover/bin:${PATH:-}",
+            "LIBRARY_PATH": "/opt/rosdiscover/lib:${LIBRARY_PATH:-}",
+            "LD_LIBRARY_PATH": "/opt/rosdiscover/lib:${LD_LIBRARY_PATH:-}",
         }
         env_args = [f"{var}={val}" for (var, val) in env.items()]
         args = env_args + [
