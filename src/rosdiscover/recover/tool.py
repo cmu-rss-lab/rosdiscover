@@ -16,23 +16,27 @@ from ..config import Config
 
 
 class RosBuildTool(enum.Enum):
-    CATKIN = "catkin"
+    CATKIN_TOOLS = "catkin"
     CATKIN_MAKE = "catkin_make"
     CATKIN_MAKE_ISOLATED = "catkin_make_isolated"
 
     @classmethod
-    def from_string(cls, name: str) -> "RosBuildTool":
-        """Finds the build tool with the given name.
+    def from_built_by(cls, contents: str) -> "RosBuildTool":
+        """Finds the build tool based on the contents of a .built_by file.
 
         Raises
         ------
         ValueError
             if the name of the build tool is unrecognized
         """
-        try:
-            return RosBuildTool[name]
-        except KeyError as err:
-            raise ValueError(f"unrecognized ROS build tool: {name}") from err
+        contents_to_tool = {
+            "catkin build": RosBuildTool.CATKIN_TOOLS,
+            "catkin_make": RosBuildTool.CATKIN_MAKE,
+            "catkin_make_isolated": RosBuildTool.CATKIN_MAKE_ISOLATED,
+        }
+        if contents not in contents_to_tool:
+            raise ValueError(f"unrecognized ROS build tool: {name}")
+        return contents_to_tool[contents]
 
 
 @attr.s(auto_attribs=True)
@@ -180,7 +184,7 @@ class NodeRecoveryTool:
         except FileNotFoundError:
             raise ValueError(f"unable to find expected .built_by file: {built_by_path}")
 
-        return RosBuildTool.from_string(build_tool_name)
+        return RosBuildTool.from_built_by(build_tool_name)
 
     def _find_compile_commands_file(self, package: roswire.common.Package) -> str:
         """Locates the compile_commands.json for a given package.
@@ -210,7 +214,7 @@ class NodeRecoveryTool:
         compile_commands_directory: str
         if build_tool == RosBuildTool.CATKIN_MAKE:
             compile_commands_directory = build_directory
-        elif build_tool in (RosBuildTool.CATKIN, RosBuildTool.CATKIN_MAKE_ISOLATED):
+        elif build_tool in (RosBuildTool.CATKIN_TOOLS, RosBuildTool.CATKIN_MAKE_ISOLATED):
             compile_commands_directory = os.path.join(build_directory, package.name)
         else:
             assert (
