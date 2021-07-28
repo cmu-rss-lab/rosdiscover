@@ -107,6 +107,10 @@ class NodeRecoveryTool:
         if not files.isdir(workspace_abs_path):
             raise ValueError(f"no directory found at given workspace path: {workspace_abs_path}")
 
+        # TODO find the build directory
+
+        # TODO find the compile_commands.json file; raise an exception if it doesn't exist
+
         for source_file in source_file_abs_paths:
             if not os.path.isabs(source_file):
                 raise ValueError(f"expected absolute source file path: {source_file}")
