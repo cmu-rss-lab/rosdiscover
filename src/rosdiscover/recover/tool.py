@@ -68,6 +68,7 @@ class NodeRecoveryTool:
     # not just the translation unit source files (e.g., header files)
     def _prepare_source_file(self, abs_path: str) -> None:
         """Prepares a source file for static recovery."""
+        assert self._app_instance
         shell = self._app_instance.shell
         escaped_abs_path = shlex.quote(abs_path)
         shell.run(f'sed -i "s#std::isnan#__STDISNAN__#g" {escaped_abs_path}')
@@ -106,7 +107,7 @@ class NodeRecoveryTool:
         if not files.isdir(workspace_abs_path):
             raise ValueError(f"no directory found at given workspace path: {workspace_abs_path}")
 
-        # TODO find the build directory
+        # TODO find the build directory within the given workspace
 
         # TODO find the compile_commands.json file; raise an exception if it doesn't exist
 
@@ -134,5 +135,6 @@ class NodeRecoveryTool:
         args_s = ' '.join(args)
         logger.debug(f"running static recovery command: {args_s}")
         outcome = shell.run(args_s, text=True, stderr=True)
+        assert isinstance(outcome.output, str)
         logger.debug(f"static recovery output: {outcome.output}")
         logger.debug("finished static recovery process")
