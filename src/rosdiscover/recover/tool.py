@@ -3,6 +3,7 @@ __all__ = ('NodeRecoveryTool',)
 
 import contextlib
 import shlex
+import subprocess
 import types
 import typing as t
 
@@ -87,6 +88,10 @@ class NodeRecoveryTool:
         if not self._app_instance:
             raise ValueError("tool has not been started")
 
+        # TODO check that the workspace is an absolute path and actually exists
+
+        # TODO check that the source files are absolute paths and all of them exist
+
         logger.debug("beginning static recovery process")
         shell = self._app_instance.shell
         args = (
@@ -96,5 +101,7 @@ class NodeRecoveryTool:
             ' '.join(shlex.quote(p) for p in source_file_abs_paths),
         )
         args_s = ' '.join(args)
-        print(shell.check_output(args_s, text=True))
+        logger.debug(f"running static recovery command: {args_s}")
+        outcome = shell.run(args_s, text=True, stderr=True)
+        logger.debug(f"static recovery output: {outcome.output}")
         logger.debug("finished static recovery process")
