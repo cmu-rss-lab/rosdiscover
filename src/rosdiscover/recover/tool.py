@@ -51,9 +51,10 @@ class NodeRecoveryTool:
                 "bind": "/opt/llvm11",
             },
         }
-        environment = {
-            "PATH": "/opt/rosdiscover/bin:/opt/llvm11/bin:${PATH}",
-        }
+        #environment = {
+        #    "PATH": "/opt/rosdiscover/bin:/opt/llvm11/bin:${PATH}",
+        #}
+        environment = {}
         self._app_instance = self._app.launch(
             volumes=volumes,
             environment=environment,

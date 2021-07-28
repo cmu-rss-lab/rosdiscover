@@ -25,6 +25,7 @@ def recover(args: argparse.Namespace) -> None:
     config = Config.from_yaml_string(args.config)
     with NodeRecoveryTool.for_config(config) as tool:
         print(f"spun up the container: {tool}")
+        tool.recover(args.workspace, args.sources)
 
 
 def _launch(config: Config) -> SystemSummary:
@@ -126,9 +127,18 @@ def main() -> None:
         formatter_class=MultiLineFormatter,
     )
     p.add_argument('config', type=argparse.FileType('r'), help=CONFIG_HELP)
-    p.add_argument('package', type=str, help='the name of the package to which the node belongs')
-    p.add_argument('node', type=str, help='the name of the node')
-    p.add_argument('sources', nargs='+')
+    # p.add_argument('package', type=str, help='the name of the package to which the node belongs')
+    # p.add_argument('node', type=str, help='the name of the node')
+    p.add_argument(
+        'workspace',
+        type=str,
+        help='the absolute path of the Catkin workspace in which the node source code resides',
+    )
+    p.add_argument(
+        'sources',
+        nargs='+',
+        help='the absolute paths to the translation unit source files for this node',
+    )
     p.set_defaults(func=recover)
 
     p = subparsers.add_parser(
