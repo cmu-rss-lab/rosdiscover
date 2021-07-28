@@ -114,6 +114,26 @@ class NodeRecoveryTool:
 
         raise ValueError(f"unable to determine workspace for package: {package_name}")
 
+    def _find_build_directory(self, workspace: str) -> str:
+        """Determines the absolute path to the build directory within a given workspace.
+
+        Raises
+        ------
+        ValueError
+            if the build directory could not be found
+        """
+        files = self._app_instance.files
+
+        build_dir = os.path.join(workspace, "build")
+        if files.isdir(build_dir):
+            return build_dir
+
+        build_dir = os.path.join(workspace, "build_isolated")
+        if files.isdir(build_dir):
+            return build_dir
+
+        raise ValueError(f"unable to find build directory in workspace: {workspace}")
+
     def _detect_build_tool(self, workspace: str) -> RosBuildTool:
         """Detects the build tool that was used to construct a given workspace.
 
@@ -121,7 +141,20 @@ class NodeRecoveryTool:
         ----------
         workspace: str
             The absolute path to the workspace.
+
+        Raises
+        ------
+        ValueError
+            if the build directory could not be found inside the workspace
+        ValueError
+            if the build tool used to construct the workspace was unrecognized
         """
+        files = self._app_instance.files
+        build_directory = self._find_build_directory(workspace)
+
+        # TODO raise exception if .built_by doesn't exist
+        # TODO look at .built_by file
+
         raise NotImplementedError
 
     def nice_recover(
