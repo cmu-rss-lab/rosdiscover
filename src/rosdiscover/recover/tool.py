@@ -4,6 +4,7 @@ __all__ = ('NodeRecoveryTool',)
 import contextlib
 import shlex
 import subprocess
+import os
 import types
 import typing as t
 
@@ -69,6 +70,16 @@ class NodeRecoveryTool:
         self._app_instance.close()
         self._app_instance = None
 
+    # TODO we probably need to run this on all C/C++ source files within the workspace and
+    # not just the translation unit source files (e.g., header files)
+    def _prepare_source_file(self, abs_path: str) -> None:
+        """Prepares a source file for static recovery."""
+        shell = self._app_instance.shell
+        escaped_abs_path = shlex.quote(abs_path)
+        shell.run(f'sed -i "s#std::isnan#__STDISNAN__#g" {escaped_abs_path}')
+        shell.run(f'sed -i "s#isnan#__STDISNAN__#g" {escaped_abs_path}')
+        shell.run(f'sed -i "s#__STDISNAN__#std::isnan#g" {escaped_abs_path}')
+
     def recover(
         self,
         workspace_abs_path: str,
@@ -88,12 +99,28 @@ class NodeRecoveryTool:
         if not self._app_instance:
             raise ValueError("tool has not been started")
 
-        # TODO check that the workspace is an absolute path and actually exists
-
-        # TODO check that the source files are absolute paths and all of them exist
-
         logger.debug("beginning static recovery process")
         shell = self._app_instance.shell
+        files = self._app_instance.files
+
+        if not source_file_abs_paths:
+            raise ValueError("expected at least one source file")
+
+        if not os.path.isabs(workspace_abs_path):
+            raise ValueError(f"expected absolute workspace path: {workspace_abs_path}")
+
+        if not files.isdir(workspace_abs_path):
+            raise ValueError(f"no directory found at given workspace path: {workspace_abs_path}")
+
+        # check that the source files are absolute paths and all of them exist
+        for source_file in source_file_abs_paths:
+            if not os.path.isabs(source_file):
+                raise ValueError(f"expected absolute source file path: {source_file}")
+
+        # add the necessary instrumentation to the source code files
+        for source_file in source_file_abs_paths:
+            self._prepare_source_file(source_file)
+
         args = (
             "rosdiscover",
             "-p",
