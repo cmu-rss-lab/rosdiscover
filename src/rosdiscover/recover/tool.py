@@ -3,7 +3,6 @@ __all__ = ('NodeRecoveryTool',)
 
 import contextlib
 import shlex
-import subprocess
 import os
 import types
 import typing as t
