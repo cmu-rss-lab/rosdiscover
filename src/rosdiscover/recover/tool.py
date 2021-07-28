@@ -35,7 +35,7 @@ class RosBuildTool(enum.Enum):
             "catkin_make_isolated": RosBuildTool.CATKIN_MAKE_ISOLATED,
         }
         if contents not in contents_to_tool:
-            raise ValueError(f"unrecognized ROS build tool: {name}")
+            raise ValueError(f"unrecognized ROS build tool: {contents}")
         return contents_to_tool[contents]
 
 
