@@ -12,7 +12,7 @@ from .acme import AcmeGenerator
 from .config import Config
 from .interpreter import Interpreter, SystemSummary
 from .observer import Observer
-from .recovery import NodeRecoveryTool
+from .recover import NodeRecoveryTool
 
 DESC = 'discovery of ROS architectures'
 CONFIG_HELP = """R|A YAML file defining the configuration.
