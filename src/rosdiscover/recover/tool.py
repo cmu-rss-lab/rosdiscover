@@ -213,8 +213,8 @@ class NodeRecoveryTool:
         elif build_tool in (RosBuildTool.CATKIN_TOOLS, RosBuildTool.CATKIN_MAKE_ISOLATED):
             compile_commands_directory = os.path.join(build_directory, package.name)
         else:
-            assert (
-                "attempted to find compile_commands.json for unsupported build tool: {build_tool.value}"
+            raise AssertionError(
+                f"attempted to find compile_commands.json for unsupported build tool: {build_tool.value}"
             )
 
         compile_commands_path = os.path.join(compile_commands_directory, "compile_commands.json")
@@ -318,7 +318,7 @@ class NodeRecoveryTool:
         }
         env_args = [f"{var}={val}" for (var, val) in env.items()]
         args = env_args + [
-            "rosdiscover",
+            "rosdiscover-cxx-extract",
             "-p",
             shlex.quote(os.path.dirname(compile_commands_path)),
             ' '.join(shlex.quote(p) for p in source_file_abs_paths),

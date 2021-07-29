@@ -123,7 +123,7 @@ def main() -> None:
 
     p = subparsers.add_parser(
         'recover',
-        help='simulates the effects of a roslaunch.',
+        help='statically recovers the dynamic architecture of a given node.',
         formatter_class=MultiLineFormatter,
     )
     p.add_argument('config', type=argparse.FileType('r'), help=CONFIG_HELP)
