@@ -1,20 +1,331 @@
 # -*- coding: utf-8 -*-
 __all__ = ('NodeRecoveryTool',)
 
+import contextlib
+import enum
+import shlex
+import os
+import types
+import typing as t
+
+from loguru import logger
 import attr
 import roswire
 
-from .core import RecoveredNodeModel
 from ..config import Config
 
 
-@attr.s(frozen=True, auto_attribs=True)
-class NodeRecoveryTool:
-    _app: roswire.app.App
+class RosBuildTool(enum.Enum):
+    CATKIN_TOOLS = "catkin"
+    CATKIN_MAKE = "catkin_make"
+    CATKIN_MAKE_ISOLATED = "catkin_make_isolated"
 
     @classmethod
-    def for_config(cls, config: Config) -> 'NodeRecoveryTool':
-        return NodeRecoveryTool(app=config.app)
+    def from_built_by(cls, contents: str) -> "RosBuildTool":
+        """Finds the build tool based on the contents of a .built_by file.
 
-    def recover(self, node_type: str, package: str) -> RecoveredNodeModel:
-        raise NotImplementedError
+        Raises
+        ------
+        ValueError
+            if the name of the build tool is unrecognized
+        """
+        contents_to_tool = {
+            "catkin build": RosBuildTool.CATKIN_TOOLS,
+            "catkin_make": RosBuildTool.CATKIN_MAKE,
+            "catkin_make_isolated": RosBuildTool.CATKIN_MAKE_ISOLATED,
+        }
+        if contents not in contents_to_tool:
+            raise ValueError(f"unrecognized ROS build tool: {contents}")
+        return contents_to_tool[contents]
+
+
+@attr.s(auto_attribs=True)
+class NodeRecoveryTool:
+    _app: roswire.app.App
+    _app_instance: t.Optional[roswire.app.AppInstance] = attr.ib(default=None, repr=False)
+
+    @classmethod
+    @contextlib.contextmanager
+    def for_config(cls, config: Config) -> t.Iterator["NodeRecoveryTool"]:
+        with NodeRecoveryTool(app=config.app) as tool:
+            yield tool
+
+    def __enter__(self) -> "NodeRecoveryTool":
+        self.open()
+        return self
+
+    def __exit__(
+        self,
+        ex_type: t.Optional[t.Type[BaseException]],
+        ex_val: t.Optional[BaseException],
+        ex_tb: t.Optional[types.TracebackType],
+    ) -> None:
+        self.close()
+
+    def open(self) -> None:
+        if self._app_instance:
+            raise ValueError("tool has already been started")
+
+        logger.debug("launching container for static recovery")
+        volumes = {
+            "rosdiscover-cxx-extract-opt": {
+                "mode": "ro",
+                "bind": "/opt/rosdiscover",
+            },
+        }
+        self._app_instance = self._app.launch(
+            volumes=volumes,
+        )
+        logger.debug("launched static recovery container")
+
+    def close(self) -> None:
+        if not self._app_instance:
+            raise ValueError("tool has not been started")
+
+        self._app_instance.close()
+        self._app_instance = None
+
+    # TODO we probably need to run this on all C/C++ source files within the workspace and
+    # not just the translation unit source files (e.g., header files)
+    def _prepare_source_file(self, abs_path: str) -> None:
+        """Prepares a source file for static recovery."""
+        assert self._app_instance
+        shell = self._app_instance.shell
+        escaped_abs_path = shlex.quote(abs_path)
+        shell.run(f'sed -i "s#std::isnan#__STDISNAN__#g" {escaped_abs_path}')
+        shell.run(f'sed -i "s#isnan#__STDISNAN__#g" {escaped_abs_path}')
+        shell.run(f'sed -i "s#__STDISNAN__#std::isnan#g" {escaped_abs_path}')
+
+    def _find_package_workspace(self, package: roswire.common.Package) -> str:
+        """Determines the absolute path of the workspace to which a given package belongs.
+
+        Raises
+        ------
+        ValueError
+            if the workspace for the given package could not be determined
+        """
+        assert self._app_instance
+        files = self._app_instance.files
+        workspace_path = os.path.dirname(package.path)
+        while workspace_path != "/":
+
+            catkin_marker_path = os.path.join(workspace_path, ".catkin_workspace")
+            logger.debug(f"looking for workspace marker: {catkin_marker_path}")
+            if files.exists(catkin_marker_path):
+                return workspace_path
+
+            catkin_tools_dir = os.path.join(workspace_path, ".catkin_tools")
+            logger.debug(f"looking for workspace marker: {catkin_tools_dir}")
+            if files.exists(catkin_tools_dir):
+                return workspace_path
+
+            workspace_path = os.path.dirname(workspace_path)
+
+        raise ValueError(f"unable to determine workspace for package: {package}")
+
+    def _find_build_directory(self, workspace: str) -> str:
+        """Determines the absolute path to the build directory within a given workspace.
+
+        Raises
+        ------
+        ValueError
+            if the build directory could not be found
+        """
+        assert self._app_instance
+        files = self._app_instance.files
+
+        build_dir = os.path.join(workspace, "build")
+        if files.isdir(build_dir):
+            return build_dir
+
+        build_dir = os.path.join(workspace, "build_isolated")
+        if files.isdir(build_dir):
+            return build_dir
+
+        raise ValueError(f"unable to find build directory in workspace: {workspace}")
+
+    def _detect_build_tool(
+        self,
+        workspace: str,
+        build_directory: t.Optional[str] = None,
+    ) -> RosBuildTool:
+        """Detects the build tool that was used to construct a given workspace.
+
+        Parameters
+        ----------
+        workspace: str
+            The absolute path to the workspace.
+        build_directory: str, optional
+            The absolute path to the build directory within the given workspace.
+
+        Raises
+        ------
+        ValueError
+            if the build directory could not be found inside the workspace
+        ValueError
+            if the build tool used to construct the workspace was unrecognized
+        ValueError
+            if the workspace does not provide a .built_by file inside its build directory
+        """
+        assert self._app_instance
+        files = self._app_instance.files
+
+        if not build_directory:
+            build_directory = self._find_build_directory(workspace)
+
+        built_by_path = os.path.join(build_directory, ".built_by")
+
+        try:
+            build_tool_name = files.read(built_by_path, binary=False)
+        except FileNotFoundError:
+            raise ValueError(f"unable to find expected .built_by file: {built_by_path}")
+
+        return RosBuildTool.from_built_by(build_tool_name)
+
+    def _find_compile_commands_file(self, package: roswire.common.Package) -> str:
+        """Locates the compile_commands.json for a given package.
+
+        Raises
+        ------
+        FileNotFoundError
+            if no compile_commands.json was found for the given package
+        ValueError
+            if the build directory could not be found inside the workspace
+        ValueError
+            if the build tool used to construct the workspace was unrecognized
+        ValueError
+            if the workspace does not provide a .built_by file inside its build directory
+
+        Returns
+        -------
+        str
+            the absolute path of the compile_commands.json file
+        """
+        assert self._app_instance
+        files = self._app_instance.files
+        workspace = self._find_package_workspace(package)
+        build_directory = self._find_build_directory(workspace)
+        build_tool = self._detect_build_tool(workspace, build_directory)
+
+        compile_commands_directory: str
+        if build_tool == RosBuildTool.CATKIN_MAKE:
+            compile_commands_directory = build_directory
+        elif build_tool in (RosBuildTool.CATKIN_TOOLS, RosBuildTool.CATKIN_MAKE_ISOLATED):
+            compile_commands_directory = os.path.join(build_directory, package.name)
+        else:
+            raise AssertionError(
+                f"attempted to find compile_commands.json for unsupported build tool: {build_tool.value}"
+            )
+
+        compile_commands_path = os.path.join(compile_commands_directory, "compile_commands.json")
+        if not files.exists(compile_commands_path):
+            raise FileNotFoundError(
+                f"failed to find compile_commands.json at expected location: {compile_commands_path}"
+            )
+        return compile_commands_path
+
+    def recover(
+        self,
+        package_name: str,
+        node_name: str,
+        sources: t.Collection[str],
+    ) -> None:
+        """Statically recovers the dynamic architecture of a given node.
+
+        Parameters
+        ----------
+        package_name: str
+            The name of the package to which the node belongs
+        node_name: str
+            The name of the node
+        sources: str
+            A list of the translation unit source files for node, provided as paths
+            relative to the root of the package directory
+
+        Raises
+        ------
+        ValueError
+            if no package is found with the given name
+        FileNotFoundError
+            if no compile_commands.json was found for the given package
+        ValueError
+            if the build directory could not be found inside the workspace
+        ValueError
+            if the build tool used to construct the workspace was unrecognized
+        ValueError
+            if the workspace does not provide a .built_by file inside its build directory
+        """
+        try:
+            package = self._app.description.packages[package_name]
+        except KeyError as err:
+            raise ValueError(f"no package found with given name: {package_name}") from err
+
+        # ensure that no absolute paths are given
+        if any(os.path.isabs(path) for path in sources):
+            raise ValueError("expected source paths to be relative to package directory")
+
+        # compute the absolute paths of each source file
+        sources = [os.path.join(package.path, path) for path in sources]
+
+        compile_commands_path = self._find_compile_commands_file(package)
+
+        self._recover(compile_commands_path, sources)
+
+    def _recover(
+        self,
+        compile_commands_path: str,
+        source_file_abs_paths: t.Collection[str],
+    ) -> None:
+        """Invokes the C++ recovery binary to recover the dynamic architecture of a given node.
+
+        Parameters
+        ----------
+        compile_commands_path: str
+            The absolute path to the compile_commands.json associated with the given node.
+        source_file_abs_paths: str
+            A list of the C++ translation unit source files (i.e., .cpp files)
+            for the given node, provided as absolute paths within the container
+        """
+        if not self._app_instance:
+            raise ValueError("tool has not been started")
+
+        logger.debug("beginning static recovery process")
+        shell = self._app_instance.shell
+        files = self._app_instance.files
+
+        if not source_file_abs_paths:
+            raise ValueError("expected at least one source file")
+
+        if not os.path.isabs(compile_commands_path):
+            raise ValueError(f"expected absolute compile commands path: {compile_commands_path}")
+
+        if not files.exists(compile_commands_path):
+            raise ValueError(f"compile_commands.json not found at given location: {compile_commands_path}")
+
+        for source_file in source_file_abs_paths:
+            if not os.path.isabs(source_file):
+                raise ValueError(f"expected absolute source file path: {source_file}")
+            if not files.exists(source_file):
+                raise ValueError(f"source file was not found: {source_file}")
+
+        for source_file in source_file_abs_paths:
+            self._prepare_source_file(source_file)
+
+        env = {
+            "PATH": "/opt/rosdiscover/bin:${PATH:-}",
+            "LIBRARY_PATH": "/opt/rosdiscover/lib:${LIBRARY_PATH:-}",
+            "LD_LIBRARY_PATH": "/opt/rosdiscover/lib:${LD_LIBRARY_PATH:-}",
+        }
+        env_args = [f"{var}={val}" for (var, val) in env.items()]
+        args = env_args + [
+            "rosdiscover-cxx-extract",
+            "-p",
+            shlex.quote(os.path.dirname(compile_commands_path)),
+            ' '.join(shlex.quote(p) for p in source_file_abs_paths),
+        ]
+        args_s = ' '.join(args)
+        logger.debug(f"running static recovery command: {args_s}")
+        outcome = shell.run(args_s, text=True, stderr=True)
+        assert isinstance(outcome.output, str)
+        logger.debug(f"static recovery output: {outcome.output}")
+        logger.debug("finished static recovery process")

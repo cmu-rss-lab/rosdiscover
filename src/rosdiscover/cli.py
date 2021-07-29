@@ -5,18 +5,27 @@ Provides a simple command-line interface.
 import argparse
 
 from loguru import logger
-import yaml
 import pkg_resources
+import yaml
 
 from .acme import AcmeGenerator
 from .config import Config
 from .interpreter import Interpreter, SystemSummary
 from .observer import Observer
+from .recover import NodeRecoveryTool
 
 DESC = 'discovery of ROS architectures'
 CONFIG_HELP = """R|A YAML file defining the configuration.
 - indicates stdin.
 {Config.__doc__}"""
+
+
+def recover(args: argparse.Namespace) -> None:
+    """Provides static recovery of dynamic architecture models."""
+    config = Config.from_yaml_string(args.config)
+    with NodeRecoveryTool.for_config(config) as tool:
+        print(f"spun up the container: {tool}")
+        tool.recover(args.package, args.node, args.sources)
 
 
 def _launch(config: Config) -> SystemSummary:
@@ -113,12 +122,26 @@ def main() -> None:
     subparsers = parser.add_subparsers()
 
     p = subparsers.add_parser(
+        'recover',
+        help='statically recovers the dynamic architecture of a given node.',
+        formatter_class=MultiLineFormatter,
+    )
+    p.add_argument('config', type=argparse.FileType('r'), help=CONFIG_HELP)
+    p.add_argument('package', type=str, help='the name of the package to which the node belongs')
+    p.add_argument('node', type=str, help='the name of the node')
+    p.add_argument(
+        'sources',
+        nargs='+',
+        help='the paths of the translation unit source files for this node, relative to the package directory',
+    )
+    p.set_defaults(func=recover)
+
+    p = subparsers.add_parser(
         'launch',
         help='simulates the effects of a roslaunch.',
         formatter_class=MultiLineFormatter)
     p.add_argument('--output', type=str, help="file to output YAML to")
     p.add_argument('config', type=argparse.FileType('r'), help=CONFIG_HELP)
-
     p.set_defaults(func=launch)
 
     p = subparsers.add_parser(
