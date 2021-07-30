@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import types
 import typing as t
 import contextlib
 
@@ -24,6 +25,7 @@ class Interpreter:
     params: ParameterServer
         The simulated parameter server for this interpreter.
     """
+
     @classmethod
     @contextlib.contextmanager
     def for_config(cls,
@@ -32,7 +34,8 @@ class Interpreter:
         """Constructs an interpreter for a given configuration"""
         rsw = roswire.ROSWire()  # TODO don't maintain multiple instances
         with rsw.launch(config.image, config.sources, environment=config.environment) as app:
-            yield Interpreter(app, config.node_sources)
+            with Interpreter(app, config.node_sources) as interpreter:
+                yield interpreter
 
     def __init__(self, app: roswire.System, node_sources: t.Mapping[t.Tuple[str, str], NodeSourceInfo]) -> None:
         self._app = app
@@ -41,12 +44,15 @@ class Interpreter:
         self._node_sources = node_sources
         self._recovery_tool = None
 
-    def __enter__(self):
-        if self._recovery_tool:
-            logger.error("Shouldn't be a recovery tool")
-        self._recovery_tool = None
+    def __enter__(self) -> "Interpreter":
+        return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(
+        self,
+        ex_type: t.Optional[t.Type[BaseException]],
+        ex_val: t.Optional[BaseException],
+        ex_tb: t.Optional[types.TracebackType],
+    ) -> None:
         if self._recovery_tool:
             self._recovery_tool.close()
 
