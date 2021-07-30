@@ -17,7 +17,8 @@ RUN apk add --no-cache \
 
 WORKDIR /code
 COPY requirements.dev.txt /tmp
-RUN pip3 install -r /tmp/requirements.dev.txt && rm -f /tmp/*
+ENV CRYPTOGRAPHY_DONT_BUILD_RUST = 1
+RUN pip3 install -r /tmp/requirements.dev.txt --no-binary cryptography && rm -f /tmp/*
 
 ENTRYPOINT ["/bin/bash"]
 
