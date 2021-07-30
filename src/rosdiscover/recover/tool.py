@@ -229,7 +229,7 @@ class NodeRecoveryTool:
         package_name: str,
         node_name: str,
         sources: t.Collection[str],
-    ) -> None:
+    ) -> str:
         """Statically recovers the dynamic architecture of a given node.
 
         Parameters
@@ -269,13 +269,13 @@ class NodeRecoveryTool:
 
         compile_commands_path = self._find_compile_commands_file(package)
 
-        self._recover(compile_commands_path, sources)
+        return self._recover(compile_commands_path, sources)
 
     def _recover(
         self,
         compile_commands_path: str,
         source_file_abs_paths: t.Collection[str],
-    ) -> None:
+    ) -> str:
         """Invokes the C++ recovery binary to recover the dynamic architecture of a given node.
 
         Parameters
@@ -329,3 +329,4 @@ class NodeRecoveryTool:
         assert isinstance(outcome.output, str)
         logger.debug(f"static recovery output: {outcome.output}")
         logger.debug("finished static recovery process")
+        return outcome.output
