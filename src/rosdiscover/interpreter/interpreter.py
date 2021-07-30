@@ -12,8 +12,9 @@ from .context import NodeContext
 from .model import HandwrittenModel
 from .summary import SystemSummary
 from .parameter import ParameterServer
-from ..config import Config
+from ..config import Config, NodeSourceInfo
 from ..launch import Launch
+from ..recover import NodeRecoveryTool
 
 
 class Interpreter:
@@ -38,6 +39,11 @@ class Interpreter:
         self.params = ParameterServer()
         self.nodes: t.Dict[str, NodeContext] = {}
         self._node_sources = node_sources
+        self._recovery_tool = None
+
+    def __enter__(self):
+        if self._recovery_tool:
+            logger.error("Shouldn't be a recovery tool")
         self._recovery_tool = None
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -217,15 +223,23 @@ class Interpreter:
         if (pkg, nodetype) in self._node_sources:
             sources = self._node_sources[(pkg, nodetype)]
             logger.info(f"Found {nodetype} in {pkg}: Need to examine {str(sources.sources)}")
-            raise NotImplementedError("Call to static analysis not implemented yet")
-        # TODO replace with ProjectModels.fetch(package, node)
-        try:
-            model = HandwrittenModel.find(pkg, nodetype)
-        except Exception:
-            m = (f"failed to find model for node type [{nodetype}] "
-                 f"in package [{pkg}]")
-            logger.warning(m)
-            raise Exception(m)
+            if not self._recovery_tool:
+                self._recovery_tool = NodeRecoveryTool(app=self.app.app)
+                self._recovery_tool.open()
+            model_str = self._recovery_tool.recover(pkg, nodetype, sources.sources)
+            logger.info(f"Found model for {nodetype} in {pkg}")
+            logger.info(model_str)
+
+            logger.error("The substance is not implemented yet.")
+            return
+        else:
+            try:
+                model = HandwrittenModel.find(pkg, nodetype)
+            except Exception:
+                m = (f"failed to find model for node type [{nodetype}] "
+                     f"in package [{pkg}]")
+                logger.warning(m)
+                raise Exception(m)
 
         ctx = NodeContext(name=name,
                           namespace=namespace,
