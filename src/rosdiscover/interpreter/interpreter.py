@@ -31,13 +31,18 @@ class Interpreter:
         """Constructs an interpreter for a given configuration"""
         rsw = roswire.ROSWire()  # TODO don't maintain multiple instances
         with rsw.launch(config.image, config.sources, environment=config.environment) as app:
-            yield Interpreter(app)
+            yield Interpreter(app, config.node_sources)
 
     def __init__(self, app: roswire.System, node_sources: t.Mapping[t.Tuple[str, str], NodeSourceInfo]) -> None:
         self._app = app
         self.params = ParameterServer()
         self.nodes: t.Dict[str, NodeContext] = {}
         self._node_sources = node_sources
+        self._recovery_tool = None
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self._recovery_tool:
+            self._recovery_tool.close()
 
     @property
     def app(self) -> AppInstance:
