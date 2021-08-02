@@ -28,11 +28,17 @@ class RecoveredNodeModelDatabase:
         image_sha1: str
             The SHA1 of the image to which the node belongs, represented as a hex string.
         package_dir: str
-            The absolute path of the node's corresponding package directory.
+            The absolute path of the node's corresponding package directory within its
+            associated image.
         node_name: str
             The name of the node.
         """
-        raise NotImplementedError
+        # strip the leading / in the package_dir
+        assert package_dir[0] == "/"
+        package_dir = package_dir[1:]
+
+        rel_path = os.path.join(image_sha1, package_dir, f"{node_name}.json")
+        return os.path.join(self.path, rel_path)
 
     def contains(self, config: Config, package: str, node: str) -> bool:
         """Determines whether this database contains a recovered model for a given node.
