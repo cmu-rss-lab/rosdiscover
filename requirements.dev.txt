@@ -10,4 +10,3 @@ wheel==0.34.2
 types-PyYAML==5.4.3
 types-setuptools==57.0.0
 git+git://github.com/rosqual/roswire.git@27e4792ed7a4b7a7e105a915146a1e4bfc046639#egg=roswire
-git+git://github.com/rosqual/rosdiscover-cxx-recover.git@f926a25b6389c1c691b68a6281aec4400343cc41
