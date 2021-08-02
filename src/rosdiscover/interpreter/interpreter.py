@@ -34,7 +34,7 @@ class Interpreter:
         """Constructs an interpreter for a given configuration"""
         rsw = roswire.ROSWire()  # TODO don't maintain multiple instances
         with rsw.launch(config.image, config.sources, environment=config.environment) as app:
-            with Interpreter(app, config.package_sources) as interpreter:
+            with Interpreter(app, config.node_sources) as interpreter:
                 yield interpreter
 
     def __init__(self, app: roswire.System, node_sources: t.Sequence[NodeSourceInfo]) -> None:
