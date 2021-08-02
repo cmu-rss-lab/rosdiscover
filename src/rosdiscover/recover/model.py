@@ -13,8 +13,8 @@ class RecoveredNodeModel:
 
     Attributes
     ----------
-    image_sha1: str
-        The SHA1 of the image from which this node model was recovered, represented
+    image_sha256: str
+        The SHA256 of the image from which this node model was recovered, represented
         as a hexadecimal string.
     package_name: str
         The name of the package to which this node belongs.
@@ -26,7 +26,7 @@ class RecoveredNodeModel:
     node_name: str
         The name of the node.
     """
-    image_sha1: str
+    image_sha256: str
     package_name: str
     package_abs_path: str
     source_paths: t.Collection[str] = attr.ib(converter=tuple)

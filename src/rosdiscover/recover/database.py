@@ -26,13 +26,13 @@ class RecoveredNodeModelDatabase:
         os.makedirs(self.path, exist_ok=True)
         logger.debug(f"ensured that model database directory exists: {self.path}")
 
-    def _path(self, image_sha1: str, package_dir: str, node_name: str) -> str:
+    def _path(self, image_sha256: str, package_dir: str, node_name: str) -> str:
         """Determines the absolute path of a recovered model on disk.
 
         Parameters
         ----------
-        image_sha1: str
-            The SHA1 of the image to which the node belongs, represented as a hex string.
+        image_sha256: str
+            The SHA256 of the image to which the node belongs, represented as a hex string.
         package_dir: str
             The absolute path of the node's corresponding package directory within its
             associated image.
@@ -43,7 +43,7 @@ class RecoveredNodeModelDatabase:
         assert package_dir[0] == "/"
         package_dir = package_dir[1:]
 
-        rel_path = os.path.join(image_sha1, package_dir, f"{node_name}.json")
+        rel_path = os.path.join(image_sha256, package_dir, f"{node_name}.json")
         return os.path.join(self.path, rel_path)
 
     def _path_from_config(self, config: Config, package: str, node: str) -> str:
@@ -107,7 +107,7 @@ class RecoveredNodeModelDatabase:
 
     def store(self, model: RecoveredNodeModel) -> None:
         """Stores a given node model in this database."""
-        model_path = self._path(model.image_sha1, model.package_dir, model.node_name)
+        model_path = self._path(model.image_sha256, model.package_dir, model.node_name)
         logger.info(f"storing recovered node model [{model}] on disk: {model_path}")
         package_models_dir = os.path.dirname(abs_path)
         os.makedirs(package_models_dir, exist_ok=True)
