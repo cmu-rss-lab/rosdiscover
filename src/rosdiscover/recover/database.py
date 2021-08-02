@@ -40,6 +40,20 @@ class RecoveredNodeModelDatabase:
         rel_path = os.path.join(image_sha1, package_dir, f"{node_name}.json")
         return os.path.join(self.path, rel_path)
 
+    def _path_from_config(self, config: Config, package: str, node: str) -> str:
+        """Determines the absolute path of a recovered model on disk.
+
+        Parameters
+        ----------
+        config: Config
+            the configuration for the system to which the node belongs
+        package: str
+            the name of the package to which the node belongs
+        node: str
+            the name of the node
+        """
+        raise NotImplementedError
+
     def contains(self, config: Config, package: str, node: str) -> bool:
         """Determines whether this database contains a recovered model for a given node.
 
@@ -57,7 +71,8 @@ class RecoveredNodeModelDatabase:
         bool
             True if the database contains a recovered model, or False if it does not.
         """
-        raise NotImplementedError
+        model_path = self._path_from_config(config, package, node)
+        return os.path.exists(model_path)
 
     def fetch(self, config: Config, package: str, node: str) -> RecoveredNodeModel:
         """Retrieves the model of a given node.
