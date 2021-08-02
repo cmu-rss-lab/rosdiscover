@@ -6,6 +6,8 @@ import typing as t
 
 import attr
 
+from ..interpreter import NodeContext
+
 
 @attr.s(frozen=True, slots=True)
 class RecoveredNodeModel:
@@ -47,4 +49,7 @@ class RecoveredNodeModel:
 
     @classmethod
     def from_dict(cls, dict_: t.Dict[str, t.Any]) -> "RecoveredNodeModel":
+        raise NotImplementedError
+
+    def eval(self, context: NodeContext) -> None:
         raise NotImplementedError
