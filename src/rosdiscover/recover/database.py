@@ -91,6 +91,12 @@ class RecoveredNodeModelDatabase:
         ValueError
             if no model exists for the given node
         """
+        model_path = self._path_from_config(config, package, node)
+
+        # TODO raise ValueError if model doesn't exist
+
+        # TODO RecoveredNodeModel.load(model_path) if it does exist
+
         raise NotImplementedError
 
     def store(self, model: RecoveredNodeModel) -> None:
