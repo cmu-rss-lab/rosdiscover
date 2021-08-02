@@ -4,6 +4,7 @@ __all__ = ('RecoveredNodeModelDatabase',)
 import os
 import typing as t
 
+from loguru import logger
 import attr
 
 from .model import RecoveredNodeModel
@@ -18,7 +19,12 @@ class RecoveredNodeModelDatabase:
     path: str
         The absolute path of the database directory on the host file system.
     """
-    path: str
+    path: str = attr.ib(converter=os.path.abspath)
+
+    def __attrs_post_init__(self) -> None:
+        logger.debug(f"ensuring that model database directory exists: {self.path}")
+        os.makedirs(self.path, exist_ok=True)
+        logger.debug(f"ensured that model database directory exists: {self.path}")
 
     def _path(self, image_sha1: str, package_dir: str, node_name: str) -> str:
         """Determines the absolute path of a recovered model on disk.
@@ -102,6 +108,8 @@ class RecoveredNodeModelDatabase:
     def store(self, model: RecoveredNodeModel) -> None:
         """Stores a given node model in this database."""
         model_path = self._path(model.image_sha1, model.package_dir, model.node_name)
+        logger.info(f"storing recovered node model [{model}] on disk: {model_path}")
         package_models_dir = os.path.dirname(abs_path)
         os.makedirs(package_models_dir, exist_ok=True)
         model.save(model_path)
+        logger.info(f"stored recovered node model [{model}] on disk")
