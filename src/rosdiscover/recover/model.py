@@ -18,7 +18,7 @@ class RecoveredNodeModel:
         as a hexadecimal string.
     package_name: str
         The name of the package to which this node belongs.
-    package_path: str
+    package_abs_path: str
         The absolute path of the directory for the node's package.
     source_paths: t.Collection[str]
         The paths of the source files for this node, relative to the package
