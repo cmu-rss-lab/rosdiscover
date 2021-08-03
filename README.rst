@@ -144,7 +144,11 @@ cases (e.g., specifying :code:`TURTLEBOT3_MODEL` for TurtleBot3).
    environment:
      TURTLEBOT3_MODEL: burger
    launches:
-   - /ros_ws/src/turtlebot3_simulations/turtlebot3_gazebo/launch/turtlebot3_house.launch
+   - filename: /ros_ws/src/turtlebot3_simulations/turtlebot3_gazebo/launch/turtlebot3_house.launch
+     arg1: value
+     arg2: value
+     arg3: value
+       
 
 Commands
 ........
