@@ -155,6 +155,12 @@ class Config:
         logger.debug(f'loaded config from file [{filename}]: {config}')
         return config
 
+    @property
+    def image_sha256(self) -> str:
+        """Returns the SHA-256 of the Docker image for this application, represented
+        as a hexadecimal string."""
+        return self.app.sha256
+
     def __attrs_post_init__(self) -> None:
         object.__setattr__(self, 'sources', tuple(self.sources))
         object.__setattr__(self, 'launches', tuple(self.launches))
