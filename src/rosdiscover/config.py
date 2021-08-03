@@ -112,7 +112,7 @@ class Config:
             raise ValueError("expected 'image' to be a string")
         if not isinstance(dict_['sources'], list):
             raise ValueError("expected 'sources' to be a list")
-        if not isinstance(dict_['launches'], list):            
+        if not isinstance(dict_['launches'], list):
             raise ValueError("expected 'launches' to be a list")
         if all(type(d) == dict for d in dict_["launches"]):
             launch_args_provided = True
@@ -137,10 +137,10 @@ class Config:
         node_sources = {(nsi.package_name, nsi.node_name): nsi
                         for nsi in (NodeSourceInfo.from_dict(d)
                                     for d in node_sources_list)}
-        launches_inputs: t.Sequence[Any] = dict_['launches']
+        launches_inputs: t.Sequence[t.Any] = dict_['launches']
         if launch_args_provided:
             launches = list(map(lambda d: Launch.from_dict(d), launches_inputs))
-        else: 
+        else:
             launches = list(map(lambda s: Launch(filename=s, arguments=dict()), launches_inputs))
 
         return Config(image=image,
