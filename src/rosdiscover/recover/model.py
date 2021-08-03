@@ -11,7 +11,9 @@ from ..interpreter import NodeContext
 
 @attr.s(frozen=True, slots=True)
 class RecoveredNodeModel:
-    """Provides a description of the run-time architecture of a given node.
+    """Provides a symbolic description of the (statically recovered) run-time
+    architecture of a given node. This description can be executed via the symbolic
+    interpreter to obtain the concrete run-time architecture for a given configuration.
 
     Attributes
     ----------
