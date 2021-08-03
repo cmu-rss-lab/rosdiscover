@@ -1,8 +1,8 @@
 rosdiscover
 ===========
 
-.. image:: https://www.travis-ci.org/ChrisTimperley/rosdiscover.svg?branch=master
-    :target: https://www.travis-ci.org/ChrisTimperley/rosdiscover
+.. image:: https://github.com/rosqual/rosdiscover/actions/workflows/tox.yml/badge.svg
+    :target: https://github.com/rosqual/rosdiscover/actions/workflows/tox.yml
 
 Description
 -----------

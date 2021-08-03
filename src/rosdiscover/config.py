@@ -2,14 +2,67 @@
 __all__ = ('Config',)
 
 from types import MappingProxyType
-from typing import Any, Mapping, Sequence
+import typing as t
 
 from loguru import logger
 import attr
 import roswire
 import yaml
-
 from .launch import Launch
+
+
+@attr.s(frozen=True, slots=True, auto_attribs=True)
+class NodeSourceInfo:
+    """
+    This is a class to represent nodes and their sources, as a bootstrap for recovering node information
+    from static analysis.
+
+    Note: This is an interim class, and will be replaced by CMakelists.txt analysis in the fullness of time.
+
+    Attributes
+    ----------
+    package_name: str
+        The name of the package where the node is from
+    node_name: str
+        The name of the node provided by the package
+    sources: Sequence[str]
+        The list of sources for building the node
+    """
+    package_name: str
+    node_name: str
+    sources: t.Sequence[str]
+
+    @classmethod
+    def from_dict(cls, dict_: t.Mapping[str, t.Any]) -> 'NodeSourceInfo':
+        """
+        Raises
+        ------
+        ValueError
+            If 'package' is undefined.
+        ValueError
+            If 'node' is undefined.
+        ValueError
+            If 'sources' is undefined.
+        """
+        if 'package' not in dict_:
+            raise ValueError("'package' is undefined for the node source.")
+        if 'node' not in dict_:
+            raise ValueError("'node' is undefined for the node source.")
+        if 'sources' not in dict_:
+            raise ValueError("'sources' is undefined for the node source.")
+
+        if not isinstance(dict_['package'], str):
+            raise ValueError("expected 'package' to be a string")
+        if not isinstance(dict_['node'], str):
+            raise ValueError("expected 'node' to be a string")
+        if not isinstance(dict_['sources'], list):
+            raise ValueError("expected 'sources' to be a list")
+
+        return NodeSourceInfo(
+            package_name=dict_['package'],
+            node_name=dict_['node'],
+            sources=list(dict_['sources']),
+        )
 
 
 @attr.s(frozen=True, slots=True, auto_attribs=True)
@@ -22,22 +75,25 @@ class Config:
     sources: Sequence[str]
         The sequence of source files that should be sourced to obtain the
         catkin workspace for the application.
-    launches: Sequence[Launch]
-        The sequence of Launch objects that should be used to launch the
+    launches: Sequence[str]
+        The sequence of launch files that should be used to launch the
         application.
     environment: Mapping[str, str]
         A set of environment variables that should be used by the application.
     app: roswire.app.App
         The ROSWire application for this configuration.
+    node_sources: List[NodeSourceInfo]
+        Provides instructions on how to statically recover the architecture code for individual nodes
     """
     image: str
-    sources: Sequence[str]
-    launches: Sequence[Launch]
-    environment: Mapping[str, str] = attr.ib(factory=dict)
+    sources: t.Sequence[str]
+    launches: t.Sequence[Launch]
+    environment: t.Mapping[str, str] = attr.ib(factory=dict)
+    node_sources: t.Mapping[t.Tuple[str, str], NodeSourceInfo] = attr.ib(factory=dict)
     app: roswire.app.App = attr.ib(init=False)
 
     @classmethod
-    def from_dict(cls, dict_: Mapping[str, Any]) -> 'Config':
+    def from_dict(cls, dict_: t.Mapping[str, t.Any]) -> 'Config':
         """
         Raises
         ------
@@ -57,32 +113,41 @@ class Config:
             raise ValueError("expected 'image' to be a string")
         if not isinstance(dict_['sources'], list):
             raise ValueError("expected 'sources' to be a list")
-        if not isinstance(dict_['launches'], list):
-            raise ValueError("expected 'launches' to be a list")
-        if all(type(d) == dict for d in dict_["launches"]):
-            launch_args_provided = True
-        elif all(type(d) == str for d in dict_["launches"]):
+        if isinstance(dict_['launches'], list):
             launch_args_provided = False
-        else:
-            raise ValueError("expected elements of 'launches' to be str or dict")
+        else if isinstance(dict_['launches'], dict):
+            launch_args_provided = True
+        else 
+            raise ValueError("expected 'launches' to be a list or dict")
+            
 
         has_environment = 'environment' in dict_
         if has_environment and not isinstance(dict_['environment'], dict):
             raise ValueError("expected 'environment' to be a mapping")
 
+        has_node_sources = 'node_sources' in dict_
+        if has_node_sources and not isinstance(dict_['node_sources'], list):
+            raise ValueError("expected 'node_sources' to be a list")
+
         image: str = dict_['image']
-        sources: Sequence[str] = dict_['sources']
-        launches_inputs: Sequence[Any] = dict_['launches']
-        if launch_args_provided:
-            launches = list(map(lambda d: Launch.from_dict(d), launches_inputs))
-        else:
-            launches = list(map(lambda s: Launch(filename=s, arguments=dict()), launches_inputs))
-        logger.debug(f'getArgV: {launches[0].get_argv()}')
-        environment: Mapping[str, str] = dict(dict_.get('environment', {}))
+        sources: t.Sequence[str] = dict_['sources']
+        environment: t.Mapping[str, str] = dict(dict_.get('environment', {}))
+        node_sources_list: t.Sequence[t.Dict[str, t.Any]] = list(dict_.get('node_sources', []))
+
+        node_sources = {(nsi.package_name, nsi.node_name): nsi
+                        for nsi in (NodeSourceInfo.from_dict(d)
+                                    for d in node_sources_list)}
+        if launch_args_provided: 
+            launches = map(lambda d: Launch.from_dict(d), launches_inputs) 
+        else: 
+            launches_inputs: t.Sequence[str] = dict_['launches']
+            launches = map(lambda s: Launch(filename = s, arguments = dict()), launches_inputs) 
+
         return Config(image=image,
                       sources=sources,
                       launches=launches,
-                      environment=environment)
+                      environment=environment,
+                      node_sources=node_sources)
 
     @classmethod
     def from_yaml_string(cls, yml: str) -> 'Config':
@@ -100,6 +165,12 @@ class Config:
         config = cls.from_yaml_string(contents)
         logger.debug(f'loaded config from file [{filename}]: {config}')
         return config
+
+    @property
+    def image_sha256(self) -> str:
+        """Returns the SHA-256 of the Docker image for this application, represented
+        as a hexadecimal string."""
+        return self.app.sha256
 
     def __attrs_post_init__(self) -> None:
         object.__setattr__(self, 'sources', tuple(self.sources))
