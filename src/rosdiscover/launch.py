@@ -42,7 +42,7 @@ class Launch:
         if has_arguments and not isinstance(dict_['arguments'], dict):
             raise ValueError("expected 'arguments' to be a mapping")
 
-        filename: str = dict_.get('filename') or ""
+        filename: str = dict_['filename']
         arguments: Mapping[str, str] = dict(dict_.get('arguments', {}))
         return Launch(filename=filename,
                       arguments=arguments)
