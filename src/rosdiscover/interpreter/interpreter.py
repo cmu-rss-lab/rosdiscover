@@ -48,15 +48,15 @@ class Interpreter:
         node_to_summary = {s.fullname: s for s in node_summaries}
         return SystemSummary(node_to_summary)
 
-    def launch(self, launch_obj: Launch) -> None:
+    def launch(self, launch_description: Launch) -> None:
         """Simulates the effects of `roslaunch` using a given launch file."""
         # NOTE this method also supports command-line arguments
         if self._app.description.distribution.ros == ROSVersion.ROS1:
             reader = ROS1LaunchFileReader.for_app_instance(self._app)
         else:
             reader = ROS2LaunchFileReader.for_app_instance(self._app)
-        logger.debug(f"get_argv: {launch_obj.get_argv()}")
-        config = reader.read(launch_obj.filename, launch_obj.get_argv())
+        logger.debug(f"get_argv: {launch_description.get_argv()}")
+        config = reader.read(launch_description.filename, launch_description.get_argv())
 
         for param in config.params.values():
             self.params[param.name] = param.value
