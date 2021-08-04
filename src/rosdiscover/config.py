@@ -9,6 +9,8 @@ import attr
 import roswire
 import yaml
 
+from .launch import Launch
+
 
 @attr.s(frozen=True, slots=True, auto_attribs=True)
 class NodeSourceInfo:
@@ -86,7 +88,7 @@ class Config:
     """
     image: str
     sources: t.Sequence[str]
-    launches: t.Sequence[str]
+    launches: t.Sequence[Launch]
     environment: t.Mapping[str, str] = attr.ib(factory=dict)
     node_sources: t.Mapping[t.Tuple[str, str], NodeSourceInfo] = attr.ib(factory=dict)
     app: roswire.app.App = attr.ib(init=False)
@@ -107,13 +109,18 @@ class Config:
             raise ValueError("'launches' is undefined in configuration")
         if 'sources' not in dict_:
             raise ValueError("'sources' is undefined in configuration")
-
         if not isinstance(dict_['image'], str):
             raise ValueError("expected 'image' to be a string")
         if not isinstance(dict_['sources'], list):
             raise ValueError("expected 'sources' to be a list")
         if not isinstance(dict_['launches'], list):
             raise ValueError("expected 'launches' to be a list")
+        if all(type(d) == dict for d in dict_["launches"]):
+            launch_args_provided = True
+        elif all(type(d) == str for d in dict_["launches"]):
+            launch_args_provided = False
+        else:
+            raise ValueError("expected 'launches' to be a list or dict")
 
         has_environment = 'environment' in dict_
         if has_environment and not isinstance(dict_['environment'], dict):
@@ -125,13 +132,18 @@ class Config:
 
         image: str = dict_['image']
         sources: t.Sequence[str] = dict_['sources']
-        launches: t.Sequence[str] = dict_['launches']
         environment: t.Mapping[str, str] = dict(dict_.get('environment', {}))
         node_sources_list: t.Sequence[t.Dict[str, t.Any]] = list(dict_.get('node_sources', []))
 
         node_sources = {(nsi.package_name, nsi.node_name): nsi
                         for nsi in (NodeSourceInfo.from_dict(d)
                                     for d in node_sources_list)}
+        launches_inputs: t.Sequence[t.Any] = dict_['launches']
+        if launch_args_provided:
+            launches = list(map(lambda d: Launch.from_dict(d), launches_inputs))
+        else:
+            launches = list(map(lambda s: Launch(filename=s, arguments=dict()), launches_inputs))
+
         return Config(image=image,
                       sources=sources,
                       launches=launches,
