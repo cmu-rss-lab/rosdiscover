@@ -90,7 +90,7 @@ class Config:
     sources: t.Sequence[str]
     launches: t.Sequence[Launch]
     environment: t.Mapping[str, str] = attr.ib(factory=dict)
-    node_sources: t.Mapping[t.Tuple[str, str], NodeSourceInfo] = attr.ib(factory=dict)
+    node_sources: t.Sequence[NodeSourceInfo] = attr.ib(factory=list)
     app: roswire.app.App = attr.ib(init=False)
 
     @classmethod
@@ -135,9 +135,7 @@ class Config:
         environment: t.Mapping[str, str] = dict(dict_.get('environment', {}))
         node_sources_list: t.Sequence[t.Dict[str, t.Any]] = list(dict_.get('node_sources', []))
 
-        node_sources = {(nsi.package_name, nsi.node_name): nsi
-                        for nsi in (NodeSourceInfo.from_dict(d)
-                                    for d in node_sources_list)}
+        node_sources = [NodeSourceInfo.from_dict(d) for d in node_sources_list]
         launches_inputs: t.Sequence[t.Any] = dict_['launches']
         if launch_args_provided:
             launches = list(map(lambda d: Launch.from_dict(d), launches_inputs))
