@@ -142,4 +142,3 @@ class SystemSummary(Mapping[str, NodeSummary]):
         for n in self._node_to_summary.values():
             if n.placeholder:
                 yield n
-
