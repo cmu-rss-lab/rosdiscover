@@ -5,6 +5,7 @@ from a launch file.
 
 The main class provided by this module is :class:`AcmeGenerator`
 """
+__all__ = ("AcmeGenerator", )
 import json
 import os
 import subprocess
@@ -467,4 +468,3 @@ class AcmeGenerator:
                 logger.error(run.stderr)
         finally:
             os.remove(jf)
-
