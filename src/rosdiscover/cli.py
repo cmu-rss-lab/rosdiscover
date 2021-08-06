@@ -189,7 +189,6 @@ def main() -> None:
     p.add_argument("--check", "-c", action='store_true')
     p.add_argument("--jar", type=str, help='Pointer to the Acme jar file', default=acme_jar_path)
 
-    p.add_argument('config', type=argparse.FileType('r'), help=CONFIG_HELP)
     p.set_defaults(func=generate_acme)
 
     p = subparsers.add_parser('observe',
