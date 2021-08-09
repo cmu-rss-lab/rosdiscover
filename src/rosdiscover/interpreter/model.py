@@ -34,7 +34,20 @@ class PlaceholderModel(NodeModel):
 
 @attr.s(frozen=True, slots=True)
 class HandwrittenModel(NodeModel):
-    """Models the architectural interactions of a node type."""
+    """Models the architectural interactions of a node type.
+
+    Attributes
+    ----------
+    package: str
+        The name of the package to which the associated node type belongs.
+    name: str
+        The name of the node type.
+    _definition: t.Callable[[NodeContext], None]
+        A callable (e.g., a [lambda] function) that implements the architectural
+        semantics of this node type in the form of a function that accepts and
+        appropriately mutates a given node context. I.e., this attribute is
+        used to provide an implementation of the :meth:`NodeModel.eval` method.
+    """
     package: str = attr.ib()
     name: str = attr.ib()
     _definition: t.Callable[[NodeContext], None] = attr.ib()
