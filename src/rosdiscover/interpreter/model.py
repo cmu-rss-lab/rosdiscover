@@ -1,64 +1,78 @@
 # -*- coding: utf-8 -*-
-__all__ = ('Model', 'model')
+__all__ = ('HandwrittenModel', 'PlaceholderModel', 'model', 'NodeModel')
 
-from typing import Dict, Any, Tuple, Callable
+import abc
+import typing as t
 
 from loguru import logger
+import attr
 
 from .context import NodeContext
 
 
-class Model:
+class NodeModel(abc.ABC):
+    """
+    Provides an executable description of the run-time architecture of a given node type
+    that can be used to obtain the actual run-time architectural interactions of a node
+    within a concrete context.
+    """
+    @abc.abstractmethod
+    def eval(self, context: NodeContext) -> None:
+        """Obtain the concrete definition for a node within a given context."""
+        ...
+
+
+@attr.s(frozen=True, slots=True, auto_attribs=True)
+class PlaceholderModel(NodeModel):
+    """Used in place of a missing node model. Has no architectural effects."""
+    package: str
+    name: str
+
+    def eval(self, context: NodeContext) -> None:
+        return
+
+
+@attr.s(frozen=True, slots=True)
+class HandwrittenModel(NodeModel):
     """Models the architectural interactions of a node type."""
-    _models: Dict[Tuple[str, str], 'Model'] = {}
-    __placeholder: bool = False
+    package: str = attr.ib()
+    name: str = attr.ib()
+    _definition: t.Callable[[NodeContext], None] = attr.ib()
+
+    _models: t.ClassVar[t.Dict[t.Tuple[str, str], "HandwrittenModel"]] = {}
 
     @staticmethod
-    def register(package: str,
-                 name: str,
-                 definition: Callable[[NodeContext], None]
-                 ) -> None:
+    def register(
+        package: str,
+        name: str,
+        definition: t.Callable[[NodeContext], None],
+    ) -> None:
         key = (package, name)
-        models = Model._models
+        models = HandwrittenModel._models
         if key in models:
             m = f"model [{name}] already registered for package [{package}]"
             raise Exception(m)
-        models[key] = Model(package, name, definition)
+        models[key] = HandwrittenModel(package, name, definition)
         logger.debug(f"registered model [{name}] for package [{package}]")
 
+    # TODO move this logic into ProjectModels class
     @staticmethod
-    def find(package: str, name: str) -> 'Model':
-        if (package, name) in Model._models:
-            return Model._models[(package, name)]
+    def find(package: str, name: str) -> NodeModel:
+        if (package, name) in HandwrittenModel._models:
+            return HandwrittenModel._models[(package, name)]
         else:
             m = (f"failed to find model for node type [{name}] "
                  f"in package [{package}]")
             logger.warning(m)
-            ph = Model._models[('PLACEHOLDER', 'PLACEHOLDER')]
-            ph.__package = package
-            ph.__name = name
-            ph.__placeholder = True
-            return ph
 
-    def __init__(self,
-                 package,       # type: str
-                 name,          # type: str
-                 definition     # type: Callable[[NodeContext], None]
-                 ):             # type: (...) -> None
-        self.__package = package
-        self.__name = name
-        self.__definition = definition
-        self.__placeholder = False
+            return PlaceholderModel(package, name)
 
     def eval(self, context: NodeContext) -> None:
-        return self.__definition(context)
-
-    def mark_placeholder(self):
-        self.__placeholder = True
+        return self._definition(context)
 
 
-def model(package: str, name: str) -> Any:
-    def register(m: Callable[[NodeContext], None]) -> Any:
-        Model.register(package, name, m)
+def model(package: str, name: str) -> t.Any:
+    def register(m: t.Callable[[NodeContext], None]) -> t.Any:
+        HandwrittenModel.register(package, name, m)
         return m
     return register

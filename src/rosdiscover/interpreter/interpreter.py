@@ -9,7 +9,7 @@ from roswire.ros1.launch.reader import ROS1LaunchFileReader
 from roswire.ros2.launch.reader import ROS2LaunchFileReader
 
 from .context import NodeContext
-from .model import Model
+from .model import HandwrittenModel
 from .summary import SystemSummary
 from .parameter import ParameterServer
 from ..config import Config
@@ -209,8 +209,9 @@ class Interpreter:
         if remappings:
             logger.info(f"using remappings: {remappings}")
 
+        # TODO replace with ProjectModels.fetch(package, node)
         try:
-            model = Model.find(pkg, nodetype)
+            model = HandwrittenModel.find(pkg, nodetype)
         except Exception:
             m = (f"failed to find model for node type [{nodetype}] "
                  f"in package [{pkg}]")
@@ -228,7 +229,4 @@ class Interpreter:
                           params=self.params,
                           app=self._app)
         self.nodes[ctx.fullname] = ctx
-
         model.eval(ctx)
-        if hasattr(model, '__placeholder') and model.__placeholder:
-            ctx.mark_placeholder()
