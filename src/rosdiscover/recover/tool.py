@@ -272,11 +272,12 @@ class NodeRecoveryTool:
 
         self._recover(compile_commands_path, sources)
 
-        # FIXME for now, just return a dummy recovered model
+        # FIXME for now, we just return a dummy recovered model
+        package_abs_path = self.app.description.packages[package_name].path
         return RecoveredNodeModel(
-            image_sha256=,  # FIXME self.config.image_sha256
+            image_sha256=self.app.sha256,
             package_name=package_name,
-            package_abs_path=,  # FIXME
+            package_abs_path=package_abs_path,
             source_paths=sources,
             node_name=node_name,
         )
