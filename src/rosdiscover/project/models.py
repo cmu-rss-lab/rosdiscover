@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 __all__ = ("ProjectModels",)
 
+import typing as t
+
 import attr
 
 from ..config import Config
 from ..interpreter import NodeModel, HandwrittenModel
-from ..recover.database import RecoveredModelDatabase
+from ..recover import NodeRecoveryTool, RecoveredModelDatabase
 
 
 @attr.s(slots=True, auto_attribs=True)
@@ -16,25 +18,79 @@ class ProjectModels:
     ----------
     config: Config
         The configuration for the project
-    _recovered_models: RecoveredModelDatabase
-        A database of all of the models that have been recovered using ROSDiscover
+    allow_recovery: bool
+        Allows models to be recovered from source if :code:`True`.
     allow_placeholders: bool
-        If :code:`True`, then a :class:`PlaceholderModel` will be used whenever a model
-        is missing and irrecoverable for a given node type. If :code:`False`, then a
-        :class:`ValueError` will be thrown whenever there is no model available.
+        If :code:`True`, uses a placeholder model if there is no handwritten
+        model available and recovery is disabled or not possible.
     """
     config: Config
-    _recovered_models: RecoveredModelDatabase
+    allow_recovery: bool = attr.ib(default=True)
     allow_placeholders: bool = attr.ib(default=True)
-    # TODO add: prefer_handwritten_models attribute
+    _recovered_models: RecoveredModelDatabase = attr.ib(init=False)
+    _recovery_tool: NodeRecoveryTool = attr.ib(init=False)
+    # TODO add: use_model_cache
+    # TODO add: prefer_recovered
 
-    def recover(self, package: str, node: str) -> NodeModel:
-        # FIXME
+    def __attrs_post_init__(self) -> None:
+        # TODO allow model database path to be specified
+        recovered_model_database_path = os.path.abspath("~/.rosdiscover/recovered-models")
+        self._recovered_models = RecoveredModelDatabase(recovered_model_database_path)
+        self._recovery_tool = NodeRecoveryTool(app=config.app)
+
+    def __enter__(self) -> "ProjectModels":
+        self.open()
+        return self
+
+    def __exit__(
+        self,
+        ex_type: t.Optional[t.Type[BaseException]],
+        ex_val: t.Optional[BaseException],
+        ex_tb: t.Optional[types.TracebackType],
+    ) -> None:
+        self.close()
+
+    def open(self) -> None:
+        self._recovery_tool.open()
+
+    def close(self) -> None:
+        self._recovery_tool.close()
+
+    def _recover(self, package: str, node: str) -> NodeModel:
+        # have we already recovered this model?
         if self._recovered_models.contains(self.config, package, node):
             return self._recovered_models.fetch(self.config, package, node)
 
+        # is this node model irrecoverable?
+        if (package, node) not in self.config.node_sources:
+            return None
+
+        # TODO we need to know the sources for this node
+        # - eventually, we want this to come from CMakeLists
+        # - for now, we can manually specify these as part of the configuration
+        sources = self.config.node_sources[(package, node)].sources
+
+        # use the recovery tool to recover the model before saving it to the database
+        model = self._recovery_tool.recover(package, node, sources)
+        self._recovered_models.store(model)
+        return model
+
+    def _fetch_handwritten(self, package: str, node: str) -> t.Optional[NodeModel]:
+        if HandwrittenModel.exists(package, node):
+            return HandwrittenModel.fetch(package, node)
+        return None
+
+    def _fetch_placeholder(self, package: str, node: str) -> NodeModel:
+        return PlaceholderModel(package, node)
+
     def fetch(self, package: str, node: str) -> NodeModel:
         """Retrieves the model for a given node.
+        By default, the handwritten model for this node will be returned, if
+        available, since this is likely to be the most accurate. If there is no
+        handwritten model for the given node, then the model will be statically
+        recovered from source if model recovery is allowed. Finally, if there
+        is no handwritten model and model recovery is disabled or not possible,
+        a placeholder model will be returned unless placeholders are disabled.
 
         Parameters
         ----------
@@ -54,10 +110,24 @@ class ProjectModels:
         Raises
         ------
         ValueError
-            If there is no model for the given node and placeholders are disabled.
+            If there is no model could be fetched for the given node and placeholders
+            have been disabled.
         """
-        if HandwrittenModel.exists(package, node):
-            return HandwrittenModel.fetch(package, node)
+        # TODO this exists to make it easier to customize preferences later on
+        # e.g., to prefer recovered models over handwritten ones
+        model_sources: t.List[t.Callable[[str, str], t.Optional[NodeModel]] = [
+            self._fetch_handwritten,
+        ]
+        if self.allow_recovery:
+            model_sources.append(self._recover)
 
-        # TODO check allow placeholders
-        return PlaceholderModel(package, node)
+        fetched_model: t.Optional[NodeModel] = None
+        for model_source in model_sources:
+            fetched_model = model_source(package, node)
+            if fetched_model:
+                return fetched_model
+
+        if self.allow_placeholders:
+            return self._fetch_placeholder(package, node)
+        else:
+            raise ValueError(f"failed to fetch model for node [{node}] in package [{package}]")

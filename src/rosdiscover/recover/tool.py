@@ -12,6 +12,7 @@ from loguru import logger
 import attr
 import roswire
 
+from .model import RecoveredNodeModel
 from ..config import Config
 
 
@@ -229,7 +230,7 @@ class NodeRecoveryTool:
         package_name: str,
         node_name: str,
         sources: t.Collection[str],
-    ) -> None:
+    ) -> RecoveredNodeModel:
         """Statically recovers the dynamic architecture of a given node.
 
         Parameters
@@ -270,6 +271,15 @@ class NodeRecoveryTool:
         compile_commands_path = self._find_compile_commands_file(package)
 
         self._recover(compile_commands_path, sources)
+
+        # FIXME for now, just return a dummy recovered model
+        return RecoveredNodeModel(
+            image_sha256=,  # FIXME self.config.image_sha256
+            package_name=package_name,
+            package_abs_path=,  # FIXME
+            source_paths=sources,
+            node_name=node_name,
+        )
 
     def _recover(
         self,
