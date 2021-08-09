@@ -9,7 +9,7 @@ import attr
 from ..interpreter import NodeModel, NodeContext
 
 
-@attr.s(frozen=True, slots=True)
+@attr.s(frozen=True, slots=True, auto_attribs=True)
 class RecoveredNodeModel(NodeModel):
     """Provides a symbolic description of the (statically recovered) run-time
     architecture of a given node. This description can be executed via the symbolic
@@ -42,7 +42,17 @@ class RecoveredNodeModel(NodeModel):
             json.dump(dict_, f)
 
     def to_dict(self) -> t.Dict[str, t.Any]:
-        raise NotImplementedError
+        return {
+            "image": {
+                "sha256": self.image_sha256,
+            },
+            "node-name": self.node_name,
+            "package": {
+                "name": self.package_name,
+                "path": self.package_abs_path,
+            },
+            "sources": list(self.source_paths),
+        }
 
     @classmethod
     def load(cls, filename: str) -> "RecoveredNodeModel":
@@ -51,7 +61,18 @@ class RecoveredNodeModel(NodeModel):
 
     @classmethod
     def from_dict(cls, dict_: t.Dict[str, t.Any]) -> "RecoveredNodeModel":
-        raise NotImplementedError
+        image_sha256 = dict_["image"]["sha256"]
+        node_name = dict_["node-name"]
+        package_name = dict_["package"]["name"]
+        package_abs_path = dict_["package"]["path"]
+        source_paths = dict_["sources"]
+        return RecoveredNodeModel(
+            image_sha256=image_sha256,
+            node_name=node_name,
+            package_name=package_name,
+            package_abs_path=package_abs_path,
+            source_paths=source_paths,
+        )
 
     def eval(self, context: NodeContext) -> None:
         raise NotImplementedError
