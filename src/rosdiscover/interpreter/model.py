@@ -68,6 +68,24 @@ class HandwrittenModel(NodeModel):
         models[key] = HandwrittenModel(package, name, definition)
         logger.debug(f"registered model [{name}] for package [{package}]")
 
+    @staticmethod
+    def exists(package: str, name: str) -> bool:
+        """Determines whether there exists a handwritten model for a given node type.
+
+        Parameters
+        ----------
+        package: str
+            The name of the package to which the node belongs.
+        name: str
+            The name of the node type.
+
+        Returns
+        -------
+        bool
+            :code:`True` if there is a handwritten model for the given, else :code:`False`.
+        """
+        return (package, name) in HandwrittenModel._models
+
     # TODO move this logic into ProjectModels class
     @staticmethod
     def find(package: str, name: str) -> NodeModel:
