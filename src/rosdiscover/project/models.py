@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 __all__ = ("ProjectModels",)
 
+import os
+import types
 import typing as t
 
 import attr
 
 from ..config import Config
-from ..interpreter import NodeModel, HandwrittenModel
-from ..recover import NodeRecoveryTool, RecoveredModelDatabase
+from ..interpreter.model import NodeModel, HandwrittenModel, PlaceholderModel
+from ..recover import NodeRecoveryTool, RecoveredNodeModelDatabase
 
 
 @attr.s(slots=True, auto_attribs=True)
@@ -27,7 +29,7 @@ class ProjectModels:
     config: Config
     allow_recovery: bool = attr.ib(default=True)
     allow_placeholders: bool = attr.ib(default=True)
-    _recovered_models: RecoveredModelDatabase = attr.ib(init=False)
+    _recovered_models: RecoveredNodeModelDatabase = attr.ib(init=False)
     _recovery_tool: NodeRecoveryTool = attr.ib(init=False)
     # TODO add: use_model_cache
     # TODO add: prefer_recovered
@@ -35,8 +37,8 @@ class ProjectModels:
     def __attrs_post_init__(self) -> None:
         # TODO allow model database path to be specified
         recovered_model_database_path = os.path.abspath("~/.rosdiscover/recovered-models")
-        self._recovered_models = RecoveredModelDatabase(recovered_model_database_path)
-        self._recovery_tool = NodeRecoveryTool(app=config.app)
+        self._recovered_models = RecoveredNodeModelDatabase(recovered_model_database_path)
+        self._recovery_tool = NodeRecoveryTool(app=self.config.app)
 
     def __enter__(self) -> "ProjectModels":
         self.open()
@@ -56,7 +58,7 @@ class ProjectModels:
     def close(self) -> None:
         self._recovery_tool.close()
 
-    def _recover(self, package: str, node: str) -> NodeModel:
+    def _recover(self, package: str, node: str) -> t.Optional[NodeModel]:
         # have we already recovered this model?
         if self._recovered_models.contains(self.config, package, node):
             return self._recovered_models.fetch(self.config, package, node)
@@ -115,7 +117,7 @@ class ProjectModels:
         """
         # TODO this exists to make it easier to customize preferences later on
         # e.g., to prefer recovered models over handwritten ones
-        model_sources: t.List[t.Callable[[str, str], t.Optional[NodeModel]] = [
+        model_sources: t.List[t.Callable[[str, str], t.Optional[NodeModel]]] = [
             self._fetch_handwritten,
         ]
         if self.allow_recovery:

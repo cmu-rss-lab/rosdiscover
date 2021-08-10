@@ -86,17 +86,21 @@ class HandwrittenModel(NodeModel):
         """
         return (package, name) in HandwrittenModel._models
 
-    # TODO move this logic into ProjectModels class
     @staticmethod
-    def find(package: str, name: str) -> NodeModel:
-        if (package, name) in HandwrittenModel._models:
-            return HandwrittenModel._models[(package, name)]
-        else:
-            m = (f"failed to find model for node type [{name}] "
-                 f"in package [{package}]")
-            logger.warning(m)
+    def fetch(package: str, name: str) -> NodeModel:
+        """Fetches the prewritten model for a given node.
 
-            return PlaceholderModel(package, name)
+        Raises
+        ------
+        ValueError
+            if no handwritten model for the given node exists.
+        """
+        package_and_name = (package, name)
+        if package_and_name not in HandwrittenModel._models:
+            msg = f"no handwritten model exists for node [{name}] in package [{package}]"
+            raise ValueError(msg)
+
+        return HandwrittenModel._models[package_and_name]
 
     def eval(self, context: NodeContext) -> None:
         return self._definition(context)
