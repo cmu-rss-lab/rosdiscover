@@ -4,7 +4,7 @@ from typing import Any, List, Mapping, Optional, Set, Tuple
 from loguru import logger
 import attr
 import dockerblade
-from roswire import AppInstance, ROSVersion
+from roswire import AppInstance, ROSDistribution, ROSVersion
 import roswire.name as rosname
 import typing
 
@@ -57,6 +57,10 @@ class NodeContext:
         if ns[-1] != '/':
             ns += ' /'
         return f'{ns}{self.name}'
+
+    @property
+    def ros_distro(self) -> ROSDistribution:
+        return self.app.description.distribution
 
     def _apply_remappings(self, name: str) -> str:
         """Applies any appropriate remappings to a fully qualified name."""
@@ -199,7 +203,7 @@ class NodeContext:
                      f"[{ns}] with format [{fmt}]")
         ns = self.resolve(ns)
         self._action_servers.add(Action(name=ns, format=fmt))
-        if self.app.description.distribution.ros == ROSVersion.ROS1:
+        if self.ros_distro.ros == ROSVersion.ROS1:
             # Topics are implicit because they are created by the action server
             # and are only really intended for interaction between the
             # action client and action server.
@@ -224,7 +228,7 @@ class NodeContext:
         ns = self.resolve(ns)
         self._action_clients.add(Action(name=ns, format=fmt))
 
-        if self.app.description.distribution.ros == ROSVersion.ROS1:
+        if self.ros_distro.ros == ROSVersion.ROS1:
             # Topics are implicit because they are created by the action client
             # and are only really intended for interaction between the
             # action client and action server.

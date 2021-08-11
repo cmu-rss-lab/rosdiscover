@@ -1,8 +1,10 @@
-from ..interpreter import model
+from roswire import ROSDistribution
+
+from ..interpreter import model, NodeContext
 
 
 @model('joint_state_publisher', 'joint_state_publisher')
-def joint_state_publisher(c):
+def joint_state_publisher(c: NodeContext):
     # https://github.com/ros/joint_state_publisher/blob/kinetic-devel/joint_state_publisher/joint_state_publisher/joint_state_publisher
 
     # joint_state_publisher#L33
@@ -19,7 +21,9 @@ def joint_state_publisher(c):
     get_param("publish_default_positions", True)
     get_param("publish_default_velocities", False)
     get_param("publish_default_efforts", False)
-    get_param("use_gui", False)
+
+    if c.ros_distro < ROSDistribution.NOETIC:
+        get_param("use_gui", False)
 
     for source in get_param("source_list", []):
         c.sub(source, 'sensor_msgs/JointState')
