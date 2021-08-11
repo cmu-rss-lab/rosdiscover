@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from typing import Dict, Iterator, Optional
 import contextlib
+import types
+import typing as t
 
 from loguru import logger
 import roswire
@@ -9,11 +11,11 @@ from roswire.ros1.launch.reader import ROS1LaunchFileReader
 from roswire.ros2.launch.reader import ROS2LaunchFileReader
 
 from .context import NodeContext
-from .model import HandwrittenModel
 from .summary import SystemSummary
 from .parameter import ParameterServer
 from ..config import Config
 from ..launch import Launch
+from ..project import ProjectModels
 
 
 class Interpreter:
@@ -31,12 +33,36 @@ class Interpreter:
         """Constructs an interpreter for a given configuration"""
         rsw = roswire.ROSWire()  # TODO don't maintain multiple instances
         with rsw.launch(config.image, config.sources, environment=config.environment) as app:
-            yield Interpreter(app)
+            with Interpreter(config, app) as interpreter:
+                yield interpreter
 
-    def __init__(self, app: roswire.System) -> None:
+    def __init__(
+        self,
+        config: Config,
+        app: roswire.System,
+    ) -> None:
         self._app = app
         self.params = ParameterServer()
         self.nodes: Dict[str, NodeContext] = {}
+        self.models = ProjectModels(config, allow_recovery=False)
+
+    def open(self) -> None:
+        self.models.open()
+
+    def close(self) -> None:
+        self.models.close()
+
+    def __enter__(self) -> "Interpreter":
+        self.open()
+        return self
+
+    def __exit__(
+        self,
+        ex_type: t.Optional[t.Type[BaseException]],
+        ex_val: t.Optional[BaseException],
+        ex_tb: t.Optional[types.TracebackType],
+    ) -> None:
+        self.close()
 
     @property
     def app(self) -> AppInstance:
@@ -209,9 +235,8 @@ class Interpreter:
         if remappings:
             logger.info(f"using remappings: {remappings}")
 
-        # TODO replace with ProjectModels.fetch(package, node)
         try:
-            model = HandwrittenModel.find(pkg, nodetype)
+            model = self.models.fetch(pkg, nodetype)
         except Exception:
             m = (f"failed to find model for node type [{nodetype}] "
                  f"in package [{pkg}]")

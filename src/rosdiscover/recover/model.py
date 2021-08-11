@@ -33,7 +33,7 @@ class RecoveredNodeModel(NodeModel):
     image_sha256: str
     package_name: str
     package_abs_path: str
-    source_paths: t.Collection[str] = attr.ib(converter=tuple)
+    source_paths: t.Collection[str]
     node_name: str
 
     def save(self, filename: str) -> None:
