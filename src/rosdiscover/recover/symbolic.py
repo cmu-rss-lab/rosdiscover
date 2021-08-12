@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
-__all__ = ("SymbolicStatement", "SymbolicFunction")
+__all__ = (
+    "SymbolicBool",
+    "SymbolicFunction",
+    "SymbolicStatement",
+    "SymbolicString",
+)
 
 import abc
 import typing as t
@@ -9,6 +14,18 @@ import attr
 
 class SymbolicValue(abc.ABC):
     """Represents a symbolic value in a function summary."""
+
+
+class SymbolicString(abc.ABC, SymbolicValue):
+    """Represents a symbolic string value."""
+
+
+class SymbolicInteger(abc.ABC, SymbolicValue):
+    """Represents a symbolic integer value."""
+
+
+class SymbolicBool(abc.ABC, SymbolicValue):
+    """Represents a symbolic boolean value."""
 
 
 class SymbolicStatement(abc.ABC):
