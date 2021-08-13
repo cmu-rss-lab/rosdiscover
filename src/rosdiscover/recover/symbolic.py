@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 __all__ = (
+    "SymbolicAssignment",
     "SymbolicBool",
     "SymbolicCompound",
     "SymbolicFunction",
@@ -35,6 +36,20 @@ class SymbolicBool(abc.ABC, SymbolicValue):
 
 class SymbolicStatement(abc.ABC):
     """Represents a statement in a symbolic function summary."""
+
+
+class SymbolicAssignment(abc.ABC):
+    """Represents an assignment to a symbolic variable.
+
+    Attributes
+    ----------
+    variable: str
+        The name of the variable whose value is being assigned.
+    value: SymbolicValue
+        The value of the variable, provided as a symbolic expression.
+    """
+    variable: str
+    value: SymbolicValue
 
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
