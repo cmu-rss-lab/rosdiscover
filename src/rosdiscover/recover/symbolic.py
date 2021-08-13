@@ -7,6 +7,7 @@ __all__ = (
     "SymbolicFunction",
     "SymbolicStatement",
     "SymbolicString",
+    "SymbolicParameter",
     "SymbolicProgram",
 )
 
@@ -65,6 +66,12 @@ class SymbolicFunctionCall(SymbolicFunction):
 
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
+class SymbolicParameter:
+    """Provides the definition for a symbolic function parameter."""
+    name: str
+
+
+@attr.s(frozen=True, auto_attribs=True, slots=True)
 class SymbolicFunction:
     """Provides the definition of a single symbolic function.
 
@@ -72,10 +79,13 @@ class SymbolicFunction:
     ----------
     name: str
         The fully-qualified name of the function.
+    parameters: t.Mapping[str, SymbolicParameter]
+        The parameters of this function, indexed by name.
     body: SymbolicCompound
         The definition of the function.
     """
     name: str
+    parameters: t.Mapping[str, SymbolicParameter]
     body: SymbolicCompound
 
 
