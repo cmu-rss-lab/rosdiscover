@@ -88,6 +88,16 @@ class SymbolicFunction:
     parameters: t.Mapping[str, SymbolicParameter]
     body: SymbolicCompound
 
+    @classmethod
+    def build(
+        self,
+        name: str,
+        parameters: t.Iterable[SymbolicParameter],
+        body: SymbolicCompound,
+    ) -> SymbolicFunction:
+        name_to_parameter = {param.name: param for param in parameters}
+        return SymbolicFunction(name, name_to_parameter, body)
+
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class SymbolicProgram:
@@ -99,3 +109,8 @@ class SymbolicProgram:
         The symbolic functions within this program, indexed by name.
     """
     functions: t.Mapping[str, SymbolicFunction]
+
+    @classmethod
+    def build(self, functions: t.Iterable[SymbolicFunction]) -> SymbolicProgram:
+        name_to_function = {function.name: function for function in functions}
+        return SymbolicProgram(name_to_function)
