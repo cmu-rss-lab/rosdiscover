@@ -239,7 +239,7 @@ class NodeContext:
         if distribution == ROSVersion.ROS1:
             return True
         else:
-            return distribution.ros == ROSVersion.ROS2 and distribution.name < ROSDistribution.FOXY
+            return distribution < ROSDistribution.FOXY
 
     def load_plugin(self, plugin: 'ModelPlugin') -> None:
         """Loads a given dynamic plugin."""
