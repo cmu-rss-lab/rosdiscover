@@ -5,7 +5,7 @@ from a launch file.
 
 The main class provided by this module is :class:`AcmeGenerator`
 """
-from typing import Dict, Iterator, Optional, Tuple, List, Sequence
+from typing import Dict, Iterable, Optional, Tuple, List, Sequence
 import os
 import subprocess
 from subprocess import PIPE
@@ -122,7 +122,7 @@ def update_action_conn(conns, action, port_qualified, is_server) -> None:
 
 class AcmeGenerator:
     def __init__(self,
-                 nodes: Iterator[NodeSummary],
+                 nodes: Iterable[NodeSummary],
                  acme_file: str,
                  jar: Optional[str]
                  ) -> None:

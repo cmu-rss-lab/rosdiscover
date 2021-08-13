@@ -4,6 +4,7 @@ from typing import Any, List, Mapping, Optional, Set, Tuple
 
 import attr
 import dockerblade
+from roswire import AppInstance, ROSDistribution, ROSVersion
 import roswire.name as rosname
 from loguru import logger
 from roswire import AppInstance, ROSVersion, ROSDistribution
@@ -57,6 +58,10 @@ class NodeContext:
         if ns[-1] != '/':
             ns += ' /'
         return f'{ns}{self.name}'
+
+    @property
+    def ros_distro(self) -> ROSDistribution:
+        return self.app.description.distribution
 
     def _apply_remappings(self, name: str) -> str:
         """Applies any appropriate remappings to a fully qualified name."""

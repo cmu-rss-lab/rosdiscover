@@ -1,17 +1,21 @@
 # -*- coding: utf-8 -*-
 from typing import Dict, Iterator, Optional
 import contextlib
+import types
+import typing as t
 
 from loguru import logger
-from roswire import AppInstance
-from roswire.proxy.roslaunch.reader import LaunchFileReader
 import roswire
+from roswire import AppInstance, ROSVersion
+from roswire.ros1.launch.reader import ROS1LaunchFileReader
+from roswire.ros2.launch.reader import ROS2LaunchFileReader
 
 from .context import NodeContext
-from .model import Model
 from .summary import SystemSummary
 from .parameter import ParameterServer
 from ..config import Config
+from ..launch import Launch
+from ..project import ProjectModels
 
 
 class Interpreter:
@@ -29,12 +33,36 @@ class Interpreter:
         """Constructs an interpreter for a given configuration"""
         rsw = roswire.ROSWire()  # TODO don't maintain multiple instances
         with rsw.launch(config.image, config.sources, environment=config.environment) as app:
-            yield Interpreter(app)
+            with Interpreter(config, app) as interpreter:
+                yield interpreter
 
-    def __init__(self, app: roswire.System) -> None:
+    def __init__(
+        self,
+        config: Config,
+        app: roswire.System,
+    ) -> None:
         self._app = app
         self.params = ParameterServer()
         self.nodes: Dict[str, NodeContext] = {}
+        self.models = ProjectModels(config, allow_recovery=False)
+
+    def open(self) -> None:
+        self.models.open()
+
+    def close(self) -> None:
+        self.models.close()
+
+    def __enter__(self) -> "Interpreter":
+        self.open()
+        return self
+
+    def __exit__(
+        self,
+        ex_type: t.Optional[t.Type[BaseException]],
+        ex_val: t.Optional[BaseException],
+        ex_tb: t.Optional[types.TracebackType],
+    ) -> None:
+        self.close()
 
     @property
     def app(self) -> AppInstance:
@@ -46,12 +74,15 @@ class Interpreter:
         node_to_summary = {s.fullname: s for s in node_summaries}
         return SystemSummary(node_to_summary)
 
-    def launch(self, filename: str) -> None:
+    def launch(self, launch_description: Launch) -> None:
         """Simulates the effects of `roslaunch` using a given launch file."""
         # NOTE this method also supports command-line arguments
-        reader = LaunchFileReader(shell=self._app.shell,
-                                  files=self._app.files)
-        config = reader.read(filename)
+        if self._app.description.distribution.ros == ROSVersion.ROS1:
+            reader = ROS1LaunchFileReader.for_app_instance(self._app)
+        else:
+            reader = ROS2LaunchFileReader.for_app_instance(self._app)
+        logger.debug(f"get_argv: {launch_description.get_argv()}")
+        config = reader.read(launch_description.filename, launch_description.get_argv())
 
         for param in config.params.values():
             self.params[param.name] = param.value
@@ -205,7 +236,7 @@ class Interpreter:
             logger.info(f"using remappings: {remappings}")
 
         try:
-            model = Model.find(pkg, nodetype)
+            model = self.models.fetch(pkg, nodetype)
         except Exception:
             m = (f"failed to find model for node type [{nodetype}] "
                  f"in package [{pkg}]")
@@ -223,7 +254,4 @@ class Interpreter:
                           params=self.params,
                           app=self._app)
         self.nodes[ctx.fullname] = ctx
-
         model.eval(ctx)
-        if hasattr(model, '__placeholder') and model.__placeholder:
-            ctx.mark_placeholder()
