@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
+import typing
 from typing import Any, List, Mapping, Optional, Set, Tuple
 
-from loguru import logger
 import attr
 import dockerblade
-from roswire import AppInstance, ROSDistribution, ROSVersion
 import roswire.name as rosname
-import typing
+from loguru import logger
+from roswire import AppInstance, ROSDistribution, ROSVersion
 
-from .summary import NodeSummary
 from .parameter import ParameterServer
+from .summary import NodeSummary
 from ..core import Action, Service, Topic
 
 if typing.TYPE_CHECKING:
@@ -47,7 +47,7 @@ class NodeContext:
         self.namespace = rosname.global_name(self.namespace)
         self.remappings = {
             self._resolve_without_remapping(x):
-            self._resolve_without_remapping(y)
+                self._resolve_without_remapping(y)
             for (x, y) in self.remappings.items()
         }
 
@@ -203,7 +203,7 @@ class NodeContext:
                      f"[{ns}] with format [{fmt}]")
         ns = self.resolve(ns)
         self._action_servers.add(Action(name=ns, format=fmt))
-        if self.ros_distro.ros == ROSVersion.ROS1:
+        if self.actions_have_topics():
             # Topics are implicit because they are created by the action server
             # and are only really intended for interaction between the
             # action client and action server.
@@ -228,7 +228,7 @@ class NodeContext:
         ns = self.resolve(ns)
         self._action_clients.add(Action(name=ns, format=fmt))
 
-        if self.ros_distro.ros == ROSVersion.ROS1:
+        if self.actions_have_topics():
             # Topics are implicit because they are created by the action client
             # and are only really intended for interaction between the
             # action client and action server.
@@ -237,6 +237,13 @@ class NodeContext:
             self.sub(f'{ns}/status', 'actionlib_msgs/GoalStatusArray', implicit=True)
             self.sub(f'{ns}/feedback', f'{fmt}Feedback', implicit=True)
             self.sub(f'{ns}/result', f'{fmt}Result', implicit=True)
+
+    def actions_have_topics(self):
+        distribution = self.app.description.distribution
+        if distribution == ROSVersion.ROS1:
+            return True
+        else:
+            return distribution < ROSDistribution.FOXY
 
     def load_plugin(self, plugin: 'ModelPlugin') -> None:
         """Loads a given dynamic plugin."""
