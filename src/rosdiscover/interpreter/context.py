@@ -4,10 +4,9 @@ from typing import Any, List, Mapping, Optional, Set, Tuple
 
 import attr
 import dockerblade
-from roswire import AppInstance, ROSDistribution, ROSVersion
 import roswire.name as rosname
 from loguru import logger
-from roswire import AppInstance, ROSVersion, ROSDistribution
+from roswire import AppInstance, ROSDistribution, ROSVersion
 
 from .parameter import ParameterServer
 from .summary import NodeSummary
