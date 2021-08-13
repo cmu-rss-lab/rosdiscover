@@ -3,16 +3,19 @@ from __future__ import annotations
 
 __all__ = ("SymbolicProgramLoader",)
 
-import json
 import typing as t
 
-from .symbolic import SymbolicProgram
+from .symbolic import (
+    SymbolicFunction,
+    SymbolicProgram,
+)
 
 
 class SymbolicProgramLoader:
-    def load_from_dict(self, dict_: t.Mapping[str, t.Any]) -> SymbolicProgram:
+    def _load_function(self, dict_: t.Mapping[str, t.Any]) -> SymbolicFunction:
         raise NotImplementedError
 
-    def load(self, filename: str) -> SymbolicProgram:
-        with open(filename, "r") as f:
-            return self.load_from_dict(json.load(f))
+    def load(self, dict_: t.Mapping[str, t.Any]) -> SymbolicProgram:
+        functions = [self._load_function(d) for d in dict_["functions"]]
+        name_to_function = {function.name: function for function in functions}
+        return SymbolicProgram(name_to_function)
