@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
+from __future__ import annotations
+
 __all__ = (
     "SymbolicBool",
+    "SymbolicCompound",
     "SymbolicFunction",
     "SymbolicStatement",
     "SymbolicString",
@@ -62,5 +65,14 @@ class SymbolicFunctionCall(SymbolicFunction):
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class SymbolicFunction:
+    """Provides the definition of a single symbolic function.
+
+    Attributes
+    ----------
+    name: str
+        The fully-qualified name of the function.
+    body: SymbolicCompound
+        The definition of the function.
+    """
     name: str
     body: SymbolicCompound
