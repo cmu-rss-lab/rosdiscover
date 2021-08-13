@@ -7,6 +7,7 @@ __all__ = (
     "SymbolicFunction",
     "SymbolicStatement",
     "SymbolicString",
+    "SymbolicProgram",
 )
 
 import abc
@@ -76,3 +77,15 @@ class SymbolicFunction:
     """
     name: str
     body: SymbolicCompound
+
+
+@attr.s(frozen=True, auto_attribs=True, slots=True)
+class SymbolicProgram:
+    """Provides a symbolic summary for a given program.
+
+    Attributes
+    ----------
+    functions: t.Mapping[str, SymbolicFunction]
+        The symbolic functions within this program, indexed by name.
+    """
+    functions: t.Mapping[str, SymbolicFunction]
