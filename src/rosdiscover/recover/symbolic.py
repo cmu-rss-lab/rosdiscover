@@ -2,14 +2,15 @@
 from __future__ import annotations
 
 __all__ = (
+    "StringLiteral",
     "SymbolicAssignment",
     "SymbolicBool",
     "SymbolicCompound",
     "SymbolicFunction",
-    "SymbolicStatement",
-    "SymbolicString",
     "SymbolicParameter",
     "SymbolicProgram",
+    "SymbolicStatement",
+    "SymbolicString",
 )
 
 import abc
@@ -26,6 +27,12 @@ class SymbolicString(abc.ABC, SymbolicValue):
     """Represents a symbolic string value."""
 
 
+@attr.s(frozen=True, auto_attribs=True, slots=True)
+class StringLiteral(SymbolicString):
+    """Represents a literal string value."""
+    value: str
+
+
 class SymbolicInteger(abc.ABC, SymbolicValue):
     """Represents a symbolic integer value."""
 
@@ -38,7 +45,8 @@ class SymbolicStatement(abc.ABC):
     """Represents a statement in a symbolic function summary."""
 
 
-class SymbolicAssignment(abc.ABC):
+@attr.s(frozen=True, auto_attribs=True, slots=True)
+class SymbolicAssignment:
     """Represents an assignment to a symbolic variable.
 
     Attributes
