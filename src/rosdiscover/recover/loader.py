@@ -7,10 +7,12 @@ import typing as t
 
 from .symbolic import (
     StringLiteral,
+    SymbolicAssignment,
     SymbolicCompound,
     SymbolicFunction,
     SymbolicParameter,
     SymbolicProgram,
+    SymbolicStatement,
     SymbolicValue,
     SymbolicValueType,
     SymbolicVariableReference,
@@ -29,11 +31,11 @@ class SymbolicProgramLoader:
             type_=type_,
         )
 
-    def _load_string_literal(dict_: t.Mapping[str, t.Any]) -> StringLiteral:
+    def _load_string_literal(self, dict_: t.Mapping[str, t.Any]) -> StringLiteral:
         assert dict_["kind"] == "string-literal"
         return StringLiteral(dict_["literal"])
 
-    def _load_variable_reference(dict_: t.Mapping[str, t.Any]) -> SymbolicVariableReference:
+    def _load_variable_reference(self, dict_: t.Mapping[str, t.Any]) -> SymbolicVariableReference:
         assert dict_["kind"] == "variable-reference"
         type_ = SymbolicValueType.from_name(dict_["type"])
         return SymbolicVariableReference(dict_["variable"], type_)
@@ -54,6 +56,9 @@ class SymbolicProgramLoader:
         variable = dict_["variable"]
         value = self._load_value(dict_["value"])
         return SymbolicAssignment(variable, value)
+
+    def _load_statement(self, dict_: t.Mapping[str, t.Any]) -> SymbolicStatement:
+        raise NotImplementedError
 
     def _load_compound(self, dict_: t.Mapping[str, t.Any]) -> SymbolicCompound:
         assert dict_["kind"] == "compound"

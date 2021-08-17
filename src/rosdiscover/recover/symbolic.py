@@ -23,14 +23,21 @@ import attr
 
 class SymbolicValueType(enum.Enum):
     BOOL = auto()
-    STRING = auto()
     INTEGER = auto()
+    STRING = auto()
+    UNSUPPORTED = auto()
 
     @classmethod
     def from_name(cls, name: str) -> SymbolicValueType:
         name_to_type = {
-            "bool"
+            "bool": cls.BOOL,
+            "integer": cls.INTEGER,
+            "string": cls.STRING,
+            "unsupported": cls.UNSUPPORTED,
         }
+        if name in name_to_type:
+            raise ValueError(f"unknown value type: {name}")
+        return name_to_type[name]
 
 
 class SymbolicValue(abc.ABC):
@@ -87,7 +94,7 @@ class SymbolicCompound(t.Sequence[SymbolicStatement]):
 
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
-class SymbolicFunctionCall(SymbolicFunction):
+class SymbolicFunctionCall(SymbolicStatement):
     """Represents a call to a symbolic function.
 
     Attributes
@@ -144,7 +151,7 @@ class SymbolicFunction:
 
     @classmethod
     def build(
-        self,
+        cls,
         name: str,
         parameters: t.Iterable[SymbolicParameter],
         body: SymbolicCompound,
@@ -165,6 +172,6 @@ class SymbolicProgram:
     functions: t.Mapping[str, SymbolicFunction]
 
     @classmethod
-    def build(self, functions: t.Iterable[SymbolicFunction]) -> SymbolicProgram:
+    def build(cls, functions: t.Iterable[SymbolicFunction]) -> SymbolicProgram:
         name_to_function = {function.name: function for function in functions}
         return SymbolicProgram(name_to_function)
