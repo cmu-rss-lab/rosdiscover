@@ -56,7 +56,7 @@ class SymbolicProgramLoader:
             type_=type_,
         )
 
-    def _load_string(self, dict_: t.Mapping[str, t.Any]) -> SymbolicValue:
+    def _load_string(self, dict_: t.Mapping[str, t.Any]) -> SymbolicString:
         value = self._load_value(dict_)
         assert isinstance(value, SymbolicString)
         return value
@@ -83,12 +83,18 @@ class SymbolicProgramLoader:
         name = self._load_string(dict_["name"])
         return RosInit(name)
 
+    def _load_publishes_to(self, dict_: t.Mapping[str, t.Any]) -> Publisher:
+        assert dict_["kind"] == "publishes-to"
+        topic = self._load_string(dict_["name"])
+        return Publisher(topic=topic, format_=dict_["format"])
+
     def _load_statement(self, dict_: t.Mapping[str, t.Any]) -> SymbolicStatement:
         kind: str = dict_["kind"]
 
         try:
             loader: t.Callable[[t.Mapping[str, t.Any]], SymbolicValue] = ({
                 "ros-init": self._load_rosinit,
+                "publishes-to": self._load_publishes_to,
             })[kind]
         except KeyError:
             raise ValueError(f"failed to load statement: {dict_}")
