@@ -118,7 +118,7 @@ class SymbolicFunctionCall(SymbolicStatement):
     arguments: t.Mapping[str, SymbolicValue]
 
 
-# TODO can be anything!
+@attr.s(frozen=True, auto_attribs=True, slots=True)
 class SymbolicVariableReference(SymbolicValue):
     """Represents a symbolic variable reference.
 

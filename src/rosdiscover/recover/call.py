@@ -11,7 +11,7 @@ from .symbolic import (
 )
 
 
-class SymbolicRosApiCall(abc.ABC, SymbolicStatement):
+class SymbolicRosApiCall(SymbolicStatement, abc.ABC):
     """Represents a symbolic call to a ROS API."""
 
 

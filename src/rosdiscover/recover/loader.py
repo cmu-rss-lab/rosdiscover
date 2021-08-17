@@ -5,6 +5,18 @@ __all__ = ("SymbolicProgramLoader",)
 
 import typing as t
 
+from .call import (
+    HasParam,
+    Publisher,
+    ReadParam,
+    ReadParamWithDefault,
+    RosInit,
+    ServiceCaller,
+    ServiceProvider,
+    Subscriber,
+    SymbolicRosApiCall,
+    WriteParam,
+)
 from .symbolic import (
     StringLiteral,
     SymbolicAssignment,
@@ -13,6 +25,7 @@ from .symbolic import (
     SymbolicParameter,
     SymbolicProgram,
     SymbolicStatement,
+    SymbolicString,
     SymbolicValue,
     SymbolicValueType,
     SymbolicVariableReference,
@@ -38,7 +51,15 @@ class SymbolicProgramLoader:
     def _load_variable_reference(self, dict_: t.Mapping[str, t.Any]) -> SymbolicVariableReference:
         assert dict_["kind"] == "variable-reference"
         type_ = SymbolicValueType.from_name(dict_["type"])
-        return SymbolicVariableReference(dict_["variable"], type_)
+        return SymbolicVariableReference(
+            variable=dict_["variable"],
+            type_=type_,
+        )
+
+    def _load_string(self, dict_: t.Mapping[str, t.Any]) -> SymbolicValue:
+        value = self._load_value(dict_)
+        assert isinstance(value, SymbolicString)
+        return value
 
     def _load_value(self, dict_: t.Mapping[str, t.Any]) -> SymbolicValue:
         kind: str = dict_["kind"]
@@ -57,8 +78,22 @@ class SymbolicProgramLoader:
         value = self._load_value(dict_["value"])
         return SymbolicAssignment(variable, value)
 
+    def _load_rosinit(self, dict_: t.Mapping[str, t.Any]) -> RosInit:
+        assert dict_["kind"] == "ros-init"
+        name = self._load_string(dict_["name"])
+        return RosInit(name)
+
     def _load_statement(self, dict_: t.Mapping[str, t.Any]) -> SymbolicStatement:
-        raise NotImplementedError
+        kind: str = dict_["kind"]
+
+        try:
+            loader: t.Callable[[t.Mapping[str, t.Any]], SymbolicValue] = ({
+                "ros-init": self._load_rosinit,
+            })[kind]
+        except KeyError:
+            raise ValueError(f"failed to load statement: {dict_}")
+
+        return loader(dict_)
 
     def _load_compound(self, dict_: t.Mapping[str, t.Any]) -> SymbolicCompound:
         assert dict_["kind"] == "compound"
