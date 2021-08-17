@@ -13,10 +13,24 @@ __all__ = (
     "SymbolicString",
 )
 
+from enum import auto
 import abc
+import enum
 import typing as t
 
 import attr
+
+
+class SymbolicValueType(enum.Enum):
+    BOOL = auto()
+    STRING = auto()
+    INTEGER = auto()
+
+    @classmethod
+    def from_name(cls, name: str) -> SymbolicValueType:
+        name_to_type = {
+            "bool"
+        }
 
 
 class SymbolicValue(abc.ABC):
@@ -88,10 +102,27 @@ class SymbolicFunctionCall(SymbolicFunction):
     arguments: t.Mapping[str, SymbolicValue]
 
 
+# TODO can be anything!
+class SymbolicVariableReference(SymbolicValue):
+    """Represents a symbolic variable reference.
+
+    Attributes
+    ----------
+    variable: str
+        The name of the value that is referenced.
+    type: SymbolicValueType
+        The type of the referenced variable.
+    """
+    variable: str
+    type_: SymbolicValueType
+
+
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class SymbolicParameter:
     """Provides the definition for a symbolic function parameter."""
+    index: int
     name: str
+    type_: SymbolicValueType
 
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)

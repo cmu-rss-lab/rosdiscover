@@ -12,6 +12,8 @@ from .symbolic import (
     SymbolicParameter,
     SymbolicProgram,
     SymbolicValue,
+    SymbolicValueType,
+    SymbolicVariableReference,
 )
 
 
@@ -23,11 +25,17 @@ class SymbolicProgramLoader:
         assert dict_["kind"] == "string-literal"
         return StringLiteral(dict_["literal"])
 
+    def _load_variable_reference(dict_: t.Mapping[str, t.Any]) -> SymbolicVariableReference:
+        assert dict_["kind"] == "variable-reference"
+        type_ = SymbolicValueType.from_name(dict_["type"])
+        return SymbolicVariableReference(dict_["variable"], type_)
+
     def _load_value(self, dict_: t.Mapping[str, t.Any]) -> SymbolicValue:
         kind: str = dict_["kind"]
         try:
             loader: t.Callable[[t.Mapping[str, t.Any]], SymbolicValue] = ({
                 "string-literal": self._load_string_literal,
+                "variable-reference": self._load_variable_reference,
             })[kind]
         except KeyError:
             raise ValueError(f"failed to load value type: {kind}")
