@@ -352,7 +352,7 @@ class SymbolicProgram:
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
             "program": {
-                "functions": {name: f.to_dict() for (name, f) in self.functions.items()},
+                "functions": [f.to_dict() for f in self.functions.values()],
             },
         }
 
