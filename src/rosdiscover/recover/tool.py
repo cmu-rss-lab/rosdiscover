@@ -273,9 +273,9 @@ class NodeRecoveryTool:
 
         compile_commands_path = self._find_compile_commands_file(package)
 
-        self._recover(compile_commands_path, sources)
+        # recover a symbolic description of the node executable
+        program = self._recover(compile_commands_path, sources)
 
-        # FIXME for now, we just return a dummy recovered model
         package_abs_path = self._app.description.packages[package_name].path
         return RecoveredNodeModel(
             image_sha256=self._app.sha256,
@@ -283,6 +283,7 @@ class NodeRecoveryTool:
             package_abs_path=package_abs_path,
             source_paths=tuple(sources),
             node_name=node_name,
+            program=program,
         )
 
     def _recover(
@@ -358,4 +359,6 @@ class NodeRecoveryTool:
         model_loader = SymbolicProgramLoader()
         json_model_file_contents = files.read(json_model_filename, binary=False)
         json_model = json.loads(json_model_file_contents)
-        return model_loader.load(json_model)
+        summary = model_loader.load(json_model)
+        logger.debug(f"recovered node summary: {summary}")
+        return summary

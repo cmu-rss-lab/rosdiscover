@@ -187,3 +187,6 @@ class SymbolicProgram:
     def build(cls, functions: t.Iterable[SymbolicFunction]) -> SymbolicProgram:
         name_to_function = {function.name: function for function in functions}
         return SymbolicProgram(name_to_function)
+
+    def to_dict(self) -> t.Dict[str, t.Any]:
+        raise NotImplementedError
