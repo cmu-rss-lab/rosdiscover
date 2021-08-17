@@ -231,6 +231,25 @@ class SymbolicFunction:
         }
 
 
+@attr.s(auto_attribs=True, slots=True)
+class _SymbolicContext:
+    program: SymbolicProgram
+    function: SymbolicFunction
+    node: NodeContext
+
+    @classmethod
+    def create(
+        cls,
+        program: SymbolicProgram,
+        node: NodeContext,
+    ) -> _SymbolicContext:
+        return _SymbolicContext(
+            program=program,
+            function=program.main,
+            node=node,
+        )
+
+
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class SymbolicProgram:
     """Provides a symbolic summary for a given program.
@@ -264,9 +283,12 @@ class SymbolicProgram:
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {"program": {name: f.to_dict() for (name, f) in self.functions.items()}}
 
+    @property
     def main(self) -> SymbolicFunction:
         """Returns the main function (i.e., entrypoint) for this program."""
         return self.functions["main"]
 
-    def eval(self, context: NodeContext) -> None:
+    def eval(self, node: NodeContext) -> None:
+        context = _SymbolicContext.create(program, context)
+
         raise NotImplementedError
