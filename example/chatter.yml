@@ -3,4 +3,13 @@ sources:
   - /opt/ros/kinetic/setup.bash
   - /ros_ws/devel/setup.bash
 launches:
-  - /ros_ws/src/ros_tutorials/rospy_tutorials/001_talker_listener/talker_listener.launch
+  - /ros_ws/src/ros_tutorials/roscpp_tutorials/launch/talker_listener.launch
+node_sources:
+  - package: roscpp_tutorials
+    node: listener
+    sources:
+      - listener/listener.cpp
+  - package: roscpp_tutorials
+    node: talker
+    sources:
+      - talker/talker.cpp
