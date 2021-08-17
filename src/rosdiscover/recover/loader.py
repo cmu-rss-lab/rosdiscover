@@ -6,6 +6,7 @@ __all__ = ("SymbolicProgramLoader",)
 import typing as t
 
 from .call import (
+    DeleteParam,
     HasParam,
     Publisher,
     ReadParam,
@@ -73,20 +74,56 @@ class SymbolicProgramLoader:
         return loader(dict_)
 
     def _load_assignment(self, dict_: t.Mapping[str, t.Any]) -> SymbolicAssignment:
-        assert dict_["kind"] == "assignment"
         variable = dict_["variable"]
         value = self._load_value(dict_["value"])
         return SymbolicAssignment(variable, value)
 
     def _load_rosinit(self, dict_: t.Mapping[str, t.Any]) -> RosInit:
-        assert dict_["kind"] == "ros-init"
         name = self._load_string(dict_["name"])
         return RosInit(name)
 
     def _load_publishes_to(self, dict_: t.Mapping[str, t.Any]) -> Publisher:
-        assert dict_["kind"] == "publishes-to"
         topic = self._load_string(dict_["name"])
-        return Publisher(topic=topic, format_=dict_["format"])
+        return Publisher(topic, dict_["format"])
+
+    def _load_subscribes_to(self, dict_: t.Mapping[str, t.Any]) -> Subscriber:
+        topic = self._load_string(dict_["name"])
+        return Subscriber(topic, dict_["format"])
+
+    def _load_calls_service(self, dict_: t.Mapping[str, t.Any]) -> ServiceCaller:
+        service = self._load_string(dict_["name"])
+        return ServiceCaller(service, dict_["format"])
+
+    def _load_provides_service(self, dict_: t.Mapping[str, t.Any]) -> ServiceProvider:
+        service = self._load_string(dict_["name"])
+        return ServiceProvider(service, dict_["format"])
+
+    def _load_reads_param(self, dict_: t.Mapping[str, t.Any]) -> ReadParam:
+        param = self._load_string(dict_["name"])
+        value = self._load_value(dict_["value"])
+        return ReadParam(param, value)
+
+    def _load_reads_param_with_default(
+        self,
+        dict_: t.Mapping[str, t.Any],
+    ) -> ReadParamWithDefault:
+        param = self._load_string(dict_["name"])
+        value = self._load_value(dict_["value"])
+        default = self._load_value(dict_["default"])
+        return ReadParamWithDefault(param, value, default)
+
+    def _load_writes_to_param(self, dict_: t.Mapping[str, t.Any]) -> WriteParam:
+        param = self._load_string(dict_["name"])
+        value = self._load_value(dict_["value"])
+        return WriteParam(param, value)
+
+    def _load_deletes_param(self, dict_: t.Mapping[str, t.Any]) -> DeleteParam:
+        param = self._load_string(dict_["name"])
+        return DeleteParam(param)
+
+    def _load_checks_for_param(self, dict_: t.Mapping[str, t.Any]) -> HasParam:
+        param = self._load_string(dict_["name"])
+        return HasParam(param)
 
     def _load_statement(self, dict_: t.Mapping[str, t.Any]) -> SymbolicStatement:
         kind: str = dict_["kind"]
@@ -94,6 +131,22 @@ class SymbolicProgramLoader:
             return self._load_rosinit(dict_)
         elif kind == "publishes-to":
             return self._load_publishes_to(dict_)
+        elif kind == "subscribes-to":
+            return self._load_subscribes_to(dict_)
+        elif kind == "calls-service":
+            return self._load_calls_service(dict_)
+        elif kind == "provides-service":
+            return self._load_provides_service(dict_)
+        elif kind == "reads-param":
+            return self._load_reads_param(dict_)
+        elif kind == "reads-param-with-default":
+            return self._load_reads_param_with_default(dict_)
+        elif kind == "writes-to-param":
+            return self._load_writes_to_param(dict_)
+        elif kind == "deletes-param":
+            return self._load_deletes_param(dict_)
+        elif kind == "checks-for-param":
+            return self._load_checks_for_param(dict_)
         else:
             raise ValueError(f"unknown statement kind: {kind}")
 

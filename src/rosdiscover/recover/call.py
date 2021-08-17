@@ -1,4 +1,18 @@
 # -*- coding: utf-8 -*-
+__all__ = (
+    "DeleteParam",
+    "HasParam",
+    "Publisher",
+    "ReadParam",
+    "ReadParamWithDefault",
+    "RosInit",
+    "ServiceCaller",
+    "ServiceProvider",
+    "Subscriber",
+    "SymbolicRosApiCall",
+    "WriteParam",
+)
+
 import abc
 
 import attr
@@ -65,4 +79,9 @@ class ReadParamWithDefault(SymbolicRosApiCall, SymbolicValue):
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class HasParam(SymbolicRosApiCall, SymbolicBool):
+    param: SymbolicString
+
+
+@attr.s(frozen=True, auto_attribs=True, slots=True)
+class DeleteParam(SymbolicRosApiCall):
     param: SymbolicString
