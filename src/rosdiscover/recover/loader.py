@@ -6,6 +6,7 @@ __all__ = ("SymbolicProgramLoader",)
 import typing as t
 
 from .symbolic import (
+    StringLiteral,
     SymbolicCompound,
     SymbolicFunction,
     SymbolicParameter,
@@ -18,8 +19,19 @@ class SymbolicProgramLoader:
     def _load_parameter(self, dict_: t.Mapping[str, t.Any]) -> SymbolicParameter:
         raise NotImplementedError
 
+    def _load_string_literal(dict_: t.Mapping[str, t.Any]) -> StringLiteral:
+        assert dict_["kind"] == "string-literal"
+        return StringLiteral(dict_["literal"])
+
     def _load_value(self, dict_: t.Mapping[str, t.Any]) -> SymbolicValue:
-        raise NotImplementedError
+        kind: str = dict_["kind"]
+        try:
+            loader: t.Callable[[t.Mapping[str, t.Any]], SymbolicValue] = ({
+                "string-literal": self._load_string_literal,
+            })[kind]
+        except KeyError:
+            raise ValueError(f"failed to load value type: {kind}")
+        return loader(dict_)
 
     def _load_assignment(self, dict_: t.Mapping[str, t.Any]) -> SymbolicAssignment:
         assert dict_["kind"] == "assignment"
