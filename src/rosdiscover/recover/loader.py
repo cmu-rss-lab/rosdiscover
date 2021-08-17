@@ -34,7 +34,6 @@ from .symbolic import (
 
 class SymbolicProgramLoader:
     def _load_parameter(self, dict_: t.Mapping[str, t.Any]) -> SymbolicParameter:
-        assert dict_["kind"] == "parameter"
         index: int = dict_["index"]
         name: str = dict_["name"]
         type_ = SymbolicValueType.from_name(dict_["type"])
@@ -146,6 +145,8 @@ class SymbolicProgramLoader:
             return self._load_writes_to_param(dict_)
         elif kind == "deletes-param":
             return self._load_deletes_param(dict_)
+        elif kind == "compound":
+            return self._load_compound(dict_)
         else:
             raise ValueError(f"unknown statement kind: {kind}")
 
@@ -165,6 +166,7 @@ class SymbolicProgramLoader:
         )
 
     def load(self, dict_: t.Mapping[str, t.Any]) -> SymbolicProgram:
+        dict_ = dict_["program"]
         return SymbolicProgram.build(
             self._load_function(d) for d in dict_["functions"]
         )

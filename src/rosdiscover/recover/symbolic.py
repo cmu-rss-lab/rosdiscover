@@ -36,7 +36,7 @@ class SymbolicValueType(enum.Enum):
             "string": cls.STRING,
             "unsupported": cls.UNSUPPORTED,
         }
-        if name in name_to_type:
+        if name not in name_to_type:
             raise ValueError(f"unknown value type: {name}")
         return name_to_type[name]
 
@@ -83,7 +83,7 @@ class SymbolicAssignment(SymbolicStatement):
 
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
-class SymbolicCompound(t.Sequence[SymbolicStatement]):
+class SymbolicCompound(t.Sequence[SymbolicStatement], SymbolicStatement):
     """Represents a sequence of symbolic statements."""
     _statements: t.Sequence[SymbolicStatement]
 
