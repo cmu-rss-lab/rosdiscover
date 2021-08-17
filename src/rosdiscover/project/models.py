@@ -36,7 +36,7 @@ class ProjectModels:
 
     def __attrs_post_init__(self) -> None:
         # TODO allow model database path to be specified
-        recovered_model_database_path = os.path.abspath("~/.rosdiscover/recovered-models")
+        recovered_model_database_path = os.path.expanduser("~/.rosdiscover/recovered-models")
         self._recovered_models = RecoveredNodeModelDatabase(recovered_model_database_path)
         self._recovery_tool = NodeRecoveryTool(app=self.config.app)
 
