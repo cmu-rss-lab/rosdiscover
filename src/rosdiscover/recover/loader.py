@@ -132,7 +132,7 @@ class SymbolicProgramLoader:
         # FIXME add support for arguments both here and in C++ recovery code
         return SymbolicFunctionCall(
             callee=dict_["callee"],
-            arguments=[],
+            arguments={},
         )
 
     def _load_statement(self, dict_: t.Mapping[str, t.Any]) -> SymbolicStatement:
@@ -155,6 +155,8 @@ class SymbolicProgramLoader:
             return self._load_writes_to_param(dict_)
         elif kind == "deletes-param":
             return self._load_deletes_param(dict_)
+        elif kind == "checks-for-param":
+            return self._load_checks_for_param(dict_)
         elif kind == "compound":
             return self._load_compound(dict_)
         else:

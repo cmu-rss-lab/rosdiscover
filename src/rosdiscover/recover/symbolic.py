@@ -13,7 +13,6 @@ __all__ = (
     "SymbolicString",
 )
 
-from enum import auto
 import abc
 import enum
 import typing
@@ -23,10 +22,10 @@ import attr
 
 
 class SymbolicValueType(enum.Enum):
-    BOOL = auto()
-    INTEGER = auto()
-    STRING = auto()
-    UNSUPPORTED = auto()
+    BOOL = "bool"
+    INTEGER = "integer"
+    STRING = "string"
+    UNSUPPORTED = "unsupported"
 
     @classmethod
     def from_name(cls, name: str) -> SymbolicValueType:
@@ -43,6 +42,9 @@ class SymbolicValueType(enum.Enum):
 
 class SymbolicValue(abc.ABC):
     """Represents a symbolic value in a function summary."""
+    @abc.abstractmethod
+    def to_dict(self) -> t.Dict[str, t.Any]:
+        ...
 
 
 class SymbolicString(SymbolicValue, abc.ABC):
@@ -53,6 +55,12 @@ class SymbolicString(SymbolicValue, abc.ABC):
 class StringLiteral(SymbolicString):
     """Represents a literal string value."""
     value: str
+
+    def to_dict(self) -> t.Dict[str, t.Any]:
+        return {
+            "kind": "string-literal",
+            "literal": self.value,
+        }
 
 
 class SymbolicInteger(SymbolicValue, abc.ABC):
@@ -65,6 +73,9 @@ class SymbolicBool(SymbolicValue, abc.ABC):
 
 class SymbolicStatement(abc.ABC):
     """Represents a statement in a symbolic function summary."""
+    @abc.abstractmethod
+    def to_dict(self) -> t.Dict[str, t.Any]:
+        ...
 
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
@@ -80,6 +91,13 @@ class SymbolicAssignment(SymbolicStatement):
     """
     variable: str
     value: SymbolicValue
+
+    def to_dict(self) -> t.Dict[str, t.Any]:
+        return {
+            "kind": "assignment",
+            "variable": self.variable,
+            "value": self.value.to_dict(),
+        }
 
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
@@ -104,6 +122,12 @@ class SymbolicCompound(t.Sequence[SymbolicStatement], SymbolicStatement):
     ) -> t.Union[SymbolicStatement, t.Sequence[SymbolicStatement]]:
         return self._statements[at]
 
+    def to_dict(self) -> t.Dict[str, t.Any]:
+        return {
+            "kind": "compound",
+            "statements": [s.to_dict() for s in self._statements],
+        }
+
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class SymbolicFunctionCall(SymbolicStatement):
@@ -120,6 +144,15 @@ class SymbolicFunctionCall(SymbolicStatement):
     callee: str
     arguments: t.Mapping[str, SymbolicValue]
 
+    def to_dict(self) -> t.Dict[str, t.Any]:
+        return {
+            "kind": "call",
+            "callee": self.callee,
+            "arguments": {
+                name: arg.to_dict() for (name, arg) in self.arguments.items()
+            },
+        }
+
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class SymbolicVariableReference(SymbolicValue):
@@ -135,6 +168,13 @@ class SymbolicVariableReference(SymbolicValue):
     variable: str
     type_: SymbolicValueType
 
+    def to_dict(self) -> t.Dict[str, t.Any]:
+        return {
+            "kind": "variable-reference",
+            "variable": self.variable,
+            "type": self.type_,
+        }
+
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class SymbolicParameter:
@@ -142,6 +182,13 @@ class SymbolicParameter:
     index: int
     name: str
     type_: SymbolicValueType
+
+    def to_dict(self) -> t.Dict[str, t.Any]:
+        return {
+            "index": self.index,
+            "name": self.name,
+            "type": self.type_.value,
+        }
 
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
@@ -171,6 +218,13 @@ class SymbolicFunction:
         name_to_parameter = {param.name: param for param in parameters}
         return SymbolicFunction(name, name_to_parameter, body)
 
+    def to_dict(self) -> t.Dict[str, t.Any]:
+        return {
+            "name": self.name,
+            "parameters": [p.to_dict() for p in self.parameters.values()],
+            "body": self.body.to_dict(),
+        }
+
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class SymbolicProgram:
@@ -189,4 +243,4 @@ class SymbolicProgram:
         return SymbolicProgram(name_to_function)
 
     def to_dict(self) -> t.Dict[str, t.Any]:
-        raise NotImplementedError
+        return {"program": {name: f for (name, f) in self.functions.items()}}
