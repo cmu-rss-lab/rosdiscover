@@ -27,6 +27,9 @@ class SymbolicValueType(enum.Enum):
     STRING = "string"
     UNSUPPORTED = "unsupported"
 
+    def __str__(self) -> str:
+        return self.value
+
     @classmethod
     def from_name(cls, name: str) -> SymbolicValueType:
         name_to_type = {
@@ -172,7 +175,7 @@ class SymbolicVariableReference(SymbolicValue):
         return {
             "kind": "variable-reference",
             "variable": self.variable,
-            "type": self.type_,
+            "type": str(self.type_),
         }
 
 
@@ -187,7 +190,7 @@ class SymbolicParameter:
         return {
             "index": self.index,
             "name": self.name,
-            "type": self.type_.value,
+            "type": str(self.type_),
         }
 
 
@@ -243,4 +246,4 @@ class SymbolicProgram:
         return SymbolicProgram(name_to_function)
 
     def to_dict(self) -> t.Dict[str, t.Any]:
-        return {"program": {name: f for (name, f) in self.functions.items()}}
+        return {"program": {name: f.to_dict() for (name, f) in self.functions.items()}}

@@ -37,7 +37,7 @@ class RosInit(SymbolicRosApiCall):
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
             "kind": "ros-init",
-            "name": self.name,
+            "name": self.name.to_dict(),
         }
 
 
@@ -49,7 +49,7 @@ class Publisher(SymbolicRosApiCall):
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
             "kind": "publishes-to",
-            "name": self.topic,
+            "name": self.topic.to_dict(),
             "format": self.format_,
         }
 
@@ -62,7 +62,7 @@ class Subscriber(SymbolicRosApiCall):
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
             "kind": "subscribes-to",
-            "name": self.topic,
+            "name": self.topic.to_dict(),
             "format": self.format_,
         }
 
@@ -75,7 +75,7 @@ class ServiceProvider(SymbolicRosApiCall):
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
             "kind": "provides-service",
-            "name": self.service,
+            "name": self.service.to_dict(),
             "format": self.format_,
         }
 
@@ -88,7 +88,7 @@ class ServiceCaller(SymbolicRosApiCall):
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
             "kind": "calls-service",
-            "name": self.service,
+            "name": self.service.to_dict(),
             "format": self.format_,
         }
 

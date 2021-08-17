@@ -4,6 +4,7 @@ __all__ = ("RecoveredNodeModel",)
 import json
 import typing as t
 
+from loguru import logger
 import attr
 
 from .loader import SymbolicProgramLoader
@@ -43,6 +44,7 @@ class RecoveredNodeModel(NodeModel):
 
     def save(self, filename: str) -> None:
         dict_ = self.to_dict()
+        logger.debug(f"converted model to JSON-ready dict: {dict_}")
         with open(filename, "w") as f:
             json.dump(dict_, f)
 
