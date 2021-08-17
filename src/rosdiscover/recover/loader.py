@@ -19,7 +19,15 @@ from .symbolic import (
 
 class SymbolicProgramLoader:
     def _load_parameter(self, dict_: t.Mapping[str, t.Any]) -> SymbolicParameter:
-        raise NotImplementedError
+        assert dict_["kind"] == "parameter"
+        index: int = dict_["index"]
+        name: str = dict_["name"]
+        type_ = SymbolicValueType.from_name(dict_["type"])
+        return SymbolicParameter(
+            index=index,
+            name=name,
+            type_=type_,
+        )
 
     def _load_string_literal(dict_: t.Mapping[str, t.Any]) -> StringLiteral:
         assert dict_["kind"] == "string-literal"
