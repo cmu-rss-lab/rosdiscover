@@ -85,4 +85,4 @@ class RecoveredNodeModel(NodeModel):
         )
 
     def eval(self, context: NodeContext) -> None:
-        raise NotImplementedError
+        return self.program.eval(context)
