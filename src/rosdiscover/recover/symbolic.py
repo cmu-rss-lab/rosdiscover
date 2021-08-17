@@ -25,9 +25,23 @@ from ..interpreter import NodeContext
 
 @attr.s(auto_attribs=True, slots=True)
 class _SymbolicContext:
+    """Used to maintain program state during interpretation.
+
+    Attributes
+    ----------
+    program: SymbolicProgram
+        The program that is being interpreted.
+    function: SymbolicFunction
+        The current function that is being interpreted.
+    node: NodeContext
+        The node context that the symbolic program is being used to construct.
+    _vars: t.Dict[str, t.Any]
+        A mapping from the names of in-scope variables to their values.
+    """
     program: SymbolicProgram
     function: SymbolicFunction
     node: NodeContext
+    _vars: t.Dict[str, t.Any] = attr.ib(factory=dict)
 
     @classmethod
     def create(
@@ -44,6 +58,30 @@ class _SymbolicContext:
     def for_function_call(self, function: SymbolicFunction) -> _SymbolicContext:
         """Creates a new symbolic context that represents the scope of a function call."""
         return _SymbolicContext(self.program, function, self.node)
+
+    def load(self, variable: str) -> t.Any:
+        """Loads the value of a given variable.
+
+        Raises
+        ------
+        ValueError
+            If no variable exists with the given name.
+        """
+        return self._vars[variable]
+
+    def store(self, variable: str, value: t.Any) -> None:
+        """Stores the value of a given variable.
+
+        Raises
+        ------
+        ValueError
+            If a definition for the given variable already exists as that would violate
+            single static assignment (SSA) rules.
+        """
+        if variable in self._vars:
+            raise ValueError(f"variable already defined in this scope: {variable}")
+
+        self._vars[variable] = value
 
 
 class SymbolicValueType(enum.Enum):
@@ -72,6 +110,10 @@ class SymbolicValue(abc.ABC):
     """Represents a symbolic value in a function summary."""
     @abc.abstractmethod
     def to_dict(self) -> t.Dict[str, t.Any]:
+        ...
+
+    @abc.abstractmethod
+    def eval(self, context: _SymbolicContext) -> t.Any:
         ...
 
 
@@ -131,6 +173,10 @@ class SymbolicAssignment(SymbolicStatement):
             "value": self.value.to_dict(),
         }
 
+    def eval(self, context: _SymbolicContext) -> None:
+        concrete_value = self.value.eval(context)
+        context.store(self.variable, concrete_value)
+
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class SymbolicCompound(t.Sequence[SymbolicStatement], SymbolicStatement):
@@ -159,6 +205,10 @@ class SymbolicCompound(t.Sequence[SymbolicStatement], SymbolicStatement):
             "kind": "compound",
             "statements": [s.to_dict() for s in self._statements],
         }
+
+    def eval(self, context: _SymbolicContext) -> None:
+        for statement in self._statements:
+            statement.eval(context)
 
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
