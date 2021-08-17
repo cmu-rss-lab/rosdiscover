@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
 import abc
-import typing as t
 
 import attr
 
-from .symbolic import SymbolicStatement, SymbolicString
+from .symbolic import (
+    SymbolicBool,
+    SymbolicStatement,
+    SymbolicString,
+    SymbolicValue,
+)
 
 
 class SymbolicRosApiCall(abc.ABC, SymbolicStatement):
@@ -47,18 +51,18 @@ class WriteParam(SymbolicRosApiCall):
 
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
-class ReadParam(SymbolicRosApiCall):
+class ReadParam(SymbolicRosApiCall, SymbolicValue):
     param: SymbolicString
     value: SymbolicValue
 
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
-class ReadParamWithDefault(SymbolicRosApiCall):
+class ReadParamWithDefault(SymbolicRosApiCall, SymbolicValue):
     param: SymbolicString
     value: SymbolicValue
     default: SymbolicValue
 
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
-class HasParam(SymbolicRosApiCall):
+class HasParam(SymbolicRosApiCall, SymbolicBool):
     param: SymbolicString
