@@ -24,7 +24,7 @@ from ..interpreter import NodeContext
 
 
 @attr.s(auto_attribs=True, slots=True)
-class _SymbolicContext:
+class SymbolicContext:
     """Used to maintain program state during interpretation.
 
     Attributes
@@ -48,16 +48,16 @@ class _SymbolicContext:
         cls,
         program: SymbolicProgram,
         node: NodeContext,
-    ) -> _SymbolicContext:
-        return _SymbolicContext(
+    ) -> SymbolicContext:
+        return SymbolicContext(
             program=program,
             function=program.main,
             node=node,
         )
 
-    def for_function_call(self, function: SymbolicFunction) -> _SymbolicContext:
+    def for_function_call(self, function: SymbolicFunction) -> SymbolicContext:
         """Creates a new symbolic context that represents the scope of a function call."""
-        return _SymbolicContext(self.program, function, self.node)
+        return SymbolicContext(self.program, function, self.node)
 
     def load(self, variable: str) -> t.Any:
         """Loads the value of a given variable.
@@ -113,7 +113,7 @@ class SymbolicValue(abc.ABC):
         ...
 
     @abc.abstractmethod
-    def eval(self, context: _SymbolicContext) -> t.Any:
+    def eval(self, context: SymbolicContext) -> t.Any:
         ...
 
 
@@ -132,6 +132,9 @@ class StringLiteral(SymbolicString):
             "literal": self.value,
         }
 
+    def eval(self, context: SymbolicContext) -> t.Any:
+        return self.value
+
 
 class SymbolicInteger(SymbolicValue, abc.ABC):
     """Represents a symbolic integer value."""
@@ -148,7 +151,7 @@ class SymbolicStatement(abc.ABC):
         ...
 
     @abc.abstractmethod
-    def eval(self, context: _SymbolicContext) -> None:
+    def eval(self, context: SymbolicContext) -> None:
         ...
 
 
@@ -173,7 +176,7 @@ class SymbolicAssignment(SymbolicStatement):
             "value": self.value.to_dict(),
         }
 
-    def eval(self, context: _SymbolicContext) -> None:
+    def eval(self, context: SymbolicContext) -> None:
         concrete_value = self.value.eval(context)
         context.store(self.variable, concrete_value)
 
@@ -206,7 +209,7 @@ class SymbolicCompound(t.Sequence[SymbolicStatement], SymbolicStatement):
             "statements": [s.to_dict() for s in self._statements],
         }
 
-    def eval(self, context: _SymbolicContext) -> None:
+    def eval(self, context: SymbolicContext) -> None:
         for statement in self._statements:
             statement.eval(context)
 
@@ -256,6 +259,9 @@ class SymbolicVariableReference(SymbolicValue):
             "variable": self.variable,
             "type": str(self.type_),
         }
+
+    def eval(self, context: SymbolicContext) -> t.Any:
+        return context.load(self.variable)
 
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
@@ -347,5 +353,5 @@ class SymbolicProgram:
         return self.functions["main"]
 
     def eval(self, node: NodeContext) -> None:
-        context = _SymbolicContext.create(self, node)
+        context = SymbolicContext.create(self, node)
         self.main.body.eval(context)

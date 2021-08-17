@@ -184,6 +184,14 @@ class NodeContext:
                      f"parameter [{param}]")
         param = self.resolve(param)
         self._writes.add(param)
+        self._params[param] = val
+
+    # FIXME we _may_ want to record this interaction in our summary
+    def has_param(self, param: str) -> bool:
+        """Determines whether a given parameter has been defined."""
+        logger.debug(f"node [{self.name}] checks for existence of parameter [{param}]")
+        param = self.resolve(param)
+        return param in self._params
 
     def read_file(self, fn: str) -> str:
         """Reads the contents of a text file."""
