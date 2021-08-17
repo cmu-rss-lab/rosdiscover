@@ -3,8 +3,9 @@ __all__ = ('NodeRecoveryTool',)
 
 import contextlib
 import enum
-import shlex
+import json
 import os
+import shlex
 import types
 import typing as t
 
@@ -12,6 +13,7 @@ from loguru import logger
 import attr
 import roswire
 
+from .loader import SymbolicProgramLoader
 from .model import RecoveredNodeModel
 from ..config import Config
 
@@ -286,7 +288,7 @@ class NodeRecoveryTool:
         self,
         compile_commands_path: str,
         source_file_abs_paths: t.Collection[str],
-    ) -> None:
+    ) -> SymbolicProgram:
         """Invokes the C++ recovery binary to recover the dynamic architecture of a given node.
 
         Parameters
@@ -296,6 +298,11 @@ class NodeRecoveryTool:
         source_file_abs_paths: str
             A list of the C++ translation unit source files (i.e., .cpp files)
             for the given node, provided as absolute paths within the container
+
+        Returns
+        -------
+        SymbolicProgram
+            A description of the recovered program.
         """
         if not self._app_instance:
             raise ValueError("tool has not been started")
@@ -322,6 +329,9 @@ class NodeRecoveryTool:
         for source_file in source_file_abs_paths:
             self._prepare_source_file(source_file)
 
+        # create a temporary file inside the container to hold the JSON-based node summary
+        json_model_filename = files.mktemp('.json')
+
         env = {
             "PATH": "/opt/rosdiscover/bin:${PATH:-}",
             "LIBRARY_PATH": "/opt/rosdiscover/lib:${LIBRARY_PATH:-}",
@@ -332,6 +342,8 @@ class NodeRecoveryTool:
             "rosdiscover-cxx-extract",
             "-p",
             shlex.quote(os.path.dirname(compile_commands_path)),
+            "-output-filename",
+            json_model_filename,
             ' '.join(shlex.quote(p) for p in source_file_abs_paths),
         ]
         args_s = ' '.join(args)
@@ -340,3 +352,9 @@ class NodeRecoveryTool:
         assert isinstance(outcome.output, str)
         logger.debug(f"static recovery output: {outcome.output}")
         logger.debug("finished static recovery process")
+
+        # load the symbolic summary from the temporary file
+        model_loader = SymbolicProgramLoader()
+        json_model_file_contents = files.read(json_model_filename, binary=False)
+        json_model = json.loads(json_model_file_contents)
+        return model_loader.load(json_model)
