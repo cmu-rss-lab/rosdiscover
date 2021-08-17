@@ -160,8 +160,8 @@ class ReadParamWithDefault(SymbolicRosApiCall, SymbolicValue):
 
     def eval(self, context: SymbolicContext) -> None:
         param = self.param.eval(context)
-        value = self.value.eval(context)
-        context.node.write(param, value)
+        default = self.default.eval(context)
+        context.node.read(param, default)
 
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
@@ -174,6 +174,10 @@ class HasParam(SymbolicRosApiCall, SymbolicBool):
             "param": self.param.to_dict(),
         }
 
+    def eval(self, context: SymbolicContext) -> None:
+        param = self.param.eval(context)
+        context.node.has_param(param)
+
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class DeleteParam(SymbolicRosApiCall):
@@ -184,3 +188,7 @@ class DeleteParam(SymbolicRosApiCall):
             "kind": "deletes-param",
             "param": self.param.to_dict(),
         }
+
+    def eval(self, context: SymbolicContext) -> None:
+        param = self.param.eval(context)
+        context.node.delete_param(param)

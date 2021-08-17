@@ -193,6 +193,9 @@ class NodeContext:
         param = self.resolve(param)
         return param in self._params
 
+    def delete_param(self, param: str) -> None:
+        raise NotImplementedError("parameter deletion is not implemented")
+
     def read_file(self, fn: str) -> str:
         """Reads the contents of a text file."""
         return self._files.read(fn)

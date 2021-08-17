@@ -238,6 +238,11 @@ class SymbolicFunctionCall(SymbolicStatement):
             },
         }
 
+    def eval(self, context: SymbolicContext) -> None:
+        function = context.program.functions[self.callee]
+        context = context.for_function_call(function)
+        function.body.eval(context)
+
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class SymbolicVariableReference(SymbolicValue):
