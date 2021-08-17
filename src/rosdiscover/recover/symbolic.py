@@ -44,7 +44,7 @@ class SymbolicValue(abc.ABC):
     """Represents a symbolic value in a function summary."""
 
 
-class SymbolicString(abc.ABC, SymbolicValue):
+class SymbolicString(SymbolicValue, abc.ABC):
     """Represents a symbolic string value."""
 
 
@@ -54,11 +54,11 @@ class StringLiteral(SymbolicString):
     value: str
 
 
-class SymbolicInteger(abc.ABC, SymbolicValue):
+class SymbolicInteger(SymbolicValue, abc.ABC):
     """Represents a symbolic integer value."""
 
 
-class SymbolicBool(abc.ABC, SymbolicValue):
+class SymbolicBool(SymbolicValue, abc.ABC):
     """Represents a symbolic boolean value."""
 
 
@@ -89,7 +89,16 @@ class SymbolicCompound(t.Sequence[SymbolicStatement]):
     def __len__(self) -> int:
         return len(self._statements)
 
-    def __getitem__(self, at: t.Union[int, slice]) -> SymbolicStatement:
+    @t.overload
+    def __getitem__(self, at: int) -> SymbolicStatement: ...
+
+    @t.overload
+    def __getitem__(self, at: slice) -> t.Sequence[SymbolicStatement]: ...
+
+    def __getitem__(
+        self,
+        at: t.Union[int, slice],
+    ) -> t.Union[SymbolicStatement, t.Sequence[SymbolicStatement]]:
         return self._statements[at]
 
 
