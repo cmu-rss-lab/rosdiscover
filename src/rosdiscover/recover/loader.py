@@ -90,16 +90,12 @@ class SymbolicProgramLoader:
 
     def _load_statement(self, dict_: t.Mapping[str, t.Any]) -> SymbolicStatement:
         kind: str = dict_["kind"]
-
-        try:
-            loader: t.Callable[[t.Mapping[str, t.Any]], SymbolicValue] = ({
-                "ros-init": self._load_rosinit,
-                "publishes-to": self._load_publishes_to,
-            })[kind]
-        except KeyError:
-            raise ValueError(f"failed to load statement: {dict_}")
-
-        return loader(dict_)
+        if kind == "ros-init":
+            return self._load_rosinit(dict_)
+        elif kind == "publishes-to":
+            return self._load_publishes_to(dict_)
+        else:
+            raise ValueError(f"unknown statement kind: {kind}")
 
     def _load_compound(self, dict_: t.Mapping[str, t.Any]) -> SymbolicCompound:
         assert dict_["kind"] == "compound"
