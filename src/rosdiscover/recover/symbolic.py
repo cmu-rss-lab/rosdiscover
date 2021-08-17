@@ -319,7 +319,7 @@ class SymbolicFunction:
         }
 
 
-@attr.s(frozen=True, auto_attribs=True, slots=True)
+@attr.s(frozen=True, slots=True)
 class SymbolicProgram:
     """Provides a symbolic summary for a given program.
 
@@ -333,7 +333,7 @@ class SymbolicProgram:
     ValueError
         If this program does not provide a "main" function.
     """
-    functions: t.Mapping[str, SymbolicFunction]
+    functions: t.Mapping[str, SymbolicFunction] = attr.ib()
 
     @functions.validator
     def must_have_main_function(
