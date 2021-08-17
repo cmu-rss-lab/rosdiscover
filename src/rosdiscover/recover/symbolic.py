@@ -297,5 +297,5 @@ class SymbolicProgram:
         return self.functions["main"]
 
     def eval(self, node: NodeContext) -> None:
-        context = _SymbolicContext.create(program, context)
+        context = _SymbolicContext.create(self, node)
         self.main.body.eval(context)
