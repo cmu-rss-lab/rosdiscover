@@ -44,7 +44,7 @@ class Interpreter:
         self._app = app
         self.params = ParameterServer()
         self.nodes: Dict[str, NodeContext] = {}
-        self.models = ProjectModels(config, allow_recovery=False)
+        self.models = ProjectModels(config, allow_recovery=True)
 
     def open(self) -> None:
         self.models.open()
