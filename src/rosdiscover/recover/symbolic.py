@@ -23,6 +23,29 @@ import attr
 from ..interpreter import NodeContext
 
 
+@attr.s(auto_attribs=True, slots=True)
+class _SymbolicContext:
+    program: SymbolicProgram
+    function: SymbolicFunction
+    node: NodeContext
+
+    @classmethod
+    def create(
+        cls,
+        program: SymbolicProgram,
+        node: NodeContext,
+    ) -> _SymbolicContext:
+        return _SymbolicContext(
+            program=program,
+            function=program.main,
+            node=node,
+        )
+
+    def for_function_call(self, function: SymbolicFunction) -> _SymbolicContext:
+        """Creates a new symbolic context that represents the scope of a function call."""
+        return _SymbolicContext(self.program, function, self.node)
+
+
 class SymbolicValueType(enum.Enum):
     BOOL = "bool"
     INTEGER = "integer"
@@ -233,29 +256,6 @@ class SymbolicFunction:
             "parameters": [p.to_dict() for p in self.parameters.values()],
             "body": self.body.to_dict(),
         }
-
-
-@attr.s(auto_attribs=True, slots=True)
-class _SymbolicContext:
-    program: SymbolicProgram
-    function: SymbolicFunction
-    node: NodeContext
-
-    @classmethod
-    def create(
-        cls,
-        program: SymbolicProgram,
-        node: NodeContext,
-    ) -> _SymbolicContext:
-        return _SymbolicContext(
-            program=program,
-            function=program.main,
-            node=node,
-        )
-
-    def for_function_call(self, function: SymbolicFunction) -> _SymbolicContext:
-        """Creates a new symbolic context that represents the scope of a function call."""
-        return _SymbolicContext(self.program, function, self.node)
 
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
