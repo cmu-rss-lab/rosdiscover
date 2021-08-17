@@ -22,6 +22,7 @@ from .symbolic import (
     SymbolicAssignment,
     SymbolicCompound,
     SymbolicFunction,
+    SymbolicFunctionCall,
     SymbolicParameter,
     SymbolicProgram,
     SymbolicStatement,
@@ -127,10 +128,19 @@ class SymbolicProgramLoader:
         param = self._load_string(dict_["name"])
         return HasParam(param)
 
+    def _load_function_call(self, dict_: t.Mapping[str, t.Any]) -> SymbolicFunctionCall:
+        # FIXME add support for arguments both here and in C++ recovery code
+        return SymbolicFunctionCall(
+            callee=dict_["callee"],
+            arguments=[],
+        )
+
     def _load_statement(self, dict_: t.Mapping[str, t.Any]) -> SymbolicStatement:
         kind: str = dict_["kind"]
         if kind == "assignment":
             return self._load_assignment(dict_)
+        elif kind == "call":
+            return self._load_function_call(dict_)
         elif kind == "ros-init":
             return self._load_rosinit(dict_)
         elif kind == "publishes-to":
