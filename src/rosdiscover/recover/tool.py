@@ -15,6 +15,7 @@ import roswire
 
 from .loader import SymbolicProgramLoader
 from .model import RecoveredNodeModel
+from .symbolic import SymbolicProgram
 from ..config import Config
 
 
