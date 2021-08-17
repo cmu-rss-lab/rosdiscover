@@ -82,6 +82,10 @@ class SymbolicStatement(abc.ABC):
     def to_dict(self) -> t.Dict[str, t.Any]:
         ...
 
+    @abc.abstractmethod
+    def eval(self, context: _SymbolicContext) -> None:
+        ...
+
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class SymbolicAssignment(SymbolicStatement):
@@ -294,6 +298,4 @@ class SymbolicProgram:
 
     def eval(self, node: NodeContext) -> None:
         context = _SymbolicContext.create(program, context)
-
-
-        raise NotImplementedError
+        self.main.body.eval(context)
