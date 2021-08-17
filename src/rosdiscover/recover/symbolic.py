@@ -350,7 +350,11 @@ class SymbolicProgram:
         return SymbolicProgram(name_to_function)
 
     def to_dict(self) -> t.Dict[str, t.Any]:
-        return {"program": {name: f.to_dict() for (name, f) in self.functions.items()}}
+        return {
+            "program": {
+                "functions": {name: f.to_dict() for (name, f) in self.functions.items()},
+            },
+        }
 
     @property
     def main(self) -> SymbolicFunction:
