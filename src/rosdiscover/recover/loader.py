@@ -15,7 +15,6 @@ from .call import (
     ServiceCaller,
     ServiceProvider,
     Subscriber,
-    SymbolicRosApiCall,
     WriteParam,
 )
 from .symbolic import (
@@ -64,14 +63,18 @@ class SymbolicProgramLoader:
 
     def _load_value(self, dict_: t.Mapping[str, t.Any]) -> SymbolicValue:
         kind: str = dict_["kind"]
-        try:
-            loader: t.Callable[[t.Mapping[str, t.Any]], SymbolicValue] = ({
-                "string-literal": self._load_string_literal,
-                "variable-reference": self._load_variable_reference,
-            })[kind]
-        except KeyError:
+        if kind == "string-literal":
+            return self._load_string_literal(dict_)
+        elif kind == "variable-reference":
+            return self._load_variable_reference(dict_)
+        elif kind == "reads-param":
+            return self._load_reads_param(dict_)
+        elif kind == "reads-param-with-default":
+            return self._load_reads_param_with_default(dict_)
+        elif kind == "checks-for-param":
+            return self._load_checks_for_param(dict_)
+        else:
             raise ValueError(f"failed to load value type: {kind}")
-        return loader(dict_)
 
     def _load_assignment(self, dict_: t.Mapping[str, t.Any]) -> SymbolicAssignment:
         variable = dict_["variable"]
@@ -127,7 +130,9 @@ class SymbolicProgramLoader:
 
     def _load_statement(self, dict_: t.Mapping[str, t.Any]) -> SymbolicStatement:
         kind: str = dict_["kind"]
-        if kind == "ros-init":
+        if kind == "assignment":
+            return self._load_assignment(dict_)
+        elif kind == "ros-init":
             return self._load_rosinit(dict_)
         elif kind == "publishes-to":
             return self._load_publishes_to(dict_)
@@ -137,16 +142,10 @@ class SymbolicProgramLoader:
             return self._load_calls_service(dict_)
         elif kind == "provides-service":
             return self._load_provides_service(dict_)
-        elif kind == "reads-param":
-            return self._load_reads_param(dict_)
-        elif kind == "reads-param-with-default":
-            return self._load_reads_param_with_default(dict_)
         elif kind == "writes-to-param":
             return self._load_writes_to_param(dict_)
         elif kind == "deletes-param":
             return self._load_deletes_param(dict_)
-        elif kind == "checks-for-param":
-            return self._load_checks_for_param(dict_)
         else:
             raise ValueError(f"unknown statement kind: {kind}")
 

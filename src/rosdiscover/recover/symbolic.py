@@ -16,6 +16,7 @@ __all__ = (
 from enum import auto
 import abc
 import enum
+import typing
 import typing as t
 
 import attr
@@ -67,7 +68,7 @@ class SymbolicStatement(abc.ABC):
 
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
-class SymbolicAssignment:
+class SymbolicAssignment(SymbolicStatement):
     """Represents an assignment to a symbolic variable.
 
     Attributes
@@ -89,11 +90,13 @@ class SymbolicCompound(t.Sequence[SymbolicStatement]):
     def __len__(self) -> int:
         return len(self._statements)
 
-    @t.overload
-    def __getitem__(self, at: int) -> SymbolicStatement: ...
+    @typing.overload
+    def __getitem__(self, at: int) -> SymbolicStatement:
+        ...
 
-    @t.overload
-    def __getitem__(self, at: slice) -> t.Sequence[SymbolicStatement]: ...
+    @typing.overload
+    def __getitem__(self, at: slice) -> t.Sequence[SymbolicStatement]:
+        ...
 
     def __getitem__(
         self,
