@@ -4,8 +4,11 @@ __all__ = ("RecoveredNodeModel",)
 import json
 import typing as t
 
+from loguru import logger
 import attr
 
+from .loader import SymbolicProgramLoader
+from .symbolic import SymbolicProgram
 from ..interpreter import NodeModel, NodeContext
 
 
@@ -29,15 +32,19 @@ class RecoveredNodeModel(NodeModel):
         directory,
     node_name: str
         The name of the node.
+    program: SymbolicProgram
+        A parameterized, executable description of the node's architectural effects.
     """
     image_sha256: str
     package_name: str
     package_abs_path: str
     source_paths: t.Collection[str]
     node_name: str
+    program: SymbolicProgram
 
     def save(self, filename: str) -> None:
         dict_ = self.to_dict()
+        logger.debug(f"converted model to JSON-ready dict: {dict_}")
         with open(filename, "w") as f:
             json.dump(dict_, f)
 
@@ -52,6 +59,7 @@ class RecoveredNodeModel(NodeModel):
                 "path": self.package_abs_path,
             },
             "sources": list(self.source_paths),
+            "program": self.program.to_dict(),
         }
 
     @classmethod
@@ -66,12 +74,14 @@ class RecoveredNodeModel(NodeModel):
         package_name = dict_["package"]["name"]
         package_abs_path = dict_["package"]["path"]
         source_paths = dict_["sources"]
+        program = SymbolicProgramLoader().load(dict_["program"])
         return RecoveredNodeModel(
             image_sha256=image_sha256,
             node_name=node_name,
             package_name=package_name,
             package_abs_path=package_abs_path,
             source_paths=source_paths,
+            program=program,
         )
 
     def eval(self, context: NodeContext) -> None:
