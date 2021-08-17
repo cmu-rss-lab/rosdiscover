@@ -249,6 +249,10 @@ class _SymbolicContext:
             node=node,
         )
 
+    def for_function_call(self, function: SymbolicFunction) -> _SymbolicContext:
+        """Creates a new symbolic context that represents the scope of a function call."""
+        return _SymbolicContext(self.program, function, self.node)
+
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class SymbolicProgram:
@@ -290,5 +294,6 @@ class SymbolicProgram:
 
     def eval(self, node: NodeContext) -> None:
         context = _SymbolicContext.create(program, context)
+
 
         raise NotImplementedError
