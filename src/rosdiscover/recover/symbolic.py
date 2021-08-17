@@ -20,6 +20,8 @@ import typing as t
 
 import attr
 
+from ..interpreter import NodeContext
+
 
 class SymbolicValueType(enum.Enum):
     BOOL = "bool"
@@ -237,8 +239,22 @@ class SymbolicProgram:
     ----------
     functions: t.Mapping[str, SymbolicFunction]
         The symbolic functions within this program, indexed by name.
+
+    Raises
+    ------
+    ValueError
+        If this program does not provide a "main" function.
     """
     functions: t.Mapping[str, SymbolicFunction]
+
+    @functions.validator
+    def must_have_main_function(
+        self,
+        attribute: str,
+        value: t.Any,
+    ) -> None:
+        if "main" not in self.functions:
+            raise ValueError("symbolic programs must provide a 'main' function")
 
     @classmethod
     def build(cls, functions: t.Iterable[SymbolicFunction]) -> SymbolicProgram:
@@ -247,3 +263,10 @@ class SymbolicProgram:
 
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {"program": {name: f.to_dict() for (name, f) in self.functions.items()}}
+
+    def main(self) -> SymbolicFunction:
+        """Returns the main function (i.e., entrypoint) for this program."""
+        return self.functions["main"]
+
+    def eval(self, context: NodeContext) -> None:
+        raise NotImplementedError
