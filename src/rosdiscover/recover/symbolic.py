@@ -11,6 +11,7 @@ __all__ = (
     "SymbolicProgram",
     "SymbolicStatement",
     "SymbolicString",
+    "SymbolicUnknown",
 )
 
 import abc
@@ -142,6 +143,21 @@ class SymbolicInteger(SymbolicValue, abc.ABC):
 
 class SymbolicBool(SymbolicValue, abc.ABC):
     """Represents a symbolic boolean value."""
+
+
+class SymbolicUnknown(
+    SymbolicInteger,
+    SymbolicBool,
+    SymbolicString,
+    SymbolicValue,
+):
+    """Represents an unknown symbolic value."""
+    # TODO: this will cause issues with saving summaries to JSON/YAML
+    def eval(self, context: SymbolicContext) -> t.Any:
+        return self
+
+    def to_dict(self) -> t.Dict[str, t.Any]:
+        return {"kind": "unknown"}
 
 
 class SymbolicStatement(abc.ABC):

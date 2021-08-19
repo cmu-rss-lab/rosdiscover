@@ -27,6 +27,7 @@ from .symbolic import (
     SymbolicProgram,
     SymbolicStatement,
     SymbolicString,
+    SymbolicUnknown,
     SymbolicValue,
     SymbolicValueType,
     SymbolicVariableReference,
@@ -73,6 +74,8 @@ class SymbolicProgramLoader:
             return self._load_reads_param_with_default(dict_)
         elif kind == "checks-for-param":
             return self._load_checks_for_param(dict_)
+        elif kind == "unknown":
+            return SymbolicUnknown()
         else:
             raise ValueError(f"failed to load value type: {kind}")
 
