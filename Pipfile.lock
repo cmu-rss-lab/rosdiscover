@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "b3a5b580cd250806bd1c743345b6805a8de143524dcb89fe876c4e40595c0f4f"
+            "sha256": "ab0d73c2b78be1f60334398f61f4ba54e008f24279daf0fd97bd50f476d47be1"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -546,7 +546,7 @@
         "roswire": {
             "editable": true,
             "git": "https://github.com/rosqual/roswire",
-            "ref": "51ed7b3570b77772d44edb908d90d7013abe399e"
+            "ref": "334d390e0c9396000a896b3965abc61ded356544"
         },
         "ruamel.yaml": {
             "hashes": [
