@@ -1,0 +1,22 @@
+image: autoware-static_2
+sources:
+  - /opt/ros/melodic/setup.bash
+  - /home/autoware/Autoware/install/setup.bash
+launches:
+  - /home/autoware/Autoware/src/autoware/documentation/autoware_quickstart_examples/launch/rosbag_demo/my_localization.launch
+  - /home/autoware/Autoware/src/autoware/documentation/autoware_quickstart_examples/launch/rosbag_demo/my_motion_planning.launch
+  - /home/autoware/Autoware/src/autoware/documentation/autoware_quickstart_examples/launch/rosbag_demo/default.rviz
+  - /home/autoware/Autoware/src/autoware/documentation/autoware_quickstart_examples/launch/rosbag_demo/my_map.launch
+  - /home/autoware/Autoware/src/autoware/documentation/autoware_quickstart_examples/launch/rosbag_demo/my_sensing.launch
+  - /home/autoware/Autoware/src/autoware/documentation/autoware_quickstart_examples/launch/rosbag_demo/my_detection.launch
+  - /home/autoware/Autoware/src/autoware/documentation/autoware_quickstart_examples/launch/rosbag_demo/my_mission_planning.launch
+# TODO we need to fill these in
+node_sources:
+  - package: roscpp_tutorials
+    node: listener
+    sources:
+      - listener/listener.cpp
+  - package: roscpp_tutorials
+    node: talker
+    sources:
+      - talker/talker.cpp
