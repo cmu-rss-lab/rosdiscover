@@ -5,3 +5,15 @@ sources:
   - /ros_ws/src/autorally/autorally_util/setupEnvLocal.sh
 launches:
   - /ros_ws/src/autorally/autorally_gazebo/launch/autoRallyTrackGazeboSim.launch
+  - /ros_ws/src/autorally/autorally_control/launch/waypointFollower.launch
+  - /ros_ws/src/autorally/autorally_control/launch/constantSpeedController.launch
+node_sources:
+  - package: autorally_control
+    node: gpsWaypoint
+    sources:
+      - src/gpsWaypoint/gpsWaypoint.cpp
+  - package: autorally_control
+    node: joystickController
+    sources:
+      - src/joystick/JoystickControl.cpp
+      - src/joystick/joystickControlMain.cpp
