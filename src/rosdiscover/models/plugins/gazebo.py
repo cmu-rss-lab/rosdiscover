@@ -75,7 +75,6 @@ class LibGazeboROSMultiCameraPlugin(GazeboPlugin):
     filename = 'libgazebo_ros_multicamera.so'
 
     def load(self, interpreter: Interpreter) -> None:
-        gazebo = interpreter.nodes['/gazebo']
         logger.error(f"gazebo plugin model not implemented: {self.filename}")
 
     @classmethod
