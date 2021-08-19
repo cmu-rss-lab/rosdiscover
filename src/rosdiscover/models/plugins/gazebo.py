@@ -27,6 +27,7 @@ class GazeboPlugin(ModelPlugin):
 
         # TODO locate the class for the plugin based on filename
         filename_to_cls: Mapping[str, Type[GazeboPlugin]] = {
+            'libgazebo_ros_multicamera.so': LibGazeboROSMultiCameraPlugin,
             'libgazebo_ros_laser.so': LibGazeboROSLaserPlugin,
             'libgazebo_ros_diff_drive.so': LibGazeboROSDiffDrivePlugin,
             'libgazebo_ros_imu.so': LibGazeboROSIMUPlugin,
@@ -46,6 +47,39 @@ class GazeboPlugin(ModelPlugin):
     @abc.abstractmethod
     def build_from_xml(cls, xml: ET.Element) -> 'GazeboPlugin':
         ...
+
+
+@attr.s(frozen=True, slots=True)
+class LibGazeboROSMultiCameraPlugin(GazeboPlugin):
+    """
+    Example
+    -------
+
+    .. code:: xml
+
+        <plugin filename="libgazebo_ros_multicamera.so" name="stereo_camera_controller">
+            <robotNamespace>/</robotNamespace>
+            <alwaysOn>true</alwaysOn>
+            <updateRate>60.0</updateRate>
+            <cameraName>camera</cameraName>
+            <imageTopicName>image_raw</imageTopicName>
+            <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+            <frameName>left_camera_optical_frame</frameName>
+            <hackBaseline>0.14</hackBaseline>
+        </plugin>
+    """
+    filename = 'libgazebo_ros_multicamera.so'
+
+    def load(self, interpreter: Interpreter) -> None:
+        gazebo = interpreter.nodes['/gazebo']
+        namespace = self.robot_namespace
+        logger.error("gazebo plugin model not implemented: {self.filename}")
+
+    @classmethod
+    def build_from_xml(cls, xml: ET.Element) -> 'GazeboPlugin':
+        # TODO see https://github.com/ros-simulation/gazebo_ros_pkgs/blob/noetic-devel/gazebo_plugins/src/gazebo_ros_camera_utils.cpp
+        # node handle: {self.robot_namespace}/{camera_name}
+        return LibGazeboROSMultiCameraPlugin()
 
 
 @attr.s(frozen=True, slots=True)
