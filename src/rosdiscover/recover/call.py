@@ -20,6 +20,7 @@ import attr
 
 from .symbolic import (
     SymbolicBool,
+    SymbolicContext,
     SymbolicStatement,
     SymbolicString,
     SymbolicValue,
@@ -40,6 +41,9 @@ class RosInit(SymbolicRosApiCall):
             "name": self.name.to_dict(),
         }
 
+    def eval(self, context: SymbolicContext) -> None:
+        return None
+
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class Publisher(SymbolicRosApiCall):
@@ -52,6 +56,10 @@ class Publisher(SymbolicRosApiCall):
             "name": self.topic.to_dict(),
             "format": self.format_,
         }
+
+    def eval(self, context: SymbolicContext) -> None:
+        topic = self.topic.eval(context)
+        context.node.pub(topic, self.format_)
 
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
@@ -66,6 +74,10 @@ class Subscriber(SymbolicRosApiCall):
             "format": self.format_,
         }
 
+    def eval(self, context: SymbolicContext) -> None:
+        topic = self.topic.eval(context)
+        context.node.sub(topic, self.format_)
+
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class ServiceProvider(SymbolicRosApiCall):
@@ -78,6 +90,10 @@ class ServiceProvider(SymbolicRosApiCall):
             "name": self.service.to_dict(),
             "format": self.format_,
         }
+
+    def eval(self, context: SymbolicContext) -> None:
+        service = self.service.eval(context)
+        context.node.provide(service, self.format_)
 
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
@@ -92,6 +108,10 @@ class ServiceCaller(SymbolicRosApiCall):
             "format": self.format_,
         }
 
+    def eval(self, context: SymbolicContext) -> None:
+        service = self.service.eval(context)
+        context.node.use(service, self.format_)
+
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class WriteParam(SymbolicRosApiCall):
@@ -105,33 +125,43 @@ class WriteParam(SymbolicRosApiCall):
             "value": self.value.to_dict(),
         }
 
+    def eval(self, context: SymbolicContext) -> None:
+        param = self.param.eval(context)
+        value = self.value.eval(context)
+        context.node.write(param, value)
+
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class ReadParam(SymbolicRosApiCall, SymbolicValue):
     param: SymbolicString
-    value: SymbolicValue
 
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
             "kind": "reads-param",
-            "param": self.param.to_dict(),
-            "value": self.value.to_dict(),
+            "name": self.param.to_dict(),
         }
+
+    def eval(self, context: SymbolicContext) -> None:
+        param = self.param.eval(context)
+        context.node.read(param)
 
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class ReadParamWithDefault(SymbolicRosApiCall, SymbolicValue):
     param: SymbolicString
-    value: SymbolicValue
     default: SymbolicValue
 
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
             "kind": "reads-param-with-default",
             "param": self.param.to_dict(),
-            "value": self.value.to_dict(),
             "default": self.default.to_dict(),
         }
+
+    def eval(self, context: SymbolicContext) -> None:
+        param = self.param.eval(context)
+        default = self.default.eval(context)
+        context.node.read(param, default)
 
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
@@ -144,6 +174,10 @@ class HasParam(SymbolicRosApiCall, SymbolicBool):
             "param": self.param.to_dict(),
         }
 
+    def eval(self, context: SymbolicContext) -> None:
+        param = self.param.eval(context)
+        context.node.has_param(param)
+
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class DeleteParam(SymbolicRosApiCall):
@@ -154,3 +188,7 @@ class DeleteParam(SymbolicRosApiCall):
             "kind": "deletes-param",
             "param": self.param.to_dict(),
         }
+
+    def eval(self, context: SymbolicContext) -> None:
+        param = self.param.eval(context)
+        context.node.delete_param(param)

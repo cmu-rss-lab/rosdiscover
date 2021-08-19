@@ -46,7 +46,7 @@ class RecoveredNodeModel(NodeModel):
         dict_ = self.to_dict()
         logger.debug(f"converted model to JSON-ready dict: {dict_}")
         with open(filename, "w") as f:
-            json.dump(dict_, f)
+            json.dump(dict_, f, indent=2)
 
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
@@ -85,4 +85,4 @@ class RecoveredNodeModel(NodeModel):
         )
 
     def eval(self, context: NodeContext) -> None:
-        raise NotImplementedError
+        return self.program.eval(context)

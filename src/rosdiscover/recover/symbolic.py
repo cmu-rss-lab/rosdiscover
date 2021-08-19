@@ -20,6 +20,69 @@ import typing as t
 
 import attr
 
+from ..interpreter import NodeContext
+
+
+@attr.s(auto_attribs=True, slots=True)
+class SymbolicContext:
+    """Used to maintain program state during interpretation.
+
+    Attributes
+    ----------
+    program: SymbolicProgram
+        The program that is being interpreted.
+    function: SymbolicFunction
+        The current function that is being interpreted.
+    node: NodeContext
+        The node context that the symbolic program is being used to construct.
+    _vars: t.Dict[str, t.Any]
+        A mapping from the names of in-scope variables to their values.
+    """
+    program: SymbolicProgram
+    function: SymbolicFunction
+    node: NodeContext
+    _vars: t.Dict[str, t.Any] = attr.ib(factory=dict)
+
+    @classmethod
+    def create(
+        cls,
+        program: SymbolicProgram,
+        node: NodeContext,
+    ) -> SymbolicContext:
+        return SymbolicContext(
+            program=program,
+            function=program.main,
+            node=node,
+        )
+
+    def for_function_call(self, function: SymbolicFunction) -> SymbolicContext:
+        """Creates a new symbolic context that represents the scope of a function call."""
+        return SymbolicContext(self.program, function, self.node)
+
+    def load(self, variable: str) -> t.Any:
+        """Loads the value of a given variable.
+
+        Raises
+        ------
+        ValueError
+            If no variable exists with the given name.
+        """
+        return self._vars[variable]
+
+    def store(self, variable: str, value: t.Any) -> None:
+        """Stores the value of a given variable.
+
+        Raises
+        ------
+        ValueError
+            If a definition for the given variable already exists as that would violate
+            single static assignment (SSA) rules.
+        """
+        if variable in self._vars:
+            raise ValueError(f"variable already defined in this scope: {variable}")
+
+        self._vars[variable] = value
+
 
 class SymbolicValueType(enum.Enum):
     BOOL = "bool"
@@ -49,6 +112,10 @@ class SymbolicValue(abc.ABC):
     def to_dict(self) -> t.Dict[str, t.Any]:
         ...
 
+    @abc.abstractmethod
+    def eval(self, context: SymbolicContext) -> t.Any:
+        ...
+
 
 class SymbolicString(SymbolicValue, abc.ABC):
     """Represents a symbolic string value."""
@@ -65,6 +132,9 @@ class StringLiteral(SymbolicString):
             "literal": self.value,
         }
 
+    def eval(self, context: SymbolicContext) -> t.Any:
+        return self.value
+
 
 class SymbolicInteger(SymbolicValue, abc.ABC):
     """Represents a symbolic integer value."""
@@ -78,6 +148,10 @@ class SymbolicStatement(abc.ABC):
     """Represents a statement in a symbolic function summary."""
     @abc.abstractmethod
     def to_dict(self) -> t.Dict[str, t.Any]:
+        ...
+
+    @abc.abstractmethod
+    def eval(self, context: SymbolicContext) -> None:
         ...
 
 
@@ -101,6 +175,10 @@ class SymbolicAssignment(SymbolicStatement):
             "variable": self.variable,
             "value": self.value.to_dict(),
         }
+
+    def eval(self, context: SymbolicContext) -> None:
+        concrete_value = self.value.eval(context)
+        context.store(self.variable, concrete_value)
 
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
@@ -131,6 +209,10 @@ class SymbolicCompound(t.Sequence[SymbolicStatement], SymbolicStatement):
             "statements": [s.to_dict() for s in self._statements],
         }
 
+    def eval(self, context: SymbolicContext) -> None:
+        for statement in self._statements:
+            statement.eval(context)
+
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class SymbolicFunctionCall(SymbolicStatement):
@@ -156,6 +238,11 @@ class SymbolicFunctionCall(SymbolicStatement):
             },
         }
 
+    def eval(self, context: SymbolicContext) -> None:
+        function = context.program.functions[self.callee]
+        context = context.for_function_call(function)
+        function.body.eval(context)
+
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class SymbolicVariableReference(SymbolicValue):
@@ -177,6 +264,9 @@ class SymbolicVariableReference(SymbolicValue):
             "variable": self.variable,
             "type": str(self.type_),
         }
+
+    def eval(self, context: SymbolicContext) -> t.Any:
+        return context.load(self.variable)
 
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
@@ -229,7 +319,7 @@ class SymbolicFunction:
         }
 
 
-@attr.s(frozen=True, auto_attribs=True, slots=True)
+@attr.s(frozen=True, slots=True)
 class SymbolicProgram:
     """Provides a symbolic summary for a given program.
 
@@ -237,8 +327,22 @@ class SymbolicProgram:
     ----------
     functions: t.Mapping[str, SymbolicFunction]
         The symbolic functions within this program, indexed by name.
+
+    Raises
+    ------
+    ValueError
+        If this program does not provide a "main" function.
     """
-    functions: t.Mapping[str, SymbolicFunction]
+    functions: t.Mapping[str, SymbolicFunction] = attr.ib()
+
+    @functions.validator
+    def must_have_main_function(
+        self,
+        attribute: str,
+        value: t.Any,
+    ) -> None:
+        if "main" not in self.functions:
+            raise ValueError("symbolic programs must provide a 'main' function")
 
     @classmethod
     def build(cls, functions: t.Iterable[SymbolicFunction]) -> SymbolicProgram:
@@ -246,4 +350,17 @@ class SymbolicProgram:
         return SymbolicProgram(name_to_function)
 
     def to_dict(self) -> t.Dict[str, t.Any]:
-        return {"program": {name: f.to_dict() for (name, f) in self.functions.items()}}
+        return {
+            "program": {
+                "functions": [f.to_dict() for f in self.functions.values()],
+            },
+        }
+
+    @property
+    def main(self) -> SymbolicFunction:
+        """Returns the main function (i.e., entrypoint) for this program."""
+        return self.functions["main"]
+
+    def eval(self, node: NodeContext) -> None:
+        context = SymbolicContext.create(self, node)
+        self.main.body.eval(context)

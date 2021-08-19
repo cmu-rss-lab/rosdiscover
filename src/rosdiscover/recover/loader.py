@@ -103,17 +103,15 @@ class SymbolicProgramLoader:
 
     def _load_reads_param(self, dict_: t.Mapping[str, t.Any]) -> ReadParam:
         param = self._load_string(dict_["name"])
-        value = self._load_value(dict_["value"])
-        return ReadParam(param, value)
+        return ReadParam(param)
 
     def _load_reads_param_with_default(
         self,
         dict_: t.Mapping[str, t.Any],
     ) -> ReadParamWithDefault:
         param = self._load_string(dict_["name"])
-        value = self._load_value(dict_["value"])
         default = self._load_value(dict_["default"])
-        return ReadParamWithDefault(param, value, default)
+        return ReadParamWithDefault(param, default)
 
     def _load_writes_to_param(self, dict_: t.Mapping[str, t.Any]) -> WriteParam:
         param = self._load_string(dict_["name"])

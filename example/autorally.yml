@@ -1,0 +1,7 @@
+image: therobotcooperative/autorally
+sources:
+  - /opt/ros/melodic/setup.bash
+  - /ros_ws/devel/setup.bash
+  - /ros_ws/src/autorally/autorally_util/setupEnvLocal.sh
+launches:
+  - /ros_ws/src/autorally/autorally_gazebo/launch/autoRallyTrackGazeboSim.launch
