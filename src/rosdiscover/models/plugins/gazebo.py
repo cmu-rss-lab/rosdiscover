@@ -76,7 +76,7 @@ class LibGazeboROSMultiCameraPlugin(GazeboPlugin):
 
     def load(self, interpreter: Interpreter) -> None:
         gazebo = interpreter.nodes['/gazebo']
-        logger.error("gazebo plugin model not implemented: {self.filename}")
+        logger.error(f"gazebo plugin model not implemented: {self.filename}")
 
     @classmethod
     def build_from_xml(cls, xml: ET.Element) -> 'GazeboPlugin':
