@@ -51,5 +51,8 @@ def spawn_model(c):
     urdf_contents = urdf_contents[:end_tag_ends_at]
     urdf_xml = ET.fromstring(urdf_contents)
     for plugin_xml in urdf_xml.findall('.//plugin'):
-        plugin = GazeboPlugin.from_xml(plugin_xml)
-        c.load_plugin(plugin)
+        try:
+            plugin = GazeboPlugin.from_xml(plugin_xml)
+            c.load_plugin(plugin)
+        except ValueError:
+            logger.exception(f"failed to load gazebo plugin [skipping!]: {plugin_xml}")

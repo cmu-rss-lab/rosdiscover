@@ -37,6 +37,10 @@ class GazeboPlugin(ModelPlugin):
             'libgazebo_ros_openni_kinect.so': LibGazeboROSOpenniKinectPlugin,
             'libfetch_gazebo_plugin.so': LibFetchGazeboPlugin  # Note, this should be generated
         }
+
+        if filename not in filename_to_cls:
+            raise ValueError(f"missing model for gazebo plugin: {filename}")
+
         cls = filename_to_cls[filename]
         plugin = cls.build_from_xml(xml)
         logger.debug(f'loaded gazebo plugin [{name}] from file [{filename}]: '
@@ -72,7 +76,6 @@ class LibGazeboROSMultiCameraPlugin(GazeboPlugin):
 
     def load(self, interpreter: Interpreter) -> None:
         gazebo = interpreter.nodes['/gazebo']
-        namespace = self.robot_namespace
         logger.error("gazebo plugin model not implemented: {self.filename}")
 
     @classmethod
