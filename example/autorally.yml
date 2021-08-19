@@ -4,4 +4,4 @@ sources:
   - /ros_ws/devel/setup.bash
   - /ros_ws/src/autorally/autorally_util/setupEnvLocal.sh
 launches:
-  - /ros_ws/src/autorally/autorally_core/launch/xbeeNode.launch
+  - /ros_ws/src/autorally/autorally_gazebo/launch/autoRallyTrackGazeboSim.launch
