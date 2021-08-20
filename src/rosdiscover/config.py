@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 __all__ = ('Config',)
 
+import enum
 from types import MappingProxyType
 import typing as t
 
@@ -10,6 +11,19 @@ import roswire
 import yaml
 
 from .launch import Launch
+
+
+class ROSNodeKind(enum.Enum):
+    NODE = "node"
+    NODELET = "nodelet"
+
+    @classmethod
+    def value_of(cls, value: str) -> "ROSNodeKind":
+        if 'node' == value:
+            return ROSNodeKind.NODE
+        if 'nodelet' == value:
+            return ROSNodeKind.NODELET
+        raise NotImplementedError
 
 
 @attr.s(frozen=True, slots=True, auto_attribs=True)
@@ -26,11 +40,14 @@ class NodeSourceInfo:
         The name of the package where the node is from
     node_name: str
         The name of the node provided by the package
+    node_type: ROSNodeKind
+        The kind of node represented
     sources: Sequence[str]
         The list of sources for building the node
     """
     package_name: str
     node_name: str
+    node_kind: ROSNodeKind
     sources: t.Sequence[str]
 
     @classmethod
@@ -59,10 +76,17 @@ class NodeSourceInfo:
         if not isinstance(dict_['sources'], list):
             raise ValueError("expected 'sources' to be a list")
 
+        kind = ROSNodeKind.NODE
+        if 'kind' in dict_:
+            if not isinstance(dict_['kind'], str):
+                raise ValueError("expected 'kind' to be a string")
+            kind = ROSNodeKind.value_of(dict_['kind'])
+
         return NodeSourceInfo(
             package_name=dict_['package'],
             node_name=dict_['node'],
-            sources=list(dict_['sources']),
+            node_kind=kind,
+            sources=list(dict_['sources'])
         )
 
 
