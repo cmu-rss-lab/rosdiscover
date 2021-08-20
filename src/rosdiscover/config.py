@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 __all__ = ('Config',)
 
+import enum
 from types import MappingProxyType
 import typing as t
 
@@ -10,6 +11,19 @@ import roswire
 import yaml
 
 from .launch import Launch
+
+
+class ROSNodeKind(enum.Enum):
+    NORMAL = "normal"
+    NODELET = "nodelet"
+
+    @classmethod
+    def value_of(cls, value: str) -> "ROSNodeKind":
+        if 'normal' == value:
+            return ROSNodeKind.NORMAL
+        if 'nodelet' == value:
+            return ROSNodeKind.NODELET
+        raise NotImplementedError
 
 
 @attr.s(frozen=True, slots=True, auto_attribs=True)
@@ -26,11 +40,14 @@ class NodeSourceInfo:
         The name of the package where the node is from
     node_name: str
         The name of the node provided by the package
+    node_type: ROSNodeKind
+        The kind of node represented
     sources: Sequence[str]
         The list of sources for building the node
     """
     package_name: str
     node_name: str
+    node_kind: ROSNodeKind
     sources: t.Sequence[str]
 
     @classmethod
@@ -49,6 +66,8 @@ class NodeSourceInfo:
             raise ValueError("'package' is undefined for the node source.")
         if 'node' not in dict_:
             raise ValueError("'node' is undefined for the node source.")
+        if 'kind' not in dict_:
+            raise ValueError("'kind' is undefined for the node source.")
         if 'sources' not in dict_:
             raise ValueError("'sources' is undefined for the node source.")
 
@@ -56,13 +75,16 @@ class NodeSourceInfo:
             raise ValueError("expected 'package' to be a string")
         if not isinstance(dict_['node'], str):
             raise ValueError("expected 'node' to be a string")
+        if not isinstance(dict_['kind'], str):
+            raise ValueError("expected 'kind' to be a string")
         if not isinstance(dict_['sources'], list):
             raise ValueError("expected 'sources' to be a list")
 
         return NodeSourceInfo(
             package_name=dict_['package'],
             node_name=dict_['node'],
-            sources=list(dict_['sources']),
+            node_kind=ROSNodeKind.value_of(dict_['kind']),
+            sources=list(dict_['sources'])
         )
 
 
