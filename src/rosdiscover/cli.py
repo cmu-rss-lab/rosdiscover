@@ -174,7 +174,6 @@ def main() -> None:
     p = subparsers.add_parser('acme',
                               help='generates Acme from a source file',
                               formatter_class=MultiLineFormatter)
-    generate = p.add_argument_group("Generate Acme")
     p.add_argument("--acme",
                    type=str,
                    default="generated.acme",
