@@ -121,7 +121,7 @@ class WriteParam(SymbolicRosApiCall):
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
             "kind": "writes-to-param",
-            "param": self.param.to_dict(),
+            "name": self.param.to_dict(),
             "value": self.value.to_dict(),
         }
 
@@ -154,7 +154,7 @@ class ReadParamWithDefault(SymbolicRosApiCall, SymbolicValue):
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
             "kind": "reads-param-with-default",
-            "param": self.param.to_dict(),
+            "name": self.param.to_dict(),
             "default": self.default.to_dict(),
         }
 
@@ -171,7 +171,7 @@ class HasParam(SymbolicRosApiCall, SymbolicBool):
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
             "kind": "checks-for-param",
-            "param": self.param.to_dict(),
+            "name": self.param.to_dict(),
         }
 
     def eval(self, context: SymbolicContext) -> None:
@@ -186,7 +186,7 @@ class DeleteParam(SymbolicRosApiCall):
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
             "kind": "deletes-param",
-            "param": self.param.to_dict(),
+            "name": self.param.to_dict(),
         }
 
     def eval(self, context: SymbolicContext) -> None:
