@@ -19,8 +19,8 @@ class ROSNodeKind(enum.Enum):
 
     @classmethod
     def value_of(cls, value: str) -> "ROSNodeKind":
-        if 'normal' == value:
-            return ROSNodeKind.NORMAL
+        if 'node' == value:
+            return ROSNodeKind.NODE
         if 'nodelet' == value:
             return ROSNodeKind.NODELET
         raise NotImplementedError
@@ -66,8 +66,6 @@ class NodeSourceInfo:
             raise ValueError("'package' is undefined for the node source.")
         if 'node' not in dict_:
             raise ValueError("'node' is undefined for the node source.")
-        if 'kind' not in dict_:
-            raise ValueError("'kind' is undefined for the node source.")
         if 'sources' not in dict_:
             raise ValueError("'sources' is undefined for the node source.")
 
@@ -75,15 +73,19 @@ class NodeSourceInfo:
             raise ValueError("expected 'package' to be a string")
         if not isinstance(dict_['node'], str):
             raise ValueError("expected 'node' to be a string")
-        if not isinstance(dict_['kind'], str):
-            raise ValueError("expected 'kind' to be a string")
         if not isinstance(dict_['sources'], list):
             raise ValueError("expected 'sources' to be a list")
+
+        kind = ROSNodeKind.NODE
+        if 'kind' in dict_:
+            if not isinstance(dict_['kind'], str):
+                raise ValueError("expected 'kind' to be a string")
+            kind = ROSNodeKind.value_of(dict_['kind'])
 
         return NodeSourceInfo(
             package_name=dict_['package'],
             node_name=dict_['node'],
-            node_kind=ROSNodeKind.value_of(dict_['kind']),
+            node_kind=kind,
             sources=list(dict_['sources'])
         )
 
