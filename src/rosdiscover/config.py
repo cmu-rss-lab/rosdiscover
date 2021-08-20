@@ -14,7 +14,7 @@ from .launch import Launch
 
 
 class ROSNodeKind(enum.Enum):
-    NORMAL = "normal"
+    NODE = "node"
     NODELET = "nodelet"
 
     @classmethod
