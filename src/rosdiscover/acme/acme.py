@@ -368,7 +368,7 @@ class AcmeGenerator:
                           connector_strs: List[str]) -> None:
         for sub in service_conns.keys():
             # Only create a connector for services that are connected
-            has_providers = len(service_conns[sub].provs) != 0
+            has_providers = len(service_conns[sub]['providers']) != 0
             has_callers = len(service_conns[sub]['callers']) != 0
             if self.__generate_dangling_connectors or (has_providers and has_callers):
                 roles = []
