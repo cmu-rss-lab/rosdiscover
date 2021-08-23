@@ -52,7 +52,7 @@ class SymbolicContext:
     ) -> SymbolicContext:
         return SymbolicContext(
             program=program,
-            function=program.main,
+            function=program.entry_fn,
             node=node,
         )
 
@@ -341,6 +341,9 @@ class SymbolicProgram:
 
     Attributes
     ----------
+    entry_point: str
+        The name of the function that serves as the entry point for the
+        proagram.
     functions: t.Mapping[str, SymbolicFunction]
         The symbolic functions within this program, indexed by name.
 
@@ -349,21 +352,22 @@ class SymbolicProgram:
     ValueError
         If this program does not provide a "main" function.
     """
+    entry_point: str
     functions: t.Mapping[str, SymbolicFunction] = attr.ib()
 
     @functions.validator
-    def must_have_main_function(
+    def must_have_entry_function(
         self,
         attribute: str,
         value: t.Any,
     ) -> None:
-        if "main" not in self.functions:
-            raise ValueError("symbolic programs must provide a 'main' function")
+        if self.entry_point not in self.functions:
+            raise ValueError(f"symbolic programs must provide a '{self.entry_point}' function")
 
     @classmethod
-    def build(cls, functions: t.Iterable[SymbolicFunction]) -> SymbolicProgram:
+    def build(cls, entry_point: str, functions: t.Iterable[SymbolicFunction]) -> SymbolicProgram:
         name_to_function = {function.name: function for function in functions}
-        return SymbolicProgram(name_to_function)
+        return SymbolicProgram(entry_point, name_to_function)
 
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
@@ -373,10 +377,10 @@ class SymbolicProgram:
         }
 
     @property
-    def main(self) -> SymbolicFunction:
+    def entry_fn(self) -> SymbolicFunction:
         """Returns the main function (i.e., entrypoint) for this program."""
-        return self.functions["main"]
+        return self.functions[self.entry_point]
 
     def eval(self, node: NodeContext) -> None:
         context = SymbolicContext.create(self, node)
-        self.main.body.eval(context)
+        self.entry_fn.body.eval(context)
