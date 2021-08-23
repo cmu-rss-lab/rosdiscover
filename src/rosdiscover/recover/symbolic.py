@@ -352,7 +352,7 @@ class SymbolicProgram:
     ValueError
         If this program does not provide a "main" function.
     """
-    entry_point: str
+    entry_point: str = attr.ib()
     functions: t.Mapping[str, SymbolicFunction] = attr.ib()
 
     @functions.validator
