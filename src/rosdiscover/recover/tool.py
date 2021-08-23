@@ -232,6 +232,7 @@ class NodeRecoveryTool:
         self,
         package_name: str,
         node_name: str,
+        entry_point: str,
         sources: t.Collection[str],
     ) -> RecoveredNodeModel:
         """Statically recovers the dynamic architecture of a given node.
@@ -242,6 +243,8 @@ class NodeRecoveryTool:
             The name of the package to which the node belongs
         node_name: str
             The name of the node
+        entry_point: str
+            The function that represents the entry_point for the node (e.g., main)
         sources: str
             A list of the translation unit source files for node, provided as paths
             relative to the root of the package directory
@@ -274,7 +277,7 @@ class NodeRecoveryTool:
         compile_commands_path = self._find_compile_commands_file(package)
 
         # recover a symbolic description of the node executable
-        program = self._recover(compile_commands_path, sources)
+        program = self._recover(compile_commands_path, entry_point, sources)
 
         package_abs_path = self._app.description.packages[package_name].path
         return RecoveredNodeModel(
@@ -289,6 +292,7 @@ class NodeRecoveryTool:
     def _recover(
         self,
         compile_commands_path: str,
+        entry_point: str,
         source_file_abs_paths: t.Collection[str],
     ) -> SymbolicProgram:
         """Invokes the C++ recovery binary to recover the dynamic architecture of a given node.
@@ -297,6 +301,8 @@ class NodeRecoveryTool:
         ----------
         compile_commands_path: str
             The absolute path to the compile_commands.json associated with the given node.
+        entry_point: str
+            The name of the function that is the entry point for the symbolic program.
         source_file_abs_paths: str
             A list of the C++ translation unit source files (i.e., .cpp files)
             for the given node, provided as absolute paths within the container

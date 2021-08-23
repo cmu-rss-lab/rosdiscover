@@ -181,6 +181,6 @@ class SymbolicProgramLoader:
     def load(self, dict_: t.Mapping[str, t.Any]) -> SymbolicProgram:
         dict_ = dict_["program"]
         return SymbolicProgram.build(
-            "main",
+            dict_["entry_point"],
             (self._load_function(d) for d in dict_["functions"])
         )
