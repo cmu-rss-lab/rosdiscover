@@ -593,7 +593,7 @@ class LibGazeboROSP3DPlugin(GazeboPlugin):
     def load(self, interpreter: Interpreter) -> None:
         gazebo = interpreter.nodes['/gazebo']
 
-        gazebo.pub(namespace_join(self.namespace, self.odom_topic, 'nav_msgs/Odometry'))
+        gazebo.pub(namespace_join(self.namespace, self.odom_topic), 'nav_msgs/Odometry')
 
     @classmethod
     def build_from_xml(cls, xml: ET.Element) -> 'GazeboPlugin':
