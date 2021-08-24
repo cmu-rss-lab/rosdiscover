@@ -42,7 +42,7 @@ class NodeSourceInfo:
         The name of the node provided by the package
     node_kind: ROSNodeKind
         The kind of node represented
-    entry_point: str
+    entrypoint: str
         The entry point for the main program in the source. The format for this is
         a fully qualified classname, followed by the name of the function, like:
         qualified.class.name::main
@@ -52,7 +52,7 @@ class NodeSourceInfo:
     package_name: str
     node_name: str
     node_kind: ROSNodeKind
-    entry_point: str
+    entrypoint: str
     sources: t.Sequence[str]
 
     @classmethod
@@ -73,17 +73,6 @@ class NodeSourceInfo:
             raise ValueError("'node' is undefined for the node source.")
         if 'sources' not in dict_:
             raise ValueError("'sources' is undefined for the node source.")
-        if 'entry_point' not in dict_:
-            raise ValueError("'entry_point' is undefined for the node source.")
-
-        if not isinstance(dict_['package'], str):
-            raise ValueError("expected 'package' to be a string")
-        if not isinstance(dict_['node'], str):
-            raise ValueError("expected 'node' to be a string")
-        if not isinstance(dict_['sources'], list):
-            raise ValueError("expected 'sources' to be a list")
-        if not isinstance(dict_['entry_point'], str):
-            raise ValueError("expected 'entry_point' to be a string")
 
         kind = ROSNodeKind.NODE
         if 'kind' in dict_:
@@ -91,11 +80,23 @@ class NodeSourceInfo:
                 raise ValueError("expected 'kind' to be a string")
             kind = ROSNodeKind.value_of(dict_['kind'])
 
+        if kind == ROSNodeKind.NODELET and 'entrypoint' not in dict_:
+            raise ValueError("'entrypoint' is undefined for the nodelet source.")
+
+        if not isinstance(dict_['package'], str):
+            raise ValueError("expected 'package' to be a string")
+        if not isinstance(dict_['node'], str):
+            raise ValueError("expected 'node' to be a string")
+        if not isinstance(dict_['sources'], list):
+            raise ValueError("expected 'sources' to be a list")
+        if 'entrypoint' in dict_ and not isinstance(dict_['entrypoint'], str):
+            raise ValueError("expected 'entrypoint' to be a string")
+
         return NodeSourceInfo(
             package_name=dict_['package'],
             node_name=dict_['node'],
             node_kind=kind,
-            entry_point=dict_['entry_point'],
+            entrypoint=dict_['entrypoint'],
             sources=list(dict_['sources'])
         )
 

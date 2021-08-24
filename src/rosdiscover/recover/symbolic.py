@@ -341,7 +341,7 @@ class SymbolicProgram:
 
     Attributes
     ----------
-    entry_point: str
+    entrypoint: str
         The name of the function that serves as the entry point for the
         proagram.
     functions: t.Mapping[str, SymbolicFunction]
@@ -352,7 +352,7 @@ class SymbolicProgram:
     ValueError
         If this program does not provide a "main" function.
     """
-    entry_point: str = attr.ib()
+    entrypoint: str = attr.ib()
     functions: t.Mapping[str, SymbolicFunction] = attr.ib()
 
     @functions.validator
@@ -361,8 +361,8 @@ class SymbolicProgram:
         attribute: str,
         value: t.Any,
     ) -> None:
-        if self.entry_point not in self.functions:
-            raise ValueError(f"symbolic programs must provide a '{self.entry_point}' function")
+        if self.entrypoint not in self.functions:
+            raise ValueError(f"symbolic programs must provide a '{self.entrypoint}' function")
 
     @classmethod
     def build(cls, entry_point: str, functions: t.Iterable[SymbolicFunction]) -> SymbolicProgram:
@@ -372,7 +372,7 @@ class SymbolicProgram:
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
             "program": {
-                "entry_point": self.entry_point,
+                "entry_point": self.entrypoint,
                 "functions": [f.to_dict() for f in self.functions.values()],
             },
         }
@@ -380,7 +380,7 @@ class SymbolicProgram:
     @property
     def entry_fn(self) -> SymbolicFunction:
         """Returns the main function (i.e., entrypoint) for this program."""
-        return self.functions[self.entry_point]
+        return self.functions[self.entrypoint]
 
     def eval(self, node: NodeContext) -> None:
         context = SymbolicContext.create(self, node)
