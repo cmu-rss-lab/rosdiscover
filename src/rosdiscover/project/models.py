@@ -73,7 +73,13 @@ class ProjectModels:
         node_info = self.config.node_sources[(package, node)]
 
         # use the recovery tool to recover the model before saving it to the database
-        model = self._recovery_tool.recover(package, node, node_info.entrypoint, node_info.sources)
+        model = self._recovery_tool.recover(
+            package,
+            node,
+            node_info.entrypoint,
+            node_info.sources,
+            node_info.restrict_to_paths
+        )
         self._recovered_models.store(model)
         return model
 

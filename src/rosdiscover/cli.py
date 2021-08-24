@@ -25,7 +25,7 @@ def recover(args: argparse.Namespace) -> None:
     config = Config.from_yaml_string(args.config)
     with NodeRecoveryTool.for_config(config) as tool:
         print(f"spun up the container: {tool}")
-        tool.recover(args.package, args.node, args.entry, args.sources)
+        tool.recover(args.package, args.node, args.entry, args.sources, args.restrict_to)
 
 
 def _launch(config: Config) -> SystemSummary:
@@ -144,6 +144,12 @@ def main() -> None:
         'sources',
         nargs='+',
         help='the paths of the translation unit source files for this node, relative to the package directory',
+    )
+    p.add_argument(
+        'restrict-to',
+        nargs='+',
+        type=str,
+        help='the paths to restrict static analysis to, relative to the package directory'
     )
     p.set_defaults(func=recover)
 
