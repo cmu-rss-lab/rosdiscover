@@ -365,9 +365,11 @@ class SymbolicProgram:
             raise ValueError(f"symbolic programs must provide a '{self.entrypoint}' function")
 
     @classmethod
-    def build(cls, entry_point: str, functions: t.Iterable[SymbolicFunction]) -> SymbolicProgram:
+    def build(cls, entrypoint: str, functions: t.Iterable[SymbolicFunction]) -> SymbolicProgram:
         name_to_function = {function.name: function for function in functions}
-        return SymbolicProgram(entry_point, name_to_function)
+        if entrypoint not in name_to_function:
+            raise ValueError(f"The entrypoint '{entrypoint}' is unknown in the program.")
+        return SymbolicProgram(entrypoint, name_to_function)
 
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
