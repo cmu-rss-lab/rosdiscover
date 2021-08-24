@@ -205,7 +205,10 @@ class NodeContext:
 
     def read_file(self, fn: Union[str, 'SymbolicUnknown']) -> str:
         """Reads the contents of a text file."""
-        return self._files.read(fn)
+        if isinstance(fn, str):
+            return self._files.read(fn)
+        logger.warning(f"Unable to resolve unknown parameter filename in NodeContext [{self.name}]")
+        return UNKNOWN_NAME
 
     def action_server(self, ns: Union[str, 'SymbolicUnknown'], fmt: str) -> None:
         """Creates a new action server.
