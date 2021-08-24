@@ -52,7 +52,7 @@ class SymbolicContext:
     ) -> SymbolicContext:
         return SymbolicContext(
             program=program,
-            function=program.main,
+            function=program.entrypoint,
             node=node,
         )
 
@@ -341,6 +341,9 @@ class SymbolicProgram:
 
     Attributes
     ----------
+    entrypoint: str
+        The name of the function that serves as the entry point for the
+        program.
     functions: t.Mapping[str, SymbolicFunction]
         The symbolic functions within this program, indexed by name.
 
@@ -349,34 +352,38 @@ class SymbolicProgram:
     ValueError
         If this program does not provide a "main" function.
     """
+    entrypoint_name: str = attr.ib()
     functions: t.Mapping[str, SymbolicFunction] = attr.ib()
 
     @functions.validator
-    def must_have_main_function(
+    def must_have_entry_function(
         self,
         attribute: str,
         value: t.Any,
     ) -> None:
-        if "main" not in self.functions:
-            raise ValueError("symbolic programs must provide a 'main' function")
+        if self.entrypoint_name not in self.functions:
+            raise ValueError(f"symbolic programs must provide a '{self.entrypoint_name}' function")
 
     @classmethod
-    def build(cls, functions: t.Iterable[SymbolicFunction]) -> SymbolicProgram:
+    def build(cls, entrypoint: str, functions: t.Iterable[SymbolicFunction]) -> SymbolicProgram:
         name_to_function = {function.name: function for function in functions}
-        return SymbolicProgram(name_to_function)
+        if entrypoint not in name_to_function:
+            raise ValueError(f"The entrypoint '{entrypoint}' is unknown in the program.")
+        return SymbolicProgram(entrypoint, name_to_function)
 
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
             "program": {
+                "entry_point": self.entrypoint_name,
                 "functions": [f.to_dict() for f in self.functions.values()],
             },
         }
 
     @property
-    def main(self) -> SymbolicFunction:
+    def entrypoint(self) -> SymbolicFunction:
         """Returns the main function (i.e., entrypoint) for this program."""
-        return self.functions["main"]
+        return self.functions[self.entrypoint_name]
 
     def eval(self, node: NodeContext) -> None:
         context = SymbolicContext.create(self, node)
-        self.main.body.eval(context)
+        self.entrypoint.body.eval(context)

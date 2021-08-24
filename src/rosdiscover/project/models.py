@@ -70,10 +70,10 @@ class ProjectModels:
         # TODO we need to know the sources for this node
         # - eventually, we want this to come from CMakeLists
         # - for now, we can manually specify these as part of the configuration
-        sources = self.config.node_sources[(package, node)].sources
+        node_info = self.config.node_sources[(package, node)]
 
         # use the recovery tool to recover the model before saving it to the database
-        model = self._recovery_tool.recover(package, node, sources)
+        model = self._recovery_tool.recover(package, node, node_info.entrypoint, node_info.sources)
         self._recovered_models.store(model)
         return model
 

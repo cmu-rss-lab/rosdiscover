@@ -25,7 +25,7 @@ def recover(args: argparse.Namespace) -> None:
     config = Config.from_yaml_string(args.config)
     with NodeRecoveryTool.for_config(config) as tool:
         print(f"spun up the container: {tool}")
-        tool.recover(args.package, args.node, args.sources)
+        tool.recover(args.package, args.node, args.entry, args.sources)
 
 
 def _launch(config: Config) -> SystemSummary:
@@ -139,6 +139,7 @@ def main() -> None:
     p.add_argument('config', type=argparse.FileType('r'), help=CONFIG_HELP)
     p.add_argument('package', type=str, help='the name of the package to which the node belongs')
     p.add_argument('node', type=str, help='the name of the node')
+    p.add_argument('entry', type=str, help='the function to use as an entry point')
     p.add_argument(
         'sources',
         nargs='+',
