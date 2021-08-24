@@ -380,7 +380,7 @@ class SymbolicProgram:
         }
 
     @property
-    def entry_fn(self) -> SymbolicFunction:
+    def entrypoint(self) -> SymbolicFunction:
         """Returns the main function (i.e., entrypoint) for this program."""
         return self.functions[self.entrypoint]
 

@@ -96,7 +96,7 @@ class NodeSourceInfo:
             package_name=dict_['package'],
             node_name=dict_['node'],
             node_kind=kind,
-            entrypoint=dict_['entrypoint'],
+            entrypoint=dict_.get('entrypoint'),
             sources=list(dict_['sources'])
         )
 
