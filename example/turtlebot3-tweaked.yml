@@ -1,0 +1,8 @@
+image: therobotcooperative/turtlebot3
+sources:
+- /opt/ros/kinetic/setup.bash
+- /ros_ws/devel_isolated/setup.bash
+environment:
+  TURTLEBOT3_MODEL: burger
+launches:
+- /ros_ws/src/turtlebot3_simulations/turtlebot3_gazebo/launch/turtlebot3_house.launch

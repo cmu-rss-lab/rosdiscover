@@ -1,0 +1,6 @@
+image: therobotcooperative/husky
+sources:
+- /opt/ros/melodic/setup.bash
+- /ros_ws/devel/setup.bash
+launches:
+- /ros_ws/src/husky/husky_base/launch/base.launch

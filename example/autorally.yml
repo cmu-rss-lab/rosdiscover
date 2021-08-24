@@ -12,8 +12,14 @@ node_sources:
     node: gpsWaypoint
     sources:
       - src/gpsWaypoint/gpsWaypoint.cpp
+    restrict-analysis-to-paths:
+      - /ros_ws/devel/include/autorally_control
+      - /ros_ws/src/autorally/autorally_control
   - package: autorally_control
     node: joystickController
     sources:
       - src/joystick/JoystickControl.cpp
       - src/joystick/joystickControlMain.cpp
+    restrict-analysis-to-paths:
+      - /ros_ws/devel/include/autorally_control
+      - /ros_ws/src/autorally/autorally_control

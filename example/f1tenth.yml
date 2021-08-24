@@ -1,0 +1,6 @@
+image: therobotcooperative/f1tenth
+sources:
+- /opt/ros/melodic/setup.bash
+- /ros_ws/devel/setup.bash
+launches:
+- /ros_ws/src/f1tenth_gtc_tutorial/src/hector_slam/hector_imu_attitude_to_tf/launch/example.launch
