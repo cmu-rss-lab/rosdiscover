@@ -74,15 +74,49 @@ class LibGazeboROSMultiCameraPlugin(GazeboPlugin):
         </plugin>
     """
     filename = 'libgazebo_ros_multicamera.so'
+    camera_name: str = attr.ib()
+    image_topic_name: str = attr.ib()
+    camera_info_topic_name: str = attr.ib()
+    frame_name: str = attr.ib()
+    robot_namespace: str = attr.ib()
 
     def load(self, interpreter: Interpreter) -> None:
-        logger.error(f"gazebo plugin model not implemented: {self.filename}")
+        gazebo = interpreter.nodes['/gazebo']
+        image_topic_name = namespace_join(self.robot_namespace, namespace_join(self.camera_name, self.image_topic_name))
+        camera_info_topic_name = namespace_join(self.robot_namespace,
+                                                namespace_join(self.camera_name, self.camera_info_topic_name))
+        for image_topic in [("", "sensor_msgs/Image"), ("/compressed", "sensor_msgs/CompressedImage"),
+                            ("/compressedDepth", "sensor_msgs/CompressedImage"),
+                            ("/theora", "theora_image_transport/Packet")]:
+            gazebo.pub(image_topic_name + image_topic[0], image_topic[1])
+        gazebo.pub(camera_info_topic_name, 'sensor_msgs/CameraInfo')
 
     @classmethod
     def build_from_xml(cls, xml: ET.Element) -> 'GazeboPlugin':
-        # TODO see https://github.com/ros-simulation/gazebo_ros_pkgs/blob/noetic-devel/gazebo_plugins/src/gazebo_ros_camera_utils.cpp
-        # node handle: {self.robot_namespace}/{camera_name}
-        return LibGazeboROSMultiCameraPlugin()
+        xml_camera_name = xml.find("cameraName")
+        xml_topic_name = xml.find("imageTopicName")
+        xml_camera_topic_name = xml.find('cameraInfoTopicName')
+        xml_frame_name = xml.find('frameName')
+        xml_robot_ns = xml.find('robotNamesapce')
+
+        assert xml_topic_name is not None and xml_topic_name.text is not None
+        assert xml_camera_topic_name is not None and xml_camera_topic_name.text is not None
+        assert xml_frame_name is not None and xml_frame_name.text is not None
+        assert xml_camera_name is not None and xml_camera_name.text is not None
+        topic_name: str = xml_topic_name.text
+        camera_topic_name: str = xml_camera_topic_name.text
+        camera_name: str = xml_camera_name.text
+        frame_name: str = xml_frame_name.text
+
+        robot_ns = "/"
+        if xml_robot_ns is not None and xml_robot_ns.text is not None:
+            robot_ns = xml_robot_ns.text
+
+        return LibGazeboROSCameraPlugin(camera_name=camera_name,
+                                        image_topic_name=topic_name,
+                                        camera_info_topic_name=camera_topic_name,
+                                        frame_name=frame_name,
+                                        robot_namespace=robot_ns)
 
 
 @attr.s(frozen=True, slots=True)
