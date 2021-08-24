@@ -27,6 +27,7 @@ class GazeboPlugin(ModelPlugin):
 
         # TODO locate the class for the plugin based on filename
         filename_to_cls: Mapping[str, Type[GazeboPlugin]] = {
+            'libhector_gazebo_ros_imu.so': LibHectorGazeboROSIMUPlugin,
             'libgazebo_ros_multicamera.so': LibGazeboROSMultiCameraPlugin,
             'libgazebo_ros_laser.so': LibGazeboROSLaserPlugin,
             'libgazebo_ros_diff_drive.so': LibGazeboROSDiffDrivePlugin,
@@ -497,7 +498,7 @@ class LibFetchGazeboPlugin(GazeboPlugin):
     """
     This is the gazebo plugin for the Fetch robot. It should really be generated.
     """
-    filename = "libfectch_gazebo_plugin.so"
+    filename = "libfetch_gazebo_plugin.so"
     joint_state_topic: str = attr.ib()
 
     def load(self, interpreter: 'Interpreter') -> None:
@@ -507,3 +508,55 @@ class LibFetchGazeboPlugin(GazeboPlugin):
     @classmethod
     def build_from_xml(cls, xml: ET.Element) -> 'GazeboPlugin':
         return LibFetchGazeboPlugin(joint_state_topic="joint_states")
+
+
+@attr.s(frozen=True, slots=True)
+class LibHectorGazeboROSIMUPlugin(GazeboPlugin):
+    """
+    GazeboRosImu is a replacement for the GazeboRosImu plugin in package gazebo_plugins.
+    It simulates an Inertial Measurement Unit (IMU) affected by Gaussian noise and
+    low-frequency random drift. The orientation returned mimics a simple Attitude and
+    Heading Reference System (AHRS) using the (erroneous) rates and accelerations.
+    """
+    filename = 'libhector_gazebo_ros_imy.so'
+    robot_namespace: str = attr.ib()
+    imu_topic: str = attr.ib()
+    bias_topic: str = attr.ib()
+    calibrate_service: str = attr.ib()
+
+    def load(self, interpreter: 'Interpreter') -> None:
+        gazebo = interpreter.nodes['/gazebo']
+        imu_topic = namespace_join(self.robot_namespace, self.imu_topic)
+        bias_topic = namespace_join(self.robot_namespace, self.bias_topic)
+        calibrate_service = namespace_join(self.robot_namespace, self.calibrate_service)
+        set_accel_bias_service = namespace_join(self.robot_namespace, namespace_join(self.imu_topic,
+                                                                                     '/set_accel_bias'))
+        set_gyro_base_service = namespace_join(self.robot_namespace, namespace_join(self.imu_topic,
+                                                                                    'imu/set_gyro_bias'))
+
+        gazebo.pub(imu_topic, "sensor_msgs/Imu")
+        gazebo.pub(bias_topic, "sensor_msgs/Imu")
+        gazebo.provide(calibrate_service, 'std_srvs/Empty')
+        gazebo.provide(set_accel_bias_service, 'hector_gazebo_plugins/SetBias')
+        gazebo.provide(set_gyro_base_service, 'hector_gazebo_plugins/SetBias')
+
+    @classmethod
+    def build_from_xml(cls, xml: ET.Element) -> 'GazeboPlugin':
+        xml_topic_name = xml.find('topicName')
+        xml_bias_topic_name = xml.find('biasTopicName')
+        xml_robot_namespace = xml.find('robotNamespace')
+        xml_service_name = xml.find('serviceName')
+
+        topic_name: str = xml_topic_name.text if xml_topic_name and xml_service_name.text else 'imu'
+        bias_topic_name: str = (xml_bias_topic_name
+                                if xml_bias_topic_name and xml_bias_topic_name.text else topic_name) + '/bias'
+        namespace: str = xml_robot_namespace.text if xml_robot_namespace and xml_robot_namespace.text else '/'
+        service_name: str = xml_service_name.text if xml_service_name and xml_service_name.text \
+            else (topic_name + "/calibrate")
+
+        return LibHectorGazeboROSIMUPlugin(
+            imu_topic=topic_name,
+            bias_topic=bias_topic_name,
+            calibrate_service=service_name,
+            robot_namespace=namespace
+        )
