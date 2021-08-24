@@ -2,6 +2,7 @@
 __all__ = ('Config',)
 
 import enum
+from pathlib import Path
 from types import MappingProxyType
 import typing as t
 
@@ -99,11 +100,14 @@ class NodeSourceInfo:
                 raise ValueError("expected 'entrypoint' to be a string")
             entrypoint = dict_['entrypoint']
 
-        restricted_paths = []
         if 'restrict-analysis-to-paths' in dict_:
             if not isinstance(dict_['restrict-analysis-to-paths'], list):
                 raise ValueError("expected 'restrict-analysis-to-paths' to bae a list")
-            restricted_paths = dict_['restrict-analysis-to-paths']
+        restricted_paths = dict_.get('restrict-analysis-to-paths', [])
+
+        for path in restricted_paths:
+            if not Path(path).is_absolute():
+                raise ValueError(f"Restricuted path '{path}' should be absolute")
 
         return NodeSourceInfo(
             package_name=dict_['package'],

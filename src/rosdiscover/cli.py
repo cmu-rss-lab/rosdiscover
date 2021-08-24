@@ -3,6 +3,7 @@
 Provides a simple command-line interface.
 """
 import argparse
+from pathlib import Path
 
 from loguru import logger
 import pkg_resources
@@ -23,6 +24,9 @@ CONFIG_HELP = """R|A YAML file defining the configuration.
 def recover(args: argparse.Namespace) -> None:
     """Provides static recovery of dynamic architecture models."""
     config = Config.from_yaml_string(args.config)
+    for path in args.restricted_to:
+        if not Path(path).is_absolute():
+            raise ValueError(f"Restricuted path '{path}' should be absolute")
     with NodeRecoveryTool.for_config(config) as tool:
         print(f"spun up the container: {tool}")
         tool.recover(args.package, args.node, args.entry, args.sources, args.restrict_to)
@@ -131,6 +135,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=DESC)
     subparsers = parser.add_subparsers()
 
+    # ----------------- RECOVER --------------------
     p = subparsers.add_parser(
         'recover',
         help='statically recovers the dynamic architecture of a given node.',
@@ -149,10 +154,12 @@ def main() -> None:
         'restrict-to',
         nargs='+',
         type=str,
-        help='the paths to restrict static analysis to, relative to the package directory'
+        default=[],
+        help='the absoulate container paths to restrict static analysis to'
     )
     p.set_defaults(func=recover)
 
+    # ----------------- LAUNCH --------------------
     p = subparsers.add_parser(
         'launch',
         help='simulates the effects of a roslaunch.',
@@ -170,6 +177,7 @@ def main() -> None:
 
     p.set_defaults(func=rostopic_list)
 
+    # ----------------- ROSSERVICE --------------------
     p = subparsers.add_parser(
         'rosservice',
         help='simulates the output of rosservice for a given configuration.',
@@ -177,6 +185,7 @@ def main() -> None:
     p.add_argument('config', type=argparse.FileType('r'), help=CONFIG_HELP)
     p.set_defaults(func=rosservice_list)
 
+    # ----------------- ACME --------------------
     acme_jar_path = pkg_resources.resource_filename(__name__, 'acme/lib/acme.standalone-ros.jar')
     p = subparsers.add_parser('acme',
                               help='generates Acme from a source file',
@@ -198,6 +207,7 @@ def main() -> None:
     p.add_argument('config', type=argparse.FileType('r'), help=CONFIG_HELP)
     p.set_defaults(func=generate_acme)
 
+    # ----------------- OBSERVE --------------------
     p = subparsers.add_parser('observe',
                               help='observes a robot running in a container and produces an '
                                    'architecture',

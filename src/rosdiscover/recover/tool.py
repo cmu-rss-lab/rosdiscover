@@ -356,9 +356,9 @@ class NodeRecoveryTool:
             json_model_filename,
         ]
         for path in restrict_to_paths:
-            args = args + ['--restrict-to', path]
+            args += ['--restrict-to', path]
 
-        args = args + [' '.join(shlex.quote(p) for p in source_file_abs_paths)]
+        args += [' '.join(shlex.quote(p) for p in source_file_abs_paths)]
         args_s = ' '.join(args)
         logger.debug(f"running static recovery command: {args_s}")
         outcome = shell.run(args_s, text=True, stderr=True)
