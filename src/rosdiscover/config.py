@@ -75,6 +75,8 @@ class NodeSourceInfo:
             raise ValueError("'sources' is undefined for the node source.")
 
         kind = ROSNodeKind.NODE
+        entrypoint = "main"
+
         if 'kind' in dict_:
             if not isinstance(dict_['kind'], str):
                 raise ValueError("expected 'kind' to be a string")
@@ -89,14 +91,16 @@ class NodeSourceInfo:
             raise ValueError("expected 'node' to be a string")
         if not isinstance(dict_['sources'], list):
             raise ValueError("expected 'sources' to be a list")
-        if 'entrypoint' in dict_ and not isinstance(dict_['entrypoint'], str):
-            raise ValueError("expected 'entrypoint' to be a string")
+        if 'entrypoint' in dict_:
+            if not isinstance(dict_['entrypoint'], str):
+                raise ValueError("expected 'entrypoint' to be a string")
+            entrypoint = dict_['entrypoint']
 
         return NodeSourceInfo(
             package_name=dict_['package'],
             node_name=dict_['node'],
             node_kind=kind,
-            entrypoint=dict_.get('entrypoint'),
+            entrypoint=entrypoint,
             sources=list(dict_['sources'])
         )
 
