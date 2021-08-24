@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 __all__ = (
+    "Concatenate",
     "StringLiteral",
     "SymbolicAssignment",
     "SymbolicBool",
@@ -135,6 +136,28 @@ class StringLiteral(SymbolicString):
 
     def eval(self, context: SymbolicContext) -> t.Any:
         return self.value
+
+
+@attr.s(frozen=True, auto_attribs=True, slots=True)
+class Concatenate(SymbolicString):
+    """Represents a concatenation of two symbolic strings."""
+    lhs: SymbolicString
+    rhs: SymbolicString
+
+    def to_dict(self) -> t.Dict[str, t.Any]:
+        return {
+            "kind": "concatenate",
+            "lhs": self.lhs,
+            "rhs": self.rhs,
+        }
+
+    def eval(self, context: SymbolicContext) -> t.Any:
+        lhs = self.lhs.eval(context)
+        rhs = self.rhs.eval(context)
+        if isinstance(lhs, str) and isinstance(rhs, str):
+            return lhs + rhs
+        else:
+            return SymbolicUnknown()
 
 
 class SymbolicInteger(SymbolicValue, abc.ABC):

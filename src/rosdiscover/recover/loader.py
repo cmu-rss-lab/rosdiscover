@@ -18,6 +18,7 @@ from .call import (
     WriteParam,
 )
 from .symbolic import (
+    Concatenate,
     StringLiteral,
     SymbolicAssignment,
     SymbolicCompound,
@@ -64,7 +65,9 @@ class SymbolicProgramLoader:
 
     def _load_value(self, dict_: t.Mapping[str, t.Any]) -> SymbolicValue:
         kind: str = dict_["kind"]
-        if kind == "string-literal":
+        if kind == "concatenate":
+            return self._load_concatenate(dict_)
+        elif kind == "string-literal":
             return self._load_string_literal(dict_)
         elif kind == "variable-reference":
             return self._load_variable_reference(dict_)
@@ -78,6 +81,11 @@ class SymbolicProgramLoader:
             return SymbolicUnknown()
         else:
             raise ValueError(f"failed to load value type: {kind}")
+
+    def _load_concatenate(self, dict_: t.Mapping[str, t.Any]) -> Concatenate:
+        lhs = self._load_string(dict_["lhs"])
+        rhs = self._load_string(dict_["rhs"])
+        return Concatenate(lhs, rhs)
 
     def _load_assignment(self, dict_: t.Mapping[str, t.Any]) -> SymbolicAssignment:
         variable = dict_["variable"]
