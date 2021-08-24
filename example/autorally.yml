@@ -23,3 +23,12 @@ node_sources:
     restrict-analysis-to-paths:
       - /ros_ws/devel/include/autorally_control
       - /ros_ws/src/autorally/autorally_control
+  - package: autorally_control
+    node: ConstantSpeedController
+    type: nodelet
+    entrypoint: autorally_control::ConstantSpeedController::onInit
+    sources:
+      - src/ConstantSpeedController/ConstantSpeedController.cpp
+    restrict-analysis-to-paths:
+      - /ros_ws/devel/include/autorally_control
+      - /ros_ws/src/autorally/autorally_control
