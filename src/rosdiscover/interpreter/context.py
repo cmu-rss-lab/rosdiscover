@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import typing
-from typing import Any, List, Mapping, Optional, Set, Tuple
+from typing import Any, List, Mapping, Optional, Set, Tuple, Union
 
 import attr
 import dockerblade
@@ -14,6 +14,9 @@ from ..core import Action, Service, Topic
 
 if typing.TYPE_CHECKING:
     from .plugin import ModelPlugin
+    from ..recover.symbolic import SymbolicUnknown
+
+UNKNOWN_NAME = "\\unknown"
 
 
 @attr.s(slots=True, auto_attribs=True)
@@ -103,7 +106,7 @@ class NodeContext:
         else:
             return rosname.namespace_join(self.namespace, name)
 
-    def resolve(self, name: str) -> str:
+    def resolve(self, name: Union[str, 'SymbolicUnknown']) -> str:
         """Resolves a given name within the context of this node.
 
         Returns
@@ -115,24 +118,28 @@ class NodeContext:
         ----------
         * http://wiki.ros.org/Names
         """
-        name = self._resolve_without_remapping(name)
-        return self._apply_remappings(name)
+        if isinstance(name, str):
+            name = self._resolve_without_remapping(name)
+            return self._apply_remappings(name)
+        else:
+            logger.warning(f"Unable to resolve unknown name in NodeContext [{self.name}]")
+            return UNKNOWN_NAME
 
-    def provide(self, service: str, fmt: str) -> None:
+    def provide(self, service: Union[str, 'SymbolicUnknown'], fmt: str) -> None:
         """Instructs the node to provide a service."""
         logger.debug(f"node [{self.name}] provides service [{service}] "
                      f"using format [{fmt}]")
         service_name_full = self.resolve(service)
         self._provides.add(Service(name=service_name_full, format=fmt))
 
-    def use(self, service: str, fmt: str) -> None:
+    def use(self, service: Union[str, 'SymbolicUnknown'], fmt: str) -> None:
         """Instructs the node to use a given service."""
         logger.debug(f"node [{self.name}] uses a service [{service}] "
                      f"with format [{fmt}]")
         service_name_full = self.resolve(service)
         self._uses.add(Service(name=service_name_full, format=fmt))
 
-    def sub(self, topic_name: str, fmt: str, implicit: bool = False) -> None:
+    def sub(self, topic_name: Union[str, 'SymbolicUnknown'], fmt: str, implicit: bool = False) -> None:
         """Subscribes the node to a given topic.
 
         Parameters
@@ -150,7 +157,7 @@ class NodeContext:
                      f"[{topic_name}] with format [{fmt}]")
         self._subs.add(Topic(name=topic_name_full, format=fmt, implicit=implicit))
 
-    def pub(self, topic_name: str, fmt: str, implicit: bool = False) -> None:
+    def pub(self, topic_name: Union[str, 'SymbolicUnknown'], fmt: str, implicit: bool = False) -> None:
         """Instructs the node to publish to a given topic.
 
         Parameters
@@ -169,7 +176,7 @@ class NodeContext:
         self._pubs.add(Topic(name=topic_name_full, format=fmt, implicit=implicit))
 
     def read(self,
-             param: str,
+             param: Union[str, 'SymbolicUnknown'],
              default: Optional[Any] = None,
              dynamic: bool = False
              ) -> Any:
@@ -179,7 +186,7 @@ class NodeContext:
         self._reads.add((param, dynamic))
         return self._params.get(param, default)
 
-    def write(self, param: str, val: Any) -> None:
+    def write(self, param: Union[str, 'SymbolicUnknown'], val: Any) -> None:
         logger.debug(f"node [{self.name}] writes [{val}] to "
                      f"parameter [{param}]")
         param = self.resolve(param)
@@ -187,20 +194,23 @@ class NodeContext:
         self._params[param] = val
 
     # FIXME we _may_ want to record this interaction in our summary
-    def has_param(self, param: str) -> bool:
+    def has_param(self, param: Union[str, 'SymbolicUnknown']) -> bool:
         """Determines whether a given parameter has been defined."""
         logger.debug(f"node [{self.name}] checks for existence of parameter [{param}]")
         param = self.resolve(param)
         return param in self._params
 
-    def delete_param(self, param: str) -> None:
+    def delete_param(self, param: Union[str, 'SymbolicUnknown']) -> None:
         raise NotImplementedError("parameter deletion is not implemented")
 
-    def read_file(self, fn: str) -> str:
+    def read_file(self, fn: Union[str, 'SymbolicUnknown']) -> str:
         """Reads the contents of a text file."""
-        return self._files.read(fn)
+        if isinstance(fn, str):
+            return self._files.read(fn)
+        logger.warning(f"Unable to resolve unknown parameter filename in NodeContext [{self.name}]")
+        return UNKNOWN_NAME
 
-    def action_server(self, ns: str, fmt: str) -> None:
+    def action_server(self, ns: Union[str, 'SymbolicUnknown'], fmt: str) -> None:
         """Creates a new action server.
 
         Parameters
@@ -224,7 +234,7 @@ class NodeContext:
             self.pub(f'{ns}/feedback', f'{fmt}Feedback', implicit=True)
             self.pub(f'{ns}/result', f'{fmt}Result', implicit=True)
 
-    def action_client(self, ns: str, fmt: str) -> None:
+    def action_client(self, ns: Union[str, 'SymbolicUnknown'], fmt: str) -> None:
         """Creates a new action client.
 
         Parameters
