@@ -234,6 +234,7 @@ class NodeRecoveryTool:
         node_name: str,
         entry_point: str,
         sources: t.Collection[str],
+        path_restrictions: t.Collection[str]
     ) -> RecoveredNodeModel:
         """Statically recovers the dynamic architecture of a given node.
 
@@ -277,7 +278,7 @@ class NodeRecoveryTool:
         compile_commands_path = self._find_compile_commands_file(package)
 
         # recover a symbolic description of the node executable
-        program = self._recover(compile_commands_path, entry_point, sources)
+        program = self._recover(compile_commands_path, entry_point, sources, path_restrictions)
 
         package_abs_path = self._app.description.packages[package_name].path
         return RecoveredNodeModel(
@@ -294,6 +295,7 @@ class NodeRecoveryTool:
         compile_commands_path: str,
         entry_point: str,
         source_file_abs_paths: t.Collection[str],
+        restrict_to_paths: t.Collection[str]
     ) -> SymbolicProgram:
         """Invokes the C++ recovery binary to recover the dynamic architecture of a given node.
 
@@ -352,8 +354,11 @@ class NodeRecoveryTool:
             shlex.quote(os.path.dirname(compile_commands_path)),
             "-output-filename",
             json_model_filename,
-            ' '.join(shlex.quote(p) for p in source_file_abs_paths),
         ]
+        for path in restrict_to_paths:
+            args += ['--restrict-to', path]
+
+        args += [' '.join(shlex.quote(p) for p in source_file_abs_paths)]
         args_s = ' '.join(args)
         logger.debug(f"running static recovery command: {args_s}")
         outcome = shell.run(args_s, text=True, stderr=True)

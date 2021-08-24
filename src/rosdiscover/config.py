@@ -2,6 +2,7 @@
 __all__ = ('Config',)
 
 import enum
+from pathlib import Path
 from types import MappingProxyType
 import typing as t
 
@@ -42,6 +43,8 @@ class NodeSourceInfo:
         The name of the node provided by the package
     node_kind: ROSNodeKind
         The kind of node represented
+    restrict_to_paths: Collection[str]
+        The paths to restrict source analysis to
     entrypoint: str
         The entry point for the main program in the source. The format for this is
         a fully qualified classname, followed by the name of the function, like:
@@ -52,6 +55,7 @@ class NodeSourceInfo:
     package_name: str
     node_name: str
     node_kind: ROSNodeKind
+    restrict_to_paths: t.Collection[str]
     entrypoint: str
     sources: t.Sequence[str]
 
@@ -96,12 +100,22 @@ class NodeSourceInfo:
                 raise ValueError("expected 'entrypoint' to be a string")
             entrypoint = dict_['entrypoint']
 
+        if 'restrict-analysis-to-paths' in dict_:
+            if not isinstance(dict_['restrict-analysis-to-paths'], list):
+                raise ValueError("expected 'restrict-analysis-to-paths' to bae a list")
+        restricted_paths = dict_.get('restrict-analysis-to-paths', [])
+
+        for path in restricted_paths:
+            if not Path(path).is_absolute():
+                raise ValueError(f"Restricuted path '{path}' should be absolute")
+
         return NodeSourceInfo(
             package_name=dict_['package'],
             node_name=dict_['node'],
             node_kind=kind,
             entrypoint=entrypoint,
-            sources=list(dict_['sources'])
+            sources=list(dict_['sources']),
+            restrict_to_paths=restricted_paths
         )
 
 
