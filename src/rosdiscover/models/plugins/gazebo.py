@@ -27,6 +27,7 @@ class GazeboPlugin(ModelPlugin):
 
         # TODO locate the class for the plugin based on filename
         filename_to_cls: Mapping[str, Type[GazeboPlugin]] = {
+            'libgazebo_ros_p3d.so': LibGazeboROSP3DPlugin,
             'libhector_gazebo_ros_imu.so': LibHectorGazeboROSIMUPlugin,
             'libgazebo_ros_multicamera.so': LibGazeboROSMultiCameraPlugin,
             'libgazebo_ros_laser.so': LibGazeboROSLaserPlugin,
@@ -581,3 +582,28 @@ class LibGazeboROSMultiCameraPlugin(LibGazeboROSCameraPlugin):
                                              camera_info_topic_name=camera_topic_name,
                                              frame_name=frame_name,
                                              robot_namespace=robot_ns)
+
+
+@attr.s(frozen=True, slots=True)
+class LibGazeboROSP3DPlugin(GazeboPlugin):
+    filename = 'libgazebo_ros_p3d.so'
+    odom_topic: str = attr.ib()
+    namespace: str = attr.ib()
+
+    def load(self, interpreter: Interpreter) -> None:
+        gazebo = interpreter.nodes['/gazebo']
+
+        gazebo.pub(namespace_join(self.namespace, self.odom_topic, 'nav_msgs/Odometry'))
+
+    @classmethod
+    def build_from_xml(cls, xml: ET.Element) -> 'GazeboPlugin':
+        xml_robot_ns = xml.find('robotNamesapce')
+        robot_ns = "/"
+        if xml_robot_ns is not None and xml_robot_ns.text is not None:
+            robot_ns = xml_robot_ns.text
+
+        xml_topic_name = xml.find("topicName")
+        assert xml_topic_name is not None and xml_topic_name.text is not None
+        topic_name = xml_topic_name.text
+
+        return LibGazeboROSP3DPlugin(namespace=robot_ns, odom_topic=topic_name)
