@@ -232,7 +232,7 @@ class NodeRecoveryTool:
         self,
         package_name: str,
         node_name: str,
-        entry_point: str,
+        entrypoint: str,
         sources: t.Collection[str],
         path_restrictions: t.Collection[str]
     ) -> RecoveredNodeModel:
@@ -244,8 +244,8 @@ class NodeRecoveryTool:
             The name of the package to which the node belongs
         node_name: str
             The name of the node
-        entry_point: str
-            The function that represents the entry_point for the node (e.g., main)
+        entrypoint: str
+            The function that represents the entrypoint for the node (e.g., main)
         sources: str
             A list of the translation unit source files for node, provided as paths
             relative to the root of the package directory
@@ -278,7 +278,7 @@ class NodeRecoveryTool:
         compile_commands_path = self._find_compile_commands_file(package)
 
         # recover a symbolic description of the node executable
-        program = self._recover(compile_commands_path, entry_point, sources, path_restrictions)
+        program = self._recover(compile_commands_path, entrypoint, sources, path_restrictions)
 
         package_abs_path = self._app.description.packages[package_name].path
         return RecoveredNodeModel(
@@ -293,7 +293,7 @@ class NodeRecoveryTool:
     def _recover(
         self,
         compile_commands_path: str,
-        entry_point: str,
+        entrypoint: str,
         source_file_abs_paths: t.Collection[str],
         restrict_to_paths: t.Collection[str]
     ) -> SymbolicProgram:
@@ -303,7 +303,7 @@ class NodeRecoveryTool:
         ----------
         compile_commands_path: str
             The absolute path to the compile_commands.json associated with the given node.
-        entry_point: str
+        entrypoint: str
             The name of the function that is the entry point for the symbolic program.
         source_file_abs_paths: str
             A list of the C++ translation unit source files (i.e., .cpp files)
@@ -370,6 +370,10 @@ class NodeRecoveryTool:
         model_loader = SymbolicProgramLoader()
         json_model_file_contents = files.read(json_model_filename, binary=False)
         json_model = json.loads(json_model_file_contents)
+
+        # inject the name of the entrypoint into the JSON description
+        json_model["program"]["entrypoint"] = entrypoint
+
         summary = model_loader.load(json_model)
         logger.debug(f"recovered node summary: {summary}")
         return summary
