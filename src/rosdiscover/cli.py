@@ -3,7 +3,7 @@
 Provides a simple command-line interface.
 """
 import argparse
-from pathlib import Path
+import os
 
 from loguru import logger
 import pkg_resources
@@ -25,8 +25,8 @@ def recover(args: argparse.Namespace) -> None:
     """Provides static recovery of dynamic architecture models."""
     config = Config.from_yaml_string(args.config)
     for path in args.restricted_to:
-        if not Path(path).is_absolute():
-            raise ValueError(f"Restricuted path '{path}' should be absolute")
+        if not os.path.isabs(path):
+            raise ValueError(f"Restricted path [{path}] should be absolute")
     with NodeRecoveryTool.for_config(config) as tool:
         print(f"spun up the container: {tool}")
         tool.recover(args.package, args.node, args.entry, args.sources, args.restrict_to)

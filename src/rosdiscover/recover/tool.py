@@ -356,7 +356,7 @@ class NodeRecoveryTool:
             json_model_filename,
         ]
         for path in restrict_to_paths:
-            args += ['--restrict-to', path]
+            args += ['-restrict-to', path]
 
         args += [' '.join(shlex.quote(p) for p in source_file_abs_paths)]
         args_s = ' '.join(args)

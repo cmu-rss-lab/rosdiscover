@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 __all__ = ('Config',)
 
-import enum
-from pathlib import Path
 from types import MappingProxyType
+import os
+import enum
 import typing as t
 
 from loguru import logger
@@ -102,12 +102,13 @@ class NodeSourceInfo:
 
         if 'restrict-analysis-to-paths' in dict_:
             if not isinstance(dict_['restrict-analysis-to-paths'], list):
-                raise ValueError("expected 'restrict-analysis-to-paths' to bae a list")
+                raise ValueError("expected 'restrict-analysis-to-paths' to be a list")
+
         restricted_paths = dict_.get('restrict-analysis-to-paths', [])
 
         for path in restricted_paths:
-            if not Path(path).is_absolute():
-                raise ValueError(f"Restricuted path '{path}' should be absolute")
+            if not os.path.isabs(path):
+                raise ValueError(f"Restricted path [{path}] must be absolute")
 
         return NodeSourceInfo(
             package_name=dict_['package'],
