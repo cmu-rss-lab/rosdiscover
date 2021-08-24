@@ -24,6 +24,7 @@ from .symbolic import (
     SymbolicCompound,
     SymbolicFunction,
     SymbolicFunctionCall,
+    SymbolicNodeHandle,
     SymbolicParameter,
     SymbolicProgram,
     SymbolicStatement,
@@ -58,6 +59,11 @@ class SymbolicProgramLoader:
             type_=type_,
         )
 
+    def _load_node_handle(self, dict_: t.Mapping[str, t.Any]) -> SymbolicNodeHandle:
+        assert dict_["kind"] == "node-handle"
+        namespace = self._load_string(dict_["namespace"])
+        return SymbolicNodeHandle(namespace)
+
     def _load_string(self, dict_: t.Mapping[str, t.Any]) -> SymbolicString:
         value = self._load_value(dict_)
         assert isinstance(value, SymbolicString)
@@ -69,6 +75,8 @@ class SymbolicProgramLoader:
             return self._load_concatenate(dict_)
         elif kind == "string-literal":
             return self._load_string_literal(dict_)
+        elif kind == "node-handle":
+            return self._load_node_handle(dict_)
         elif kind == "variable-reference":
             return self._load_variable_reference(dict_)
         elif kind == "reads-param":

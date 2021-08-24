@@ -8,6 +8,7 @@ __all__ = (
     "SymbolicBool",
     "SymbolicCompound",
     "SymbolicFunction",
+    "SymbolicNodeHandle",
     "SymbolicParameter",
     "SymbolicProgram",
     "SymbolicStatement",
@@ -147,8 +148,8 @@ class Concatenate(SymbolicString):
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
             "kind": "concatenate",
-            "lhs": self.lhs,
-            "rhs": self.rhs,
+            "lhs": self.lhs.to_dict(),
+            "rhs": self.rhs.to_dict(),
         }
 
     def eval(self, context: SymbolicContext) -> t.Any:
@@ -181,6 +182,20 @@ class SymbolicUnknown(
 
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {"kind": "unknown"}
+
+
+@attr.s(frozen=True, auto_attribs=True, slots=True)
+class SymbolicNodeHandle(SymbolicString):
+    namespace: SymbolicString
+
+    def to_dict(self) -> t.Dict[str, t.Any]:
+        return {
+            "kind": "node-handle",
+            "namespace": self.namespace.to_dict(),
+        }
+
+    def eval(self, context: SymbolicContext) -> t.Any:
+        return self.namespace.eval(context)
 
 
 class SymbolicStatement(abc.ABC):
