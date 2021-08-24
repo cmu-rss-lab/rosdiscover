@@ -343,7 +343,7 @@ class SymbolicProgram:
     ----------
     entrypoint: str
         The name of the function that serves as the entry point for the
-        proagram.
+        program.
     functions: t.Mapping[str, SymbolicFunction]
         The symbolic functions within this program, indexed by name.
 
