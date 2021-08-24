@@ -517,12 +517,23 @@ class LibHectorGazeboROSIMUPlugin(GazeboPlugin):
         xml_robot_namespace = xml.find('robotNamespace')
         xml_service_name = xml.find('serviceName')
 
-        topic_name: str = xml_topic_name.text if xml_topic_name and xml_service_name.text else 'imu'
-        bias_topic_name: str = (xml_bias_topic_name
-                                if xml_bias_topic_name and xml_bias_topic_name.text else topic_name) + '/bias'
-        namespace: str = xml_robot_namespace.text if xml_robot_namespace and xml_robot_namespace.text else '/'
-        service_name: str = xml_service_name.text if xml_service_name and xml_service_name.text \
-            else (topic_name + "/calibrate")
+        topic_name = 'imu'
+        if xml_topic_name:
+            assert xml_topic_name.text
+            topic_name = xml_topic_name.text
+        bias_topic_name = topic_name + '/bias'
+        if xml_bias_topic_name:
+            assert xml_bias_topic_name.text
+            bias_topic_name = xml_bias_topic_name.text + "/bias"
+        namespace = '/'
+        if xml_robot_namespace:
+            assert xml_robot_namespace.text
+            namespace = xml_robot_namespace.text
+
+        service_name = topic_name + "/calibrate"
+        if xml_service_name:
+            assert xml_service_name.text
+            service_name = xml_service_name.text
 
         return LibHectorGazeboROSIMUPlugin(
             imu_topic=topic_name,
