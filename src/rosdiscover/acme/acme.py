@@ -83,6 +83,7 @@ PROVIDER_PORT = """     port {port_name} : ServiceProviderPortT = new ServicePro
     }};
     """
 REQUIRER_PORT = """     port {port_name} : ServiceClientPortT = new ServiceClientPortT extended with {{
+        property name : string = "{service}";
         property svc_type : string = "{svc_type}";
         property persistency : boolean = {persistence};
     }};
@@ -285,13 +286,13 @@ class AcmeGenerator:
 
             for caller in [s for s in c.uses if not self._ignore(s.name)]:
                 service_name = caller.name
-                pname = self.to_acme_name(service_name) + "_call"
+                pname = f"{AcmeGenerator.to_acme_name(service_name)}_call"
                 fmt = caller.format
                 port = REQUIRER_PORT.format(port_name=pname, svc_type=fmt,
                                             service=service_name, persistence="false")
                 ports.append(port)
                 update_service_conn(service_conns, service_name,
-                                    "%caller.%caller" % (comp_name, pname),
+                                    f"{comp_name}.{pname}",
                                     False)
 
             for action in [a for a in c.action_servers if not self._ignore(a.name)]:
@@ -299,7 +300,7 @@ class AcmeGenerator:
                 fmt = action.format
                 pname = f"{AcmeGenerator.to_acme_name(name)}_srvr"
                 port = ACTION_SERVER_PORT.format(port_name=pname,
-                                                 action_type=name)
+                                                 action_type=fmt)
                 ports.append(port)
                 update_action_conn(action_conns,
                                    name,
@@ -311,7 +312,7 @@ class AcmeGenerator:
                 fmt = action.format
                 pname = f"{AcmeGenerator.to_acme_name(name)}_cli"
                 port = ACTION_CLIENT_PORT.format(port_name=pname,
-                                                 action_type=name)
+                                                 action_type=fmt)
                 ports.append(port)
                 update_action_conn(action_conns,
                                    name,
