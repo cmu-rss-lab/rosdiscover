@@ -83,6 +83,7 @@ def generate_acme(args) -> None:
     to_ignore = []
     if args.ignore_list:
         to_ignore = [line.rstrip() for line in args.ignore_list]
+    to_ignore.append('\\unknown')
 
     acme_gen = AcmeGenerator(node_summaries, args.acme, args.jar, things_to_ignore=to_ignore)
     acme = acme_gen.generate_acme()
