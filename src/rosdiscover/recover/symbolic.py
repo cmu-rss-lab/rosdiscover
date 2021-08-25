@@ -90,6 +90,7 @@ class SymbolicContext:
 class SymbolicValueType(enum.Enum):
     BOOL = "bool"
     INTEGER = "integer"
+    NODE_HANDLE = "node-handle"
     STRING = "string"
     UNSUPPORTED = "unsupported"
 
@@ -101,6 +102,7 @@ class SymbolicValueType(enum.Enum):
         name_to_type = {
             "bool": cls.BOOL,
             "integer": cls.INTEGER,
+            "node-handle": cls.NODE_HANDLE,
             "string": cls.STRING,
             "unsupported": cls.UNSUPPORTED,
         }
