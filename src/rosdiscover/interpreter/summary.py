@@ -81,7 +81,7 @@ class NodeSummary:
         nodelet = dict.get('nodelet', False)
         filename = dict.get('filename', '')
         placeholder = dict.get('placeholder', False)
-        reads = [(p['name'], p['implicit']) for p in dict.get('reads', [])]
+        reads = [(p['name'], p['dynamic']) for p in dict.get('reads', [])]
         writes = dict.get('writes', [])
         pubs = [Topic(name=t['name'], format=t['format'], implicit=t.get('implicit', False))
                 for t in dict.get('pubs', [])]
