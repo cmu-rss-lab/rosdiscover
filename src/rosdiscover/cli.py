@@ -24,12 +24,18 @@ CONFIG_HELP = """R|A YAML file defining the configuration.
 def recover(args: argparse.Namespace) -> None:
     """Provides static recovery of dynamic architecture models."""
     config = Config.from_yaml_string(args.config)
-    for path in args.restricted_to:
+    for path in args.restrict_to:
         if not os.path.isabs(path):
             raise ValueError(f"Restricted path [{path}] should be absolute")
     with NodeRecoveryTool.for_config(config) as tool:
         print(f"spun up the container: {tool}")
-        tool.recover(args.package, args.node, args.entry, args.sources, args.restrict_to)
+        tool.recover(
+            package_name=args.package,
+            node_name=args.node,
+            entrypoint=args.entry,
+            sources=args.sources,
+            path_restrictions=args.restrict_to,
+        )
 
 
 def _launch(config: Config) -> SystemSummary:
@@ -141,6 +147,12 @@ def main() -> None:
         help='statically recovers the dynamic architecture of a given node.',
         formatter_class=MultiLineFormatter,
     )
+    p.add_argument(
+        '--restrict-to',
+        action='append',
+        dest='restrict_to',
+        help='the absolute container paths to which the static analysis should be restricted'
+    )
     p.add_argument('config', type=argparse.FileType('r'), help=CONFIG_HELP)
     p.add_argument('package', type=str, help='the name of the package to which the node belongs')
     p.add_argument('node', type=str, help='the name of the node')
@@ -149,13 +161,6 @@ def main() -> None:
         'sources',
         nargs='+',
         help='the paths of the translation unit source files for this node, relative to the package directory',
-    )
-    p.add_argument(
-        'restrict-to',
-        nargs='+',
-        type=str,
-        default=[],
-        help='the absoulate container paths to restrict static analysis to'
     )
     p.set_defaults(func=recover)
 
