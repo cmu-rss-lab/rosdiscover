@@ -28,7 +28,7 @@ def pointgrey_camera_driver(c: NodeContext) -> None:
     c.read("video_mode", "format7_mode0", dynamic=True)
     c.read("frame_rate", 7, dynamic=True)
     c.read("auto_exposure", True, dynamic=True)
-    c.read("exposure",1.35, dynamic=True)
+    c.read("exposure", 1.35, dynamic=True)
     c.read("auto_shutter", True, dynamic=True)
     c.read("shutter_speed", 0.03, dynamic=True)
     c.read("auto_gain", True, dynamic=True)
