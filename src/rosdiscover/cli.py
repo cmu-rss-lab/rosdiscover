@@ -4,6 +4,7 @@ Provides a simple command-line interface.
 """
 import argparse
 import os
+import typing as t
 
 from loguru import logger
 import pkg_resources
@@ -137,7 +138,7 @@ class MultiLineFormatter(argparse.HelpFormatter):
         return argparse.HelpFormatter._split_lines(self, text, width)
 
 
-def main() -> None:
+def main(args: t.Optional[t.Sequence[str]] = None) -> None:
     logger.enable('roswire')
     parser = argparse.ArgumentParser(description=DESC)
     subparsers = parser.add_subparsers()
@@ -228,6 +229,6 @@ def main() -> None:
                    '{Config.__doc__}')
     p.set_defaults(func=observe)
 
-    args = parser.parse_args()
-    if 'func' in args:
-        args.func(args)
+    parsed_args = parser.parse_args(args)
+    if 'func' in parsed_args:
+        parsed_args.func(parsed_args)
