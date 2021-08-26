@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
-from ..interpreter import model
+from roswire import ROSDistribution
+
+from ..interpreter import model, NodeContext
 
 
 @model('autorally_control', 'lap_stats')
-def lap_stats(c):
+def lap_stats(c: NodeContext) -> None:
     # For indigo and kinetic
     prefix = "/stat_tracker/controller_type"
     c.read(f"{prefix}/hz")
@@ -26,5 +28,8 @@ def lap_stats(c):
     c.read(f"{prefix}/map_path")
 
     c.pub('lap_stats', 'autorally_msgs/pathIntegralStats')
-    c.sub('/pose_estimate', 'nav_msgs/Odometry')
+    if c.ros_distro < ROSDistribution.MELODIC:
+        c.sub('/pose_estimate', 'nav_msgs/Odometry')
+    else:
+        c.sub('/mppi_controller/subscribedPose', 'nav_msgs/Odometry')
 
