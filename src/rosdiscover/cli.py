@@ -40,7 +40,7 @@ def recover(args: argparse.Namespace) -> None:
         if args.save_to:
             print(f"saving recovered model to disk: {args.save_to}")
             model.save(args.save_to)
-            print(f"saved recovered model to disk")
+            print("saved recovered model to disk")
 
 
 def _launch(config: Config) -> SystemSummary:
