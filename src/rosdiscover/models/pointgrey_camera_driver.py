@@ -6,7 +6,8 @@ from ..interpreter import model, NodeContext
 def pointgrey_camera_driver(c: NodeContext) -> None:
     c.mark_nodelet()
 
-    # How to derive dynamic parameters from: https://github.com/ros-drivers/pointgrey_camera_driver/blob/1c71a654bea94f59396361cd735ef718f8f07011/pointgrey_camera_driver/src/nodelet.cpp#L270
+    # How to derive dynamic parameters from:
+    # https://github.com/ros-drivers/pointgrey_camera_driver/blob/1c71a654bea94f59396361cd735ef718f8f07011/pointgrey_camera_driver/src/nodelet.cpp#L270
     c.read('serial', 0)
     c.read('packet_size', 1400)
     c.read('auto_packet_size', True)
@@ -23,4 +24,4 @@ def pointgrey_camera_driver(c: NodeContext) -> None:
     c.read('max_acceptable_delay', 0.2)
 
     c.pub('image_raw', 'sensor_msgs/Image')
-    c.put('image', 'wfov_camera_msgs/WFOVImage')
+    c.pub('image', 'wfov_camera_msgs/WFOVImage')
