@@ -20,11 +20,13 @@ from .call import (
 from .symbolic import (
     Concatenate,
     StringLiteral,
+    SymbolicArg,
     SymbolicAssignment,
     SymbolicCompound,
     SymbolicFunction,
     SymbolicFunctionCall,
     SymbolicNodeHandle,
+    SymbolicNodeHandleImpl,
     SymbolicParameter,
     SymbolicProgram,
     SymbolicStatement,
@@ -51,6 +53,10 @@ class SymbolicProgramLoader:
         assert dict_["kind"] == "string-literal"
         return StringLiteral(dict_["literal"])
 
+    def _load_arg(self, dict_: t.Mapping[str, t.Any]) -> SymbolicArg:
+        assert dict_["kind"] == "arg"
+        return SymbolicArg(dict_["name"])
+
     def _load_variable_reference(self, dict_: t.Mapping[str, t.Any]) -> SymbolicVariableReference:
         assert dict_["kind"] == "variable-reference"
         type_ = SymbolicValueType.from_name(dict_["type"])
@@ -62,7 +68,7 @@ class SymbolicProgramLoader:
     def _load_node_handle(self, dict_: t.Mapping[str, t.Any]) -> SymbolicNodeHandle:
         assert dict_["kind"] == "node-handle"
         namespace = self._load_string(dict_["namespace"])
-        return SymbolicNodeHandle(namespace)
+        return SymbolicNodeHandleImpl(namespace)
 
     def _load_string(self, dict_: t.Mapping[str, t.Any]) -> SymbolicString:
         value = self._load_value(dict_)
@@ -73,6 +79,8 @@ class SymbolicProgramLoader:
         kind: str = dict_["kind"]
         if kind == "concatenate":
             return self._load_concatenate(dict_)
+        elif kind == "arg":
+            return self._load_arg(dict_)
         elif kind == "string-literal":
             return self._load_string_literal(dict_)
         elif kind == "node-handle":

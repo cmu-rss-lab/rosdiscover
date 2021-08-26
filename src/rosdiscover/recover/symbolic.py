@@ -4,11 +4,13 @@ from __future__ import annotations
 __all__ = (
     "Concatenate",
     "StringLiteral",
+    "SymbolicArg",
     "SymbolicAssignment",
     "SymbolicBool",
     "SymbolicCompound",
     "SymbolicFunction",
     "SymbolicNodeHandle",
+    "SymbolicNodeHandleImpl",
     "SymbolicParameter",
     "SymbolicProgram",
     "SymbolicStatement",
@@ -58,9 +60,17 @@ class SymbolicContext:
             node=node,
         )
 
-    def for_function_call(self, function: SymbolicFunction) -> SymbolicContext:
+    def for_function_call(
+        self,
+        function: SymbolicFunction,
+        args: t.Optional[t.Mapping[str, t.Any]] = None,
+    ) -> SymbolicContext:
         """Creates a new symbolic context that represents the scope of a function call."""
-        return SymbolicContext(self.program, function, self.node)
+        context = SymbolicContext(self.program, function, self.node)
+        args = args or {}
+        for arg_name, arg_val in args.items():
+            self.store(arg_name, arg_val)
+        return context
 
     def load(self, variable: str) -> t.Any:
         """Loads the value of a given variable.
@@ -171,10 +181,15 @@ class SymbolicBool(SymbolicValue, abc.ABC):
     """Represents a symbolic boolean value."""
 
 
+class SymbolicNodeHandle(SymbolicValue, abc.ABC):
+    """Represents a symbolic node handle."""
+
+
 class SymbolicUnknown(
     SymbolicInteger,
     SymbolicBool,
     SymbolicString,
+    SymbolicNodeHandle,
     SymbolicValue,
 ):
     """Represents an unknown symbolic value."""
@@ -186,8 +201,10 @@ class SymbolicUnknown(
         return {"kind": "unknown"}
 
 
+# FIXME this is the effect of a bad class hierarchy :-(
+# I'll fix this up later
 @attr.s(frozen=True, auto_attribs=True, slots=True)
-class SymbolicNodeHandle(SymbolicString):
+class SymbolicNodeHandleImpl(SymbolicNodeHandle):
     namespace: SymbolicString
 
     def to_dict(self) -> t.Dict[str, t.Any]:
@@ -198,6 +215,26 @@ class SymbolicNodeHandle(SymbolicString):
 
     def eval(self, context: SymbolicContext) -> t.Any:
         return self.namespace.eval(context)
+
+
+@attr.s(frozen=True, auto_attribs=True, slots=True)
+class SymbolicArg(
+    SymbolicInteger,
+    SymbolicBool,
+    SymbolicString,
+    SymbolicNodeHandle,
+    SymbolicValue,
+):
+    name: str
+
+    def to_dict(self) -> t.Dict[str, t.Any]:
+        return {
+            "kind": "arg",
+            "name": self.name,
+        }
+
+    def eval(self, context: SymbolicContext) -> t.Any:
+        return context.load(self.name)
 
 
 class SymbolicStatement(abc.ABC):
@@ -295,8 +332,12 @@ class SymbolicFunctionCall(SymbolicStatement):
         }
 
     def eval(self, context: SymbolicContext) -> None:
+        args: t.Dict[str, t.Any] = {}
+        for arg_name, arg_symbolic_value in self.arguments.items():
+            args[arg_name] = arg_symbolic_value.eval(context)
+
         function = context.program.functions[self.callee]
-        context = context.for_function_call(function)
+        context = context.for_function_call(function, args)
         function.body.eval(context)
 
 
