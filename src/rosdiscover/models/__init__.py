@@ -56,3 +56,4 @@ from . import twist_mux
 from . import velocity_smoother
 from . import pointgrey_camera_driver
 from . import lap_stats
+from . import rostopic
