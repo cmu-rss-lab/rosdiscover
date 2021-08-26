@@ -32,4 +32,3 @@ def lap_stats(c: NodeContext) -> None:
         c.sub('/pose_estimate', 'nav_msgs/Odometry')
     else:
         c.sub('/mppi_controller/subscribedPose', 'nav_msgs/Odometry')
-
