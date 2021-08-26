@@ -34,6 +34,14 @@ ACTION_CONNECTOR = """  connector {conn_name} : ActionServerConnT = new ActionSe
     {roles}
     }};
    """
+PARAMETER_READ_CONNECTOR = """   connector {conn_name} : ParameterReadServiceConnT = new ParameterReadServiceConnT extended with {{
+    {roles}
+    }};
+    """
+PARAMETER_WRITE_CONNECTOR = """   connector {conn_name} : ParameterWriteServiceConnT = new ParameterWriteServiceConnT extended with {{
+    {roles}
+    }};
+    """
 NODE_COMPONENT = """   component {comp_name} : ROSNodeCompT = new ROSNodeCompT extended with {{
         {ports}
         property name = "{node_name}";
@@ -47,6 +55,12 @@ NODE_PLACEHOLDER_COMPONENT = """   component {comp_name} : ROSNodeCompT, Placeho
         property launchedBy = "{filename}";
     }};
 """
+PARAMETER_SERVER_COMPONENT = """   component parameter_server : ParameterServerT = new ParameterServerT extended with {{
+        {ports}
+        property parameters = {param_set};
+    }};
+"""
+
 ATTACHMENT = "  attachment {comp}.{port} to {conn}.{role};"
 SERVICE_ATTACHMENT = "  attachment {qualified_port} to {conn}.{role};"
 SUBSCRIBER_ROLE = """    role {role_name} : ROSTopicSubscriberRoleT = new ROSTopicSubscriberRoleT;
@@ -61,6 +75,22 @@ ACTION_CLIENT_ROLE = """      role {role_name} : ROSActionCallerRoleT = new ROSA
     """
 ACTION_SERVER_ROLE = """      role {role_name} : ROSActionResponderRoleT = new ROSActionResponderRoleT;
     """
+PARAMETER_READ_SERVER_ROLE = """      role {role_name} : ParameterReadResponderRoleT = new ParameterReadResponderRoleT extended with {{
+        property parameter = [name="{param_name}"; type_="";];
+    }};
+    """
+PARAMETER_WRITE_SERVER_ROLE = """      role {role_name} : ParameterWriteResponderRoleT = new ParameterWriteResponderRoleT extended with {{
+        property parameter = [name="{param_name}"; type_="";];
+    }};
+   """
+PARAMETER_READ_CLIENT_ROLE = """      role {role_name} : ParameterReadCallerRoleT = new ParameterReadCallerRoleT extended with {{
+        property parameter = [name="{param_name}"; type_="";];
+    }};
+    """
+PARAMETER_WRITE_CLIENT_ROLE = """      role {role_name} : ParameterWriteCallerRoleT = new ParameterWriteCallerRoleT extended with {{
+        property parameter = [name="{param_name}"; type_="";];
+    }};
+   """
 TOPIC_PORT = """     port {port_name} : ${port_type} = new ${port_type} extended with {{
         property msg_type = "{msg_type}";
         property topic = "{topic}";
@@ -96,7 +126,23 @@ ACTION_SERVER_PORT = """    port {port_name}: ActionServerPortT = new ActionServ
         property action_type : string = "{action_type}";
     }};
     """
-
+PARAMETER_READ_CLIENT_PORT = """    port {port_name}: ParameterReadServiceCallerPortT = new ParameterReadServiceCallerPortT extended with {{
+        property parameter : ParameterT = [name = "{param_name}"; type_ = "";];
+        property dynamic : boolean = {dynamic};
+    }};
+    """
+PARAMETER_WRITE_CLIENT_PORT = """    port {port_name}: ParameterWriteServiceCallerPortT = new ParameterWriteServiceCallerPortT extended with {{
+        property parameter : ParameterT = [name = "{param_name}"; type_ = "";];
+    }};
+    """
+PARAMETER_READ_SERVER_PORT = """    port {port_name}: ParameterReadServiceProviderPortT = new ParameterReadServiceProviderPortT extended with {{
+        property parameter : ParameterT = [name = "{param_name}"; type_ = "";];
+    }};
+    """
+PARAMETER_WRITE_SERVER_PORT = """    port {port_name}: ParameterWriteServiceProviderPortT = new ParameterWriteServiceProviderPortT extended with {{
+        property parameter : ParameterT = [name = "{param_name}"; type_ = "";];
+    }};
+    """
 
 def update_service_conn(conns, service, port_qualified, is_provider) -> None:
     if service in conns:
@@ -123,6 +169,26 @@ def update_action_conn(conns, action, port_qualified, is_server) -> None:
         a['clients'].add(port_qualified)
 
 
+def update_param_read_conn(conns, param, port_qualified) -> None:
+    r = {}
+    if param in conns:
+        r = conns[param]
+    else:
+        r = {'name': param, "clients": set()}
+        conns[param] = r
+    r['clients'].add(port_qualified)
+
+
+def update_param_write_conn(conns, param, port_qualified) -> None:
+    w = {}
+    if param in conns:
+        w = conns[param]
+    else:
+        w = {'name': param, "clients": set()}
+        conns[param] = w
+    w['clients'].add(port_qualified)
+
+
 @attr.s(slots=True, auto_attribs=True)
 class _TopicInformation:
     details: Topic
@@ -144,6 +210,12 @@ class _ActionInformation:
     clients: Set[str] = attr.ib(factory=set)
 
 
+@attr.s(slots=True, auto_attribs=True)
+class _ParamInformation:
+    param: str
+    clients: set[str] = attr.ib(factory=set)
+
+
 class AcmeGenerator:
     def __init__(self,
                  nodes: Iterable[NodeSummary],
@@ -158,14 +230,20 @@ class AcmeGenerator:
         self.__to_ignore = things_to_ignore if things_to_ignore is not None else []
 
     def get_components_and_connectors(self) \
-            -> Tuple[List[NodeSummary],
-                     Dict[str, _TopicInformation],
-                     Dict[str, _ServiceInformation],
-                     Dict[str, _ActionInformation]]:
+            -> Tuple[
+                List[NodeSummary],
+                Dict[str, _TopicInformation],
+                Dict[str, _ServiceInformation],
+                Dict[str, _ActionInformation],
+                Dict[str, _ParamInformation],
+                Dict[str, _ParamInformation],
+               ]:
         components: List[NodeSummary] = []
         topics: Dict[str, _TopicInformation] = {}
         services: Dict[str, _ServiceInformation] = {}
         actions: Dict[str, _ActionInformation] = {}
+        param_readers: Dict[str, _ParamInformation] = {}
+        param_writers: Dict[str, _ParamInformation] = {}
 
         for node in self.__nodes:
             for pub in [t for t in node.pubs if
@@ -217,8 +295,23 @@ class AcmeGenerator:
                     action = _ActionInformation(details=action_object)
                     actions[action_name] = action
                 action.clients.add(node.name)
+            for read in [r for r in node.reads if not self._ignore(r[0])]:
+                param_name = read[0]
+                if param_name in param_readers:
+                    param_reader = param_readers[param_name]
+                else:
+                    param_reader = _ParamInformation(param=param_name)
+                    param_readers[param_name] = param_reader
+                param_reader.clients.add(node.name)
+            for write in [w for w in node.writes if not self._ignore(w)]:
+                if write in param_writers:
+                    param_reader = param_writers[write]
+                else:
+                    param_reader = _ParamInformation(param=write)
+                    param_writers[write] = param_reader
+                param_reader.clients.add(node.name)
             components.append(node)
-        return components, topics, services, actions
+        return components, topics, services, actions, param_readers, param_writers
 
     def _ignore(self, name: str) -> bool:
         ignore: bool = False
@@ -236,7 +329,7 @@ class AcmeGenerator:
         return name.replace("/", "_").replace('.', "_")
 
     def generate_acme(self) -> str:
-        components, topics, services, actions = \
+        components, topics, services, actions, reads, writes = \
             self.get_components_and_connectors()
 
         system_name = "RobotSystem" if self.__acme_file is None else '_'.join(
@@ -248,6 +341,8 @@ class AcmeGenerator:
         component_strs: List[str] = []
         service_conns: Dict[str, dict] = {}
         action_conns: Dict[str, dict] = {}
+        param_read_conns: Dict[str, dict] = {}
+        param_write_conns: Dict[str, dict] = {}
         attachments_to_topic: Dict[str, List[str]] = {}
         for c in components:
             ports = []
@@ -318,6 +413,23 @@ class AcmeGenerator:
                                    name,
                                    f"{comp_name}.{pname}",
                                    False)
+
+            for param in [p for p in c.reads if not self._ignore(p[0])]:
+                name = param[0]
+                pname = f"{AcmeGenerator.to_acme_name(name)}_read_cli"
+                port = PARAMETER_READ_CLIENT_PORT.format(port_name=pname,
+                                                         param_name=name,
+                                                         dynamic="true" if param[1] else "false")
+                ports.append(port)
+                update_param_read_conn(param_read_conns, name, f"{comp_name}.{pname}")
+
+            for param in [p for p in c.writes if not self._ignore(p)]:
+                name = param
+                pname = f"{AcmeGenerator.to_acme_name(name)}_write_cli"
+                port = PARAMETER_WRITE_CLIENT_PORT.format(port_name=pname, param_name=name)
+                ports.append(port)
+                update_param_write_conn(param_write_conns, name, f"{comp_name}.{pname}")
+
             component_template: str = NODE_COMPONENT if not c.placeholder else NODE_PLACEHOLDER_COMPONENT
             comp = component_template.format(comp_name=comp_name,
                                              ports='\n'.join(ports),
@@ -327,15 +439,79 @@ class AcmeGenerator:
 
         acme = acme + "\n".join(component_strs)
 
+        acme += self._generate_parameter_server(param_read_conns, param_write_conns)
         connector_strs: List[str] = []
         self._process_topics(topics, connector_strs, attachments, attachments_to_topic)
         self._process_services(service_conns, attachments, connector_strs)
         self._process_actions(action_conns, attachments, connector_strs)
+        self._process_parameter_reads(param_read_conns, attachments, connector_strs)
+        self._process_parameter_writes(param_write_conns, attachments, connector_strs)
 
         acme = acme + "\n".join(connector_strs)
         acme = acme + "\n".join(attachments) + "}"
         self.generate_acme_file(acme)
         return acme
+
+    def _generate_parameter_server(
+        self,
+        param_read_conns: Dict[str, Dict[str,str]],
+        param_write_conns: Dict[str, Dict[str, str]]
+    ) -> str:
+        param_ports = []
+        param_prop = "{"
+        for param in param_write_conns:
+            param_prop = param_prop + f'[name = "{param}"; type_ = "";],'
+            port_name = f"{AcmeGenerator.to_acme_name(param)}_write_srv"
+            param_ports.append(PARAMETER_WRITE_SERVER_PORT.format(port_name=port_name, param_name=param))
+        param_prop = param_prop[0:len(param_prop)-1]  # strip trailing comma
+        param_prop += "}"
+
+        for param in param_read_conns:
+            port_name = f"{AcmeGenerator.to_acme_name(param)}_read_srv"
+            param_ports.append(PARAMETER_READ_SERVER_PORT.format(port_name=port_name, param_name=param))
+
+        return PARAMETER_SERVER_COMPONENT.format(param_set=param_prop, ports="\n".join(param_ports))
+
+    def _process_parameter_reads(self,
+                                 read_conns: Dict[str, Any],
+                                 attachments: List[str],
+                                 connector_strs: List[str]) -> None:
+        for param, ports in read_conns.items():
+            for p in ports['clients']:
+                cname = f"{AcmeGenerator.to_acme_name(p)}_read_conn"
+                caller = PARAMETER_READ_CLIENT_ROLE.format(role_name="caller", param_name=param)
+                responder = PARAMETER_READ_SERVER_ROLE.format(role_name="responder", param_name=param)
+                connector_strs.append(PARAMETER_READ_CONNECTOR.format(
+                    conn_name=cname, roles="\n".join((caller, responder))
+                ))
+                comp = p.split('.')[0]
+                port = p.split('.')[1]
+                attachments.append(ATTACHMENT.format(comp=comp, port=port, conn=cname, role="caller"))
+                attachments.append(ATTACHMENT.format(
+                    comp="parameter_server",
+                    port=f"{AcmeGenerator.to_acme_name(param)}_read_srv",
+                    conn=cname, role="responder"))
+
+    def _process_parameter_writes(self,
+                                  write_conns: Dict[str, Any],
+                                  attachments: List[str],
+                                  connector_strs: List[str]) -> None:
+        for param, ports in write_conns.items():
+            for p in ports['clients']:
+                cname = f"{AcmeGenerator.to_acme_name(p)}_write_conn"
+                caller = PARAMETER_WRITE_CLIENT_ROLE.format(role_name="caller", param_name=param)
+                responder = PARAMETER_WRITE_SERVER_ROLE.format(role_name="responder", param_name=param)
+                connector_strs.append(
+                    PARAMETER_WRITE_CONNECTOR.format(conn_name=cname, roles="\n".join((caller, responder)))
+                )
+                comp = p.split('.')[0]
+                port = p.split('.')[1]
+                attachments.append(ATTACHMENT.format(comp=comp, port=port, conn=cname, role="caller"))
+                attachments.append(ATTACHMENT.format(
+                    comp="parameter_server",
+                    port=f"{AcmeGenerator.to_acme_name(param)}_write_srv",
+                    conn=cname, role="responder"
+                ))
 
     def _process_actions(self,
                          action_conns: Dict[str, Any],
@@ -469,3 +645,5 @@ class AcmeGenerator:
                 logger.error(run.stderr)
         finally:
             os.remove(jf)
+
+
