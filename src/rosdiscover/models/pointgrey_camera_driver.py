@@ -26,10 +26,10 @@ def pointgrey_camera_driver(c: NodeContext) -> None:
     # Dynamic parameters read from
     # https://github.com/ros-drivers/pointgrey_camera_driver/blob/1c71a654bea94f59396361cd735ef718f8f07011/pointgrey_camera_driver/cfg/PointGrey.cfg
     c.read("video_mode", "format7_mode0", dynamic=True)
-    c.read("frame_rate",  7, dynamic=True)
+    c.read("frame_rate", 7, dynamic=True)
     c.read("auto_exposure", True, dynamic=True)
     c.read("exposure",1.35, dynamic=True)
-    c.read("auto_shutter",  True, dynamic=True)
+    c.read("auto_shutter", True, dynamic=True)
     c.read("shutter_speed", 0.03, dynamic=True)
     c.read("auto_gain", True, dynamic=True)
     c.read("gain", 0, dynamic=True)
@@ -46,7 +46,7 @@ def pointgrey_camera_driver(c: NodeContext) -> None:
     c.read("format7_y_offset", 0, dynamic=True)
     c.read("format7_color_coding", "raw8", dynamic=True)
     c.read("enable_trigger", False, dynamic=True)
-    c.read("trigger_mode",  "mode0", dynamic=True)
+    c.read("trigger_mode", "mode0", dynamic=True)
     c.read("trigger_source", "gpio0", dynamic=True)
     c.read("trigger_polarity", 0, dynamic=True)
     c.read("enable_trigger_delay", False, dynamic=True)
