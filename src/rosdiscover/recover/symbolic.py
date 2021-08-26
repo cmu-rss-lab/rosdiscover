@@ -181,7 +181,7 @@ class SymbolicBool(SymbolicValue, abc.ABC):
     """Represents a symbolic boolean value."""
 
 
-class SymbolicNodeHandle(SymbolicValue, abc.ABC):
+class SymbolicNodeHandle(SymbolicString, abc.ABC):
     """Represents a symbolic node handle."""
 
 
