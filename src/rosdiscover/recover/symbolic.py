@@ -181,15 +181,15 @@ class SymbolicBool(SymbolicValue, abc.ABC):
     """Represents a symbolic boolean value."""
 
 
-class SymbolicNodeHandle(SymbolicString, abc.ABC):
+class SymbolicNodeHandle(SymbolicString, SymbolicValue, abc.ABC):
     """Represents a symbolic node handle."""
 
 
 class SymbolicUnknown(
+    SymbolicNodeHandle,
     SymbolicInteger,
     SymbolicBool,
     SymbolicString,
-    SymbolicNodeHandle,
     SymbolicValue,
 ):
     """Represents an unknown symbolic value."""
@@ -219,10 +219,10 @@ class SymbolicNodeHandleImpl(SymbolicNodeHandle):
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class SymbolicArg(
+    SymbolicNodeHandle,
     SymbolicInteger,
     SymbolicBool,
     SymbolicString,
-    SymbolicNodeHandle,
     SymbolicValue,
 ):
     name: str
