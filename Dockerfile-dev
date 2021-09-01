@@ -1,10 +1,12 @@
-FROM alpine:3.7
+FROM alpine:3.9
 RUN apk add --no-cache \
       git \
-      python3 \
       python3-dev \
       libffi-dev \
+      musl-dev \
       libressl-dev \
+      openssl-dev \
+      cargo \
       py3-pip \
       build-base \
       docker \
@@ -16,8 +18,9 @@ RUN apk add --no-cache \
  && rm -rf /tmp/*
 
 WORKDIR /code
-COPY requirements.dev.txt /tmp
-RUN pip3 install -r /tmp/requirements.dev.txt && rm -f /tmp/*
+ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
+RUN /bin/sh -c python -m ensurepip --upgrade
+RUN CRYPTOGRAPHY_DONT_BUILD_RUST=1 pip3 install --no-binary cryptography pipenv cryptography
 
 ENTRYPOINT ["/bin/bash"]
 
