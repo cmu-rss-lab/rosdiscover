@@ -228,6 +228,18 @@ class NodeRecoveryTool:
             )
         return compile_commands_path
 
+    def _sources_via_cmake(self, package: roswire.common.Package, node_name: str) -> t.Collection[str]:
+        assert self._app_instance
+        files = self._app_instance.files
+        workspace = self._find_package_workspace(package)
+        print(f"{workspace=}")
+        cmakelists_path = os.path.join(workspace, 'CMakeLists.txt')
+
+        if not files.exists(cmakelists_path):
+            raise FileNotFoundError(
+                f"failed to find CMakelists.txt at expected location: {workspace}"
+            )
+
     def recover(
         self,
         package_name: str,
@@ -267,6 +279,9 @@ class NodeRecoveryTool:
             package = self._app.description.packages[package_name]
         except KeyError as err:
             raise ValueError(f"no package found with given name: {package_name}") from err
+
+        if not sources:
+            sources = self._sources_via_cmake(package, node_name)
 
         # ensure that no absolute paths are given
         if any(os.path.isabs(path) for path in sources):
