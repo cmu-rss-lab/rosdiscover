@@ -3,6 +3,7 @@ import typing as t
 import xml.dom.minidom as dom
 
 import attr
+from loguru import logger
 
 
 @attr.s(frozen=True, auto_attribs=True)
@@ -21,8 +22,12 @@ class NodeletInfo:
     @classmethod
     def from_nodelet_xml(cls, contents: str) -> 'NodeletInfo':
         libraries: t.Set['NodeletLibrary'] = set()
+        contents = "<root>\n" + contents + "\n</root>"
+        logger.debug(f"nodelet_plugin_xml = {contents=}")
         tree = dom.parseString(contents)
-        libraries_dom = NodeletInfo.get_xml_nodes_by_name('library', tree)
+        root = NodeletInfo.get_xml_nodes_by_name('root', tree)[0]
+        libraries_dom = NodeletInfo.get_xml_nodes_by_name('library', root)
+        logger.debug(f"{len(libraries_dom)}")
         for library_dom in libraries_dom:
             path = library_dom.getAttribute('path')
             class_doms = NodeletInfo.get_xml_nodes_by_name('class', library_dom)
