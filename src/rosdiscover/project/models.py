@@ -6,6 +6,7 @@ import types
 import typing as t
 
 import attr
+from loguru import logger
 
 from ..config import Config
 from ..interpreter.model import NodeModel, HandwrittenModel, PlaceholderModel
@@ -60,30 +61,36 @@ class ProjectModels:
 
     def _recover(self, package: str, node: str) -> t.Optional[NodeModel]:
         # have we already recovered this model?
+        print(f"Recovering {package}/{node}")
         if self._recovered_models.contains(self.config, package, node):
             return self._recovered_models.fetch(self.config, package, node)
 
         # is this node model irrecoverable?
         if (package, node) not in self.config.node_sources:
-            return None
+            try:
+                model = self._recovery_tool.recover_using_cmakelists(package, node)
+            except ValueError:
+                logger.error(f"No 'CMakeLists.txt' for {package} (looking for {node}")
+                return None
+        else:
+            # TODO we need to know the sources for this node
+            # - eventually, we want this to come from CMakeLists
+            # - for now, we can manually specify these as part of the configuration
+            node_info = self.config.node_sources[(package, node)]
 
-        # TODO we need to know the sources for this node
-        # - eventually, we want this to come from CMakeLists
-        # - for now, we can manually specify these as part of the configuration
-        node_info = self.config.node_sources[(package, node)]
-
-        # use the recovery tool to recover the model before saving it to the database
-        model = self._recovery_tool.recover(
-            package,
-            node,
-            node_info.entrypoint,
-            node_info.sources,
-            node_info.restrict_to_paths
-        )
+            # use the recovery tool to recover the model before saving it to the database
+            model = self._recovery_tool.recover(
+                package,
+                node,
+                node_info.entrypoint,
+                node_info.sources,
+                node_info.restrict_to_paths
+            )
         self._recovered_models.store(model)
         return model
 
     def _fetch_handwritten(self, package: str, node: str) -> t.Optional[NodeModel]:
+        print(f"Handwritten {package}/{node}")
         if HandwrittenModel.exists(package, node):
             return HandwrittenModel.fetch(package, node)
         return None
