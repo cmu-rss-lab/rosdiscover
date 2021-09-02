@@ -15,6 +15,7 @@ import roswire
 
 from .loader import SymbolicProgramLoader
 from .model import RecoveredNodeModel
+from .cmake import PackageSourceInfo, Language
 from .symbolic import SymbolicProgram
 from ..config import Config
 
@@ -231,14 +232,24 @@ class NodeRecoveryTool:
     def _sources_via_cmake(self, package: roswire.common.Package, node_name: str) -> t.Collection[str]:
         assert self._app_instance
         files = self._app_instance.files
-        workspace = self._find_package_workspace(package)
-        print(f"{workspace=}")
-        cmakelists_path = os.path.join(workspace, 'CMakeLists.txt')
+        cmake_info = PackageSourceInfo.from_package(package, files)
+        if node_name not in cmake_info.executables:
+            raise ValueError(f"{node_name} is not in the CMakeLists.txt of package '{package.name}")
+        node_source_info = cmake_info.executables[node_name]
+        if node_source_info.language != Language.CXX:
+            raise NotImplementedError("Can only recover node information for C++ nodes")
+        logger.info(f"Recovered sources for {node_name} as {str(node_source_info.sources)}")
+        return node_source_info.sources
 
-        if not files.exists(cmakelists_path):
-            raise FileNotFoundError(
-                f"failed to find CMakelists.txt at expected location: {workspace}"
-            )
+    def recover_using_cmakelists(self, package_name: str, node_name: str) -> RecoveredNodeModel:
+        try:
+            package = self._app.description.packages[package_name]
+        except KeyError as err:
+            raise ValueError(f"no package found with given name: {package_name}") from err
+
+        sources = self._sources_via_cmake(package, node_name)
+
+        return self.recover(package_name, node_name, None, sources, None)
 
     def recover(
         self,
@@ -279,9 +290,6 @@ class NodeRecoveryTool:
             package = self._app.description.packages[package_name]
         except KeyError as err:
             raise ValueError(f"no package found with given name: {package_name}") from err
-
-        if not sources:
-            sources = self._sources_via_cmake(package, node_name)
 
         # ensure that no absolute paths are given
         if any(os.path.isabs(path) for path in sources):
