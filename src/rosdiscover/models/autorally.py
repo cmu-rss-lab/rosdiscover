@@ -4,8 +4,9 @@ from ..interpreter import model, NodeContext
 # Python models for autorally_gazebo
 # Derived from: https://github.com/AutoRally/autorally/tree/melodic-devel/autorally_gazebo/nodes
 
+
 @model('autorally_gazebo', 'autorally_controller.py')
-def autorally_controller(c : NodeContext) -> None:
+def autorally_controller(c: NodeContext) -> None:
 
     c.read("~left_front_wheel/steering_link_name", "left_steering_link")
     c.read("~right_front_wheel/steering_link_name", "right_steering_link")
@@ -40,7 +41,7 @@ def autorally_controller(c : NodeContext) -> None:
     c.read("~right_rear_wheel/diameter")
 
     # https://github.com/AutoRally/autorally/blob/c2692f2970da6874ad9ddfeea3908adaf05b4b09/autorally_gazebo/nodes/autorally_controller.py#L258
-    chassisCommandPriorities = \
+    chassis_command_priorities = \
         c.read("~chassisCommandProirities", [])  # Note, misspelling is deliberate
 
     shock_absorbers = c.read("~shock_absorbers", [])
@@ -62,13 +63,13 @@ def autorally_controller(c : NodeContext) -> None:
     for shocker in shock_absorbers:
         assert isinstance(shocker, dict)
         assert 'controller_name' in shocker
-        c.pub(f"{shocker['controller_name']}/command", "std_msgs/Float64")  #latched = True
+        c.pub(f"{shocker['controller_name']}/command", "std_msgs/Float64")  # latched = True
 
     c.pub("~wheelSpeeds", "autorally_msgs/wheelSpeeds")
     c.pub("~chassisState", "autorally_msgs/chassisState")
 
-    assert isinstance(chassisCommandPriorities, list)
-    for cmd in chassisCommandPriorities:
+    assert isinstance(chassis_command_priorities, list)
+    for cmd in chassis_command_priorities:
         c.sub(f"~/{cmd}/chassisCommand", "autorally_msgs/chassisCommand")
 
     c.sub('~/joint_states', "sensor_msgs/JointState")
@@ -77,6 +78,6 @@ def autorally_controller(c : NodeContext) -> None:
 
 
 @model('autorally_gazebo', 'ground_truth_republisher')
-def ground_truth_republisher(c : NodeContext) -> None:
+def ground_truth_republisher(c: NodeContext) -> None:
     c.pub('/ground_truth/state', 'nav_msgs/Odometry')
     c.sub('/ground_truth/state_raw', 'nav_msgs/Odometry')
