@@ -68,9 +68,10 @@ class ProjectModels:
         # is this node model irrecoverable?
         if (package, node) not in self.config.node_sources:
             try:
+                logger.info(f"Attempting to recover {package}/{node} from CMakeLists.txt")
                 model = self._recovery_tool.recover_using_cmakelists(package, node)
-            except ValueError:
-                logger.error(f"No 'CMakeLists.txt' for {package} (looking for {node}")
+            except ValueError as e:
+                logger.error(f"Error recovering {package}/{node}: {e}")
                 return None
         else:
             # TODO we need to know the sources for this node
