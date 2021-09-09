@@ -116,7 +116,7 @@ class Interpreter:
 
     def _create_nodelet_manager(self, name: str) -> None:
         """Creates a nodelet manager with a given name."""
-        logger.info('launched nodelet manager: %s', name)
+        logger.info(f'launched nodelet manager: {name}')
 
     def _load_nodelet(self,
                       pkg: str,
