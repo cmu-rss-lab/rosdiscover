@@ -29,7 +29,7 @@ class PlaceholderModel(NodeModel):
     name: str
 
     def eval(self, context: NodeContext) -> None:
-        return
+        context.mark_placeholder()
 
 
 @attr.s(frozen=True, slots=True)
