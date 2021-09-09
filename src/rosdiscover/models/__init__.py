@@ -29,6 +29,7 @@ the following :code:`import` statement must be added to this file:
 
 """
 from . import amcl
+from . import autorally
 from . import cmd_vel_mux
 from . import depth_image_proc_nodelets
 from . import diagnostic_aggregator
