@@ -27,6 +27,8 @@ class GazeboPlugin(ModelPlugin):
 
         # TODO locate the class for the plugin based on filename
         filename_to_cls: Mapping[str, Type[GazeboPlugin]] = {
+            'libgazebo_ros_p3d.so': LibGazeboROSP3DPlugin,
+            'libhector_gazebo_ros_imu.so': LibHectorGazeboROSIMUPlugin,
             'libgazebo_ros_multicamera.so': LibGazeboROSMultiCameraPlugin,
             'libgazebo_ros_laser.so': LibGazeboROSLaserPlugin,
             'libgazebo_ros_diff_drive.so': LibGazeboROSDiffDrivePlugin,
@@ -51,37 +53,6 @@ class GazeboPlugin(ModelPlugin):
     @abc.abstractmethod
     def build_from_xml(cls, xml: ET.Element) -> 'GazeboPlugin':
         ...
-
-
-@attr.s(frozen=True, slots=True)
-class LibGazeboROSMultiCameraPlugin(GazeboPlugin):
-    """
-    Example
-    -------
-
-    .. code:: xml
-
-        <plugin filename="libgazebo_ros_multicamera.so" name="stereo_camera_controller">
-            <robotNamespace>/</robotNamespace>
-            <alwaysOn>true</alwaysOn>
-            <updateRate>60.0</updateRate>
-            <cameraName>camera</cameraName>
-            <imageTopicName>image_raw</imageTopicName>
-            <cameraInfoTopicName>camera_info</cameraInfoTopicName>
-            <frameName>left_camera_optical_frame</frameName>
-            <hackBaseline>0.14</hackBaseline>
-        </plugin>
-    """
-    filename = 'libgazebo_ros_multicamera.so'
-
-    def load(self, interpreter: Interpreter) -> None:
-        logger.error(f"gazebo plugin model not implemented: {self.filename}")
-
-    @classmethod
-    def build_from_xml(cls, xml: ET.Element) -> 'GazeboPlugin':
-        # TODO see https://github.com/ros-simulation/gazebo_ros_pkgs/blob/noetic-devel/gazebo_plugins/src/gazebo_ros_camera_utils.cpp
-        # node handle: {self.robot_namespace}/{camera_name}
-        return LibGazeboROSMultiCameraPlugin()
 
 
 @attr.s(frozen=True, slots=True)
@@ -497,7 +468,7 @@ class LibFetchGazeboPlugin(GazeboPlugin):
     """
     This is the gazebo plugin for the Fetch robot. It should really be generated.
     """
-    filename = "libfectch_gazebo_plugin.so"
+    filename = "libfetch_gazebo_plugin.so"
     joint_state_topic: str = attr.ib()
 
     def load(self, interpreter: 'Interpreter') -> None:
@@ -507,3 +478,143 @@ class LibFetchGazeboPlugin(GazeboPlugin):
     @classmethod
     def build_from_xml(cls, xml: ET.Element) -> 'GazeboPlugin':
         return LibFetchGazeboPlugin(joint_state_topic="joint_states")
+
+
+@attr.s(frozen=True, slots=True)
+class LibHectorGazeboROSIMUPlugin(GazeboPlugin):
+    """
+    GazeboRosImu is a replacement for the GazeboRosImu plugin in package gazebo_plugins.
+    It simulates an Inertial Measurement Unit (IMU) affected by Gaussian noise and
+    low-frequency random drift. The orientation returned mimics a simple Attitude and
+    Heading Reference System (AHRS) using the (erroneous) rates and accelerations.
+    """
+    filename = 'libhector_gazebo_ros_imy.so'
+    robot_namespace: str = attr.ib()
+    imu_topic: str = attr.ib()
+    bias_topic: str = attr.ib()
+    calibrate_service: str = attr.ib()
+
+    def load(self, interpreter: 'Interpreter') -> None:
+        gazebo = interpreter.nodes['/gazebo']
+        imu_topic = namespace_join(self.robot_namespace, self.imu_topic)
+        bias_topic = namespace_join(self.robot_namespace, self.bias_topic)
+        calibrate_service = namespace_join(self.robot_namespace, self.calibrate_service)
+        set_accel_bias_service = namespace_join(self.robot_namespace, namespace_join(self.imu_topic,
+                                                                                     '/set_accel_bias'))
+        set_gyro_base_service = namespace_join(self.robot_namespace, namespace_join(self.imu_topic,
+                                                                                    'imu/set_gyro_bias'))
+
+        gazebo.pub(imu_topic, "sensor_msgs/Imu")
+        gazebo.pub(bias_topic, "sensor_msgs/Imu")
+        gazebo.provide(calibrate_service, 'std_srvs/Empty')
+        gazebo.provide(set_accel_bias_service, 'hector_gazebo_plugins/SetBias')
+        gazebo.provide(set_gyro_base_service, 'hector_gazebo_plugins/SetBias')
+
+    @classmethod
+    def build_from_xml(cls, xml: ET.Element) -> 'GazeboPlugin':
+        xml_topic_name = xml.find('topicName')
+        xml_bias_topic_name = xml.find('biasTopicName')
+        xml_robot_namespace = xml.find('robotNamespace')
+        xml_service_name = xml.find('serviceName')
+
+        topic_name = 'imu'
+        if xml_topic_name:
+            assert xml_topic_name.text
+            topic_name = xml_topic_name.text
+        bias_topic_name = topic_name + '/bias'
+        if xml_bias_topic_name:
+            assert xml_bias_topic_name.text
+            bias_topic_name = xml_bias_topic_name.text + "/bias"
+        namespace = '/'
+        if xml_robot_namespace:
+            assert xml_robot_namespace.text
+            namespace = xml_robot_namespace.text
+
+        service_name = topic_name + "/calibrate"
+        if xml_service_name:
+            assert xml_service_name.text
+            service_name = xml_service_name.text
+
+        return LibHectorGazeboROSIMUPlugin(
+            imu_topic=topic_name,
+            bias_topic=bias_topic_name,
+            calibrate_service=service_name,
+            robot_namespace=namespace
+        )
+
+
+@attr.s(frozen=True, slots=True)
+class LibGazeboROSMultiCameraPlugin(LibGazeboROSCameraPlugin):
+    """
+    Example
+    -------
+
+    .. code:: xml
+
+        <plugin filename="libgazebo_ros_multicamera.so" name="stereo_camera_controller">
+            <robotNamespace>/</robotNamespace>
+            <alwaysOn>true</alwaysOn>
+            <updateRate>60.0</updateRate>
+            <cameraName>camera</cameraName>
+            <imageTopicName>image_raw</imageTopicName>
+            <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+            <frameName>left_camera_optical_frame</frameName>
+            <hackBaseline>0.14</hackBaseline>
+        </plugin>
+    """
+    filename = 'libgazebo_ros_multicamera.so'
+
+    def load(self, interpreter: Interpreter) -> None:
+        super().load(interpreter)
+
+    @classmethod
+    def build_from_xml(cls, xml: ET.Element) -> 'GazeboPlugin':
+        xml_camera_name = xml.find("cameraName")
+        xml_topic_name = xml.find("imageTopicName")
+        xml_camera_topic_name = xml.find('cameraInfoTopicName')
+        xml_frame_name = xml.find('frameName')
+        xml_robot_ns = xml.find('robotNamesapce')
+
+        assert xml_topic_name is not None and xml_topic_name.text is not None
+        assert xml_camera_topic_name is not None and xml_camera_topic_name.text is not None
+        assert xml_frame_name is not None and xml_frame_name.text is not None
+        assert xml_camera_name is not None and xml_camera_name.text is not None
+        topic_name: str = xml_topic_name.text
+        camera_topic_name: str = xml_camera_topic_name.text
+        camera_name: str = xml_camera_name.text
+        frame_name: str = xml_frame_name.text
+
+        robot_ns = "/"
+        if xml_robot_ns is not None and xml_robot_ns.text is not None:
+            robot_ns = xml_robot_ns.text
+
+        return LibGazeboROSMultiCameraPlugin(camera_name=camera_name,
+                                             image_topic_name=topic_name,
+                                             camera_info_topic_name=camera_topic_name,
+                                             frame_name=frame_name,
+                                             robot_namespace=robot_ns)
+
+
+@attr.s(frozen=True, slots=True)
+class LibGazeboROSP3DPlugin(GazeboPlugin):
+    filename = 'libgazebo_ros_p3d.so'
+    odom_topic: str = attr.ib()
+    namespace: str = attr.ib()
+
+    def load(self, interpreter: Interpreter) -> None:
+        gazebo = interpreter.nodes['/gazebo']
+
+        gazebo.pub(namespace_join(self.namespace, self.odom_topic), 'nav_msgs/Odometry')
+
+    @classmethod
+    def build_from_xml(cls, xml: ET.Element) -> 'GazeboPlugin':
+        xml_robot_ns = xml.find('robotNamesapce')
+        robot_ns = "/"
+        if xml_robot_ns is not None and xml_robot_ns.text is not None:
+            robot_ns = xml_robot_ns.text
+
+        xml_topic_name = xml.find("topicName")
+        assert xml_topic_name is not None and xml_topic_name.text is not None
+        topic_name = xml_topic_name.text
+
+        return LibGazeboROSP3DPlugin(namespace=robot_ns, odom_topic=topic_name)

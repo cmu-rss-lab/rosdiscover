@@ -4,6 +4,7 @@ Provides a simple command-line interface.
 """
 import argparse
 import os
+import typing as t
 
 from loguru import logger
 import pkg_resources
@@ -29,13 +30,17 @@ def recover(args: argparse.Namespace) -> None:
             raise ValueError(f"Restricted path [{path}] should be absolute")
     with NodeRecoveryTool.for_config(config) as tool:
         print(f"spun up the container: {tool}")
-        tool.recover(
+        model = tool.recover(
             package_name=args.package,
             node_name=args.node,
             entrypoint=args.entry,
             sources=args.sources,
             path_restrictions=args.restrict_to,
         )
+        if args.save_to:
+            print(f"saving recovered model to disk: {args.save_to}")
+            model.save(args.save_to)
+            print("saved recovered model to disk")
 
 
 def _launch(config: Config) -> SystemSummary:
@@ -137,7 +142,7 @@ class MultiLineFormatter(argparse.HelpFormatter):
         return argparse.HelpFormatter._split_lines(self, text, width)
 
 
-def main() -> None:
+def main(args: t.Optional[t.Sequence[str]] = None) -> None:
     logger.enable('roswire')
     parser = argparse.ArgumentParser(description=DESC)
     subparsers = parser.add_subparsers()
@@ -152,7 +157,11 @@ def main() -> None:
         '--restrict-to',
         action='append',
         dest='restrict_to',
-        help='the absolute container paths to which the static analysis should be restricted'
+        help='the absolute container paths to which the static analysis should be restricted',
+    )
+    p.add_argument(
+        '--save-to',
+        help="the name of the file to which the recovered node model should be saved",
     )
     p.add_argument('config', type=argparse.FileType('r'), help=CONFIG_HELP)
     p.add_argument('package', type=str, help='the name of the package to which the node belongs')
@@ -228,6 +237,6 @@ def main() -> None:
                    '{Config.__doc__}')
     p.set_defaults(func=observe)
 
-    args = parser.parse_args()
-    if 'func' in args:
-        args.func(args)
+    parsed_args = parser.parse_args(args)
+    if 'func' in parsed_args:
+        parsed_args.func(parsed_args)
