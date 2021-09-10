@@ -77,7 +77,7 @@ def autorally_controller(c: NodeContext) -> None:
     c.provide('~/list_controllers', "controller_manager_msgs/ListControllers")
 
 
-@model('autorally_gazebo', 'ground_truth_republisher')
+@model('autorally_gazebo', 'ground_truth_republisher.py')
 def ground_truth_republisher(c: NodeContext) -> None:
     c.pub('/ground_truth/state', 'nav_msgs/Odometry')
     c.sub('/ground_truth/state_raw', 'nav_msgs/Odometry')
