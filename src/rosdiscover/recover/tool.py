@@ -12,7 +12,7 @@ import typing as t
 import attr
 import roswire
 from loguru import logger
-from roswire import CMakeTarget, ROSVersion, SourceLanguage
+from roswire import CMakeBinaryTarget, ROSVersion, SourceLanguage
 
 from .loader import SymbolicProgramLoader
 from .model import RecoveredNodeModel
@@ -253,8 +253,8 @@ class NodeRecoveryTool:
             raise ValueError(f"no package found with given name: {package_name}") from err
 
         source_info = self._info_via_cmake(package, node_name)
-        # if isinstance(source_info, CMakeBinaryTarget):
-        entrypoint = source_info.entrypoint
+        if isinstance(source_info, CMakeBinaryTarget):
+            entrypoint = source_info.entrypoint
         return self.recover(package_name, node_name, entrypoint, source_info.sources,
                             source_info.restrict_to_paths)
 
