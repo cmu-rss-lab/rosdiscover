@@ -262,6 +262,8 @@ class NodeRecoveryTool:
             if the build tool used to construct the workspace was unrecognized
         ValueError
             if the workspace does not provide a .built_by file inside its build directory
+        RuntimeError
+            if the static recovery process fails
         """
         try:
             package = self._app.description.packages[package_name]
@@ -363,6 +365,11 @@ class NodeRecoveryTool:
         logger.debug(f"running static recovery command: {args_s}")
         outcome = shell.run(args_s, text=True, stderr=True)
         assert isinstance(outcome.output, str)
+
+        if outcome.returncode != 0:
+            logger.error(f"static recovery failed [returncode: {outcome.returncode}]: {outcome.output}")
+            raise RuntimeError("static recovery process failed")
+
         logger.debug(f"static recovery output: {outcome.output}")
         logger.debug("finished static recovery process")
 
