@@ -61,7 +61,7 @@ class ProjectModels:
 
     def _recover(self, package: str, node: str) -> t.Optional[NodeModel]:
         # have we already recovered this model?
-        logger.info(f"Recovering {package}/{node}")
+        logger.debug(f"Recovering {package}/{node}")
         if self._recovered_models.contains(self.config, package, node):
             return self._recovered_models.fetch(self.config, package, node)
 
@@ -94,7 +94,7 @@ class ProjectModels:
         return model
 
     def _fetch_handwritten(self, package: str, node: str) -> t.Optional[NodeModel]:
-        print(f"Handwritten {package}/{node}")
+        logger.debug(f"Handwritten {package}/{node}")
         if HandwrittenModel.exists(package, node):
             return HandwrittenModel.fetch(package, node)
         return None
