@@ -166,7 +166,12 @@ def main(args: t.Optional[t.Sequence[str]] = None) -> None:
     p.add_argument('config', type=argparse.FileType('r'), help=CONFIG_HELP)
     p.add_argument('package', type=str, help='the name of the package to which the node belongs')
     p.add_argument('node', type=str, help='the name of the node')
-    p.add_argument('entry', type=str, help='the function to use as an entry point')
+    p.add_argument(
+        '--entry',
+        type=str,
+        help='the fully qualified name of the function that provides the entrypoint for this node',
+        default='main',
+    )
     p.add_argument(
         'sources',
         nargs='+',
