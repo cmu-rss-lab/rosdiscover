@@ -61,7 +61,7 @@ class ProjectModels:
 
     def _recover(self, package: str, node: str) -> t.Optional[NodeModel]:
         # have we already recovered this model?
-        print(f"Recovering {package}/{node}")
+        logger.info(f"Recovering {package}/{node}")
         if self._recovered_models.contains(self.config, package, node):
             return self._recovered_models.fetch(self.config, package, node)
 
@@ -70,8 +70,11 @@ class ProjectModels:
             try:
                 logger.info(f"Attempting to recover {package}/{node} from CMakeLists.txt")
                 model = self._recovery_tool.recover_using_cmakelists(package, node)
-            except ValueError as e:
-                logger.error(f"Error recovering {package}/{node}: {e}")
+            except ValueError:
+                logger.exception(f"Error recovering {package}/{node}")
+                return None
+            except RuntimeError:
+                logger.exception(f"Static recovery failed for {package}/{node}")
                 return None
         else:
             # TODO we need to know the sources for this node
