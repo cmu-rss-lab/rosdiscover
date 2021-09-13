@@ -9,9 +9,10 @@ import shlex
 import types
 import typing as t
 
-from loguru import logger
 import attr
 import roswire
+from loguru import logger
+from roswire import CMakeBinaryTarget, CMakeTarget, ROSVersion, SourceLanguage
 
 from .loader import SymbolicProgramLoader
 from .model import RecoveredNodeModel
@@ -227,6 +228,37 @@ class NodeRecoveryTool:
                 f"failed to find compile_commands.json at expected location: {compile_commands_path}"
             )
         return compile_commands_path
+
+    def _info_via_cmake(self, package: roswire.common.Package, node_name: str) -> CMakeTarget:
+        assert self._app_instance
+        cmake_info: t.Mapping[str, CMakeTarget]
+        if self._app.description.distribution.ros == ROSVersion.ROS1:
+            ros1 = self._app_instance.ros1()
+            cmake_info = ros1.package_node_sources(package)
+        else:
+            ros2 = self._app_instance.ros2
+            cmake_info = ros2.package_node_sources(package)
+        if node_name not in cmake_info:
+            raise ValueError(f"{node_name} is not in the CMakeLists.txt of package '{package.name}")
+        node_source_info = cmake_info[node_name]
+        if node_source_info.language != SourceLanguage.CXX:
+            raise NotImplementedError("Can only recover node information for C++ nodes")
+        logger.info(f"Recovered sources for {node_name} as {str(node_source_info.sources)}")
+        return node_source_info
+
+    def recover_using_cmakelists(self, package_name: str, node_name: str) -> RecoveredNodeModel:
+        try:
+            package = self._app.description.packages[package_name]
+        except KeyError as err:
+            raise ValueError(f"no package found with given name: {package_name}") from err
+
+        source_info = self._info_via_cmake(package, node_name)
+        entrypoint = "main"
+        if isinstance(source_info, CMakeBinaryTarget):
+            assert source_info.entrypoint is not None
+            entrypoint = source_info.entrypoint
+        return self.recover(package_name, node_name, entrypoint, source_info.sources,
+                            source_info.restrict_to_paths)
 
     def recover(
         self,

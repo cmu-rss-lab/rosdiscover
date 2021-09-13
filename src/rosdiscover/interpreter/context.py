@@ -125,16 +125,21 @@ class NodeContext:
             logger.warning(f"Unable to resolve unknown name in NodeContext [{self.name}]")
             return UNKNOWN_NAME
 
+    def _name_str(self, name: Union[str, 'SymbolicUnknown']) -> str:
+        if isinstance(name, str):
+            return name
+        return "Unknown Symbol"
+
     def provide(self, service: Union[str, 'SymbolicUnknown'], fmt: str) -> None:
         """Instructs the node to provide a service."""
-        logger.debug(f"node [{self.name}] provides service [{service}] "
+        logger.debug(f"node [{self.name}] provides service [{self._name_str(service)}] "
                      f"using format [{fmt}]")
         service_name_full = self.resolve(service)
         self._provides.add(Service(name=service_name_full, format=fmt))
 
     def use(self, service: Union[str, 'SymbolicUnknown'], fmt: str) -> None:
         """Instructs the node to use a given service."""
-        logger.debug(f"node [{self.name}] uses a service [{service}] "
+        logger.debug(f"node [{self.name}] uses a service [{self._name_str(service)}] "
                      f"with format [{fmt}]")
         service_name_full = self.resolve(service)
         self._uses.add(Service(name=service_name_full, format=fmt))
@@ -154,7 +159,7 @@ class NodeContext:
         """
         topic_name_full = self.resolve(topic_name)
         logger.debug(f"node [{self.name}] subscribes to topic "
-                     f"[{topic_name}] with format [{fmt}]")
+                     f"[{self._name_str(topic_name)}] with format [{fmt}]")
         self._subs.add(Topic(name=topic_name_full, format=fmt, implicit=implicit))
 
     def pub(self, topic_name: Union[str, 'SymbolicUnknown'], fmt: str, implicit: bool = False) -> None:
@@ -172,7 +177,7 @@ class NodeContext:
         """
         topic_name_full = self.resolve(topic_name)
         logger.debug(f"node [{self.name}] publishes to topic "
-                     f"[{topic_name}] with format [{fmt}]")
+                     f"[{self._name_str(topic_name)}] with format [{fmt}]")
         self._pubs.add(Topic(name=topic_name_full, format=fmt, implicit=implicit))
 
     def read(self,
@@ -181,14 +186,14 @@ class NodeContext:
              dynamic: bool = False
              ) -> Any:
         """Obtains the value of a given parameter from the parameter server."""
-        logger.debug(f"node [{self.name}] reads parameter [{param}]")
+        logger.debug(f"node [{self.name}] reads parameter [{self._name_str(param)}]")
         param = self.resolve(param)
         self._reads.add((param, dynamic))
         return self._params.get(param, default)
 
     def write(self, param: Union[str, 'SymbolicUnknown'], val: Any) -> None:
         logger.debug(f"node [{self.name}] writes [{val}] to "
-                     f"parameter [{param}]")
+                     f"parameter [{self._name_str(param)}]")
         param = self.resolve(param)
         self._writes.add(param)
         self._params[param] = val
@@ -221,7 +226,7 @@ class NodeContext:
             the name of the action format used by the server.
         """
         logger.debug(f"node [{self.name}] provides action server "
-                     f"[{ns}] with format [{fmt}]")
+                     f"[{self._name_str(ns)}] with format [{fmt}]")
         ns = self.resolve(ns)
         self._action_servers.add(Action(name=ns, format=fmt))
         if self.actions_have_topics():
@@ -245,7 +250,7 @@ class NodeContext:
             the name of the action format used by the server.
         """
         logger.debug(f"node [{self.name}] provides action client "
-                     f"[{ns}] with format [{fmt}]")
+                     f"[{self._name_str(ns)}] with format [{fmt}]")
         ns = self.resolve(ns)
         self._action_clients.add(Action(name=ns, format=fmt))
 
