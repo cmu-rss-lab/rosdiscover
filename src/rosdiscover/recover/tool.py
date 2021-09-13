@@ -12,7 +12,7 @@ import typing as t
 import attr
 import roswire
 from loguru import logger
-from roswire import CMakeBinaryTarget, ROSVersion, SourceLanguage
+from roswire import CMakeBinaryTarget, CMakeTarget, ROSVersion, SourceLanguage
 
 from .loader import SymbolicProgramLoader
 from .model import RecoveredNodeModel
