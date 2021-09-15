@@ -239,6 +239,7 @@ class NodeRecoveryTool:
             ros2 = self._app_instance.ros2
             cmake_info = ros2.package_node_sources(package)
         if node_name not in cmake_info:
+            logger.info(f"CMakeLists.txt contains: {str(cmake_info.keys())}")
             raise ValueError(f"{node_name} is not in the CMakeLists.txt of package '{package.name}")
         node_source_info = cmake_info[node_name]
         if node_source_info.language != SourceLanguage.CXX:

@@ -15,7 +15,7 @@ coveralls = "==2.0.0"
 twine = "==3.1.1"
 types-setuptools = "==57.0.0"
 types-PyYAML = "==5.4.3"
-roswire = {editable = true, ref = "944308a929a56cea703dbbb3e996b9dcfcbcd6f6", git = "https://github.com/rosqual/roswire"}
+roswire = {editable = true, ref = "8f6db9bfa70660c1ff52caa496642a4d423fba65", git = "https://github.com/rosqual/roswire"}
 
 [dev-packages]
 flake8 = "==3.8.2"
