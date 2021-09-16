@@ -288,6 +288,8 @@ class Config:
         package: roswire.common.Package,
         target: roswire.common.source.CMakeLibraryTarget,
     ) -> t.Optional[NodeSourceInfo]:
+        assert target.name is not None
+
         # not all libraries are nodelets
         if not target.entrypoint:
             return None
@@ -298,7 +300,7 @@ class Config:
             node_kind=ROSNodeKind.NODELET,
             restrict_to_paths=target.restrict_to_paths,
             entrypoint=target.entrypoint,
-            sources=target.sources,
+            sources=list(target.sources),
         )
 
     def __cmake_binary_to_node_sources(
@@ -306,13 +308,14 @@ class Config:
         package: roswire.common.Package,
         target: roswire.common.source.CMakeBinaryTarget,
     ) -> t.Optional[NodeSourceInfo]:
+        assert target.name is not None
         return NodeSourceInfo(
             package_name=package.name,
             node_name=target.name,
             node_kind=ROSNodeKind.NODE,
             restrict_to_paths=target.restrict_to_paths,
             entrypoint="main",
-            sources=target.sources,
+            sources=list(target.sources),
         )
 
     @classmethod
