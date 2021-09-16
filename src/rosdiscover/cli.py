@@ -126,8 +126,10 @@ def observe(args) -> None:
 
 def sources(args: argparse.Namespace) -> None:
     config = Config.from_yaml_string(args.config)
-    config.find_node_sources()
-    raise NotImplementedError
+    config_with_sources = config.with_recovered_node_sources()
+
+    with open(args.save_to, "w") as fh:
+        yaml.dump(config_with_sources.to_dict(), fh, default_flow_style=False)
 
 
 def rostopic_list(args) -> None:
@@ -194,8 +196,8 @@ def main(args: t.Optional[t.Sequence[str]] = None) -> None:
     p.add_argument("config", type=argparse.FileType("r"), help=CONFIG_HELP)
     p.add_argument(
         "--save-to",
-        default="sources.json",
-        help="the name of the file to which the sources should be written",
+        default="config-with-sources.yml",
+        help="the name of the file to which the configuration with sources should be written",
     )
     p.set_defaults(func=sources)
 
