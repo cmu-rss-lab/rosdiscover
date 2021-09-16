@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 __all__ = ('Launch',)
 
-from typing import Any, Mapping, List
+import typing as t
 
 import attr
 
@@ -15,17 +15,23 @@ class Launch:
     ----------
     filename: str
         The file name of the launch files that should be launched
-    arguments: Mapping[str, str]
+    arguments: t.Mapping[str, str]
         A set of launch arguments that should be passed to roslaunch
     """
     filename: str
-    arguments: Mapping[str, str]
+    arguments: t.Mapping[str, str]
 
-    def get_argv(self) -> List[str]:
+    def get_argv(self) -> t.List[str]:
         return [f'{argk}:={self.arguments.get(argk)}' for argk in self.arguments.keys()]
 
+    def to_dict(self) -> t.Dict[str, t.Any]:
+        return {
+            "filename": self.filename,
+            "arguments": dict(self.arguments),
+        }
+
     @classmethod
-    def from_dict(cls, dict_: Mapping[str, Any]) -> 'Launch':
+    def from_dict(cls, dict_: t.Mapping[str, t.Any]) -> 'Launch':
         """
         Raises
         ------
@@ -43,6 +49,6 @@ class Launch:
             raise ValueError("expected 'arguments' to be a mapping")
 
         filename: str = dict_['filename']
-        arguments: Mapping[str, str] = dict(dict_.get('arguments', {}))
+        arguments: t.Mapping[str, str] = dict(dict_.get('arguments', {}))
         return Launch(filename=filename,
                       arguments=arguments)
