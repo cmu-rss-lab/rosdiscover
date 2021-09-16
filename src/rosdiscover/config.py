@@ -19,6 +19,9 @@ class ROSNodeKind(enum.Enum):
     NODE = "node"
     NODELET = "nodelet"
 
+    def __str__(self) -> str:
+        return self.value
+
     @classmethod
     def value_of(cls, value: str) -> "ROSNodeKind":
         if 'node' == value:
@@ -119,6 +122,16 @@ class NodeSourceInfo:
             sources=list(dict_['sources']),
             restrict_to_paths=restricted_paths
         )
+
+    def to_dict(self) -> t.Dict[str, t.Any]:
+        return {
+            "package": self.package_name,
+            "node": self.node_name,
+            "kind": str(self.node_kind),
+            "entrypoint": self.entrypoint,
+            "restrict-analysis-to-paths": list(self.restrict_to_paths),
+            "sources": list(self.sources),
+        }
 
 
 @attr.s(frozen=True, slots=True, auto_attribs=True)
