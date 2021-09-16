@@ -124,6 +124,12 @@ def observe(args) -> None:
         print(yaml.dump(output, default_flow_style=False))
 
 
+def sources(args: argparse.Namespace) -> None:
+    config = Config.from_yaml_string(args.config)
+    config.find_node_sources()
+    raise NotImplementedError
+
+
 def rostopic_list(args) -> None:
     summary = _launch_config(args)
     topics = set()
@@ -179,6 +185,19 @@ def main(args: t.Optional[t.Sequence[str]] = None) -> None:
         help='the paths of the translation unit source files for this node, relative to the package directory',
     )
     p.set_defaults(func=recover)
+
+    # ----------------- SOURCES --------------------
+    p = subparsers.add_parser(
+        "sources",
+        help="retrieves the sources for the nodes and nodelets in a given image",
+    )
+    p.add_argument("config", type=argparse.FileType("r"), help=CONFIG_HELP)
+    p.add_argument(
+        "--save-to",
+        default="sources.json",
+        help="the name of the file to which the sources should be written",
+    )
+    p.set_defaults(func=sources)
 
     # ----------------- LAUNCH --------------------
     p = subparsers.add_parser(
