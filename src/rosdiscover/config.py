@@ -226,7 +226,7 @@ class Config:
                     package = package_cmake_targets.package
                     targets = package_cmake_targets.targets
                     for target in targets:
-                        node_sources = __cmake_target_to_node_sources(package, target)
+                        node_sources = self.__cmake_target_to_node_sources(package, target)
                         if not node_sources:
                             continue
 
