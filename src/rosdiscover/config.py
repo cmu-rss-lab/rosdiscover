@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from __future__ import annotations
+
 __all__ = ('Config',)
 
 from types import MappingProxyType
@@ -212,11 +214,32 @@ class Config:
         else:
             launches = list(map(lambda s: Launch(filename=s, arguments=dict()), launches_inputs))
 
-        return Config(image=image,
-                      sources=sources,
-                      launches=launches,
-                      environment=environment,
-                      node_sources=node_sources)
+        return Config(
+            image=image,
+            sources=sources,
+            launches=launches,
+            environment=environment,
+            node_sources=node_sources,
+        )
+
+    def to_dict(self) -> t.Dict[str, t.Any]:
+        return {
+            "image": self.image,
+            "sources": self.sources,
+            "launches": [l.to_dict() for l in self.launches],
+            "environment": dict(self.environment),
+            "node_sources": [s.to_dict() for s in self.node_sources.values()],
+        }
+
+    def with_recovered_node_sources(self) -> "Config":
+        recovered_node_sources = self.find_node_sources()
+        return Config(
+            image=self.image,
+            sources=list(self.sources),
+            launches=list(self.launches),
+            environment=dict(self.environment),
+            node_sources=recovered_node_sources,
+        )
 
     def find_node_sources(self) -> t.Mapping[t.Tuple[str, str], NodeSourceInfo]:
         """Determines the sources for each node and nodelet in the associated image.
