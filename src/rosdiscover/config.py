@@ -225,7 +225,7 @@ class Config:
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
             "image": self.image,
-            "sources": self.sources,
+            "sources": list(self.sources),
             "launches": [launch.to_dict() for launch in self.launches],
             "environment": dict(self.environment),
             "node_sources": [s.to_dict() for s in self.node_sources.values()],
