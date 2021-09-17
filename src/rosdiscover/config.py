@@ -276,10 +276,10 @@ class Config:
         package: roswire.common.Package,
         target: roswire.common.CMakeTarget,
     ) -> t.Optional[NodeSourceInfo]:
-        if isinstance(target, roswire.common.source.CMakeBinaryTarget):
-            return self.__cmake_binary_to_node_sources(package, target)
-        elif isinstance(target, roswire.common.source.CMakeLibraryTarget):
+        if isinstance(target, roswire.common.source.CMakeLibraryTarget):
             return self.__cmake_library_to_node_sources(package, target)
+        elif isinstance(target, roswire.common.source.CMakeBinaryTarget):
+            return self.__cmake_binary_to_node_sources(package, target)
         else:
             raise ValueError("CMakeTarget is neither a binary or library")
 
