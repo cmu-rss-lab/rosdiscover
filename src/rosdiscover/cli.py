@@ -4,11 +4,12 @@ Provides a simple command-line interface.
 """
 import argparse
 import os
+import time
 import typing as t
 
-from loguru import logger
 import pkg_resources
 import yaml
+from loguru import logger
 
 from .acme import AcmeGenerator
 from .config import Config
@@ -114,8 +115,27 @@ def _observe(args) -> SystemSummary:
     return summary
 
 
+def _periodic_observe(period: int, args: argparse.Namespace) -> SystemSummary:
+    config = Config.from_yaml_string(args.config)
+    obs = Observer.for_container(args.container, config)
+    summary = SystemSummary({})
+    go = True
+    while go:
+        try:
+            observation = obs.observe()
+            summary = SystemSummary.merge(summary, observation)
+            time.sleep(period)
+        except KeyboardInterrupt:
+            go = False
+
+    return summary
+
+
 def observe(args) -> None:
-    summary = _observe(args)
+    if args.repeat:
+        summary = _periodic_observe(args.period, args)
+    else:
+        summary = _observe(args)
     output = summary.to_dict()
     if args.output:
         with open(args.output, 'w') as f:
