@@ -4,6 +4,7 @@ __all__ = ('NodeSummary', 'SystemSummary')
 from typing import Any, Collection, Dict, Iterator, List, Mapping, Tuple
 
 import attr
+from loguru import logger
 
 from ..core import Action, Service, Topic
 
@@ -45,6 +46,70 @@ class NodeSummary:
         object.__setattr__(self, 'provides', frozenset(self.provides))
         object.__setattr__(self, 'action_servers', frozenset(self.action_servers))
         object.__setattr__(self, 'action_clients', frozenset(self.action_clients))
+
+    @classmethod
+    def merge(cls, summary1: 'NodeSummary', summary2: 'NodeSummary') -> 'NodeSummary':
+        def merge_collections(s1: Collection[Any], s2: Collection[Any]) -> Collection[Any]:
+            s = set()
+            s.update(s1)
+            s.update(s2)
+            return s
+
+        reads = merge_collections(summary1.reads, summary2.reads)
+        writes = merge_collections(summary1.writes, summary2.writes)
+        pubs = merge_collections(summary1.pubs, summary2.pubs)
+        subs = merge_collections(summary1.subs, summary2.subs)
+        uses = merge_collections(summary1.uses, summary2.uses)
+        provides = merge_collections(summary1.provides, summary2.provides)
+        actions_servers = merge_collections(summary1.action_servers, summary2.action_servers)
+        action_clients = merge_collections(summary1.action_clients, summary2.action_clients)
+
+        if summary1.name != summary2.name and summary1.name:
+            logger.warning(f"Merging two nodes that are named differently: {summary1.name} & {summary2.name}")
+        name = summary1.name if summary1.name else summary2.name
+
+        if summary1.package != summary2.package and summary1.package:
+            logger.warning(f"{summary1.name} from package {summary2.package} retaining original package {summary1.package}")
+        package = summary1.package if summary1.package else summary2.package
+
+        if summary1.filename != summary2.filename and summary1.filename:
+            logger.warning(f"{summary1.name} fullname {summary2.fullname} retaining original fullname {summary1.fullname}")
+        fullname = summary1.fullname if summary1.fullname else summary2.fullname
+
+        if summary1.namespace != summary2.namespace and summary1.namespace:
+            logger.warning(f"{summary1.name} namespace {summary2.fullname} retaining original namespace {summary1.fullname}")
+        namespace = summary1.namespace if summary1.namespace else summary2.namespace
+
+        if summary1.kind != summary2.kind and summary1.kind:
+            logger.warning(f"{summary1.name} namespace {summary2.kind} retaining original namespace {summary1.kind}")
+        kind = summary1.kind if summary1.kind else summary2.kind
+
+        if summary1.placeholder != summary2.placeholder:
+            logger.warning(f"{summary1.name} placeholder {summary2.placeholder} retaining original placeholder {summary1.placeholder}")
+        placeholder = summary1.placeholder or summary2.placeholder
+
+        if summary1.filename != summary2.filename:
+            logger.warning(f"{summary1.name} filename {summary2.filename} retaining original filename {summary1.filename}")
+        filename = summary1.filename if summary1.filename else summary2.filename
+
+        return NodeSummary(
+            name=name,
+            fullname=fullname,
+            namespace=namespace,
+            kind=kind,
+            package=package,
+            nodelet=summary1.nodelet,
+            filename=filename,
+            placeholder=placeholder,
+            reads=reads,
+            writes=writes,
+            provides=provides,
+            uses=uses,
+            action_servers=actions_servers,
+            action_clients=action_clients,
+            pubs=pubs,
+            subs=subs,
+        )
 
     def to_dict(self) -> Dict[str, Any]:
         pubs = [t.to_dict() for t in self.pubs]
@@ -142,3 +207,16 @@ class SystemSummary(Mapping[str, NodeSummary]):
         for n in self._node_to_summary.values():
             if n.placeholder:
                 yield n
+
+    @classmethod
+    def merge(cls, sum1: 'SystemSummary', sum2: 'SystemSummary') -> 'SystemSummary':
+        node_summaries = {}
+        for key, summary in sum1.items():
+            if key not in sum2:
+                node_summaries[key] = summary
+            else:
+                node_summaries[key] = NodeSummary.merge(summary, sum2[key])
+        for key, summary in sum2.items():
+            if key not in sum1:
+                node_summaries[key] = summary
+        return SystemSummary(node_to_summary=node_summaries)
