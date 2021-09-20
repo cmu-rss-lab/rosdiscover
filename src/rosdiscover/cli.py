@@ -256,6 +256,8 @@ def main(args: t.Optional[t.Sequence[str]] = None) -> None:
                               formatter_class=MultiLineFormatter)
     p.add_argument('--acme', action='store_true', help='Generate an Acme file instead of the YAML')
     p.add_argument('--output', type=str, help='What file to output')
+    p.add_argument('--repeat', action='store_true', help='Indicate that observe should be repeated until Ctrl-C')
+    p.add_argument('--period', type=int, help='The number of seconds to wait in between observations')
     p.add_argument('container', type=str, help='The container where the ROS system is running')
     p.add_argument('config', type=argparse.FileType('r'),
                    help='R|A YAML file defining the configuration (only the environment'
