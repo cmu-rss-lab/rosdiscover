@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from __future__ import annotations
+
 __all__ = ('Config',)
 
 from types import MappingProxyType
@@ -9,6 +11,7 @@ import typing as t
 from loguru import logger
 import attr
 import roswire
+import roswire.common
 import yaml
 
 from .launch import Launch
@@ -17,6 +20,9 @@ from .launch import Launch
 class ROSNodeKind(enum.Enum):
     NODE = "node"
     NODELET = "nodelet"
+
+    def __str__(self) -> str:
+        return self.value
 
     @classmethod
     def value_of(cls, value: str) -> "ROSNodeKind":
@@ -119,6 +125,16 @@ class NodeSourceInfo:
             restrict_to_paths=restricted_paths
         )
 
+    def to_dict(self) -> t.Dict[str, t.Any]:
+        return {
+            "package": self.package_name,
+            "node": self.node_name,
+            "kind": str(self.node_kind),
+            "entrypoint": self.entrypoint,
+            "restrict-analysis-to-paths": list(self.restrict_to_paths),
+            "sources": list(self.sources),
+        }
+
 
 @attr.s(frozen=True, slots=True, auto_attribs=True)
 class Config:
@@ -198,11 +214,109 @@ class Config:
         else:
             launches = list(map(lambda s: Launch(filename=s, arguments=dict()), launches_inputs))
 
-        return Config(image=image,
-                      sources=sources,
-                      launches=launches,
-                      environment=environment,
-                      node_sources=node_sources)
+        return Config(
+            image=image,
+            sources=sources,
+            launches=launches,
+            environment=environment,
+            node_sources=node_sources,
+        )
+
+    def to_dict(self) -> t.Dict[str, t.Any]:
+        return {
+            "image": self.image,
+            "sources": list(self.sources),
+            "launches": [launch.to_dict() for launch in self.launches],
+            "environment": dict(self.environment),
+            "node_sources": [s.to_dict() for s in self.node_sources.values()],
+        }
+
+    def with_recovered_node_sources(self) -> "Config":
+        recovered_node_sources = self.find_node_sources()
+        return Config(
+            image=self.image,
+            sources=list(self.sources),
+            launches=list(self.launches),
+            environment=dict(self.environment),
+            node_sources=recovered_node_sources,
+        )
+
+    def find_node_sources(self) -> t.Mapping[t.Tuple[str, str], NodeSourceInfo]:
+        """Determines the sources for each node and nodelet in the associated image.
+
+        Returns
+        -------
+        t.Mapping[t.Tuple[str, str], NodeSourceInfo]
+            a mapping from (package, node) names to their corresponding sources
+        """
+        app_description = self.app.describe()
+
+        if app_description.distribution.ros != roswire.ROSVersion.ROS1:
+            raise NotImplementedError("find_node_sources is only implemented for ROS1")
+
+        package_node_to_sources: t.Dict[t.Tuple[str, str], NodeSourceInfo] = {}
+
+        with self.app.launch() as app_instance:
+            with app_instance.ros1() as ros:
+                for package_cmake_targets in ros.cmake_targets_for_all_packages():
+                    package = package_cmake_targets.package
+                    targets = package_cmake_targets.targets
+                    for target in targets:
+                        node_sources = self.__cmake_target_to_node_sources(package, target)
+                        if not node_sources:
+                            continue
+
+                        key = (node_sources.package_name, node_sources.node_name)
+                        package_node_to_sources[key] = node_sources
+
+        return package_node_to_sources
+
+    def __cmake_target_to_node_sources(
+        self,
+        package: roswire.common.Package,
+        target: roswire.common.CMakeTarget,
+    ) -> t.Optional[NodeSourceInfo]:
+        if isinstance(target, roswire.common.source.CMakeLibraryTarget):
+            return self.__cmake_library_to_node_sources(package, target)
+        elif isinstance(target, roswire.common.source.CMakeBinaryTarget):
+            return self.__cmake_binary_to_node_sources(package, target)
+        else:
+            raise ValueError("CMakeTarget is neither a binary or library")
+
+    def __cmake_library_to_node_sources(
+        self,
+        package: roswire.common.Package,
+        target: roswire.common.source.CMakeLibraryTarget,
+    ) -> t.Optional[NodeSourceInfo]:
+        assert target.name is not None
+
+        # not all libraries are nodelets
+        if not target.entrypoint:
+            return None
+
+        return NodeSourceInfo(
+            package_name=package.name,
+            node_name=target.name,
+            node_kind=ROSNodeKind.NODELET,
+            restrict_to_paths=target.restrict_to_paths,
+            entrypoint=target.entrypoint,
+            sources=list(target.sources),
+        )
+
+    def __cmake_binary_to_node_sources(
+        self,
+        package: roswire.common.Package,
+        target: roswire.common.source.CMakeBinaryTarget,
+    ) -> t.Optional[NodeSourceInfo]:
+        assert target.name is not None
+        return NodeSourceInfo(
+            package_name=package.name,
+            node_name=target.name,
+            node_kind=ROSNodeKind.NODE,
+            restrict_to_paths=target.restrict_to_paths,
+            entrypoint="main",
+            sources=list(target.sources),
+        )
 
     @classmethod
     def from_yaml_string(cls, yml: str) -> 'Config':
