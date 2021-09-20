@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 __all__ = ('NodeSummary', 'SystemSummary')
 
-from typing import Any, Collection, Dict, Iterator, List, Mapping, Tuple
+from typing import Any, Collection, Dict, Iterator, List, Mapping, Set, Tuple
 
 import attr
 from loguru import logger
@@ -50,7 +50,7 @@ class NodeSummary:
     @classmethod
     def merge(cls, summary1: 'NodeSummary', summary2: 'NodeSummary') -> 'NodeSummary':
         def merge_collections(s1: Collection[Any], s2: Collection[Any]) -> Collection[Any]:
-            s = set()
+            s: Set[Any] = set()
             s.update(s1)
             s.update(s2)
             return s
