@@ -119,11 +119,15 @@ def _periodic_observe(period: int, args: argparse.Namespace) -> SystemSummary:
     config = Config.from_yaml_string(args.config)
     obs = Observer.for_container(args.container, config)
     summary = SystemSummary({})
+    iterations = 0
     go = True
     while go:
         try:
             observation = obs.observe()
             summary = SystemSummary.merge(summary, observation)
+            iterations += 1
+            if args.num_iterations:
+                go = iterations < args.num_iterations
             time.sleep(period)
         except KeyboardInterrupt:
             go = False
@@ -133,6 +137,8 @@ def _periodic_observe(period: int, args: argparse.Namespace) -> SystemSummary:
 
 def observe(args) -> None:
     if args.repeat:
+        if not args.period:
+            logger.error('--repeat specified but no period given')
         summary = _periodic_observe(args.period, args)
     else:
         summary = _observe(args)
@@ -277,6 +283,7 @@ def main(args: t.Optional[t.Sequence[str]] = None) -> None:
     p.add_argument('--acme', action='store_true', help='Generate an Acme file instead of the YAML')
     p.add_argument('--output', type=str, help='What file to output')
     p.add_argument('--repeat', action='store_true', help='Indicate that observe should be repeated until Ctrl-C')
+    p.add_argument('--num-observations', type=int, help='The number of times to observe')
     p.add_argument('--period', type=int, help='The number of seconds to wait in between observations')
     p.add_argument('container', type=str, help='The container where the ROS system is running')
     p.add_argument('config', type=argparse.FileType('r'),
