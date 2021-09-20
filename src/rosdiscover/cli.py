@@ -136,10 +136,11 @@ def _periodic_observe(period: int, args: argparse.Namespace) -> SystemSummary:
 
 
 def observe(args) -> None:
-    if args.repeat:
-        if not args.period:
-            logger.error('--repeat specified but no period given')
-        summary = _periodic_observe(args.period, args)
+    if args.continuous:
+        if not args.interval:
+            logger.error('--continuous specified but no interval given')
+            exit(1)
+        summary = _periodic_observe(args.interval, args)
     else:
         summary = _observe(args)
     output = summary.to_dict()
@@ -282,9 +283,9 @@ def main(args: t.Optional[t.Sequence[str]] = None) -> None:
                               formatter_class=MultiLineFormatter)
     p.add_argument('--acme', action='store_true', help='Generate an Acme file instead of the YAML')
     p.add_argument('--output', type=str, help='What file to output')
-    p.add_argument('--repeat', action='store_true', help='Indicate that observe should be repeated until Ctrl-C')
+    p.add_argument('--continuous', action='store_true', help='Indicate that observe should be repeated until Ctrl-C')
     p.add_argument('--num-observations', type=int, help='The number of times to observe')
-    p.add_argument('--period', type=int, help='The number of seconds to wait in between observations')
+    p.add_argument('--interval', type=int, help='The number of seconds to wait in between observations')
     p.add_argument('container', type=str, help='The container where the ROS system is running')
     p.add_argument('config', type=argparse.FileType('r'),
                    help='R|A YAML file defining the configuration (only the environment'

@@ -48,49 +48,49 @@ class NodeSummary:
         object.__setattr__(self, 'action_clients', frozenset(self.action_clients))
 
     @classmethod
-    def merge(cls, summary1: 'NodeSummary', summary2: 'NodeSummary') -> 'NodeSummary':
+    def merge(cls, lhs: 'NodeSummary', rhs: 'NodeSummary') -> 'NodeSummary':
         def merge_collections(s1: Collection[Any], s2: Collection[Any]) -> Collection[Any]:
             s: Set[Any] = set()
             s.update(s1)
             s.update(s2)
             return s
 
-        reads = merge_collections(summary1.reads, summary2.reads)
-        writes = merge_collections(summary1.writes, summary2.writes)
-        pubs = merge_collections(summary1.pubs, summary2.pubs)
-        subs = merge_collections(summary1.subs, summary2.subs)
-        uses = merge_collections(summary1.uses, summary2.uses)
-        provides = merge_collections(summary1.provides, summary2.provides)
-        actions_servers = merge_collections(summary1.action_servers, summary2.action_servers)
-        action_clients = merge_collections(summary1.action_clients, summary2.action_clients)
+        reads = merge_collections(lhs.reads, rhs.reads)
+        writes = merge_collections(lhs.writes, rhs.writes)
+        pubs = merge_collections(lhs.pubs, rhs.pubs)
+        subs = merge_collections(lhs.subs, rhs.subs)
+        uses = merge_collections(lhs.uses, rhs.uses)
+        provides = merge_collections(lhs.provides, rhs.provides)
+        actions_servers = merge_collections(lhs.action_servers, rhs.action_servers)
+        action_clients = merge_collections(lhs.action_clients, rhs.action_clients)
 
-        if summary1.name != summary2.name and summary1.name:
-            logger.warning(f"Merging two nodes that are named differently: {summary1.name} & {summary2.name}")
-        name = summary1.name if summary1.name else summary2.name
+        if lhs.name != rhs.name and lhs.name:
+            logger.warning(f"Merging two nodes that are named differently: {lhs.name} & {rhs.name}")
+        name = lhs.name if lhs.name else rhs.name
 
-        if summary1.package != summary2.package and summary1.package:
-            logger.warning(f"{summary1.name} from package {summary2.package} retaining original package {summary1.package}")
-        package = summary1.package if summary1.package else summary2.package
+        if lhs.package != rhs.package and lhs.package:
+            logger.warning(f"{lhs.name} from package {rhs.package} retaining original package {lhs.package}")
+        package = lhs.package if lhs.package else rhs.package
 
-        if summary1.filename != summary2.filename and summary1.filename:
-            logger.warning(f"{summary1.name} fullname {summary2.fullname} retaining original fullname {summary1.fullname}")
-        fullname = summary1.fullname if summary1.fullname else summary2.fullname
+        if lhs.filename != rhs.filename and lhs.filename:
+            logger.warning(f"{lhs.name} fullname {rhs.fullname} retaining original fullname {lhs.fullname}")
+        fullname = lhs.fullname if lhs.fullname else rhs.fullname
 
-        if summary1.namespace != summary2.namespace and summary1.namespace:
-            logger.warning(f"{summary1.name} namespace {summary2.fullname} retaining original namespace {summary1.fullname}")
-        namespace = summary1.namespace if summary1.namespace else summary2.namespace
+        if lhs.namespace != rhs.namespace and lhs.namespace:
+            logger.warning(f"{lhs.name} namespace {rhs.fullname} retaining original namespace {lhs.fullname}")
+        namespace = lhs.namespace if lhs.namespace else rhs.namespace
 
-        if summary1.kind != summary2.kind and summary1.kind:
-            logger.warning(f"{summary1.name} namespace {summary2.kind} retaining original namespace {summary1.kind}")
-        kind = summary1.kind if summary1.kind else summary2.kind
+        if lhs.kind != rhs.kind and lhs.kind:
+            logger.warning(f"{lhs.name} namespace {rhs.kind} retaining original namespace {lhs.kind}")
+        kind = lhs.kind if lhs.kind else rhs.kind
 
-        if summary1.placeholder != summary2.placeholder:
-            logger.warning(f"{summary1.name} placeholder {summary2.placeholder} retaining original placeholder {summary1.placeholder}")
-        placeholder = summary1.placeholder or summary2.placeholder
+        if lhs.placeholder != rhs.placeholder:
+            logger.warning(f"{lhs.name} placeholder {rhs.placeholder} retaining original placeholder {lhs.placeholder}")
+        placeholder = lhs.placeholder or rhs.placeholder
 
-        if summary1.filename != summary2.filename:
-            logger.warning(f"{summary1.name} filename {summary2.filename} retaining original filename {summary1.filename}")
-        filename = summary1.filename if summary1.filename else summary2.filename
+        if lhs.filename != rhs.filename:
+            logger.warning(f"{lhs.name} filename {rhs.filename} retaining original filename {lhs.filename}")
+        filename = lhs.filename if lhs.filename else rhs.filename
 
         return NodeSummary(
             name=name,
@@ -98,7 +98,7 @@ class NodeSummary:
             namespace=namespace,
             kind=kind,
             package=package,
-            nodelet=summary1.nodelet,
+            nodelet=lhs.nodelet,
             filename=filename,
             placeholder=placeholder,
             reads=reads,
@@ -209,14 +209,14 @@ class SystemSummary(Mapping[str, NodeSummary]):
                 yield n
 
     @classmethod
-    def merge(cls, sum1: 'SystemSummary', sum2: 'SystemSummary') -> 'SystemSummary':
-        node_summaries = {}
-        for key, summary in sum1.items():
-            if key not in sum2:
+    def merge(cls, lhs: 'SystemSummary', rhs: 'SystemSummary') -> 'SystemSummary':
+        node_summaries: Dict[str, NodeSummary] = {}
+        for key, summary in lhs.items():
+            if key not in rhs:
                 node_summaries[key] = summary
             else:
-                node_summaries[key] = NodeSummary.merge(summary, sum2[key])
-        for key, summary in sum2.items():
-            if key not in sum1:
+                node_summaries[key] = NodeSummary.merge(summary, rhs[key])
+        for key, summary in rhs.items():
+            if key not in lhs:
                 node_summaries[key] = summary
         return SystemSummary(node_to_summary=node_summaries)
