@@ -123,15 +123,16 @@ def _periodic_observe(period: int, args: argparse.Namespace) -> SystemSummary:
     go = True
     while go:
         try:
+            logger.info(f"Doing observation {iterations+1}")
             observation = obs.observe()
             summary = SystemSummary.merge(summary, observation)
             iterations += 1
-            if args.num_iterations:
+            if 'num_iterations' in args:
                 go = iterations < args.num_iterations
             time.sleep(period)
         except KeyboardInterrupt:
             go = False
-
+    logger.info(f"Finished observing - {iterations+1} observations in total.")
     return summary
 
 
@@ -281,7 +282,6 @@ def main(args: t.Optional[t.Sequence[str]] = None) -> None:
                               help='observes a robot running in a container and produces an '
                                    'architecture',
                               formatter_class=MultiLineFormatter)
-    p.add_argument('--acme', action='store_true', help='Generate an Acme file instead of the YAML')
     p.add_argument('--output', type=str, help='What file to output')
     p.add_argument('--continuous', action='store_true', help='Indicate that observe should be repeated until Ctrl-C')
     p.add_argument('--num-observations', type=int, help='The number of times to observe')
