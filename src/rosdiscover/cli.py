@@ -16,6 +16,7 @@ from .config import Config
 from .interpreter import Interpreter, SystemSummary
 from .observer import Observer
 from .recover import NodeRecoveryTool
+from roswire.util import Stopwatch
 
 DESC = 'discovery of ROS architectures'
 CONFIG_HELP = """R|A YAML file defining the configuration.
@@ -115,10 +116,11 @@ def _observe(args) -> SystemSummary:
     return summary
 
 
-def _periodic_observe(period: int, args: argparse.Namespace) -> SystemSummary:
+def _periodic_observe(interval: int, args: argparse.Namespace) -> SystemSummary:
     config = Config.from_yaml_string(args.config)
     obs = Observer.for_container(args.container, config)
     summary = SystemSummary({})
+    stopwatch = Stopwatch()
     iterations = 0
     go = True
     while go:
@@ -127,12 +129,13 @@ def _periodic_observe(period: int, args: argparse.Namespace) -> SystemSummary:
             observation = obs.observe()
             summary = SystemSummary.merge(summary, observation)
             iterations += 1
-            if 'num_iterations' in args:
-                go = iterations < args.num_iterations
-            time.sleep(period)
+            if 'duration' in args:
+                go = stopwatch.duration < args.duration
+            time.sleep(interval)
         except KeyboardInterrupt:
             go = False
-    logger.info(f"Finished observing - {iterations+1} observations in total.")
+    stopwatch.stop()
+    logger.info(f"Finished observing - {iterations+1} observations in total after {stopwatch.duration} seconds.")
     return summary
 
 
@@ -283,9 +286,8 @@ def main(args: t.Optional[t.Sequence[str]] = None) -> None:
                                    'architecture',
                               formatter_class=MultiLineFormatter)
     p.add_argument('--output', type=str, help='What file to output')
-    p.add_argument('--continuous', action='store_true', help='Indicate that observe should be repeated until Ctrl-C')
-    p.add_argument('--num-observations', type=int, help='The number of times to observe')
-    p.add_argument('--interval', type=int, help='The number of seconds to wait in between observations')
+    p.add_argument('--duration', type=int, help='The amount of time (secs) to observe for')
+    p.add_argument('--interval', type=float, help='The number of seconds to wait in between observations')
     p.add_argument('container', type=str, help='The container where the ROS system is running')
     p.add_argument('config', type=argparse.FileType('r'),
                    help='R|A YAML file defining the configuration (only the environment'
