@@ -16,6 +16,7 @@ from .config import Config
 from .interpreter import Interpreter, SystemSummary
 from .observer import Observer
 from .recover import NodeRecoveryTool
+from roswire.util import Stopwatch
 
 DESC = 'discovery of ROS architectures'
 CONFIG_HELP = """R|A YAML file defining the configuration.
@@ -115,32 +116,38 @@ def _observe(args) -> SystemSummary:
     return summary
 
 
-def _periodic_observe(period: int, args: argparse.Namespace) -> SystemSummary:
+def _periodic_observe(interval: float, args: argparse.Namespace) -> SystemSummary:
     config = Config.from_yaml_string(args.config)
     obs = Observer.for_container(args.container, config)
     summary = SystemSummary({})
+    stopwatch = Stopwatch()
     iterations = 0
     go = True
+    stopwatch.start()
     while go:
         try:
-            logger.info(f"Doing observation {iterations+1}")
+            obs_start = stopwatch.duration
+            iterations += 1
+            logger.info(f"Doing observation {iterations}")
             observation = obs.observe()
             summary = SystemSummary.merge(summary, observation)
-            iterations += 1
-            if 'num_iterations' in args:
-                go = iterations < args.num_iterations
-            time.sleep(period)
+            obs_end = stopwatch.duration
+            logger.debug(f"Finished observation {iterations}; took {obs_end-obs_start:.3f} seconds.")
+            if 'duration' in args:
+                go = stopwatch.duration < args.duration
+            logger.debug('Sleeping for {interval:.3f} seconds')
+            time.sleep(interval)
+            if 'duration' in args:
+                go = stopwatch.duration < args.duration
         except KeyboardInterrupt:
             go = False
-    logger.info(f"Finished observing - {iterations+1} observations in total.")
+    stopwatch.stop()
+    logger.info(f"Finished observing - {iterations+1} observations in total after {stopwatch.duration} seconds.")
     return summary
 
 
 def observe(args) -> None:
-    if args.continuous:
-        if not args.interval:
-            logger.error('--continuous specified but no interval given')
-            exit(1)
+    if 'duration' in args or 'interval' in args:
         summary = _periodic_observe(args.interval, args)
     else:
         summary = _observe(args)
@@ -283,9 +290,8 @@ def main(args: t.Optional[t.Sequence[str]] = None) -> None:
                                    'architecture',
                               formatter_class=MultiLineFormatter)
     p.add_argument('--output', type=str, help='What file to output')
-    p.add_argument('--continuous', action='store_true', help='Indicate that observe should be repeated until Ctrl-C')
-    p.add_argument('--num-observations', type=int, help='The number of times to observe')
-    p.add_argument('--interval', type=int, help='The number of seconds to wait in between observations')
+    p.add_argument('--duration', type=int, help='The amount of time (secs) to observe for')
+    p.add_argument('--interval', type=float, help='The number of seconds to wait in between observations')
     p.add_argument('container', type=str, help='The container where the ROS system is running')
     p.add_argument('config', type=argparse.FileType('r'),
                    help='R|A YAML file defining the configuration (only the environment'
