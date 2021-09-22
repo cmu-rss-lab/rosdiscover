@@ -119,6 +119,8 @@ def _observe(args) -> SystemSummary:
 def _periodic_observe(interval: float, args: argparse.Namespace) -> SystemSummary:
     config = Config.from_yaml_string(args.config)
     obs = Observer.for_container(args.container, config)
+    if 'run-script' in args:
+        obs.execute_script(args.run_script)
     summary = SystemSummary({})
     stopwatch = Stopwatch()
     iterations = 0
@@ -292,6 +294,7 @@ def main(args: t.Optional[t.Sequence[str]] = None) -> None:
     p.add_argument('--output', type=str, help='What file to output')
     p.add_argument('--duration', type=int, help='The amount of time (secs) to observe for')
     p.add_argument('--interval', type=float, help='The number of seconds to wait in between observations')
+    p.add_argument('--run-script', type=str, help='A shell script to run on the container while observing')
     p.add_argument('container', type=str, help='The container where the ROS system is running')
     p.add_argument('config', type=argparse.FileType('r'),
                    help='R|A YAML file defining the configuration (only the environment'

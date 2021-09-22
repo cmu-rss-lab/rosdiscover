@@ -94,3 +94,6 @@ class ROS1Observer(Observer):
                         reorganized_nodes[node_name].provides.add(service)
 
         return list(reorganized_nodes.values())
+
+    def execute_script(self, path_on_host: str) -> int:
+        raise NotImplementedError()

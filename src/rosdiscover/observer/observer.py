@@ -59,3 +59,20 @@ class Observer(ABC):
             An immutable representation of the system architecture.
         """
         ...
+
+    @abstractmethod
+    def execute_script(self, path_on_host: str) -> int:
+        """Executes a script on the executing container.
+
+        Parameters
+        ----------
+        path_on_host: str
+            The path to the script on the host (commands in the script should
+            be relative to the container, not the host).
+
+        Returns
+        -------
+        int
+            The exit code when the script is finished
+        """
+        ...
