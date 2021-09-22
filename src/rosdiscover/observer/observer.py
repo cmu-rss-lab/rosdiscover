@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 import typing
 
 import roswire
+from dockerblade.popen import Popen
 from roswire import AppInstance, ROSVersion
 
 from ..interpreter import SystemSummary
@@ -61,7 +62,7 @@ class Observer(ABC):
         ...
 
     @abstractmethod
-    def execute_script(self, path_on_host: str) -> int:
+    def execute_script(self, path_on_host: str) -> Popen:
         """Executes a script on the executing container.
 
         Parameters
