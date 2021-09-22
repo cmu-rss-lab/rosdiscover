@@ -144,7 +144,7 @@ def _periodic_observe(interval: float, args: argparse.Namespace) -> SystemSummar
                 if 'duration' in args:
                     go = stopwatch.duration < args.duration
 
-                logger.debug('Sleeping for {interval:.3f} seconds')
+                logger.debug(f'Sleeping for {interval:.3f} seconds')
                 time.sleep(interval)
 
                 if process:
@@ -152,6 +152,8 @@ def _periodic_observe(interval: float, args: argparse.Namespace) -> SystemSummar
                     if result:
                         if result != 0:
                             logger.error(f"{args.run_script} seems to have failed: {result}")
+                            for line in process.stream:
+                                logger.error(line)
                         process = None
 
                 if 'duration' in args:
