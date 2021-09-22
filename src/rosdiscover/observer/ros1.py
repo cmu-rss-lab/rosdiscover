@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 __all__ = ('ROS1Observer',)
 
+import os
 from typing import Collection, Dict
 
+from loguru import logger
 from roswire.common import SystemState
 
 from .nodeinfo import NodeInfo
@@ -96,4 +98,16 @@ class ROS1Observer(Observer):
         return list(reorganized_nodes.values())
 
     def execute_script(self, path_on_host: str) -> int:
+        if not os.path.exists(path_on_host):
+            raise FileNotFoundError(f"'{path_on_host}' not found.")
+        assert self._app_instance is not None
+
+        path_on_container = os.join('/tmp', os.path.basename(path_on_host))
+        self._app_instance.files.copy_from_host(path_on_host, "/launch_extractor.py")
+
+        cmd = path_on_container
+
+        logger.debug(f"Running the script in the container: {cmd}")
+        self._app_instance.shell.check_call(cmd)
+        logger.debug(f"Reading {output} on container")
         raise NotImplementedError()
