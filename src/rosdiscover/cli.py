@@ -116,7 +116,7 @@ def _observe(args) -> SystemSummary:
     return summary
 
 
-def _periodic_observe(interval: int, args: argparse.Namespace) -> SystemSummary:
+def _periodic_observe(interval: float, args: argparse.Namespace) -> SystemSummary:
     config = Config.from_yaml_string(args.config)
     obs = Observer.for_container(args.container, config)
     summary = SystemSummary({})
@@ -132,10 +132,10 @@ def _periodic_observe(interval: int, args: argparse.Namespace) -> SystemSummary:
             observation = obs.observe()
             summary = SystemSummary.merge(summary, observation)
             obs_end = stopwatch.duration
-            logger.debug(f"Finished observation {iterations}; took {obs_end-obs_start} seconds.")
+            logger.debug(f"Finished observation {iterations}; took {obs_end-obs_start:.3f} seconds.")
             if 'duration' in args:
                 go = stopwatch.duration < args.duration
-            logger.debug('Sleeping')
+            logger.debug('Sleeping for {interval:.3f} seconds')
             time.sleep(interval)
             if 'duration' in args:
                 go = stopwatch.duration < args.duration
