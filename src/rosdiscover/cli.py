@@ -123,15 +123,22 @@ def _periodic_observe(interval: int, args: argparse.Namespace) -> SystemSummary:
     stopwatch = Stopwatch()
     iterations = 0
     go = True
+    stopwatch.start()
     while go:
         try:
-            logger.info(f"Doing observation {iterations+1}")
+            obs_start = stopwatch.duration
+            iterations += 1
+            logger.info(f"Doing observation {iterations}")
             observation = obs.observe()
             summary = SystemSummary.merge(summary, observation)
-            iterations += 1
+            obs_end = stopwatch.duration
+            logger.debug(f"Finished observation {iterations}; took {obs_end-obs_start} seconds.")
             if 'duration' in args:
                 go = stopwatch.duration < args.duration
+            logger.debug('Sleeping')
             time.sleep(interval)
+            if 'duration' in args:
+                go = stopwatch.duration < args.duration
         except KeyboardInterrupt:
             go = False
     stopwatch.stop()
@@ -140,10 +147,7 @@ def _periodic_observe(interval: int, args: argparse.Namespace) -> SystemSummary:
 
 
 def observe(args) -> None:
-    if args.continuous:
-        if not args.interval:
-            logger.error('--continuous specified but no interval given')
-            exit(1)
+    if 'duration' in args or 'interval' in args:
         summary = _periodic_observe(args.interval, args)
     else:
         summary = _observe(args)
