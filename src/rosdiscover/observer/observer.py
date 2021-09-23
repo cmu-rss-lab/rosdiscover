@@ -89,3 +89,22 @@ class Observer(ABC):
         logger.debug(f"Running the script in the container: {cmd}")
         process = self._app_instance.shell.popen(cmd)
         return process
+
+    @abstractmethod
+    def launch_from_config(self, sleep_time: float) -> int:
+        """
+        Uses the launch file(s) in config to launch the ROS nodes. Waits until
+        all nodes are started.
+
+        Parameters
+        ----------
+        sleep_time: float
+            The number of seconds to sleep after each launch (if there are multiple launches)
+
+        Returns
+        -------
+        int
+            The exit code. Will be the exit code of the first non-zero return from launch
+            or 0 if all launches are successful.
+        """
+        ...

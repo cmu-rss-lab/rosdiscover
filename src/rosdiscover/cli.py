@@ -113,6 +113,8 @@ def generate_acme(args) -> None:
 def _observe(args) -> SystemSummary:
     config = Config.from_yaml_string(args.config)
     obs = Observer.for_container(args.container, config)
+    if args.do_launch:
+        obs.launch_from_config(args.launch_sleep)
     summary = obs.observe()
     return summary
 
@@ -120,6 +122,8 @@ def _observe(args) -> SystemSummary:
 def _periodic_observe(interval: float, args: argparse.Namespace) -> SystemSummary:
     config = Config.from_yaml_string(args.config)
     obs = Observer.for_container(args.container, config)
+    if args.do_launch:
+        obs.launch_from_config(args.launch_sleep)
     try:
         process: t.Optional[Popen] = None
         if 'run_script' in args:
@@ -320,6 +324,8 @@ def main(args: t.Optional[t.Sequence[str]] = None) -> None:
     p.add_argument('--duration', type=int, help='The amount of time (secs) to observe for')
     p.add_argument('--interval', type=float, help='The number of seconds to wait in between observations')
     p.add_argument('--run-script', type=str, help='A shell script to run on the container while observing')
+    p.add_argument('--do-launch', action='store_true', help='Launch using the files specified in <config>')
+    p.add_argument('--launch-sleep', type=float, help='Seconds to sleep between launch file execution', default=60.0)
     p.add_argument('container', type=str, help='The container where the ROS system is running')
     p.add_argument('config', type=argparse.FileType('r'),
                    help='R|A YAML file defining the configuration (only the environment'
