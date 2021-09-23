@@ -112,7 +112,7 @@ class ROS1Observer(Observer):
 
         for launch in self._config.launches:
             launch_script = self._generate_launch_script_on_host(launch)
-            cmd = f"bash {launch_script}"
+            cmd = f"/bin/bash {launch_script}"
             process = app_instance.shell.popen(cmd)
             processes.append(process)
             time.sleep(sleep_time)
