@@ -127,6 +127,8 @@ class ROS1Observer(Observer):
             with open(tmp.name, 'w') as script:
                 for source in self._config.sources:
                     script.write(f"source {source}\n")
+                for var, val in self._config.environment.items():
+                    script.write(f"export {var}={val}\n")
                 launch_cmd = f"roslaunch {launch.filename}"
                 for arg in launch.get_argv():
                     launch_cmd += f" {arg}"
