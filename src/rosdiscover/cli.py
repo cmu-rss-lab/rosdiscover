@@ -195,6 +195,7 @@ def observe(args: argparse.Namespace) -> None:
         obs = Observer.for_container(args.container, config)
         summary = do_observe(obs, args)
     else:
+        logger.warning("TODO: Make /startup-vnc.sh customizable")
         with Observer.for_image(config, start_script='/startup-vnc.sh') as obs:
             summary = do_observe(obs, args)
     output = summary.to_dict()
