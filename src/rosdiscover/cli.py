@@ -110,7 +110,7 @@ def generate_acme(args) -> None:
         acme_gen.check_acme()
 
 
-def _observe(obs, args) -> SystemSummary:
+def _observe(obs: Observer, args: argparse.Namespace) -> SystemSummary:
     if args.do_launch:
         obs.launch_from_config(args.launch_sleep)
     summary = obs.observe()
@@ -181,7 +181,7 @@ def _periodic_observe(obs: Observer,
     return summary
 
 
-def do_observe(obs, args):
+def do_observe(obs: Observer, args: argparse.Namespace) -> SystemSummary:
     if 'duration' in args or 'interval' in args:
         summary = _periodic_observe(obs, args.interval, args)
     else:
@@ -189,13 +189,13 @@ def do_observe(obs, args):
     return summary
 
 
-def observe(args) -> None:
+def observe(args: argparse.Namespace) -> None:
     config = Config.from_yaml_string(args.config)
     if args.container:
         obs = Observer.for_container(args.container, config)
         summary = do_observe(obs, args)
     else:
-        with Observer.for_image(config) as obs:
+        with Observer.for_image(config, start_script='/startup-vnc.sh') as obs:
             summary = do_observe(obs, args)
     output = summary.to_dict()
     if args.output:

@@ -10,7 +10,7 @@ import typing as t
 import roswire
 from dockerblade.popen import Popen
 from loguru import logger
-from roswire import AppInstance, ROSVersion
+from roswire import App, AppInstance, ROSVersion
 
 from ..interpreter import SystemSummary
 
@@ -23,8 +23,8 @@ class ExecutionError(Exception):
 
 
 class Observer(ABC):
-    _attached: t.Optional[Popen]
-
+    _x_start_script: t.Optional[Popen]  # The process created from running the start script
+    _own_instance: bool  # Whether the Observer created it's own instance
     @classmethod
     def for_container(cls,
                       container: str,
@@ -49,11 +49,16 @@ class Observer(ABC):
         app = rsw.app(config.image, config.sources)
         instance = app.attach(container, require_description=True)
         observer = cls._build_observer(app, config, instance)
-        observer._attached = None
+        observer._x_start_script = None
+        observer._own_instance = False
         return observer
 
     @classmethod
-    def _build_observer(cls, app, config, instance):
+    def _build_observer(
+        cls,
+        app: App,
+        config: Config,
+        instance: AppInstance):
         if app.description.distribution.ros == ROSVersion.ROS1:
             from .ros1 import ROS1Observer
             return ROS1Observer(instance, config)
@@ -62,7 +67,9 @@ class Observer(ABC):
             return ROS2Observer(instance, config)
 
     @classmethod
-    def for_image(cls, config: 'Config') -> 'Observer':
+    def for_image(cls,
+                  config: 'Config',
+                  start_script: t.Optional[str] = None) -> 'Observer':
         """Constructs an observer by starting an instance of an image
 
         Parameters
@@ -71,7 +78,8 @@ class Observer(ABC):
             A description of the configuration used by the running container.
             Will contain the image name, sources, and environment variables to
             run
-
+        start_script: str
+            An optional script (on the container) to run after instance cretion
         Returns
         -------
         Observer
@@ -82,16 +90,16 @@ class Observer(ABC):
         app = rsw.app(config.image, config.sources)
         instance = app.launch(environment=config.environment)
         observer = cls._build_observer(app, config, instance)
-        observer._attached = False
-
-        logger.debug("Starting the container")
-        cmd = "/startup-vnc.sh"
-        observer._attached = instance.shell.popen(cmd)
-        time.sleep(5)
-        if observer._attached.returncode and observer._attached.returncode != 1:
-            for line in observer._attached.stream:
-                logger.error(line)
-            raise ExecutionError("Could not start the X server")
+        observer._own_instance = True
+        if start_script:
+            logger.debug("Starting the container")
+            cmd = start_script
+            observer._x_start_script = instance.shell.popen(cmd)
+            time.sleep(5)
+            if observer._x_start_script.returncode and observer._x_start_script.returncode != 1:
+                for line in observer._x_start_script.stream:
+                    logger.error(line)
+                raise ExecutionError("Could not start the X server")
         return observer
 
     def __init__(self, app: AppInstance, config: 'Config') -> None:
@@ -107,8 +115,9 @@ class Observer(ABC):
         ex_val: t.Optional[BaseException],
         ex_tb: t.Optional[types.TracebackType],
     ):
-        if self._attached:
-            self._attached.terminate()
+        if self._x_start_script:
+            self._x_start_script.terminate()
+        if self._own_instance:
             self._app_instance.close()
 
     @abstractmethod
