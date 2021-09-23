@@ -1,13 +1,18 @@
 # -*- coding: utf-8 -*-
 __all__ = ('ROS1Observer',)
 
+import os
+import tempfile
+import time
 from typing import Collection, Dict
 
+from loguru import logger
 from roswire.common import SystemState
 
 from .nodeinfo import NodeInfo
 from .observer import Observer
 from ..interpreter import NodeContext, SystemSummary
+from ..launch import Launch
 
 _NODES_TO_FILTER_OUT = ('/rosout',)
 _TOPICS_TO_FILTER_OUT = ('/rosout', '/rosout_agg')
@@ -94,3 +99,39 @@ class ROS1Observer(Observer):
                         reorganized_nodes[node_name].provides.add(service)
 
         return list(reorganized_nodes.values())
+
+    def launch_from_config(self, sleep_time: float) -> int:
+        # Eagerly check launch files exist - don't start any if one doesn't exist
+        app_instance = self._app_instance
+        for launch in self._config.launches:
+            if not app_instance.files.exists(launch.filename):
+                raise FileNotFoundError(launch.filename)
+
+        i = 0
+        for launch in self._config.launches:
+            launch_script = self._generate_launch_script_on_host(launch)
+            cmd = f"bash {launch_script}"
+            completed = app_instance.shell.run(cmd)
+            if completed.returncode != 0:
+                return completed.returncode
+            if i < len(self._config.launches)-1:
+                time.sleep(sleep_time)
+            i += 1
+
+    def _generate_launch_script_on_host(self, launch: Launch) -> str:
+        script_path = None
+        try:
+            with tempfile.NamedTemporaryFile(suffix=".sh", delete=False) as script:
+                for source in self._config.sources:
+                    script.write(f"source {source}\n")
+                script.write(f"roslaunch {launch.filename} {launch.get_argv()}")
+                script_path = script.name
+            script_on_container = self._app_instance.files.mktemp(suffix='.sh')
+            self._app_instance.files.copy_from_host(script_path, script_on_container)
+            return script_on_container
+        finally:
+            if script_path:
+                os.remove(script_path)
+
+
+
