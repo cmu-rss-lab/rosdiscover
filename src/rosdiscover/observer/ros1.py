@@ -1,11 +1,8 @@
 # -*- coding: utf-8 -*-
 __all__ = ('ROS1Observer',)
 
-import os
 from typing import Collection, Dict
 
-from dockerblade.popen import Popen
-from loguru import logger
 from roswire.common import SystemState
 
 from .nodeinfo import NodeInfo
@@ -97,17 +94,3 @@ class ROS1Observer(Observer):
                         reorganized_nodes[node_name].provides.add(service)
 
         return list(reorganized_nodes.values())
-
-    def execute_script(self, path_on_host: str) -> Popen:
-        if not os.path.exists(path_on_host):
-            raise FileNotFoundError(f"'{path_on_host}' not found.")
-        assert self._app_instance is not None
-
-        path_on_container = self._app_instance.files.mktemp('.sh')
-        self._app_instance.files.copy_from_host(path_on_host, path_on_container)
-
-        cmd = f"bash {path_on_container}"
-
-        logger.debug(f"Running the script in the container: {cmd}")
-        process = self._app_instance.shell.popen(cmd)
-        return process
