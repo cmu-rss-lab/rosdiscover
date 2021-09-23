@@ -49,8 +49,6 @@ class Observer(ABC):
         app = rsw.app(config.image, config.sources)
         instance = app.attach(container, require_description=True)
         observer = cls._build_observer(app, config, instance)
-        observer._x_start_script = None
-        observer._own_instance = False
         return observer
 
     @classmethod
