@@ -6,6 +6,7 @@ import time
 from abc import ABC, abstractmethod
 import types
 import typing as t
+from contextlib import contextmanager
 
 import roswire
 from dockerblade.popen import Popen
@@ -58,7 +59,7 @@ class Observer(ABC):
     def _build_observer(
         cls,
         app: App,
-        config: Config,
+        config: 'Config',
         instance: AppInstance,
     ) -> 'Observer':
         if app.description.distribution.ros == ROSVersion.ROS1:
@@ -69,9 +70,10 @@ class Observer(ABC):
             return ROS2Observer(instance, config)
 
     @classmethod
+    @contextmanager
     def for_image(cls,
                   config: 'Config',
-                  start_script: t.Optional[str] = None) -> 'Observer':
+                  start_script: t.Optional[str] = None) -> t.Iterator['Observer']:
         """Constructs an observer by starting an instance of an image
 
         Parameters
@@ -90,37 +92,26 @@ class Observer(ABC):
         """
         rsw = roswire.ROSWire()
         app = rsw.app(config.image, config.sources)
-        instance = app.launch(environment=config.environment)
-        observer = cls._build_observer(app, config, instance)
-        observer._own_instance = True
-        if start_script:
-            logger.debug("Starting the container")
-            cmd = start_script
-            observer._x_start_script = instance.shell.popen(cmd)
-            time.sleep(5)
-            if observer._x_start_script.returncode and observer._x_start_script.returncode != 1:
-                for line in observer._x_start_script.stream:
-                    logger.error(line)
-                raise ExecutionError("Could not start the X server")
-        return observer
+        with app.launch(environment=config.environment) as instance:
+            observer = cls._build_observer(app, config, instance)
+            try:
+                if start_script:
+                    logger.debug("Starting the container")
+                    cmd = start_script
+                    script = instance.shell.popen(cmd)
+                    time.sleep(5)
+                    if script.returncode and script.returncode != 1:
+                        for line in script.stream:
+                            logger.error(line)
+                        raise ExecutionError("Could not run start script")
+                yield observer
+            finally:
+                if start_script and script:
+                    script.terminate()
 
     def __init__(self, app: AppInstance, config: 'Config') -> None:
         self._app_instance = app
         self._config = config
-
-    def __enter__(self) -> 'Observer':
-        return self
-
-    def __exit__(
-        self,
-        ex_type: t.Optional[t.Type[BaseException]],
-        ex_val: t.Optional[BaseException],
-        ex_tb: t.Optional[types.TracebackType],
-    ):
-        if self._x_start_script:
-            self._x_start_script.terminate()
-        if self._own_instance:
-            self._app_instance.close()
 
     @abstractmethod
     def observe(self) -> SystemSummary:
