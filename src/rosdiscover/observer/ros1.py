@@ -139,6 +139,3 @@ class ROS1Observer(Observer):
         finally:
             if script_path:
                 os.remove(script_path)
-
-
-
