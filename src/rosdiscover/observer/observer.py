@@ -24,8 +24,6 @@ class ExecutionError(Exception):
 
 
 class Observer(ABC):
-    _x_start_script: t.Optional[Popen]  # The process created from running the start script
-    _own_instance: bool  # Whether the Observer created it's own instance
 
     @classmethod
     def for_container(cls,
