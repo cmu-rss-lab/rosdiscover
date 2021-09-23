@@ -3,7 +3,7 @@ __all__ = ("Observer",)
 
 import os
 from abc import ABC, abstractmethod
-import typing
+import typing as t
 
 import roswire
 from dockerblade.popen import Popen
@@ -12,8 +12,12 @@ from roswire import AppInstance, ROSVersion
 
 from ..interpreter import SystemSummary
 
-if typing.TYPE_CHECKING:
+if t.TYPE_CHECKING:
     from ..config import Config
+
+
+class ExecutionError(Exception):
+    ...
 
 
 class Observer(ABC):
@@ -91,7 +95,7 @@ class Observer(ABC):
         return process
 
     @abstractmethod
-    def launch_from_config(self, sleep_time: float) -> int:
+    def launch_from_config(self, sleep_time: float) -> t.Sequence[Popen]:
         """
         Uses the launch file(s) in config to launch the ROS nodes. Waits until
         all nodes are started.
