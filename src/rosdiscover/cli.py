@@ -174,9 +174,10 @@ def _periodic_observe(interval: float, args: argparse.Namespace) -> SystemSummar
         logger.info(f"Finished observing - {iterations+1} observations in total after {stopwatch.duration} seconds.")
     finally:
         if process:
-            process.terminate()
+            process.kill()
         for launch in launches:
-            launch.terminate()
+            logger.info(f"Killing {launch.args}")
+            launch.kill()
     return summary
 
 
