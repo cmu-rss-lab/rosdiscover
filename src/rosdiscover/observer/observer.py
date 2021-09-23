@@ -73,7 +73,7 @@ class Observer(ABC):
 
         Returns
         -------
-        int
-            The exit code when the script is finished
+        Popen
+            The process instance that was started on the container
         """
         ...
