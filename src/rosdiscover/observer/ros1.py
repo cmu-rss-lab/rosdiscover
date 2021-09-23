@@ -4,13 +4,14 @@ __all__ = ('ROS1Observer',)
 import os
 import tempfile
 import time
-from typing import Collection, Dict
+import typing as t
 
+from dockerblade.popen import Popen
 from loguru import logger
 from roswire.common import SystemState
 
 from .nodeinfo import NodeInfo
-from .observer import Observer
+from .observer import ExecutionError, Observer
 from ..interpreter import NodeContext, SystemSummary
 from ..launch import Launch
 
@@ -32,7 +33,7 @@ class ROS1Observer(Observer):
 
         return self._summarise(nodecontexts)
 
-    def _summarise(self, contexts: Collection[NodeContext]) -> SystemSummary:
+    def _summarise(self, contexts: t.Collection[NodeContext]) -> SystemSummary:
         """
         Produce an immutable description of the system architecture from the collection of
         NodeContexts.
@@ -51,7 +52,7 @@ class ROS1Observer(Observer):
         node_to_summary = {s.fullname: s for s in summaries}
         return SystemSummary(node_to_summary)
 
-    def _transform_state_to_nodeinfo(self, state: SystemState) -> Collection[NodeInfo]:
+    def _transform_state_to_nodeinfo(self, state: SystemState) -> t.Collection[NodeInfo]:
         """
         Produce information about ros keyed by node.
 
@@ -69,7 +70,7 @@ class ROS1Observer(Observer):
         Collection[NodeInfo]
             A collection of nodes with publishers and subscribers and services attacbed
         """
-        reorganized_nodes: Dict[str, NodeInfo] = dict()
+        reorganized_nodes: t.Dict[str, NodeInfo] = dict()
         # Create the node placeholders
         for node_name in state.nodes:
             if node_name not in _NODES_TO_FILTER_OUT:
@@ -100,31 +101,37 @@ class ROS1Observer(Observer):
 
         return list(reorganized_nodes.values())
 
-    def launch_from_config(self, sleep_time: float) -> int:
+    def launch_from_config(self, sleep_time: float) -> t.Sequence[Popen]:
         # Eagerly check launch files exist - don't start any if one doesn't exist
         app_instance = self._app_instance
         for launch in self._config.launches:
             if not app_instance.files.exists(launch.filename):
                 raise FileNotFoundError(launch.filename)
 
-        i = 0
+        processes = []
+
         for launch in self._config.launches:
             launch_script = self._generate_launch_script_on_host(launch)
             cmd = f"bash {launch_script}"
-            completed = app_instance.shell.run(cmd)
-            if completed.returncode != 0:
-                return completed.returncode
-            if i < len(self._config.launches)-1:
-                time.sleep(sleep_time)
-            i += 1
+            process = app_instance.shell.popen(cmd)
+            processes.append(process)
+            time.sleep(sleep_time)
+            if process.returncode and process.returncode != 0:
+                raise ExecutionError(f"Could not run '{cmd}' on container.")
+        return processes
 
     def _generate_launch_script_on_host(self, launch: Launch) -> str:
         script_path = None
         try:
-            with tempfile.NamedTemporaryFile(suffix=".sh", delete=False) as script:
+            tmp = tempfile.NamedTemporaryFile(suffix=".sh", delete=False)
+            with open(tmp.name, 'w') as script:
                 for source in self._config.sources:
                     script.write(f"source {source}\n")
-                script.write(f"roslaunch {launch.filename} {launch.get_argv()}")
+                launch_cmd = f"roslaunch {launch.filename}"
+                for arg in launch.get_argv():
+                    launch_cmd += f" {arg}"
+                logger.info(f"Launching with '{launch_cmd}")
+                script.write(f"{launch_cmd}\n")
                 script_path = script.name
             script_on_container = self._app_instance.files.mktemp(suffix='.sh')
             self._app_instance.files.copy_from_host(script_path, script_on_container)

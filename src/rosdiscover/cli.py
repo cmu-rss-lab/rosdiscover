@@ -122,11 +122,12 @@ def _observe(args) -> SystemSummary:
 def _periodic_observe(interval: float, args: argparse.Namespace) -> SystemSummary:
     config = Config.from_yaml_string(args.config)
     obs = Observer.for_container(args.container, config)
+    launches: t.Sequence[Popen] = []
     if args.do_launch:
-        obs.launch_from_config(args.launch_sleep)
+        launches = obs.launch_from_config(args.launch_sleep)
     try:
         process: t.Optional[Popen] = None
-        if 'run_script' in args:
+        if 'run_script' in args and args.run_script:
             process = obs.execute_script(args.run_script)
         summary = SystemSummary({})
         stopwatch = Stopwatch()
@@ -174,6 +175,8 @@ def _periodic_observe(interval: float, args: argparse.Namespace) -> SystemSummar
     finally:
         if process:
             process.terminate()
+        for launch in launches:
+            launch.terminate()
     return summary
 
 
