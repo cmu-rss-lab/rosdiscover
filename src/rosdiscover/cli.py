@@ -110,18 +110,17 @@ def generate_acme(args) -> None:
         acme_gen.check_acme()
 
 
-def _observe(args) -> SystemSummary:
-    config = Config.from_yaml_string(args.config)
-    obs = Observer.for_container(args.container, config)
+def _observe(obs, args) -> SystemSummary:
     if args.do_launch:
         obs.launch_from_config(args.launch_sleep)
     summary = obs.observe()
     return summary
 
 
-def _periodic_observe(interval: float, args: argparse.Namespace) -> SystemSummary:
-    config = Config.from_yaml_string(args.config)
-    obs = Observer.for_container(args.container, config)
+def _periodic_observe(obs: Observer,
+                      interval: float,
+                      args: argparse.Namespace) -> SystemSummary:
+
     launches: t.Sequence[Popen] = []
     if args.do_launch:
         launches = obs.launch_from_config(args.launch_sleep)
@@ -182,11 +181,22 @@ def _periodic_observe(interval: float, args: argparse.Namespace) -> SystemSummar
     return summary
 
 
-def observe(args) -> None:
+def do_observe(obs, args):
     if 'duration' in args or 'interval' in args:
-        summary = _periodic_observe(args.interval, args)
+        summary = _periodic_observe(obs, args.interval, args)
     else:
-        summary = _observe(args)
+        summary = _observe(obs, args)
+    return summary
+
+
+def observe(args) -> None:
+    config = Config.from_yaml_string(args.config)
+    if args.container:
+        obs = Observer.for_container(args.container, config)
+        summary = do_observe(obs, args)
+    else:
+        with Observer.for_image(config) as obs:
+            summary = do_observe(obs, args)
     output = summary.to_dict()
     if args.output:
         with open(args.output, 'w') as f:
@@ -331,7 +341,7 @@ def main(args: t.Optional[t.Sequence[str]] = None) -> None:
     p.add_argument('--run-script', type=str, help='A shell script to run on the container while observing')
     p.add_argument('--do-launch', action='store_true', help='Launch using the files specified in <config>')
     p.add_argument('--launch-sleep', type=float, help='Seconds to sleep between launch file execution', default=60.0)
-    p.add_argument('container', type=str, help='The container where the ROS system is running')
+    p.add_argument('--container', type=str, help='The container where the ROS system is running', default=None)
     p.add_argument('config', type=argparse.FileType('r'),
                    help='R|A YAML file defining the configuration (only the environment'
                    'information will be used).'

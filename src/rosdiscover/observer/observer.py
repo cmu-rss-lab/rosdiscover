@@ -2,7 +2,9 @@
 __all__ = ("Observer",)
 
 import os
+import time
 from abc import ABC, abstractmethod
+import types
 import typing as t
 
 import roswire
@@ -21,6 +23,7 @@ class ExecutionError(Exception):
 
 
 class Observer(ABC):
+    _attached: t.Optional[Popen]
 
     @classmethod
     def for_container(cls,
@@ -45,6 +48,12 @@ class Observer(ABC):
         rsw = roswire.ROSWire()
         app = rsw.app(config.image, config.sources)
         instance = app.attach(container, require_description=True)
+        observer = cls._build_observer(app, config, instance)
+        observer._attached = None
+        return observer
+
+    @classmethod
+    def _build_observer(cls, app, config, instance):
         if app.description.distribution.ros == ROSVersion.ROS1:
             from .ros1 import ROS1Observer
             return ROS1Observer(instance, config)
@@ -52,9 +61,55 @@ class Observer(ABC):
             from .ros2 import ROS2Observer
             return ROS2Observer(instance, config)
 
+    @classmethod
+    def for_image(cls, config: 'Config') -> 'Observer':
+        """Constructs an observer by starting an instance of an image
+
+        Parameters
+        ----------
+        config: Config
+            A description of the configuration used by the running container.
+            Will contain the image name, sources, and environment variables to
+            run
+
+        Returns
+        -------
+        Observer
+            An observer that is appropriate for the kind of ROS system that is running in the
+            container.
+        """
+        rsw = roswire.ROSWire()
+        app = rsw.app(config.image, config.sources)
+        instance = app.launch(environment=config.environment)
+        observer = cls._build_observer(app, config, instance)
+        observer._attached = False
+
+        logger.debug("Starting the container")
+        cmd = "/startup-vnc.sh"
+        observer._attached = instance.shell.popen(cmd)
+        time.sleep(5)
+        if observer._attached.returncode and observer._attached.returncode != 1:
+            for line in observer._attached.stream:
+                logger.error(line)
+            raise ExecutionError("Could not start the X server")
+        return observer
+
     def __init__(self, app: AppInstance, config: 'Config') -> None:
         self._app_instance = app
         self._config = config
+
+    def __enter__(self) -> 'Observer':
+        return self
+
+    def __exit__(
+        self,
+        ex_type: t.Optional[t.Type[BaseException]],
+        ex_val: t.Optional[BaseException],
+        ex_tb: t.Optional[types.TracebackType],
+    ):
+        if self._attached:
+            self._attached.terminate()
+            self._app_instance.close()
 
     @abstractmethod
     def observe(self) -> SystemSummary:
