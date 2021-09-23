@@ -171,7 +171,8 @@ def _periodic_observe(interval: float, args: argparse.Namespace) -> SystemSummar
         if process and not process.poll():
             logger.warning(f"Observations seemed to have stopped before '{args.run_script}' completed.")
 
-        logger.info(f"Finished observing - {iterations+1} observations in total after {stopwatch.duration} seconds.")
+        logger.info(f"Finished observing - {iterations+1} observations in total after {stopwatch.duration:.3g} "
+                    f"seconds.")
     finally:
         if process:
             process.kill()
