@@ -3,9 +3,8 @@ __all__ = ("Observer",)
 
 import os
 import time
-from abc import ABC, abstractmethod
-import types
 import typing as t
+from abc import ABC, abstractmethod
 from contextlib import contextmanager
 
 import roswire
