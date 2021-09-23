@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
 __all__ = ("Observer",)
 
+import os
 from abc import ABC, abstractmethod
 import typing
 
 import roswire
+from dockerblade.popen import Popen
+from loguru import logger
 from roswire import AppInstance, ROSVersion
 
 from ..interpreter import SystemSummary
@@ -59,3 +62,30 @@ class Observer(ABC):
             An immutable representation of the system architecture.
         """
         ...
+
+    def execute_script(self, path_on_host: str) -> Popen:
+        """Executes a script on the executing container.
+
+        Parameters
+        ----------
+        path_on_host: str
+            The path to the script on the host (commands in the script should
+            be relative to the container, not the host).
+
+        Returns
+        -------
+        Popen
+            The process instance that was started on the container
+        """
+        if not os.path.exists(path_on_host):
+            raise FileNotFoundError(f"'{path_on_host}' not found.")
+        assert self._app_instance is not None
+
+        path_on_container = self._app_instance.files.mktemp('.sh')
+        self._app_instance.files.copy_from_host(path_on_host, path_on_container)
+
+        cmd = f"bash {path_on_container}"
+
+        logger.debug(f"Running the script in the container: {cmd}")
+        process = self._app_instance.shell.popen(cmd)
+        return process

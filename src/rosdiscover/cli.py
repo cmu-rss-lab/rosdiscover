@@ -9,6 +9,7 @@ import typing as t
 
 import pkg_resources
 import yaml
+from dockerblade.popen import Popen
 from loguru import logger
 
 from .acme import AcmeGenerator
@@ -119,30 +120,56 @@ def _observe(args) -> SystemSummary:
 def _periodic_observe(interval: float, args: argparse.Namespace) -> SystemSummary:
     config = Config.from_yaml_string(args.config)
     obs = Observer.for_container(args.container, config)
-    summary = SystemSummary({})
-    stopwatch = Stopwatch()
-    iterations = 0
-    go = True
-    stopwatch.start()
-    while go:
-        try:
-            obs_start = stopwatch.duration
-            iterations += 1
-            logger.info(f"Doing observation {iterations}")
-            observation = obs.observe()
-            summary = SystemSummary.merge(summary, observation)
-            obs_end = stopwatch.duration
-            logger.debug(f"Finished observation {iterations}; took {obs_end-obs_start:.3f} seconds.")
-            if 'duration' in args:
-                go = stopwatch.duration < args.duration
-            logger.debug('Sleeping for {interval:.3f} seconds')
-            time.sleep(interval)
-            if 'duration' in args:
-                go = stopwatch.duration < args.duration
-        except KeyboardInterrupt:
-            go = False
-    stopwatch.stop()
-    logger.info(f"Finished observing - {iterations+1} observations in total after {stopwatch.duration} seconds.")
+    try:
+        process: t.Optional[Popen] = None
+        if 'run_script' in args:
+            process = obs.execute_script(args.run_script)
+        summary = SystemSummary({})
+        stopwatch = Stopwatch()
+        iterations = 0
+        go = True
+        stopwatch.start()
+        while go:
+            try:
+                iterations += 1
+                obs_start = stopwatch.duration
+                logger.info(f"Doing observation {iterations}")
+
+                observation = obs.observe()
+                summary = SystemSummary.merge(summary, observation)
+
+                obs_end = stopwatch.duration
+                logger.debug(f"Finished observation {iterations}; took {obs_end-obs_start:.3f} seconds.")
+
+                if 'duration' in args:
+                    go = stopwatch.duration < args.duration
+
+                logger.debug(f'Sleeping for {interval:.3f} seconds')
+                time.sleep(interval)
+
+                if process:
+                    result = process.poll()
+                    if result:
+                        if result != 0:
+                            logger.error(f"{args.run_script} seems to have failed: {result}")
+                            for line in process.stream:
+                                logger.error(line)
+                        process = None
+
+                if 'duration' in args:
+                    go = stopwatch.duration < args.duration
+            except KeyboardInterrupt:
+                go = False
+
+        stopwatch.stop()
+
+        if process and not process.poll():
+            logger.warning(f"Observations seemed to have stopped before '{args.run_script}' completed.")
+
+        logger.info(f"Finished observing - {iterations+1} observations in total after {stopwatch.duration} seconds.")
+    finally:
+        if process:
+            process.terminate()
     return summary
 
 
@@ -292,6 +319,7 @@ def main(args: t.Optional[t.Sequence[str]] = None) -> None:
     p.add_argument('--output', type=str, help='What file to output')
     p.add_argument('--duration', type=int, help='The amount of time (secs) to observe for')
     p.add_argument('--interval', type=float, help='The number of seconds to wait in between observations')
+    p.add_argument('--run-script', type=str, help='A shell script to run on the container while observing')
     p.add_argument('container', type=str, help='The container where the ROS system is running')
     p.add_argument('config', type=argparse.FileType('r'),
                    help='R|A YAML file defining the configuration (only the environment'
