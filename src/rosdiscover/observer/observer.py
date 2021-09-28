@@ -2,13 +2,15 @@
 __all__ = ("Observer",)
 
 import os
-from abc import ABC, abstractmethod
+import time
 import typing as t
+from abc import ABC, abstractmethod
+from contextlib import contextmanager
 
 import roswire
 from dockerblade.popen import Popen
 from loguru import logger
-from roswire import AppInstance, ROSVersion
+from roswire import App, AppInstance, ROSVersion
 
 from ..interpreter import SystemSummary
 
@@ -45,12 +47,63 @@ class Observer(ABC):
         rsw = roswire.ROSWire()
         app = rsw.app(config.image, config.sources)
         instance = app.attach(container, require_description=True)
+        observer = cls._build_observer(app, config, instance)
+        return observer
+
+    @classmethod
+    def _build_observer(
+        cls,
+        app: App,
+        config: 'Config',
+        instance: AppInstance,
+    ) -> 'Observer':
         if app.description.distribution.ros == ROSVersion.ROS1:
             from .ros1 import ROS1Observer
             return ROS1Observer(instance, config)
         else:
             from .ros2 import ROS2Observer
             return ROS2Observer(instance, config)
+
+    @classmethod
+    @contextmanager
+    def for_image(cls,
+                  config: 'Config',
+                  start_script: t.Optional[str] = None) -> t.Iterator['Observer']:
+        """Constructs an observer by starting an instance of an image
+
+        Parameters
+        ----------
+        config: Config
+            A description of the configuration used by the running container.
+            Will contain the image name, sources, and environment variables to
+            run
+        start_script: str
+            An optional script (on the container) to run after instance cretion
+        Returns
+        -------
+        Observer
+            An observer that is appropriate for the kind of ROS system that is running in the
+            container.
+        """
+        rsw = roswire.ROSWire()
+        app = rsw.app(config.image, config.sources)
+        with app.launch(environment=config.environment) as instance:
+            observer = cls._build_observer(app, config, instance)
+            script: t.Optional[Popen] = None
+            try:
+                if start_script:
+                    logger.debug("Starting the container")
+                    cmd = start_script
+                    script = instance.shell.popen(cmd)
+                    time.sleep(5)
+                    if script.returncode and script.returncode != 1:
+                        for line in script.stream:
+                            logger.error(line)
+                        raise ExecutionError("Could not run start script")
+                yield observer
+            finally:
+                if start_script and script:
+                    script.terminate()
 
     def __init__(self, app: AppInstance, config: 'Config') -> None:
         self._app_instance = app
