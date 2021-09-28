@@ -266,7 +266,7 @@ class NodeContext:
 
     def actions_have_topics(self):
         distribution = self.app.description.distribution
-        if distribution == ROSVersion.ROS1:
+        if distribution.ros == ROSVersion.ROS1:
             return True
         else:
             return distribution < ROSDistribution.FOXY
