@@ -239,8 +239,9 @@ class AcmeGenerator:
         components, topics, services, actions = \
             self.get_components_and_connectors()
 
-        system_name = "RobotSystem" if self.__acme_file is None else '_'.join(
-            self.__acme_file.split(".")[:-1])
+        system_name = "RobotSystem" if self.__acme_file is None else self.to_acme_name(
+            '_'.join(self.__acme_file.split(".")[:-1])
+        )
         # system_name = os.path.basename(os.path.normpath(self.__launch_files)).split('.')[0]
 
         acme = f"import families/ROSFam.acme;\nsystem {system_name} : ROSFam = new ROSFam extended with {{\n"
