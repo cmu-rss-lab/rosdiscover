@@ -89,6 +89,7 @@ class Observer(ABC):
         app = rsw.app(config.image, config.sources)
         with app.launch(environment=config.environment) as instance:
             observer = cls._build_observer(app, config, instance)
+            script: t.Optional[Popen] = None
             try:
                 if start_script:
                     logger.debug("Starting the container")
