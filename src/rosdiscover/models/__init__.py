@@ -54,6 +54,7 @@ from . import stage_ros
 from . import topic_tools_mux
 from . import turtlebot3_teleop_key
 from . import twist_mux
+from . import teleop_twist_joy
 from . import velocity_smoother
 from . import pointgrey_camera_driver
 from . import lap_stats
