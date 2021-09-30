@@ -110,7 +110,7 @@
                 "sha256:fa471a601dfea0f492e4f4fca035cd82155e65dc45c9b83bf4322dfab63755dd"
             ],
             "markers": "python_version >= '3'",
-            "version": "==2.0.6"
+            "version": "==2.0.5"
         },
         "coverage": {
             "hashes": [
