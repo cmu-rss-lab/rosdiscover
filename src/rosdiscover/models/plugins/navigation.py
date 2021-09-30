@@ -164,7 +164,9 @@ class ObstacleLayerPlugin(NavigationPlugin):
         move_base = get_move_base(interpreter, self.node_name)
 
         observation_sources_param = namespace_join(move_base.name, namespace_join('obstacles', 'observation_sources'))
-        observation_sources = move_base.read(observation_sources_param, "")
+        observation_sources = move_base.read(observation_sources_param, None)
+        if not observation_sources:
+            return
 
         for os in observation_sources.split(" "):
             os_ns = namespace_join(move_base.name, namespace_join('obstacles', os))
