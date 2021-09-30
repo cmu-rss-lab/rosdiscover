@@ -23,6 +23,7 @@ def move_base(c):
     c.sub("move_base_simple/goal", "geometry_msgs/PoseStamped")
 
     c.pub("cmd_vel", "geometry_msgs/Twist")
+    c.pub("~goal", "move_base_msgs/MoveBaseAction")
     c.pub("~current_goal", "geometry_msgs/PoseStamped")
 
     c.read("~local_costmap/inscribed_radius", 0.325)
