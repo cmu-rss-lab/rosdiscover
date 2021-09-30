@@ -252,7 +252,7 @@ class AcmeGenerator:
         attachments_to_topic: Dict[str, List[str]] = {}
         for c in components:
             ports = []
-            comp_name = self.to_acme_name(c.name)
+            comp_name = self.to_acme_name(c.fullname)
 
             for pub in [t for t in c.pubs if not t.implicit and not self._ignore(t.name)]:
                 if pub.name not in attachments_to_topic:
