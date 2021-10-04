@@ -8,6 +8,7 @@ The main class within this module is :class:`Interpreter`, which acts as a
 model evaluator / virtual machine for a ROS architecture.
 """
 from .context import NodeContext
+from .controller_manager import ControllerManagerPlugin
 from .model import model, NodeModel
 from .parameter import ParameterServer
 from .plugin import ModelPlugin
