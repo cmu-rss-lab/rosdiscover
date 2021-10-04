@@ -249,6 +249,15 @@ class LibGazeboROSControlPlugin(GazeboPlugin):
             topic_name = namespace_join(namespace, self.topic_name)
             gazebo.pub(topic_name, "std_msgs/Boolean")
 
+        # This plugin acts as a controller manager so provide those services
+        gazebo.provide("controller_manager/load_controller", "controller_manager_msgs/LoadController")
+        gazebo.provide("controller_manager/unload_controller", "controller_manager_msgs/UnloadController")
+        gazebo.provide("controller_manager/switch_controller", "controller_manager_msgs/SwitchController")
+        gazebo.provide("controller_manager/list_controller", "controller_manager_msgs/ListControllers")
+        gazebo.provide("controller_manager/list_controller_types", "controller_manager_msgs/ListControllerTypes")
+        gazebo.provide("controller_manager/reload_controller_libraries",
+                       "controller_manager_msgs/ReloadControllerLibraries")
+
     @classmethod
     def build_from_xml(cls, xml: ET.Element) -> 'GazeboPlugin':
         topic_name: str = "/default_stop"

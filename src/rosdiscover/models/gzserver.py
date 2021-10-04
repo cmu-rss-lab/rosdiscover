@@ -3,6 +3,7 @@ from ..interpreter import model
 
 @model('gazebo_ros', 'gzserver')
 def gzserver(c):
+    # TODO: Most of these parameters should come from plugins, not be handled here
     c.pub('/clock', 'rosgraph_msgs/Clock')
     c.pub('~factory', 'gazebo_msgs/Factory')
     c.pub('~factory/light', 'gazebo_msgs/Light')
@@ -43,8 +44,3 @@ def gzserver(c):
 
     c.write('~use_sim_time', True)
     c.read('~pub_clock_frequency')
-
-    # plugin: diff_drive
-    c.pub('/odom', 'nav_msgs/Odometry')
-    c.pub('/cmd_vel', 'geometry_msgs/Twist')
-    c.pub('/joint_states', 'sensor_msgs/JointState')
