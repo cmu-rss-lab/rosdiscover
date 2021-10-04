@@ -44,4 +44,3 @@ def gzserver(c):
 
     c.write('~use_sim_time', True)
     c.read('~pub_clock_frequency')
-
