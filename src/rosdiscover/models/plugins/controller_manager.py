@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from __future__ import annotations
+
 __all__ = ("ControllerManagerPlugin",)
 
 import abc
@@ -12,9 +14,8 @@ from ...interpreter import Interpreter, ModelPlugin, NodeContext
 
 @attr.s(frozen=True, slots=True)
 class ControllerManagerPlugin(ModelPlugin, abc.ABC):
-    type_name: t.ClassVar[t.Final[str]]
+    type_name: t.ClassVar[str]
 
-    controller_type: str = attr.ib()
     controller_name: str = attr.ib()
     controller_manager_node: str = attr.ib()
 
@@ -24,7 +25,7 @@ class ControllerManagerPlugin(ModelPlugin, abc.ABC):
         controller_type: str,
         controller_name: str,
         controller_manager_node: str,
-    ) -> 'NavigationPlugin':
+    ) -> ControllerManagerPlugin:
         """Loads a controller manager plugin.
 
         Parameters
@@ -48,23 +49,23 @@ class ControllerManagerPlugin(ModelPlugin, abc.ABC):
            'joint_state_controller/JointStateController': JointStateControllerPlugin,
            'diff_drive_controller/DiffDriveController': DiffDriveControllerPlugin,
         }
-        cls = type_to_class[type_name]
+        cls = type_to_class[controller_type]
 
         plugin = cls.build(controller_name, controller_manager_node)
         logger.debug(f'loaded controller_manager plugin [{controller_name}]')
         return plugin
 
     @classmethod
-    def build(cls, controller_name: str, controller_manager_node: str) -> 'ControllerManagerPlugin':
+    def build(cls, controller_name: str, controller_manager_node: str) -> ControllerManagerPlugin:
         return cls(
-            controller_name=controller_node,
+            controller_name=controller_name,
             controller_manager_node=controller_manager_node,
         )
 
     @property
     def namespace(self) -> str:
         """The associated namespace for this controller."""
-        return namespace_join(controller_manager_node, controller_name)
+        return namespace_join(self.controller_manager_node, self.controller_name)
 
     def load(self, interpreter: Interpreter) -> None:
         context = interpreter.nodes[self.controller_manager_node]
