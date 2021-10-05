@@ -148,6 +148,8 @@ class DiffDriveControllerPlugin(ControllerManagerPlugin):
         context.read("wheel_separation", 0.0)
         context.read("wheel_radius", 0.0)
 
+        context.sub("cmd_vel", "geometry_msgs/Twist")
+
         if should_publish_command:
             context.pub("cmd_vel_out", "geometry_msgs/TwistStamped")
 
