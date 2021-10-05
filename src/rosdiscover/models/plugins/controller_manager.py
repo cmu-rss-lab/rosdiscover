@@ -99,4 +99,61 @@ class JointStateControllerPlugin(ControllerManagerPlugin):
 @attr.s(auto_attribs=True, frozen=True, slots=True)
 class DiffDriveControllerPlugin(ControllerManagerPlugin):
     def _load(self, interpreter: Interpreter, context: NodeContext) -> None:
+        # FIXME this is only a partial model!
+        # https://github.com/ros-controls/ros_controllers/blob/noetic-devel/diff_drive_controller/src/diff_drive_controller.cpp
+
+        # TODO get wheel names
+
+        context.read("publish_rate", 50.0)
+        context.read("open_loop", False)
+        context.read("wheel_separation_multiplier", 1.0)
+
+        if context.hasParam("wheel_radius_multiplier"):
+            context.read("wheel_radius_multiplier")
+        else:
+            context.read("left_wheel_radius_multiplier", 1.0)
+            context.read("right_wheel_radius_multiplier", 1.0)
+
+        context.read("velocity_rolling_window_size", 10)
+        context.read("cmd_vel_timeout", 0.5)
+        context.read("allow_multiple_cmd_vel_publishers", True)
+
+        context.read("base_frame_id", "base_link")
+        context.read("odom_frame_id", "odom")
+        context.read("enable_odom_tf", True)
+
+        context.read("linear/x/has_velocity_limits", False)
+        context.read("linear/x/has_acceleration_limits", False)
+        context.read("linear/x/has_jerk_limits", False)
+        context.read("linear/x/max_velocity", 0.0)
+        context.read("linear/x/min_velocity", 0.0)
+        context.read("linear/x/max_acceleration", 0.0)
+        context.read("linear/x/min_acceleration", 0.0)
+        context.read("linear/x/max_jerk", 0.0)
+        context.read("linear/x/min_jerk", 0.0)
+
+        context.read("angular/z/has_velocity_limits", False)
+        context.read("angular/z/has_acceleration_limits", False)
+        context.read("angular/z/has_jerk_limits", False)
+        context.read("angular/z/max_velocity", 0.0)
+        context.read("angular/z/min_velocity", 0.0)
+        context.read("angular/z/max_acceleration", 0.0)
+        context.read("angular/z/min_acceleration", 0.0)
+        context.read("angular/z/max_jerk", 0.0)
+        context.read("angular/z/min_jerk", 0.0)
+
+        should_publish_command = context.read("publish_cmd", False)
+        should_publish_joint_state = context.read("publish_wheel_joint_controller_state", False)
+
+        context.read("wheel_separation", 0.0)
+        context.read("wheel_radius", 0.0)
+
+        if should_publish_command:
+            context.pub("cmd_vel_out", "geometry_msgs/TwistStamped")
+
+        if should_publish_joint_state:
+            context.pub("wheel_joint_controller_state", "control_msgs/JointTrajectoryControllerState")
+
+        # TODO this node supports dynamic reconfiguration
+
         raise NotImplementedError
