@@ -108,7 +108,7 @@ class DiffDriveControllerPlugin(ControllerManagerPlugin):
         context.read("open_loop", False)
         context.read("wheel_separation_multiplier", 1.0)
 
-        if context.hasParam("wheel_radius_multiplier"):
+        if context.has_param("wheel_radius_multiplier"):
             context.read("wheel_radius_multiplier")
         else:
             context.read("left_wheel_radius_multiplier", 1.0)
@@ -153,6 +153,9 @@ class DiffDriveControllerPlugin(ControllerManagerPlugin):
 
         if should_publish_joint_state:
             context.pub("wheel_joint_controller_state", "control_msgs/JointTrajectoryControllerState")
+
+        context.pub("odom", "nav_msgs/Odometry")
+        context.pub("/tf", "tf/tfMessage")
 
         # TODO this node supports dynamic reconfiguration
         logger.warning("plugin model is likely incomplete: DiffDriveControllerPlugin")
