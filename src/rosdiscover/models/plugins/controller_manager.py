@@ -155,5 +155,4 @@ class DiffDriveControllerPlugin(ControllerManagerPlugin):
             context.pub("wheel_joint_controller_state", "control_msgs/JointTrajectoryControllerState")
 
         # TODO this node supports dynamic reconfiguration
-
-        raise NotImplementedError
+        logger.warning("plugin model is likely incomplete: DiffDriveControllerPlugin")
