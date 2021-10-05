@@ -46,8 +46,8 @@ class ControllerManagerPlugin(ModelPlugin, abc.ABC):
         # find the class associated with this type
         # TODO iterate over subclasses and inspect type_name
         type_to_class: t.Mapping[str, t.Type[ControllerManagerPlugin]] = {
-           'joint_state_controller/JointStateController': JointStateControllerPlugin,
-           'diff_drive_controller/DiffDriveController': DiffDriveControllerPlugin,
+            'joint_state_controller/JointStateController': JointStateControllerPlugin,
+            'diff_drive_controller/DiffDriveController': DiffDriveControllerPlugin,
         }
         cls = type_to_class[controller_type]
 
