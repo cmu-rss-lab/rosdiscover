@@ -127,6 +127,7 @@ def _periodic_observe(obs: Observer,
     try:
         process: t.Optional[Popen] = None
         if 'run_script' in args and args.run_script:
+            logger.info(f"Running script {args.run_script} on container")
             process = obs.execute_script(args.run_script)
         summary = SystemSummary({})
         stopwatch = Stopwatch()
