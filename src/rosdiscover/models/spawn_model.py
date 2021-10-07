@@ -47,7 +47,7 @@ def spawn_model(c):
     begin_tag = "<robot>"
     begin_tag_starts_at = urdf_contents.find(begin_tag)
     if begin_tag_starts_at == -1:
-        begin_tag_starts_at.find("<robot ")
+        begin_tag_starts_at = urdf_contents.find("<robot ")
     if begin_tag_starts_at != -1:
         urdf_contents = urdf_contents[begin_tag_starts_at:]
 
