@@ -92,7 +92,7 @@ class Interpreter:
                 m = ("unable to determine associated launch file for "
                      f"node: {node}")
                 raise Exception(m)
-            logger.debug(f"launching node: {node.name}")
+            logger.debug(f"launching node: {node.name} from {node.filename}")
             try:
                 args = node.args or ''
                 remappings = {old: new for (old, new) in node.remappings}
