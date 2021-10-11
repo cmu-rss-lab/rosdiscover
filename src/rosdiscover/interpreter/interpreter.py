@@ -223,6 +223,7 @@ class Interpreter:
             else:
                 load, pkg_and_nodetype, mgr = args.split(' ')
                 pkg, _, nodetype = pkg_and_nodetype.partition('/')
+                logger.debug(f"---->Loading nodelet {pkg} / {name}")
                 return self._load_nodelet(pkg=pkg,
                                           nodetype=nodetype,
                                           name=name,
