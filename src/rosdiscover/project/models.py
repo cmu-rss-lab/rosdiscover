@@ -91,6 +91,7 @@ class ProjectModels:
                 node_info.restrict_to_paths
             )
         self._recovered_models.store(model)
+        logger.info(f"----> recovered {model.node_name}")
         return model
 
     def _fetch_handwritten(self, package: str, node: str) -> t.Optional[NodeModel]:
