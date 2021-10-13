@@ -253,13 +253,13 @@ class NodeRecoveryTool:
         logger.info(f"Recovered sources for {node_name} as {str(node_source_info.sources)}")
         return node_source_info
 
-    def recover_using_cmakelists(self, package_name: str, node_name: str, allow_nodelet: bool) -> RecoveredNodeModel:
+    def recover_using_cmakelists(self, package_name: str, node_name: str) -> RecoveredNodeModel:
         try:
             package = self._app.description.packages[package_name]
         except KeyError as err:
             raise ValueError(f"no package found with given name: {package_name}") from err
 
-        source_info = self._info_via_cmake(package, node_name, allow_nodelet)
+        source_info = self._info_via_cmake(package, node_name)
         entrypoint = "main"
         if isinstance(source_info, CMakeBinaryTarget):
             assert source_info.entrypoint is not None
