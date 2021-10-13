@@ -241,7 +241,7 @@ class NodeRecoveryTool:
         if node_name not in cmake_info:
             logger.info(f"CMakeLists.txt contains: {str(cmake_info.keys())}")
             raise ValueError(f"{node_name} is not in the CMakeLists.txt of package '{package.name}")
-        node_source_info = cmake_info[node_name]
+        node_source_info = cmake_info[node_name]  # TODO look for class
         if node_source_info.language != SourceLanguage.CXX:
             raise NotImplementedError("Can only recover node information for C++ nodes")
         logger.info(f"Recovered sources for {node_name} as {str(node_source_info.sources)}")
