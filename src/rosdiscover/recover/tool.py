@@ -229,7 +229,10 @@ class NodeRecoveryTool:
             )
         return compile_commands_path
 
-    def _info_via_cmake(self, package: roswire.common.Package, node_name: str) -> CMakeTarget:
+    def _info_via_cmake(
+        self, package: roswire.common.Package,
+        node_name: str,
+    ) -> CMakeTarget:
         assert self._app_instance
         cmake_info: t.Mapping[str, CMakeTarget]
         if self._app.description.distribution.ros == ROSVersion.ROS1:
@@ -238,22 +241,25 @@ class NodeRecoveryTool:
         else:
             ros2 = self._app_instance.ros2
             cmake_info = ros2.package_node_sources(package)
-        if node_name not in cmake_info:
+        if node_name not in cmake_info and f"{package}/{node_name}" not in cmake_info:
             logger.info(f"CMakeLists.txt contains: {str(cmake_info.keys())}")
             raise ValueError(f"{node_name} is not in the CMakeLists.txt of package '{package.name}")
-        node_source_info = cmake_info[node_name]  # TODO look for class
+        if node_name in cmake_info:
+            node_source_info = cmake_info[node_name]
+        else:
+            node_source_info = cmake_info[f"{package}/{node_name}"]
         if node_source_info.language != SourceLanguage.CXX:
             raise NotImplementedError("Can only recover node information for C++ nodes")
         logger.info(f"Recovered sources for {node_name} as {str(node_source_info.sources)}")
         return node_source_info
 
-    def recover_using_cmakelists(self, package_name: str, node_name: str) -> RecoveredNodeModel:
+    def recover_using_cmakelists(self, package_name: str, node_name: str, allow_nodelet: bool) -> RecoveredNodeModel:
         try:
             package = self._app.description.packages[package_name]
         except KeyError as err:
             raise ValueError(f"no package found with given name: {package_name}") from err
 
-        source_info = self._info_via_cmake(package, node_name)
+        source_info = self._info_via_cmake(package, node_name, allow_nodelet)
         entrypoint = "main"
         if isinstance(source_info, CMakeBinaryTarget):
             assert source_info.entrypoint is not None
