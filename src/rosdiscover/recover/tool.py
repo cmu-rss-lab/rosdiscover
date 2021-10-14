@@ -229,7 +229,11 @@ class NodeRecoveryTool:
             )
         return compile_commands_path
 
-    def _info_via_cmake(self, package: roswire.common.Package, node_name: str) -> CMakeTarget:
+    def _info_via_cmake(
+        self,
+        package: roswire.common.Package,
+        node_name: str,
+    ) -> CMakeTarget:
         assert self._app_instance
         cmake_info: t.Mapping[str, CMakeTarget]
         if self._app.description.distribution.ros == ROSVersion.ROS1:
@@ -238,10 +242,18 @@ class NodeRecoveryTool:
         else:
             ros2 = self._app_instance.ros2
             cmake_info = ros2.package_node_sources(package)
-        if node_name not in cmake_info:
+        # ROSWire puts nodelets into CMakeInfo by their name, which happens to
+        # be a combination of package/node_name passed in via nodelet loading
+        # So, lookup via that
+        # TODO: Improve this API
+        nodelet_name_reference = f"{package}/{node_name}"
+        if node_name not in cmake_info and nodelet_name_reference not in cmake_info:
             logger.info(f"CMakeLists.txt contains: {str(cmake_info.keys())}")
             raise ValueError(f"{node_name} is not in the CMakeLists.txt of package '{package.name}")
-        node_source_info = cmake_info[node_name]
+        if node_name in cmake_info:
+            node_source_info = cmake_info[node_name]
+        else:
+            node_source_info = cmake_info[nodelet_name_reference]
         if node_source_info.language != SourceLanguage.CXX:
             raise NotImplementedError("Can only recover node information for C++ nodes")
         logger.info(f"Recovered sources for {node_name} as {str(node_source_info.sources)}")
