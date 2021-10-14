@@ -242,6 +242,10 @@ class NodeRecoveryTool:
         else:
             ros2 = self._app_instance.ros2
             cmake_info = ros2.package_node_sources(package)
+        # ROSWire puts nodelets into CMakeInfo by their name, which happens to
+        # be a combination of package/node_name passed in via nodelet loading
+        # So, lookup via that
+        # TODO: Improve this API
         nodelet_name_reference = f"{package}/{node_name}"
         if node_name not in cmake_info and nodelet_name_reference not in cmake_info:
             logger.info(f"CMakeLists.txt contains: {str(cmake_info.keys())}")
