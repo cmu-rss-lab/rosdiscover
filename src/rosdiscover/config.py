@@ -257,7 +257,8 @@ class Config:
         package_node_to_sources: t.Dict[t.Tuple[str, str], NodeSourceInfo] = {}
 
         with self.app.launch() as app_instance:
-            with app_instance.ros1() as ros:
+            ros = app_instance.ros1()
+            try:
                 for package_cmake_targets in ros.cmake_targets_for_all_packages():
                     package = package_cmake_targets.package
                     targets = package_cmake_targets.targets
@@ -268,6 +269,10 @@ class Config:
 
                         key = (node_sources.package_name, node_sources.node_name)
                         package_node_to_sources[key] = node_sources
+            except Exception as e:
+                logger.warning("Exception thrown when getting targets")
+                logger.debug(e)
+
 
         return package_node_to_sources
 
