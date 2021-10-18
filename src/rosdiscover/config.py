@@ -273,7 +273,6 @@ class Config:
                 logger.warning("Exception thrown when getting targets")
                 logger.debug(e)
 
-
         return package_node_to_sources
 
     def __cmake_target_to_node_sources(
