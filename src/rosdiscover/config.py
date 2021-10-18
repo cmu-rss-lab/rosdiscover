@@ -258,20 +258,16 @@ class Config:
 
         with self.app.launch() as app_instance:
             ros = app_instance.ros1()
-            try:
-                for package_cmake_targets in ros.cmake_targets_for_all_packages():
-                    package = package_cmake_targets.package
-                    targets = package_cmake_targets.targets
-                    for target in targets:
-                        node_sources = self.__cmake_target_to_node_sources(package, target)
-                        if not node_sources:
-                            continue
+            for package_cmake_targets in ros.cmake_targets_for_all_packages():
+                package = package_cmake_targets.package
+                targets = package_cmake_targets.targets
+                for target in targets:
+                    node_sources = self.__cmake_target_to_node_sources(package, target)
+                    if not node_sources:
+                        continue
 
-                        key = (node_sources.package_name, node_sources.node_name)
-                        package_node_to_sources[key] = node_sources
-            except Exception as e:
-                logger.warning("Exception thrown when getting targets")
-                logger.debug(e)
+                    key = (node_sources.package_name, node_sources.node_name)
+                    package_node_to_sources[key] = node_sources
 
         return package_node_to_sources
 
