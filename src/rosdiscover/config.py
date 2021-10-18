@@ -257,17 +257,17 @@ class Config:
         package_node_to_sources: t.Dict[t.Tuple[str, str], NodeSourceInfo] = {}
 
         with self.app.launch() as app_instance:
-            with app_instance.ros1() as ros:
-                for package_cmake_targets in ros.cmake_targets_for_all_packages():
-                    package = package_cmake_targets.package
-                    targets = package_cmake_targets.targets
-                    for target in targets:
-                        node_sources = self.__cmake_target_to_node_sources(package, target)
-                        if not node_sources:
-                            continue
+            ros = app_instance.ros1()
+            for package_cmake_targets in ros.cmake_targets_for_all_packages():
+                package = package_cmake_targets.package
+                targets = package_cmake_targets.targets
+                for target in targets:
+                    node_sources = self.__cmake_target_to_node_sources(package, target)
+                    if not node_sources:
+                        continue
 
-                        key = (node_sources.package_name, node_sources.node_name)
-                        package_node_to_sources[key] = node_sources
+                    key = (node_sources.package_name, node_sources.node_name)
+                    package_node_to_sources[key] = node_sources
 
         return package_node_to_sources
 
