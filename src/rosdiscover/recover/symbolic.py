@@ -452,6 +452,15 @@ class SymbolicProgram:
             raise ValueError(f"The entrypoint '{entrypoint}' is unknown in the program.")
         return SymbolicProgram(entrypoint, name_to_function)
 
+    @property
+    def unreachable_functions(self) -> t.Iterator[str]:
+        """Returns an iterator over the names of functions that are unreachable
+        from the entrypoint of this program. Unreachable functions almost always
+        indicate incomplete control flow information (due to, e.g., certain callbacks).
+        In some cases, an architecturally relevant function may truly be unreachable.
+        """
+        raise NotImplementedError
+
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
             "program": {
