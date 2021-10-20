@@ -131,6 +131,11 @@ class SymbolicValue(abc.ABC):
     def eval(self, context: SymbolicContext) -> t.Any:
         ...
 
+    @abc.abstractmethod
+    def is_unknown(self) -> bool:
+        """Returns whether or not this symbolic value is unknown."""
+        ...
+
 
 class SymbolicString(SymbolicValue, abc.ABC):
     """Represents a symbolic string value."""
@@ -149,6 +154,9 @@ class StringLiteral(SymbolicString):
 
     def eval(self, context: SymbolicContext) -> t.Any:
         return self.value
+
+    def is_unknown(self) -> bool:
+        return False
 
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
@@ -171,6 +179,9 @@ class Concatenate(SymbolicString):
             return lhs + rhs
         else:
             return SymbolicUnknown()
+
+    def is_unknown(self) -> bool:
+        return self.lhs.is_unknown() or self.rhs.is_unknown()
 
 
 class SymbolicInteger(SymbolicValue, abc.ABC):
@@ -200,6 +211,9 @@ class SymbolicUnknown(
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {"kind": "unknown"}
 
+    def is_unknown(self) -> bool:
+        return True
+
 
 # FIXME this is the effect of a bad class hierarchy :-(
 # I'll fix this up later
@@ -215,6 +229,9 @@ class SymbolicNodeHandleImpl(SymbolicNodeHandle):
 
     def eval(self, context: SymbolicContext) -> t.Any:
         return self.namespace.eval(context)
+
+    def is_unknown(self) -> bool:
+        return self.namespace.is_unknown()
 
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
@@ -235,6 +252,9 @@ class SymbolicArg(
 
     def eval(self, context: SymbolicContext) -> t.Any:
         return context.load(self.name)
+
+    def is_unknown(self) -> bool:
+        return False
 
 
 class SymbolicStatement(abc.ABC):
@@ -364,6 +384,10 @@ class SymbolicVariableReference(SymbolicValue):
 
     def eval(self, context: SymbolicContext) -> t.Any:
         return context.load(self.variable)
+
+    def is_unknown(self) -> bool:
+        """Warning: We do not check whether the definition of the variable is unknown."""
+        return False
 
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
