@@ -415,6 +415,11 @@ class SymbolicFunction:
             "body": self.body.to_dict(),
         }
 
+    @property
+    def calls(self) -> t.Set[str]:
+        """Returns the names of functions that are called within this function."""
+        return set(stmt.callee for stmt in self.body if isinstance(stmt, SymbolicFunctionCall))
+
 
 @attr.s(frozen=True, slots=True)
 class SymbolicProgram:
@@ -453,13 +458,25 @@ class SymbolicProgram:
         return SymbolicProgram(entrypoint, name_to_function)
 
     @property
-    def unreachable_functions(self) -> t.Iterator[str]:
-        """Returns an iterator over the names of functions that are unreachable
-        from the entrypoint of this program. Unreachable functions almost always
-        indicate incomplete control flow information (due to, e.g., certain callbacks).
-        In some cases, an architecturally relevant function may truly be unreachable.
+    def unreachable_functions(self) -> t.Set[SymbolicFunction]:
+        """Returns the set of functions that are unreachable from the entrypoint of this program.
+        Unreachable functions almost always indicate incomplete control flow information
+        (due to, e.g., certain callbacks). In some cases, an architecturally relevant function may
+        truly be unreachable.
         """
-        raise NotImplementedError
+        queue: t.List[SymbolicFunction] = [self.entrypoint]
+        reached: t.Set[SymbolicFunction] = set()
+
+        while queue:
+            function = queue.pop(0)
+            reached.add(function)
+            calls = set(self.functions[name] for name in function.calls)
+            for called_function in calls:
+                if called_function not in reached:
+                    queue.append(called_function)
+
+        unreachable = set(self.functions.values()).difference(reached)
+        return unreachable
 
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
