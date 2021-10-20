@@ -419,8 +419,8 @@ class SymbolicFunction:
         The definition of the function.
     """
     name: str
-    parameters: t.Mapping[str, SymbolicParameter]
-    body: SymbolicCompound
+    parameters: t.Mapping[str, SymbolicParameter] = attr.ib(hash=False)
+    body: SymbolicCompound = attr.ib(hash=False)
 
     @classmethod
     def build(
