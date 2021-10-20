@@ -439,6 +439,10 @@ class AcmeGenerator:
             with open(self.__acme_file, 'w') as f:
                 f.write(acme)
 
+    def _output(self, message: str):
+        logger.info(message)
+        print(message)
+
     def check_acme(self):
         self._check_acme(self.__acme_file)
 
@@ -446,7 +450,7 @@ class AcmeGenerator:
         (_, jf) = tempfile.mkstemp(suffix=".json")
         try:
             logger.debug("Running Acme checker")
-            print("Checking architecture...")
+            self._output("Checking architecture...")
             run = subprocess.run(list(["java", "-jar", self.__acme_jar, "-j", jf, acme_file]),
                                  stdout=PIPE, stderr=PIPE)
             if run.returncode == 0:
@@ -455,15 +459,15 @@ class AcmeGenerator:
                 with open(jf, 'r') as j:
                     checks = json.load(j)
                 if len(checks["errors"]) == 0:
-                    print("Robot architecture has no errors")
+                    self._output("Robot architecture has no errors")
                 else:
-                    print("The following problems were found with the robot architecture:")
+                    self._output("The following problems were found with the robot architecture:")
                     for e in checks["errors"]:
                         if 'causes' not in e.keys() or len(e['causes']) == 0:
-                            print(f"    {e['error']}")
+                            self._output(f"    {e['error']}")
                         else:
                             for c in e["causes"]:
-                                print(f"    {c}")
+                                self._output(f"    {c}")
 
             else:
                 logger.error("Could not run the checker")
