@@ -15,7 +15,7 @@ from loguru import logger
 from roswire import CMakeBinaryTarget, CMakeTarget, ROSVersion, SourceLanguage
 
 from .loader import SymbolicProgramLoader
-from .model import RecoveredNodeModel
+from .model import CMakeListsInfo, RecoveredNodeModel
 from .symbolic import SymbolicProgram
 from ..config import Config
 
@@ -271,7 +271,8 @@ class NodeRecoveryTool:
             assert source_info.entrypoint is not None
             entrypoint = source_info.entrypoint
         return self.recover(package_name, node_name, entrypoint, source_info.sources,
-                            source_info.restrict_to_paths)
+                            source_info.restrict_to_paths, source_info.cmakelists_file,
+                            source_info.cmakelists_line)
 
     def recover(
         self,
@@ -279,7 +280,9 @@ class NodeRecoveryTool:
         node_name: str,
         entrypoint: str,
         sources: t.Collection[str],
-        path_restrictions: t.Collection[str]
+        path_restrictions: t.Collection[str],
+        filename: str,
+        lineno: int,
     ) -> RecoveredNodeModel:
         """Statically recovers the dynamic architecture of a given node.
 
@@ -335,6 +338,7 @@ class NodeRecoveryTool:
             source_paths=tuple(sources),
             node_name=node_name,
             program=program,
+            cmakelist_info=CMakeListsInfo(filename=filename, lineno=lineno)
         )
 
     def _recover(

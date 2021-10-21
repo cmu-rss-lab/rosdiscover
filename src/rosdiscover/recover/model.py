@@ -13,6 +13,23 @@ from ..interpreter import NodeModel, NodeContext
 
 
 @attr.s(frozen=True, slots=True, auto_attribs=True)
+class CMakeListsInfo:
+    filename: str
+    lineno: int
+
+    def to_dict(self) -> t.Dict[str, t.Any]:
+        return {
+            "filename": self.filename,
+            "lineno": self.lineno
+        }
+
+    @classmethod
+    def from_dict(cls, dict_: t.Dict[str, t.Any]) -> "CMakeListsInfo":
+        assert 'filename' in dict_ and 'lineno' in dict_
+        return CMakeListsInfo(filename=dict_["filename"], lineno=dict_["lineno"])
+
+
+@attr.s(frozen=True, slots=True, auto_attribs=True)
 class RecoveredNodeModel(NodeModel):
     """Provides a symbolic description of the (statically recovered) run-time
     architecture of a given node. This description can be executed via the symbolic
@@ -32,6 +49,8 @@ class RecoveredNodeModel(NodeModel):
         directory,
     node_name: str
         The name of the node.
+    cmakelist_info: CMakeListsInfo
+        Information about which CMakeFile the sources came from
     program: SymbolicProgram
         A parameterized, executable description of the node's architectural effects.
     """
@@ -40,6 +59,7 @@ class RecoveredNodeModel(NodeModel):
     package_abs_path: str
     source_paths: t.Collection[str]
     node_name: str
+    cmakelist_info: CMakeListsInfo
     program: SymbolicProgram
 
     def save(self, filename: str) -> None:
@@ -60,6 +80,7 @@ class RecoveredNodeModel(NodeModel):
             },
             "sources": list(self.source_paths),
             "program": self.program.to_dict(),
+            "cmakeinfo": self.cmakelist_info.to_dict()
         }
 
     @classmethod
@@ -75,6 +96,7 @@ class RecoveredNodeModel(NodeModel):
         package_abs_path = dict_["package"]["path"]
         source_paths = dict_["sources"]
         program = SymbolicProgramLoader().load(dict_["program"])
+        cmakeinfo = dict_["cmakeinfo"]
         return RecoveredNodeModel(
             image_sha256=image_sha256,
             node_name=node_name,
@@ -82,6 +104,7 @@ class RecoveredNodeModel(NodeModel):
             package_abs_path=package_abs_path,
             source_paths=source_paths,
             program=program,
+            cmakelist_info=CMakeListsInfo.from_dict(cmakeinfo)
         )
 
     def eval(self, context: NodeContext) -> None:
