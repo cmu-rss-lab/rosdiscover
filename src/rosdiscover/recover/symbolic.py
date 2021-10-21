@@ -488,7 +488,7 @@ class SymbolicProgram:
                 f"The entrypoint '{entrypoint}' does not appear to reach any ROS API calls."
                 " Adding an empty placeholder function."
             )
-            name_to_function[entrypoint] = SymbolicFunction.empty(name)
+            name_to_function[entrypoint] = SymbolicFunction.empty(entrypoint)
         return SymbolicProgram(entrypoint, name_to_function)
 
     @property
