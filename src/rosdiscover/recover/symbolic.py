@@ -298,7 +298,7 @@ class SymbolicAssignment(SymbolicStatement):
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class SymbolicCompound(t.Sequence[SymbolicStatement], SymbolicStatement):
     """Represents a sequence of symbolic statements."""
-    _statements: t.Sequence[SymbolicStatement]
+    _statements: t.Sequence[SymbolicStatement] = attr.ib(default=list)
 
     def __len__(self) -> int:
         return len(self._statements)
