@@ -423,6 +423,11 @@ class SymbolicFunction:
     body: SymbolicCompound = attr.ib(hash=False)
 
     @classmethod
+    def empty(cls, name: str) -> SymbolicFunction:
+        """Creates an empty function with a given name that takes no arguments."""
+        return cls.build(name, [], SymbolicCompound())
+
+    @classmethod
     def build(
         cls,
         name: str,
@@ -478,7 +483,11 @@ class SymbolicProgram:
     def build(cls, entrypoint: str, functions: t.Iterable[SymbolicFunction]) -> SymbolicProgram:
         name_to_function = {function.name: function for function in functions}
         if entrypoint not in name_to_function:
-            raise ValueError(f"The entrypoint '{entrypoint}' is unknown in the program.")
+            logger.warning(
+                f"The entrypoint '{entrypoint}' does not appear to reach any ROS API calls."
+                " Adding an empty placeholder function."
+            )
+            name_to_function[entrypoint] = SymbolicFunction.empty(name)
         return SymbolicProgram(entrypoint, name_to_function)
 
     @property
