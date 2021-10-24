@@ -335,6 +335,9 @@ class NodeRecoveryTool:
         program = self._recover(compile_commands_path, entrypoint, sources, path_restrictions)
 
         package_abs_path = self._app.description.packages[package_name].path
+        cmakeinfo = None
+        if filename != "<unknown>" and lineno != -1:
+            cmakeinfo = CMakeListsInfo(filename=filename, lineno=lineno)
         return RecoveredNodeModel(
             image_sha256=self._app.sha256,
             package_name=package_name,
@@ -342,7 +345,7 @@ class NodeRecoveryTool:
             source_paths=tuple(sources),
             node_name=node_name,
             program=program,
-            cmakelist_info=CMakeListsInfo(filename=filename, lineno=lineno)
+            cmakelist_info=cmakeinfo
         )
 
     def _recover(

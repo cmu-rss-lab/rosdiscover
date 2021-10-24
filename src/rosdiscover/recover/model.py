@@ -49,7 +49,7 @@ class RecoveredNodeModel(NodeModel):
         directory,
     node_name: str
         The name of the node.
-    cmakelist_info: CMakeListsInfo
+    cmakelist_info: t.Optional[CMakeListsInfo]
         Information about which CMakeFile the sources came from
     program: SymbolicProgram
         A parameterized, executable description of the node's architectural effects.
