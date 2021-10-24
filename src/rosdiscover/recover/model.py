@@ -82,7 +82,7 @@ class RecoveredNodeModel(NodeModel):
             "program": self.program.to_dict(),
         }
         if self.cmakelist_info:
-            dict_["cmakeinfo"] = self.cmakelist_info
+            dict_["cmakeinfo"] = self.cmakelist_info.to_dict()
         return dict_
 
     @classmethod
