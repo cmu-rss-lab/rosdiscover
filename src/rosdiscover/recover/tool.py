@@ -281,8 +281,8 @@ class NodeRecoveryTool:
         entrypoint: str,
         sources: t.Collection[str],
         path_restrictions: t.Collection[str],
-        filename: str,
-        lineno: int,
+        filename: str = "<unknown>",
+        lineno: int = -1,
     ) -> RecoveredNodeModel:
         """Statically recovers the dynamic architecture of a given node.
 
@@ -297,6 +297,10 @@ class NodeRecoveryTool:
         sources: str
             A list of the translation unit source files for node, provided as paths
             relative to the root of the package directory
+        filename: str
+            The name of the cmake file that this is dervied from ("<unknown>" by default, indicates no information)
+        lineno: int
+            The line number in the cmake file that generated this (-1 by default, indicates no information)
 
         Raises
         ------

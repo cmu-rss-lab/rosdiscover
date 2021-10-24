@@ -39,7 +39,7 @@ def recover(args: argparse.Namespace) -> None:
                 node_name=args.node,
                 entrypoint=args.entrypoint,
                 sources=args.sources,
-                path_restrictions=args.restrict_to,
+                path_restrictions=args.restrict_to
             )
     else:
         with NodeRecoveryTool.for_config(config) as tool:

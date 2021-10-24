@@ -143,7 +143,7 @@ class NodeSourceInfo:
             "sources": list(self.sources),
         }
         if self.origin:
-            dict['origin'] = self.origin
+            dict_['origin'] = self.origin
         return dict_
 
 

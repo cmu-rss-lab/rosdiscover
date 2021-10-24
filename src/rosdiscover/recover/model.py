@@ -59,7 +59,7 @@ class RecoveredNodeModel(NodeModel):
     package_abs_path: str
     source_paths: t.Collection[str]
     node_name: str
-    cmakelist_info: CMakeListsInfo
+    cmakelist_info: t.Optional[CMakeListsInfo]
     program: SymbolicProgram
 
     def save(self, filename: str) -> None:
@@ -69,7 +69,7 @@ class RecoveredNodeModel(NodeModel):
             json.dump(dict_, f, indent=2)
 
     def to_dict(self) -> t.Dict[str, t.Any]:
-        return {
+        dict_ = {
             "image": {
                 "sha256": self.image_sha256,
             },
@@ -80,8 +80,10 @@ class RecoveredNodeModel(NodeModel):
             },
             "sources": list(self.source_paths),
             "program": self.program.to_dict(),
-            "cmakeinfo": self.cmakelist_info.to_dict()
         }
+        if self.cmakelist_info:
+            dict_["cmakeinfo"] = self.cmakelist_info
+        return dict_
 
     @classmethod
     def load(cls, filename: str) -> "RecoveredNodeModel":
@@ -96,7 +98,9 @@ class RecoveredNodeModel(NodeModel):
         package_abs_path = dict_["package"]["path"]
         source_paths = dict_["sources"]
         program = SymbolicProgramLoader().load(dict_["program"])
-        cmakeinfo = dict_["cmakeinfo"]
+        cmakeinfo = None
+        if 'cmakeinfo' in dict_:
+            cmakeinfo = dict_["cmakeinfo"]
         return RecoveredNodeModel(
             image_sha256=image_sha256,
             node_name=node_name,
@@ -104,7 +108,7 @@ class RecoveredNodeModel(NodeModel):
             package_abs_path=package_abs_path,
             source_paths=source_paths,
             program=program,
-            cmakelist_info=CMakeListsInfo.from_dict(cmakeinfo)
+            cmakelist_info=CMakeListsInfo.from_dict(cmakeinfo) if cmakeinfo else None
         )
 
     def eval(self, context: NodeContext) -> None:
