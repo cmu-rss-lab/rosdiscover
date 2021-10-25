@@ -6,6 +6,7 @@ from typing import Any, Collection, Dict, Iterator, List, Mapping, Set, Tuple
 import attr
 from loguru import logger
 
+from .context import Provenance
 from ..core import Action, Service, Topic
 
 
@@ -19,13 +20,17 @@ class NodeSummary:
     package: str
     nodelet: bool
     filename: str
-    # placeholder indicates whether the node was not really discovered, but
-    # was put in place to "complete" the architecture. Placeholder is set
-    # if the component template could not be found in the library, either
-    # because it is not a predefined model, or it's interactions were not
-    # discovered otherwise. Typically, placeholders will have no information
-    # about topics, services, etc.
-    placeholder: bool
+    # Provenance indicates where the model comes from.
+    #    PLACEHOLDER indicates whether the node was not really discovered, but
+    #    was put in place to "complete" the architecture. Placeholder is set
+    #    if the component template could not be found in the library, either
+    #    because it is not a predefined model, or it's interactions were not
+    #    discovered otherwise. Typically, placeholders will have no information
+    #    about topics, services, etc.
+    #    HANDWRITTEN indicates whether the node was derived from a handwritten
+    #    model.
+    #    RECOVERED indicates that the node was recovered through static analysis
+    provenance: Provenance
     pubs: Collection[Topic]
     subs: Collection[Topic]
     # The tuple is (name, dynamic) where name is the name of the parameter
@@ -84,9 +89,9 @@ class NodeSummary:
             logger.warning(f"{lhs.name} namespace {rhs.kind} retaining original namespace {lhs.kind}")
         kind = lhs.kind if lhs.kind else rhs.kind
 
-        if lhs.placeholder != rhs.placeholder:
-            logger.warning(f"{lhs.name} placeholder {rhs.placeholder} retaining original placeholder {lhs.placeholder}")
-        placeholder = lhs.placeholder or rhs.placeholder
+        if lhs.provenance != rhs.provenance:
+            logger.warning(f"{lhs.name} provenance {rhs.provenance} retaining original provenance {lhs.provenance}")
+        provenance = lhs.provenance
 
         if lhs.filename != rhs.filename:
             logger.warning(f"{lhs.name} filename {rhs.filename} retaining original filename {lhs.filename}")
@@ -100,7 +105,7 @@ class NodeSummary:
             package=package,
             nodelet=lhs.nodelet,
             filename=filename,
-            placeholder=placeholder,
+            provenance=provenance,
             reads=reads,
             writes=writes,
             provides=provides,
@@ -126,7 +131,7 @@ class NodeSummary:
                 'package': self.package,
                 'nodelet': self.nodelet,
                 'filename': self.filename,
-                'placeholder': self.placeholder,
+                'provenance': self.provenance.value,
                 'reads': reads,
                 'writes': list(self.writes),
                 'provides': provides,
@@ -145,7 +150,7 @@ class NodeSummary:
         package = dict.get('package', '')
         nodelet = dict.get('nodelet', False)
         filename = dict.get('filename', '')
-        placeholder = dict.get('placeholder', False)
+        provenance = Provenance(dict.get('provenance', Provenance.PLACEHOLDER))
         reads = [(p['name'], p['dynamic']) for p in dict.get('reads', [])]
         writes = dict.get('writes', [])
         pubs = [Topic(name=t['name'], format=t['format'], implicit=t.get('implicit', False))
@@ -167,7 +172,7 @@ class NodeSummary:
                            package=package,
                            nodelet=nodelet,
                            filename=filename,
-                           placeholder=placeholder,
+                           provenance=provenance,
                            reads=reads,
                            writes=writes,
                            pubs=pubs,
@@ -205,7 +210,7 @@ class SystemSummary(Mapping[str, NodeSummary]):
     @property
     def unresolved(self) -> Iterator[NodeSummary]:
         for n in self._node_to_summary.values():
-            if n.placeholder:
+            if n.provenance == Provenance.PLACEHOLDER:
                 yield n
 
     @classmethod

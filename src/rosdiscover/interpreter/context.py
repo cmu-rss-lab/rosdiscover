@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import typing
+from enum import Enum
 from typing import Any, List, Mapping, Optional, Set, Tuple, Union
 
 import attr
@@ -19,6 +20,12 @@ if typing.TYPE_CHECKING:
 UNKNOWN_NAME = "\\unknown"
 
 
+class Provenance(Enum):
+    RECOVERED = "recovered"
+    PLACEHOLDER = "placeholder"
+    HANDWRITTEN = "handwritten"
+
+
 @attr.s(slots=True, auto_attribs=True)
 class NodeContext:
     name: str
@@ -32,7 +39,7 @@ class NodeContext:
     _params: ParameterServer = attr.ib(repr=False)
     _files: dockerblade.files.FileSystem = attr.ib(repr=False)
     _nodelet: bool = attr.ib(default=False, repr=False)
-    _placeholder: bool = attr.ib(default=False, repr=False)
+    _provenance: "Provenance" = attr.ib(default=Provenance.RECOVERED, repr=False)
     _uses: Set[Service] = attr.ib(factory=set, repr=False)
     _provides: Set[Service] = attr.ib(factory=set, repr=False)
     _subs: Set[Topic] = attr.ib(factory=set, repr=False)
@@ -83,7 +90,7 @@ class NodeContext:
                            kind=self.kind,
                            package=self.package,
                            nodelet=self._nodelet,
-                           placeholder=self._placeholder,
+                           provenance=self._provenance,
                            reads=self._reads,
                            writes=self._writes,
                            pubs=self._pubs,
@@ -280,4 +287,10 @@ class NodeContext:
         self._nodelet = True
 
     def mark_placeholder(self) -> None:
-        self._placeholder = True
+        self._provenance = Provenance.PLACEHOLDER
+
+    def mark_handwritten(self) -> None:
+        self._provenance = Provenance.HANDWRITTEN
+
+    def mark_recovered(self) -> None:
+        self._provenance = Provenance.RECOVERED
