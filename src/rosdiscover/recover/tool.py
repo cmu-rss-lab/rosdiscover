@@ -15,7 +15,7 @@ from loguru import logger
 from roswire import CMakeBinaryTarget, CMakeTarget, ROSVersion, SourceLanguage
 
 from .loader import SymbolicProgramLoader
-from .model import RecoveredNodeModel
+from .model import CMakeListsInfo, RecoveredNodeModel
 from .symbolic import SymbolicProgram
 from ..config import Config
 
@@ -271,7 +271,8 @@ class NodeRecoveryTool:
             assert source_info.entrypoint is not None
             entrypoint = source_info.entrypoint
         return self.recover(package_name, node_name, entrypoint, source_info.sources,
-                            source_info.restrict_to_paths)
+                            source_info.restrict_to_paths, source_info.cmakelists_file,
+                            source_info.cmakelists_line)
 
     def recover(
         self,
@@ -279,7 +280,9 @@ class NodeRecoveryTool:
         node_name: str,
         entrypoint: str,
         sources: t.Collection[str],
-        path_restrictions: t.Collection[str]
+        path_restrictions: t.Collection[str],
+        filename: str = "<unknown>",
+        lineno: int = -1,
     ) -> RecoveredNodeModel:
         """Statically recovers the dynamic architecture of a given node.
 
@@ -294,6 +297,10 @@ class NodeRecoveryTool:
         sources: str
             A list of the translation unit source files for node, provided as paths
             relative to the root of the package directory
+        filename: str
+            The name of the cmake file that this is dervied from ("<unknown>" by default, indicates no information)
+        lineno: int
+            The line number in the cmake file that generated this (-1 by default, indicates no information)
 
         Raises
         ------
@@ -328,6 +335,9 @@ class NodeRecoveryTool:
         program = self._recover(compile_commands_path, entrypoint, sources, path_restrictions)
 
         package_abs_path = self._app.description.packages[package_name].path
+        cmakeinfo = None
+        if filename != "<unknown>" and lineno != -1:
+            cmakeinfo = CMakeListsInfo(filename=filename, lineno=lineno)
         return RecoveredNodeModel(
             image_sha256=self._app.sha256,
             package_name=package_name,
@@ -335,6 +345,7 @@ class NodeRecoveryTool:
             source_paths=tuple(sources),
             node_name=node_name,
             program=program,
+            cmakelist_info=cmakeinfo
         )
 
     def _recover(

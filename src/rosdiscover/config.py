@@ -57,6 +57,7 @@ class NodeSourceInfo:
         qualified.class.name::main
     sources: Sequence[str]
         The list of sources for building the node
+    origin: Optional[str]
     """
     package_name: str
     node_name: str
@@ -64,6 +65,7 @@ class NodeSourceInfo:
     restrict_to_paths: t.Collection[str]
     entrypoint: str
     sources: t.Sequence[str]
+    origin: t.Optional[str]
 
     @classmethod
     def from_dict(cls, dict_: t.Mapping[str, t.Any]) -> 'NodeSourceInfo':
@@ -116,17 +118,23 @@ class NodeSourceInfo:
             if not os.path.isabs(path):
                 raise ValueError(f"Restricted path [{path}] must be absolute")
 
+        if 'origin' in dict_:
+            if not isinstance(dict_['origin'], str):
+                raise ValueError("expected 'origin' to be a string")
+        origin = dict_.get('origin', None)
+
         return NodeSourceInfo(
             package_name=dict_['package'],
             node_name=dict_['node'],
             node_kind=kind,
             entrypoint=entrypoint,
             sources=list(dict_['sources']),
-            restrict_to_paths=restricted_paths
+            restrict_to_paths=restricted_paths,
+            origin=origin,
         )
 
     def to_dict(self) -> t.Dict[str, t.Any]:
-        return {
+        dict_ = {
             "package": self.package_name,
             "node": self.node_name,
             "kind": str(self.node_kind),
@@ -134,6 +142,9 @@ class NodeSourceInfo:
             "restrict-analysis-to-paths": list(self.restrict_to_paths),
             "sources": list(self.sources),
         }
+        if self.origin:
+            dict_['origin'] = self.origin
+        return dict_
 
 
 @attr.s(frozen=True, slots=True, auto_attribs=True)
@@ -301,6 +312,7 @@ class Config:
             restrict_to_paths=target.restrict_to_paths,
             entrypoint=target.entrypoint,
             sources=list(target.sources),
+            origin=f"{target.cmakelists_file}:{target.cmakelists_line}",
         )
 
     def __cmake_binary_to_node_sources(
@@ -316,6 +328,7 @@ class Config:
             restrict_to_paths=target.restrict_to_paths,
             entrypoint="main",
             sources=list(target.sources),
+            origin=f"{target.cmakelists_file}:{target.cmakelists_line}",
         )
 
     @classmethod

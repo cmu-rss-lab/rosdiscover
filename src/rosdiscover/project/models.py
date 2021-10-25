@@ -81,6 +81,7 @@ class ProjectModels:
             # - eventually, we want this to come from CMakeLists
             # - for now, we can manually specify these as part of the configuration
             node_info = self.config.node_sources[(package, node)]
+            cmakeinfo = node_info.origin.split(':') if node_info.origin else ["<unknown>", "-1"]
 
             # use the recovery tool to recover the model before saving it to the database
             model = self._recovery_tool.recover(
@@ -88,7 +89,9 @@ class ProjectModels:
                 node,
                 node_info.entrypoint,
                 node_info.sources,
-                node_info.restrict_to_paths
+                node_info.restrict_to_paths,
+                cmakeinfo[0],
+                int(cmakeinfo[1])
             )
         self._recovered_models.store(model)
         return model
