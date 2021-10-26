@@ -103,7 +103,7 @@ class HandwrittenModel(NodeModel):
         return HandwrittenModel._models[package_and_name]
 
     def eval(self, context: NodeContext) -> None:
-        definition = self._definition(context)
+        self._definition(context)
         context.mark_handwritten()
 
 
