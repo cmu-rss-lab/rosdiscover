@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import typing
-from enum import Enum
 from typing import Any, List, Mapping, Optional, Set, Tuple, Union
 
 import attr
@@ -10,6 +9,7 @@ from loguru import logger
 from roswire import AppInstance, ROSDistribution, ROSVersion
 
 from .parameter import ParameterServer
+from .provenance import Provenance
 from .summary import NodeSummary
 from ..core import Action, Service, Topic
 
@@ -18,13 +18,6 @@ if typing.TYPE_CHECKING:
     from ..recover.symbolic import SymbolicUnknown
 
 UNKNOWN_NAME = "\\unknown"
-
-
-class Provenance(Enum):
-    RECOVERED = "recovered"
-    PLACEHOLDER = "placeholder"
-    HANDWRITTEN = "handwritten"
-    UNKNOWN = "unknown"
 
 
 @attr.s(slots=True, auto_attribs=True)
