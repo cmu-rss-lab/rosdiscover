@@ -105,7 +105,6 @@ class HandwrittenModel(NodeModel):
     def eval(self, context: NodeContext) -> None:
         definition = self._definition(context)
         context.mark_handwritten()
-        return definition
 
 
 def model(package: str, name: str) -> t.Any:

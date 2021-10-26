@@ -20,6 +20,8 @@ from ..core import Action, Service, Topic
 from ..interpreter import NodeSummary
 
 # Constants for Acme generation
+from ..interpreter.context import Provenance
+
 TOPIC_CONNECTOR = """   connector {conn_name} : TopicConnectorT = new TopicConnectorT extended with {{
     {roles}
         property msg_type = "{msg_type}";
@@ -319,7 +321,8 @@ class AcmeGenerator:
                                    name,
                                    f"{comp_name}.{pname}",
                                    False)
-            component_template: str = NODE_COMPONENT if not c.placeholder else NODE_PLACEHOLDER_COMPONENT
+            component_template: str = NODE_COMPONENT \
+                if c.provenance != Provenance.PLACEHOLDER else NODE_PLACEHOLDER_COMPONENT
             comp = component_template.format(comp_name=comp_name,
                                              ports='\n'.join(ports),
                                              node_name=c.name,
