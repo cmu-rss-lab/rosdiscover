@@ -24,6 +24,7 @@ class Provenance(Enum):
     RECOVERED = "recovered"
     PLACEHOLDER = "placeholder"
     HANDWRITTEN = "handwritten"
+    UNKNOWN = "unknown"
 
 
 @attr.s(slots=True, auto_attribs=True)
@@ -39,7 +40,7 @@ class NodeContext:
     _params: ParameterServer = attr.ib(repr=False)
     _files: dockerblade.files.FileSystem = attr.ib(repr=False)
     _nodelet: bool = attr.ib(default=False, repr=False)
-    _provenance: "Provenance" = attr.ib(default=Provenance.RECOVERED, repr=False)
+    _provenance: "Provenance" = attr.ib(default=Provenance.UNKNOWN, repr=False)
     _uses: Set[Service] = attr.ib(factory=set, repr=False)
     _provides: Set[Service] = attr.ib(factory=set, repr=False)
     _subs: Set[Topic] = attr.ib(factory=set, repr=False)

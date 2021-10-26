@@ -112,4 +112,5 @@ class RecoveredNodeModel(NodeModel):
         )
 
     def eval(self, context: NodeContext) -> None:
+        context.mark_recovered()
         return self.program.eval(context)
