@@ -6,7 +6,7 @@ from typing import Any, Collection, Dict, Iterator, List, Mapping, Set, Tuple
 import attr
 from loguru import logger
 
-from .context import Provenance
+from .provenance import Provenance
 from ..core import Action, Service, Topic
 
 
