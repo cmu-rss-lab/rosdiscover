@@ -3,15 +3,23 @@ import argparse
 import os
 import typing as t
 
+import yaml
+import attr
 from loguru import logger
 from roswire.name import namespace_join
 
 from .plugins.controller_manager import ControllerManagerPlugin
-from ..interpreter import model
+from ..interpreter import model, NodeContext
+
+
+@attr.s(frozen=True, slots=True, auto_attribs=True)
+class _Controller:
+    name: str = attr.ib()
+    type_: str = attr.ib()
 
 
 @model('controller_manager', 'spawner')
-def spawner(c):
+def spawner(c: NodeContext):
     parser = argparse.ArgumentParser("spawner")
     # FIXME this is not quite how this argument works:
     # https://github.com/ros-controls/ros_control/blob/5db3baaa71c9dcd8a2fadb3b2c0b5085ea49b3a1/controller_manager/scripts/spawner#L174-L185
@@ -19,13 +27,30 @@ def spawner(c):
     parser.add_argument("controllers", nargs="+")
     args = parser.parse_args(c.args.split())
 
-    controllers_to_spawn: t.List[str] = []
+    controllers_to_spawn: t.List[_Controller] = []
+    controller_manager_namespace = "/"
+
     for controller_name_or_filename in args.controllers:
         if os.path.isabs(controller_name_or_filename):
-            m = "no support for spawners that load their controllers from a config file"
-            raise NotImplementedError(m)
+            try:
+                contents = c.app.files.read(controller_name_or_filename)
+                controllers_yml = yaml.safe_load(contents)
+                for name, info in controllers_yml.items():
+                    controller_type = info['type']
+                    controllers_to_spawn.append(_Controller(name=name, type_=controller_type))
+            except Exception:
+                m = f"Error reading controllers from a config file: {controller_name_or_filename}"
+                logger.error(m)
+                raise
+
         else:
-            controllers_to_spawn.append(controller_name_or_filename)
+            controller_name = controller_name_or_filename
+            logger.debug(f"finding type for controller [{controller_name}]")
+            controller_namespace = namespace_join(controller_manager_namespace, controller_name)
+            controller_type = c.read(f"{controller_namespace}/type")
+            logger.debug(f"found type for controller [{controller_name}]: {controller_type}")
+            controller = _Controller(name=controller_name, type_=controller_type)
+            controllers_to_spawn.append(controller)
 
     # the spawner interacts with the controller_manager services
     load_controller_service = namespace_join(args.namespace, "controller_manager/load_controller")
@@ -43,17 +68,12 @@ def spawner(c):
     #
     # for now, I'm hardcoding gazebo so that we crack on with our experiments
     controller_manager_node = "/gazebo"
-    controller_manager_namespace = "/"
 
-    for controller_name in controllers_to_spawn:
-        logger.debug(f"finding type for controller [{controller_name}]")
-        controller_namespace = namespace_join(controller_manager_namespace, controller_name)
-        controller_type = c.read(f"{controller_namespace}/type")
-        logger.debug(f"found type for controller [{controller_name}]: {controller_type}")
-
-        plugin = ControllerManagerPlugin.build(
-            controller_name=controller_name,
-            controller_type=controller_type,
+    for controller in controllers_to_spawn:
+        # This used to be ControllerManagerPlugin.from_type
+        plugin = ControllerManagerPlugin.from_type(
+            controller_name=controller.name,
+            controller_type=controller.type_,
             controller_manager_node=controller_manager_node,
         )
         c.load_plugin(plugin)
