@@ -4,7 +4,7 @@ import os
 import typing as t
 
 import yaml
-from attr import attr
+import attr
 from loguru import logger
 from roswire.name import namespace_join
 from yaml import SafeLoader
@@ -37,7 +37,7 @@ def spawner(c):
                 controllers_yml = yaml.load(controller_name_or_filename, Loader=SafeLoader)
                 for name, info in controllers_yml:
                     controller_type = info['type']
-                    controllers_to_spawn.append(_Controller(name=name, type=controller_type))
+                    controllers_to_spawn.append(_Controller(name=name, type_=controller_type))
             except Exception:
                 m = f"Error reading controllers from a config file: {controller_name_or_filename}"
                 logger.error(m)
@@ -49,7 +49,7 @@ def spawner(c):
             controller_namespace = namespace_join(controller_manager_namespace, controller_name)
             controller_type = c.read(f"{controller_namespace}/type")
             logger.debug(f"found type for controller [{controller_name}]: {controller_type}")
-            controller = _Controller(name=controller_name, type=controller_type)
+            controller = _Controller(name=controller_name, type_=controller_type)
             controllers_to_spawn.append(controller)
 
     # the spawner interacts with the controller_manager services
