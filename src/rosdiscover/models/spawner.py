@@ -13,10 +13,10 @@ from .plugins.controller_manager import ControllerManagerPlugin
 from ..interpreter import model, NodeContext
 
 
-@attr.s(frozen=True, slots=True)
+@attr.s(frozen=True, slots=True,auto_attribs=True)
 class _Controller:
-    name: str
-    type_: str
+    name: str = attr.ib()
+    type_: str = attr.ib()
 
 
 @model('controller_manager', 'spawner')
