@@ -13,7 +13,7 @@ from .plugins.controller_manager import ControllerManagerPlugin
 from ..interpreter import model, NodeContext
 
 
-@attr.s(frozen=True, slots=True,auto_attribs=True)
+@attr.s(frozen=True, slots=True, auto_attribs=True)
 class _Controller:
     name: str = attr.ib()
     type_: str = attr.ib()
@@ -35,7 +35,7 @@ def spawner(c: NodeContext):
         if os.path.isabs(controller_name_or_filename):
             try:
                 contents = c.app.files.read(controller_name_or_filename)
-                controllers_yml = yaml.load(contents, Loader=SafeLoader)
+                controllers_yml = yaml.safe_load(contents)
                 for name, info in controllers_yml.items():
                     controller_type = info['type']
                     controllers_to_spawn.append(_Controller(name=name, type_=controller_type))
