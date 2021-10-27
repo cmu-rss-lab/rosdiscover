@@ -87,7 +87,7 @@ PROVIDER_PORT = """     port {port_name} : ServiceProviderPortT = new ServicePro
 REQUIRER_PORT = """     port {port_name} : ServiceClientPortT = new ServiceClientPortT extended with {{
         property name : string = "{service}";
         property svc_type : string = "{svc_type}";
-        property persistency : boolean = {persistence};
+        property persistency : ServicePersistencyT = {persistence};
     }};
     """
 ACTION_CLIENT_PORT = """    port {port_name} : ActionClientPortT = new ActionClientPortT extended with {{
@@ -292,7 +292,7 @@ class AcmeGenerator:
                 pname = f"{AcmeGenerator.to_acme_name(service_name)}_call"
                 fmt = caller.format
                 port = REQUIRER_PORT.format(port_name=pname, svc_type=fmt,
-                                            service=service_name, persistence="false")
+                                            service=service_name, persistence="non-persistent")
                 ports.append(port)
                 update_service_conn(service_conns, service_name,
                                     f"{comp_name}.{pname}",
