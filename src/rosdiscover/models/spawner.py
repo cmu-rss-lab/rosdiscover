@@ -10,7 +10,7 @@ from roswire.name import namespace_join
 from yaml import SafeLoader
 
 from .plugins.controller_manager import ControllerManagerPlugin
-from ..interpreter import model
+from ..interpreter import model, NodeContext
 
 
 @attr.s(frozen=True, slots=True)
@@ -20,7 +20,7 @@ class _Controller:
 
 
 @model('controller_manager', 'spawner')
-def spawner(c):
+def spawner(c: NodeContext):
     parser = argparse.ArgumentParser("spawner")
     # FIXME this is not quite how this argument works:
     # https://github.com/ros-controls/ros_control/blob/5db3baaa71c9dcd8a2fadb3b2c0b5085ea49b3a1/controller_manager/scripts/spawner#L174-L185
@@ -34,7 +34,8 @@ def spawner(c):
     for controller_name_or_filename in args.controllers:
         if os.path.isabs(controller_name_or_filename):
             try:
-                controllers_yml = yaml.load(controller_name_or_filename, Loader=SafeLoader)
+                contents = c.app.files.read(controller_name_or_filename)
+                controllers_yml = yaml.load(contents, Loader=SafeLoader)
                 for name, info in controllers_yml.items():
                     controller_type = info['type']
                     controllers_to_spawn.append(_Controller(name=name, type_=controller_type))
