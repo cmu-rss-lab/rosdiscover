@@ -23,6 +23,7 @@ import enum
 import typing
 import typing as t
 
+from loguru import logger
 import attr
 
 from ..interpreter import NodeContext
@@ -297,7 +298,7 @@ class SymbolicAssignment(SymbolicStatement):
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class SymbolicCompound(t.Sequence[SymbolicStatement], SymbolicStatement):
     """Represents a sequence of symbolic statements."""
-    _statements: t.Sequence[SymbolicStatement]
+    _statements: t.Sequence[SymbolicStatement] = attr.ib(factory=list)
 
     def __len__(self) -> int:
         return len(self._statements)
@@ -423,6 +424,11 @@ class SymbolicFunction:
     body: SymbolicCompound = attr.ib(hash=False)
 
     @classmethod
+    def empty(cls, name: str) -> SymbolicFunction:
+        """Creates an empty function with a given name that takes no arguments."""
+        return cls.build(name, [], SymbolicCompound())
+
+    @classmethod
     def build(
         cls,
         name: str,
@@ -478,7 +484,11 @@ class SymbolicProgram:
     def build(cls, entrypoint: str, functions: t.Iterable[SymbolicFunction]) -> SymbolicProgram:
         name_to_function = {function.name: function for function in functions}
         if entrypoint not in name_to_function:
-            raise ValueError(f"The entrypoint '{entrypoint}' is unknown in the program.")
+            logger.warning(
+                f"The entrypoint '{entrypoint}' does not appear to reach any ROS API calls."
+                " Adding an empty placeholder function."
+            )
+            name_to_function[entrypoint] = SymbolicFunction.empty(entrypoint)
         return SymbolicProgram(entrypoint, name_to_function)
 
     @property
