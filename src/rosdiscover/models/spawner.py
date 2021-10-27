@@ -35,7 +35,7 @@ def spawner(c):
         if os.path.isabs(controller_name_or_filename):
             try:
                 controllers_yml = yaml.load(controller_name_or_filename, Loader=SafeLoader)
-                for name, info in controllers_yml:
+                for name, info in controllers_yml.items():
                     controller_type = info['type']
                     controllers_to_spawn.append(_Controller(name=name, type_=controller_type))
             except Exception:
