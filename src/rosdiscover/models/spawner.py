@@ -22,7 +22,7 @@ def spawner(c):
     controllers_to_spawn: t.List[str] = []
     for controller_name_or_filename in args.controllers:
         if os.path.isabs(controller_name_or_filename):
-            m = "no support for spawners that load their controllers from a config file"
+            m = f"no support for spawners that load their controllers from a config file: {controller_name_or_filename}"
             raise NotImplementedError(m)
         else:
             controllers_to_spawn.append(controller_name_or_filename)
