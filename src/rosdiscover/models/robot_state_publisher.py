@@ -1,7 +1,7 @@
-#from ..interpreter import model
+from ..interpreter import model
 
 
-#@model('robot_state_publisher', 'robot_state_publisher')
+@model('robot_state_publisher', 'robot_state_publisher')
 def robot_state_publisher(c):
     # FIXME required!
     # c.read('robot_description')
