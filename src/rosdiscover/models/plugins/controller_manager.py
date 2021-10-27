@@ -168,10 +168,9 @@ class DiffDriveControllerPlugin(ControllerManagerPlugin):
 @attr.s(auto_attribs=True, frozen=True, slots=True)
 class ForwardCommandController(ControllerManagerPlugin):
     def _load(self, interpreter: Interpreter, context: NodeContext) -> None:
-        root_ns = namespace(self.namespace)
         # https://github.com/ros-controls/ros_controllers/blob/melodic-devel/forward_command_controller/include/forward_command_controller/forward_command_controller.h
-        context.sub(f"{root_ns}/command", "std_msgs/Float64")
-        context.pub(f"{root_ns}/state", "control_msgs/JointControllerStates")
+        context.sub(f"{self.namespace}/command", "std_msgs/Float64")
+        context.pub(f"{self.namespace}/state", "control_msgs/JointControllerStates")
 
 
 class JointEffortController(ForwardCommandController):
@@ -182,7 +181,6 @@ class JointEffortController(ForwardCommandController):
 @attr.s(auto_attribs=True, frozen=True, slots=True)
 class JointPositionController(ControllerManagerPlugin):
     def _load(self, interpreter: Interpreter, context: NodeContext) -> None:
-        root_ns = namespace(self.namespace)
         # https://github.com/ros-controls/ros_controllers/blob/melodic-devel/forward_command_controller/include/forward_command_controller/forward_command_controller.h
-        context.sub(f"{root_ns}/command", "std_msgs/Float64")
-        context.pub(f"{root_ns}/state", "control_msgs/JointControllerStates")
+        context.sub(f"{self.namespace}/command", "std_msgs/Float64")
+        context.pub(f"{self.namespace}/state", "control_msgs/JointControllerStates")
