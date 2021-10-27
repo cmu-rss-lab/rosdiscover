@@ -167,6 +167,11 @@ class DiffDriveControllerPlugin(ControllerManagerPlugin):
 
 @attr.s(auto_attribs=True, frozen=True, slots=True)
 class ForwardCommandController(ControllerManagerPlugin):
+
+    @property
+    def namespace(self) -> str:
+        return self.controller_name
+
     def _load(self, interpreter: Interpreter, context: NodeContext) -> None:
         ns = namespace(self.namespace)
         # https://github.com/ros-controls/ros_controllers/blob/melodic-devel/forward_command_controller/include/forward_command_controller/forward_command_controller.h
@@ -181,6 +186,11 @@ class JointEffortController(ForwardCommandController):
 
 @attr.s(auto_attribs=True, frozen=True, slots=True)
 class JointPositionController(ControllerManagerPlugin):
+
+    @property
+    def namespace(self) -> str:
+        return self.controller_name
+
     def _load(self, interpreter: Interpreter, context: NodeContext) -> None:
         ns = namespace(self.namespace)
         # https://github.com/ros-controls/ros_controllers/blob/melodic-devel/forward_command_controller/include/forward_command_controller/forward_command_controller.h
