@@ -454,10 +454,8 @@ class AcmeGenerator:
         try:
             logger.debug("Running Acme checker")
             self._output("Checking architecture...")
-            run = subprocess.Popen(list(["java", "-jar", self.__acme_jar, "-j", jf, acme_file]),
-                                   stdout=PIPE, stderr=PIPE)
-            for line in iter(run.stdout.readline, b''):
-                logger.info(line)
+            run = subprocess.run(list(["java", "-jar", self.__acme_jar, "-j", jf, acme_file]),
+                                 stdout=PIPE, stderr=PIPE)
             if run.returncode == 0:
                 logger.debug("Checking ran successfully")
                 logger.debug(run.stdout)
