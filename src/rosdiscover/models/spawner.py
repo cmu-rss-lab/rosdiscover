@@ -7,7 +7,6 @@ import yaml
 import attr
 from loguru import logger
 from roswire.name import namespace_join
-from yaml import SafeLoader
 
 from .plugins.controller_manager import ControllerManagerPlugin
 from ..interpreter import model, NodeContext
