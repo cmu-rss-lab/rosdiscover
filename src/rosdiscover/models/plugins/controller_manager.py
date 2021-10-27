@@ -48,6 +48,8 @@ class ControllerManagerPlugin(ModelPlugin, abc.ABC):
         type_to_class: t.Mapping[str, t.Type[ControllerManagerPlugin]] = {
             'joint_state_controller/JointStateController': JointStateControllerPlugin,
             'diff_drive_controller/DiffDriveController': DiffDriveControllerPlugin,
+            'effort_controllers/JointEffortController': JointEffortController,
+            "effort_controllers/JointPositionController": JointPositionController,
         }
         cls = type_to_class[controller_type]
 
@@ -161,3 +163,24 @@ class DiffDriveControllerPlugin(ControllerManagerPlugin):
 
         # TODO this node supports dynamic reconfiguration
         logger.warning("plugin model is likely incomplete: DiffDriveControllerPlugin")
+
+
+@attr.s(auto_attribs=True, frozen=True, slots=True)
+class ForwardCommandController(ControllerManagerPlugin):
+    def _load(self, interpreter: Interpreter, context: NodeContext) -> None:
+        # https://github.com/ros-controls/ros_controllers/blob/melodic-devel/forward_command_controller/include/forward_command_controller/forward_command_controller.h
+        context.sub("command", "std_msgs/Float64")
+        context.pub("state", "control_msgs/JointControllerStates")
+
+
+class JointEffortController(ForwardCommandController):
+    def _load(self, interpreter: Interpreter, context: NodeContext) -> None:
+        super()._load(interpreter, context)
+
+
+@attr.s(auto_attribs=True, frozen=True, slots=True)
+class JointPositionController(ControllerManagerPlugin):
+    def _load(self, interpreter: Interpreter, context: NodeContext) -> None:
+        # https://github.com/ros-controls/ros_controllers/blob/melodic-devel/forward_command_controller/include/forward_command_controller/forward_command_controller.h
+        context.sub("command", "std_msgs/Float64")
+        context.pub("state", "control_msgs/JointControllerStates")
