@@ -65,8 +65,8 @@ def autorally_controller(c: NodeContext) -> None:
         assert 'controller_name' in shocker
         c.pub(f"{shocker['controller_name']}/command", "std_msgs/Float64")  # latched = True
 
-    c.pub("~wheelSpeeds", "autorally_msgs/wheelSpeeds")
-    c.pub("~chassisState", "autorally_msgs/chassisState")
+    c.pub("wheelSpeeds", "autorally_msgs/wheelSpeeds")
+    c.pub("chassisState", "autorally_msgs/chassisState")
 
     assert isinstance(chassis_command_priorities, list)
     for cmd in chassis_command_priorities:
