@@ -42,7 +42,7 @@ def autorally_controller(c: NodeContext) -> None:
 
     # https://github.com/AutoRally/autorally/blob/c2692f2970da6874ad9ddfeea3908adaf05b4b09/autorally_gazebo/nodes/autorally_controller.py#L258
     chassis_command_priorities = \
-        c.read("~chassisCommandPriorities", [])  # Note, misspelling is deliberate
+        c.read("~chassisCommandProirities", [])  # Note, misspelling is deliberate
 
 
     shock_absorbers = c.read("~shock_absorbers", [])
