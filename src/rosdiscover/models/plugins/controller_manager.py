@@ -176,7 +176,6 @@ class ForwardCommandController(ControllerManagerPlugin):
         ns = self.namespace
         # https://github.com/ros-controls/ros_controllers/blob/melodic-devel/forward_command_controller/include/forward_command_controller/forward_command_controller.h
         context.sub(f"{ns}/command", "std_msgs/Float64")
-        context.pub(f"{ns}/state", "control_msgs/JointControllerStates")
 
 
 class JointEffortController(ForwardCommandController):
