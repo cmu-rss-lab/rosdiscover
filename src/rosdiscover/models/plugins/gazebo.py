@@ -507,10 +507,8 @@ class LibHectorGazeboROSIMUPlugin(GazeboPlugin):
         imu_topic = namespace_join(self.robot_namespace, self.imu_topic)
         bias_topic = namespace_join(self.robot_namespace, self.bias_topic)
         calibrate_service = namespace_join(self.robot_namespace, self.calibrate_service)
-        set_accel_bias_service = namespace_join(self.robot_namespace, namespace_join(imu_topic,
-                                                                                     '/set_accel_bias'))
-        set_gyro_base_service = namespace_join(self.robot_namespace, namespace_join(imu_topic,
-                                                                                    '/set_rate_bias'))
+        set_accel_bias_service = namespace_join(self.robot_namespace, f'{imu_topic}/set_accel_bias')
+        set_gyro_base_service = namespace_join(self.robot_namespace, f'{imu_topic}/set_rate_bias')
 
         gazebo.pub(imu_topic, "sensor_msgs/Imu")
         gazebo.pub(bias_topic, "sensor_msgs/Imu")
