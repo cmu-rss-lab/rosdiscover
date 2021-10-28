@@ -507,10 +507,10 @@ class LibHectorGazeboROSIMUPlugin(GazeboPlugin):
         imu_topic = namespace_join(self.robot_namespace, self.imu_topic)
         bias_topic = namespace_join(self.robot_namespace, self.bias_topic)
         calibrate_service = namespace_join(self.robot_namespace, self.calibrate_service)
-        set_accel_bias_service = namespace_join(self.robot_namespace, namespace_join(self.imu_topic,
+        set_accel_bias_service = namespace_join(self.robot_namespace, namespace_join(imu_topic,
                                                                                      '/set_accel_bias'))
-        set_gyro_base_service = namespace_join(self.robot_namespace, namespace_join(self.imu_topic,
-                                                                                    'imu/set_gyro_bias'))
+        set_gyro_base_service = namespace_join(self.robot_namespace, namespace_join(imu_topic,
+                                                                                    '/set_rate_bias'))
 
         gazebo.pub(imu_topic, "sensor_msgs/Imu")
         gazebo.pub(bias_topic, "sensor_msgs/Imu")
@@ -538,7 +538,7 @@ class LibHectorGazeboROSIMUPlugin(GazeboPlugin):
             assert xml_robot_namespace.text
             namespace = xml_robot_namespace.text
 
-        service_name = topic_name + "/calibrate"
+        service_name = topic_name + "calibrate"
         if xml_service_name is not None:
             assert xml_service_name.text
             service_name = xml_service_name.text
