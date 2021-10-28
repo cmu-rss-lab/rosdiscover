@@ -68,7 +68,7 @@ def autorally_controller(c: NodeContext) -> None:
     c.pub("chassisState", "autorally_msgs/chassisState")
 
     for cmd in chassis_command_priorities:
-        cmd = cmd.split("/")[:-1]
+        cmd = cmd.split("/")[-1]
         c.sub(f"{cmd}/chassisCommand", "autorally_msgs/chassisCommand")
 
     c.sub('joint_states', "sensor_msgs/JointState")
