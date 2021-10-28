@@ -133,8 +133,6 @@ class Interpreter:
                           args='')
         self.nodes[ctx.fullname] = ctx
 
-
-
     def _load_nodelet(self,
                       pkg: str,
                       nodetype: str,
