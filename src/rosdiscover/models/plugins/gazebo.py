@@ -593,6 +593,9 @@ class LibGazeboROSMultiCameraPlugin(LibGazeboROSCameraPlugin):
         gazebo.pub(left_camera_info_topic_name, 'sensor_msgs/CameraInfo')
         gazebo.pub(right_camera_info_topic_name, 'sensor_msgs/CameraInfo')
 
+        gazebo.provide('left_camera/set_camera_info', 'sensor_msgs/CameraInfo')
+        gazebo.provide('right_camera/set_camera_info', 'sensor_msgs/CameraInfo')
+
     @classmethod
     def build_from_xml(cls, xml: ET.Element) -> 'GazeboPlugin':
         xml_camera_name = xml.find("cameraName")
