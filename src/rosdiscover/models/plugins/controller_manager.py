@@ -8,7 +8,7 @@ import typing as t
 
 import attr
 from loguru import logger
-from roswire.name import namespace, namespace_join
+from roswire.name import namespace_join
 from ...interpreter import Interpreter, ModelPlugin, NodeContext
 
 
