@@ -49,7 +49,7 @@ def autorally_controller(c: NodeContext) -> None:
     c.read("~cmd_timeout", 0.5)
     c.read("~publishing_frequency", 30.0)
 
-    c.sub("chassisCommand", "autorally_msgs/chassisCOmmand")
+    c.sub("chassisCommand", "autorally_msgs/chassisCommand")
     c.sub("runstop", "autorally_msgs/runstop")
 
     c.pub(f"{left_steering_controller_name}/command", "std_msgs/Float64")
