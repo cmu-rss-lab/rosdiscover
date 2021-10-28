@@ -240,7 +240,9 @@ class AcmeGenerator:
     def generate_acme(self) -> str:
         components, topics, services, actions = \
             self.get_components_and_connectors()
-
+        topics = {key: info for key, info in topics.items() if not self._ignore(key)}
+        services = {key: info for key, info in services.items() if not self._ignore(key)}
+        actions = {key: info for key, info in actions.items() if not self._ignore(key)}
         system_name = "RobotSystem" if self.__acme_file is None else self.to_acme_name(
             '_'.join(self.__acme_file.split(".")[:-1])
         )
