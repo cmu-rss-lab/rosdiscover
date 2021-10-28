@@ -42,14 +42,13 @@ def autorally_controller(c: NodeContext) -> None:
 
     # https://github.com/AutoRally/autorally/blob/c2692f2970da6874ad9ddfeea3908adaf05b4b09/autorally_gazebo/nodes/autorally_controller.py#L258
     chassis_command_priorities = \
-        c.read("~chassisCommandProirities", [])  # Note, misspelling is deliberate
+        c.parameter_keys("~chassisCommandProirities")  # Note, misspelling is deliberate
 
     shock_absorbers = c.read("~shock_absorbers", [])
 
     c.read("~cmd_timeout", 0.5)
     c.read("~publishing_frequency", 30.0)
 
-    c.sub("chassisCommand", "autorally_msgs/chassisCOmmand")
     c.sub("runstop", "autorally_msgs/runstop")
 
     c.pub(f"{left_steering_controller_name}/command", "std_msgs/Float64")
@@ -59,20 +58,19 @@ def autorally_controller(c: NodeContext) -> None:
     c.pub(f"{left_rear_axle_controller_name}/command", "std_msgs/Float64")
     c.pub(f"{right_rear_axle_controller_name}/command", "std_msgs/Float64")
 
-    assert isinstance(shock_absorbers, list)
     for shocker in shock_absorbers:
         assert isinstance(shocker, dict)
         assert 'controller_name' in shocker
         c.pub(f"{shocker['controller_name']}/command", "std_msgs/Float64")  # latched = True
 
-    c.pub("~wheelSpeeds", "autorally_msgs/wheelSpeeds")
-    c.pub("~chassisState", "autorally_msgs/chassisState")
+    c.pub("wheelSpeeds", "autorally_msgs/wheelSpeeds")
+    c.pub("chassisState", "autorally_msgs/chassisState")
 
-    assert isinstance(chassis_command_priorities, list)
     for cmd in chassis_command_priorities:
-        c.sub(f"~/{cmd}/chassisCommand", "autorally_msgs/chassisCommand")
+        cmd = cmd.split("/")[-1]
+        c.sub(f"{cmd}/chassisCommand", "autorally_msgs/chassisCommand")
 
-    c.sub('~/joint_states', "sensor_msgs/JointState")
+    c.sub('joint_states', "sensor_msgs/JointState")
 
     c.provide('~/list_controllers', "controller_manager_msgs/ListControllers")
 

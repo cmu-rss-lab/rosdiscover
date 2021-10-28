@@ -5,14 +5,9 @@ from ..interpreter import model
 def gzserver(c):
     # TODO: Most of these parameters should come from plugins, not be handled here
     c.pub('/clock', 'rosgraph_msgs/Clock')
-    c.pub('~factory', 'gazebo_msgs/Factory')
-    c.pub('~factory/light', 'gazebo_msgs/Light')
-    c.pub('~light/modify', 'gazebo_msgs/Light')
-    c.pub('~request', 'gazebo_msgs/Request')
     c.pub('~link_states', 'gazebo_msgs/LinkState')
     c.pub('~model_states', 'gazebo_msgs/ModelStates')
 
-    c.sub('~response', 'gazebo_msgs/Response')
     c.sub('~set_link_state', 'gazebo_msgs/LinkState')
     c.sub('~set_model_state', 'gazebo_msgs/ModelState')
 
@@ -26,6 +21,7 @@ def gzserver(c):
     c.provide('~get_joint_properties', 'gazebo_msgs/GetJointProperties')
     c.provide('~get_link_properties', 'gazebo_msgs/GetLinkProperties')
     c.provide('~get_link_state', 'gazebo_msgs/GetLinkState')
+    c.provide('~set_link_state', 'gazebo_msgs/GetLinkState')
     c.provide('~get_light_properties', 'gazebo_msgs/GetLightProperties')
     c.provide('~set_light_properties', 'gazebo_msgs/SetLightProperties')
     c.provide('~get_physics_properties', 'gazebo_msgs/GetPhysicsProperties')
@@ -35,6 +31,7 @@ def gzserver(c):
     c.provide('~set_model_configuration', 'gazebo_msgs/SetModelConfiguration')
     c.provide('~set_joint_properties', 'gazebo_msgs/SetJointProperties')
     c.provide('~unpause_physics', 'std_srvs/Empty')
+    c.provide('~pause_physics', 'std_srvs/Empty')
     c.provide('~apply_body_wrench', 'gazebo_msgs/ApplyBodyWrench')
     c.provide('~apply_joint_effort', 'gazebo_msgs/ApplyJointEffort')
     c.provide('~clear_joint_forces', 'gazebo_msgs/JointRequest')

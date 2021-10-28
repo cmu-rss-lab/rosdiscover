@@ -6,8 +6,7 @@ __all__ = ('GazeboPlugin',)
 
 import abc
 import xml.etree.ElementTree as ET  # noqa
-from typing import Mapping, Type
-
+import typing as t
 import attr
 from loguru import logger
 from roswire.name import namespace_join
@@ -26,7 +25,7 @@ class GazeboPlugin(ModelPlugin):
                      f'via XML: {ET.tostring(xml).decode("utf-8")}')
 
         # TODO locate the class for the plugin based on filename
-        filename_to_cls: Mapping[str, Type[GazeboPlugin]] = {
+        filename_to_cls: t.Mapping[str, t.Type[GazeboPlugin]] = {
             'libgazebo_ros_p3d.so': LibGazeboROSP3DPlugin,
             'libhector_gazebo_ros_imu.so': LibHectorGazeboROSIMUPlugin,
             'libgazebo_ros_multicamera.so': LibGazeboROSMultiCameraPlugin,
@@ -238,7 +237,7 @@ class LibGazeboROSControlPlugin(GazeboPlugin):
         </plugin>
     """
     filename = "libgazebo_ros_control.so"
-    topic_name: str = attr.ib()
+    topic_name: t.Optional[str] = attr.ib()
     robot_namespace: str = attr.ib()
 
     def load(self, interpreter: Interpreter) -> None:
@@ -260,7 +259,7 @@ class LibGazeboROSControlPlugin(GazeboPlugin):
 
     @classmethod
     def build_from_xml(cls, xml: ET.Element) -> 'GazeboPlugin':
-        topic_name: str = "/default_stop"
+        topic_name: t.Optional[str] = None
         xml_topic_name = xml.find("eStopTopic")
         if xml_topic_name is not None and xml_topic_name.text is not None:
             topic_name = xml_topic_name.text
@@ -508,10 +507,8 @@ class LibHectorGazeboROSIMUPlugin(GazeboPlugin):
         imu_topic = namespace_join(self.robot_namespace, self.imu_topic)
         bias_topic = namespace_join(self.robot_namespace, self.bias_topic)
         calibrate_service = namespace_join(self.robot_namespace, self.calibrate_service)
-        set_accel_bias_service = namespace_join(self.robot_namespace, namespace_join(self.imu_topic,
-                                                                                     '/set_accel_bias'))
-        set_gyro_base_service = namespace_join(self.robot_namespace, namespace_join(self.imu_topic,
-                                                                                    'imu/set_gyro_bias'))
+        set_accel_bias_service = namespace_join(self.robot_namespace, f'{imu_topic}/set_accel_bias')
+        set_gyro_base_service = namespace_join(self.robot_namespace, f'{imu_topic}/set_rate_bias')
 
         gazebo.pub(imu_topic, "sensor_msgs/Imu")
         gazebo.pub(bias_topic, "sensor_msgs/Imu")
@@ -527,20 +524,20 @@ class LibHectorGazeboROSIMUPlugin(GazeboPlugin):
         xml_service_name = xml.find('serviceName')
 
         topic_name = 'imu'
-        if xml_topic_name:
+        if xml_topic_name is not None:
             assert xml_topic_name.text
             topic_name = xml_topic_name.text
         bias_topic_name = topic_name + '/bias'
-        if xml_bias_topic_name:
+        if xml_bias_topic_name is not None:
             assert xml_bias_topic_name.text
             bias_topic_name = xml_bias_topic_name.text + "/bias"
         namespace = '/'
-        if xml_robot_namespace:
+        if xml_robot_namespace is not None:
             assert xml_robot_namespace.text
             namespace = xml_robot_namespace.text
 
-        service_name = topic_name + "/calibrate"
-        if xml_service_name:
+        service_name = topic_name + "calibrate"
+        if xml_service_name is not None:
             assert xml_service_name.text
             service_name = xml_service_name.text
 
@@ -593,6 +590,9 @@ class LibGazeboROSMultiCameraPlugin(LibGazeboROSCameraPlugin):
             gazebo.pub(right_image_topic_name + image_topic[0], image_topic[1])
         gazebo.pub(left_camera_info_topic_name, 'sensor_msgs/CameraInfo')
         gazebo.pub(right_camera_info_topic_name, 'sensor_msgs/CameraInfo')
+
+        gazebo.provide('left_camera/set_camera_info', 'sensor_msgs/CameraInfo')
+        gazebo.provide('right_camera/set_camera_info', 'sensor_msgs/CameraInfo')
 
     @classmethod
     def build_from_xml(cls, xml: ET.Element) -> 'GazeboPlugin':

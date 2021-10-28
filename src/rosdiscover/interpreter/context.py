@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import re
 import typing
 from typing import Any, List, Mapping, Optional, Set, Tuple, Union
 
@@ -97,6 +98,8 @@ class NodeContext:
     def _resolve_without_remapping(self, name: str) -> str:
         """Resolves a given name to a global name, without applying
         any remappings, within the context of this node."""
+        # replace multiple /'s with a single /
+        name = re.sub(r'/+', '/', name)
         # global
         if name[0] == '/':
             return name
@@ -215,6 +218,10 @@ class NodeContext:
             return self._files.read(fn)
         logger.warning(f"Unable to resolve unknown parameter filename in NodeContext [{self.name}]")
         return UNKNOWN_NAME
+
+    def parameter_keys(self, prefix: str) -> typing.Iterable[str]:
+        prefix = self.resolve(prefix)
+        return (key for key in self._params.keys() if key.startswith(prefix))
 
     def action_server(self, ns: Union[str, 'SymbolicUnknown'], fmt: str) -> None:
         """Creates a new action server.

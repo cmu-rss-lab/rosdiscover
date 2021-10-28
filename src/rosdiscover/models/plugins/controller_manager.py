@@ -8,7 +8,7 @@ import typing as t
 
 import attr
 from loguru import logger
-from roswire.name import namespace, namespace_join
+from roswire.name import namespace_join
 from ...interpreter import Interpreter, ModelPlugin, NodeContext
 
 
@@ -91,11 +91,10 @@ class ControllerManagerPlugin(ModelPlugin, abc.ABC):
 @attr.s(auto_attribs=True, frozen=True, slots=True)
 class JointStateControllerPlugin(ControllerManagerPlugin):
     def _load(self, interpreter: Interpreter, context: NodeContext) -> None:
-        root_ns = namespace(self.namespace)
         context.read("joints", None)
         context.read("publish_rate")
         context.read("extra_joints")
-        context.pub(f"{root_ns}/joint_states", "sensor_msgs::JointState")
+        context.pub("joint_states", "sensor_msgs::JointState")
 
 
 @attr.s(auto_attribs=True, frozen=True, slots=True)
@@ -176,7 +175,6 @@ class ForwardCommandController(ControllerManagerPlugin):
         ns = self.namespace
         # https://github.com/ros-controls/ros_controllers/blob/melodic-devel/forward_command_controller/include/forward_command_controller/forward_command_controller.h
         context.sub(f"{ns}/command", "std_msgs/Float64")
-        context.pub(f"{ns}/state", "control_msgs/JointControllerStates")
 
 
 class JointEffortController(ForwardCommandController):
