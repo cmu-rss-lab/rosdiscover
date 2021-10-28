@@ -70,9 +70,9 @@ def autorally_controller(c: NodeContext) -> None:
 
     assert isinstance(chassis_command_priorities, list)
     for cmd in chassis_command_priorities:
-        c.sub(f"~/{cmd}/chassisCommand", "autorally_msgs/chassisCommand")
+        c.sub(f"{cmd}/chassisCommand", "autorally_msgs/chassisCommand")
 
-    c.sub('~/joint_states', "sensor_msgs/JointState")
+    c.sub('joint_states', "sensor_msgs/JointState")
 
     c.provide('~/list_controllers', "controller_manager_msgs/ListControllers")
 
