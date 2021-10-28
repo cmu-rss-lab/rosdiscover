@@ -114,9 +114,26 @@ class Interpreter:
             for plugin in node_context._plugins:
                 plugin.load(self)
 
-    def _create_nodelet_manager(self, name: str) -> None:
+    def _create_nodelet_manager(self,
+                                name: str,
+                                namespace: str,
+                                launch_filename: str,
+                                remappings: t.Mapping[str, str]) -> None:
         """Creates a nodelet manager with a given name."""
         logger.info(f'launched nodelet manager: {name}')
+        ctx = NodeContext(name=name,
+                          namespace=namespace,
+                          kind="nodelet",
+                          package="nodelet",
+                          launch_filename=launch_filename,
+                          remappings=remappings,
+                          files=self._app.files,
+                          params=self.params,
+                          app=self._app,
+                          args='')
+        self.nodes[ctx.fullname] = ctx
+
+
 
     def _load_nodelet(self,
                       pkg: str,
@@ -217,7 +234,7 @@ class Interpreter:
         args = args.strip()
         if nodetype == 'nodelet':
             if args == 'manager':
-                return self._create_nodelet_manager(name)
+                return self._create_nodelet_manager(name, namespace, launch_filename, remappings)
             elif args.startswith('standalone '):
                 pkg_and_nodetype = args.partition(' ')[2]
                 pkg, _, nodetype = pkg_and_nodetype.partition('/')
