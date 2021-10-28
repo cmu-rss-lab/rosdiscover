@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import re
 import typing
 from typing import Any, List, Mapping, Optional, Set, Tuple, Union
 
@@ -97,6 +98,8 @@ class NodeContext:
     def _resolve_without_remapping(self, name: str) -> str:
         """Resolves a given name to a global name, without applying
         any remappings, within the context of this node."""
+        # replace multiple /'s with a single /
+        name = re.sub(r'/+', '/', name)
         # global
         if name[0] == '/':
             return name
