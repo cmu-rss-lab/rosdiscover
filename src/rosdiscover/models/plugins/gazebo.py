@@ -575,17 +575,18 @@ class LibGazeboROSMultiCameraPlugin(LibGazeboROSCameraPlugin):
 
     def load(self, interpreter: Interpreter) -> None:
         gazebo = interpreter.nodes['/gazebo']
-        left_camera_ns = namespace_join(self.camera_name, 'left')
+        left_camera_topic = namespace_join(self.camera_name, 'left')
         left_image_topic_name = namespace_join(self.robot_namespace,
-                                               namespace_join(left_camera_ns, self.image_topic_name))
+                                               namespace_join(left_camera_topic, self.image_topic_name))
         left_camera_info_topic_name = namespace_join(self.robot_namespace,
-                                                     namespace_join(left_camera_ns, self.camera_info_topic_name))
-        right_camera_ns = namespace_join(self.camera_name, 'right')
+                                                     namespace_join(left_camera_topic, self.camera_info_topic_name))
+        right_camera_topic = namespace_join(self.camera_name, 'right')
         right_image_topic_name = namespace_join(self.robot_namespace,
-                                                namespace_join(right_camera_ns, self.image_topic_name))
+                                                namespace_join(right_camera_topic, self.image_topic_name))
         right_camera_info_topic_name = namespace_join(self.robot_namespace,
-                                                      namespace_join(right_camera_ns, self.camera_info_topic_name))
-        for image_topic in [("", "sensor_msgs/Image"), ("/compressed", "sensor_msgs/CompressedImage"),
+                                                      namespace_join(right_camera_topic, self.camera_info_topic_name))
+        for image_topic in [("", "sensor_msgs/Image"),
+                            ("/compressed", "sensor_msgs/CompressedImage"),
                             ("/compressedDepth", "sensor_msgs/CompressedImage"),
                             ("/theora", "theora_image_transport/Packet")]:
             gazebo.pub(left_image_topic_name + image_topic[0], image_topic[1])
