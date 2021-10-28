@@ -6,8 +6,7 @@ __all__ = ('GazeboPlugin',)
 
 import abc
 import xml.etree.ElementTree as ET  # noqa
-from typing import Mapping, Type
-
+import typing as t
 import attr
 from loguru import logger
 from roswire.name import namespace_join
@@ -26,7 +25,7 @@ class GazeboPlugin(ModelPlugin):
                      f'via XML: {ET.tostring(xml).decode("utf-8")}')
 
         # TODO locate the class for the plugin based on filename
-        filename_to_cls: Mapping[str, Type[GazeboPlugin]] = {
+        filename_to_cls: t.Mapping[str, t.Type[GazeboPlugin]] = {
             'libgazebo_ros_p3d.so': LibGazeboROSP3DPlugin,
             'libhector_gazebo_ros_imu.so': LibHectorGazeboROSIMUPlugin,
             'libgazebo_ros_multicamera.so': LibGazeboROSMultiCameraPlugin,
@@ -238,7 +237,7 @@ class LibGazeboROSControlPlugin(GazeboPlugin):
         </plugin>
     """
     filename = "libgazebo_ros_control.so"
-    topic_name: str = attr.ib()
+    topic_name: t.Optional[str] = attr.ib()
     robot_namespace: str = attr.ib()
 
     def load(self, interpreter: Interpreter) -> None:
@@ -260,7 +259,7 @@ class LibGazeboROSControlPlugin(GazeboPlugin):
 
     @classmethod
     def build_from_xml(cls, xml: ET.Element) -> 'GazeboPlugin':
-        topic_name: str = "/default_stop"
+        topic_name: t.Optional[str] = None
         xml_topic_name = xml.find("eStopTopic")
         if xml_topic_name is not None and xml_topic_name.text is not None:
             topic_name = xml_topic_name.text
