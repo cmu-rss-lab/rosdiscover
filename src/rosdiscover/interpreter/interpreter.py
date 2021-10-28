@@ -265,7 +265,7 @@ class Interpreter:
                  f"in package [{pkg}]")
             logger.warning(m)
             raise Exception(m)
-        ctx: NodeContext = None
+        ctx: t.Optional[NodeContext] = None
         if args == 'manager':
             # This is being loaded into an existing manager, so find that as the context
             if name in self.nodes:
