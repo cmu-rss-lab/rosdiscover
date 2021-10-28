@@ -20,6 +20,14 @@ from .symbolic import SymbolicProgram
 from ..config import Config
 
 
+@attr.s(frozen=True, auto_exc=True, auto_attribs=True, str=False)
+class CompileCommandsNotFound(ValueError):
+    path: str
+
+    def __str__(self) -> str:
+        return f"Could not find compile_commands.json at expected location: {self.path}"
+
+
 class RosBuildTool(enum.Enum):
     CATKIN_TOOLS = "catkin"
     CATKIN_MAKE = "catkin_make"
@@ -192,7 +200,7 @@ class NodeRecoveryTool:
 
         Raises
         ------
-        FileNotFoundError
+        CompileCommandsNotFound
             if no compile_commands.json was found for the given package
         ValueError
             if the build directory could not be found inside the workspace
@@ -224,9 +232,7 @@ class NodeRecoveryTool:
 
         compile_commands_path = os.path.join(compile_commands_directory, "compile_commands.json")
         if not files.exists(compile_commands_path):
-            raise FileNotFoundError(
-                f"failed to find compile_commands.json at expected location: {compile_commands_path}"
-            )
+            raise CompileCommandsNotFound(compile_commands_path)
         return compile_commands_path
 
     def _info_via_cmake(
@@ -306,7 +312,7 @@ class NodeRecoveryTool:
         ------
         ValueError
             if no package is found with the given name
-        FileNotFoundError
+        CompileCommandsNotFound
             if no compile_commands.json was found for the given package
         ValueError
             if the build directory could not be found inside the workspace
@@ -386,7 +392,7 @@ class NodeRecoveryTool:
             raise ValueError(f"expected absolute compile commands path: {compile_commands_path}")
 
         if not files.exists(compile_commands_path):
-            raise ValueError(f"compile_commands.json not found at given location: {compile_commands_path}")
+            raise CompileCommandsNotFound(compile_commands_path)
 
         for source_file in source_file_abs_paths:
             if not os.path.isabs(source_file):
