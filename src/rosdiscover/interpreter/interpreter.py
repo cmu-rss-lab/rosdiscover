@@ -253,7 +253,12 @@ class Interpreter:
         ctx: NodeContext = None
         if args == 'manager':
             # This is being loaded into an existing manager, so find that as the context
-            ctx = self.nodes[name]
+            if name in self.nodes:
+                ctx = self.nodes[name]
+            elif f"/{name}" in self.nodes:
+                ctx = self.nodes[f"/{name}"]
+            else:
+                raise ValueError(f"The nodelet manager {name} has not been launched")
         if not ctx:
             ctx = NodeContext(name=name,
                               namespace=namespace,
