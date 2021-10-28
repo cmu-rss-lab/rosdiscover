@@ -95,7 +95,7 @@ class JointStateControllerPlugin(ControllerManagerPlugin):
         context.read("joints", None)
         context.read("publish_rate")
         context.read("extra_joints")
-        context.pub(f"{root_ns}/joint_states", "sensor_msgs::JointState")
+        context.pub(f"joint_states", "sensor_msgs::JointState")
 
 
 @attr.s(auto_attribs=True, frozen=True, slots=True)
