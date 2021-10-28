@@ -219,6 +219,10 @@ class NodeContext:
         logger.warning(f"Unable to resolve unknown parameter filename in NodeContext [{self.name}]")
         return UNKNOWN_NAME
 
+    def parameter_keys(self, prefix: str) -> typing.Iterable[str]:
+        prefix = self.resolve(prefix)
+        return (key for key in self._params.keys() if key.startswith(prefix))
+
     def action_server(self, ns: Union[str, 'SymbolicUnknown'], fmt: str) -> None:
         """Creates a new action server.
 
