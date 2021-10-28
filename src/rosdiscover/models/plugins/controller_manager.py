@@ -91,11 +91,10 @@ class ControllerManagerPlugin(ModelPlugin, abc.ABC):
 @attr.s(auto_attribs=True, frozen=True, slots=True)
 class JointStateControllerPlugin(ControllerManagerPlugin):
     def _load(self, interpreter: Interpreter, context: NodeContext) -> None:
-        root_ns = namespace(self.namespace)
         context.read("joints", None)
         context.read("publish_rate")
         context.read("extra_joints")
-        context.pub(f"joint_states", "sensor_msgs::JointState")
+        context.pub("joint_states", "sensor_msgs::JointState")
 
 
 @attr.s(auto_attribs=True, frozen=True, slots=True)
