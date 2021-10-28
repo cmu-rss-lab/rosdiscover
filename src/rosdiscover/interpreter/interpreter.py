@@ -159,16 +159,24 @@ class Interpreter:
         if manager:
             logger.info(f'launching nodelet [{name}] '
                         f'inside manager [{manager}]')
+            return self._load(pkg=pkg,
+                              nodetype=nodetype,
+                              name=manager,
+                              namespace=namespace,
+                              launch_filename=launch_filename,
+                              remappings=remappings,
+                              args='manager'
+                              )
         else:
             logger.info(f'launching standalone nodelet [{name}]')
-        return self._load(pkg=pkg,
-                          nodetype=nodetype,
-                          name=name,
-                          namespace=namespace,
-                          launch_filename=launch_filename,
-                          remappings=remappings,
-                          args=''
-                          )
+            return self._load(pkg=pkg,
+                              nodetype=nodetype,
+                              name=name,
+                              namespace=namespace,
+                              launch_filename=launch_filename,
+                              remappings=remappings,
+                              args=''
+                              )
 
     def _load(self,
               pkg: str,
@@ -242,16 +250,20 @@ class Interpreter:
                  f"in package [{pkg}]")
             logger.warning(m)
             raise Exception(m)
-
-        ctx = NodeContext(name=name,
-                          namespace=namespace,
-                          kind=nodetype,
-                          package=pkg,
-                          args=args,
-                          launch_filename=launch_filename,
-                          remappings=remappings,
-                          files=self._app.files,
-                          params=self.params,
-                          app=self._app)
-        self.nodes[ctx.fullname] = ctx
+        ctx: NodeContext = None
+        if args == 'manager':
+            # This is being loaded into an existing manager, so find that as the context
+            ctx = self.nodes[name]
+        if not ctx:
+            ctx = NodeContext(name=name,
+                              namespace=namespace,
+                              kind=nodetype,
+                              package=pkg,
+                              args=args,
+                              launch_filename=launch_filename,
+                              remappings=remappings,
+                              files=self._app.files,
+                              params=self.params,
+                              app=self._app)
+            self.nodes[ctx.fullname] = ctx
         model.eval(ctx)
