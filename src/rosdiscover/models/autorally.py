@@ -44,7 +44,7 @@ def autorally_controller(c: NodeContext) -> None:
     chassis_command_priorities = \
         c.parameter_keys("~chassisCommandProirities")  # Note, misspelling is deliberate
 
-    shock_absorbers = c.parameter_keys("~shock_absorbers")
+    shock_absorbers = c.read("~shock_absorbers", [])
 
     c.read("~cmd_timeout", 0.5)
     c.read("~publishing_frequency", 30.0)
@@ -68,7 +68,7 @@ def autorally_controller(c: NodeContext) -> None:
     c.pub("chassisState", "autorally_msgs/chassisState")
 
     for cmd in chassis_command_priorities:
-        cmd = cmd.split("/")[-1]
+        cmd = cmd.split("/")[:-1]
         c.sub(f"{cmd}/chassisCommand", "autorally_msgs/chassisCommand")
 
     c.sub('joint_states', "sensor_msgs/JointState")
