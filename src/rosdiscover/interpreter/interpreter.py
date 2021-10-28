@@ -114,9 +114,24 @@ class Interpreter:
             for plugin in node_context._plugins:
                 plugin.load(self)
 
-    def _create_nodelet_manager(self, name: str) -> None:
+    def _create_nodelet_manager(self,
+                                name: str,
+                                namespace: str,
+                                launch_filename: str,
+                                remappings: t.Mapping[str, str]) -> None:
         """Creates a nodelet manager with a given name."""
         logger.info(f'launched nodelet manager: {name}')
+        ctx = NodeContext(name=name,
+                          namespace=namespace,
+                          kind="nodelet",
+                          package="nodelet",
+                          launch_filename=launch_filename,
+                          remappings=remappings,
+                          files=self._app.files,
+                          params=self.params,
+                          app=self._app,
+                          args='')
+        self.nodes[ctx.fullname] = ctx
 
     def _load_nodelet(self,
                       pkg: str,
@@ -159,16 +174,24 @@ class Interpreter:
         if manager:
             logger.info(f'launching nodelet [{name}] '
                         f'inside manager [{manager}]')
+            return self._load(pkg=pkg,
+                              nodetype=nodetype,
+                              name=manager,
+                              namespace=namespace,
+                              launch_filename=launch_filename,
+                              remappings=remappings,
+                              args='manager'
+                              )
         else:
             logger.info(f'launching standalone nodelet [{name}]')
-        return self._load(pkg=pkg,
-                          nodetype=nodetype,
-                          name=name,
-                          namespace=namespace,
-                          launch_filename=launch_filename,
-                          remappings=remappings,
-                          args=''
-                          )
+            return self._load(pkg=pkg,
+                              nodetype=nodetype,
+                              name=name,
+                              namespace=namespace,
+                              launch_filename=launch_filename,
+                              remappings=remappings,
+                              args=''
+                              )
 
     def _load(self,
               pkg: str,
@@ -209,7 +232,7 @@ class Interpreter:
         args = args.strip()
         if nodetype == 'nodelet':
             if args == 'manager':
-                return self._create_nodelet_manager(name)
+                return self._create_nodelet_manager(name, namespace, launch_filename, remappings)
             elif args.startswith('standalone '):
                 pkg_and_nodetype = args.partition(' ')[2]
                 pkg, _, nodetype = pkg_and_nodetype.partition('/')
@@ -242,16 +265,25 @@ class Interpreter:
                  f"in package [{pkg}]")
             logger.warning(m)
             raise Exception(m)
-
-        ctx = NodeContext(name=name,
-                          namespace=namespace,
-                          kind=nodetype,
-                          package=pkg,
-                          args=args,
-                          launch_filename=launch_filename,
-                          remappings=remappings,
-                          files=self._app.files,
-                          params=self.params,
-                          app=self._app)
-        self.nodes[ctx.fullname] = ctx
+        ctx: t.Optional[NodeContext] = None
+        if args == 'manager':
+            # This is being loaded into an existing manager, so find that as the context
+            if name in self.nodes:
+                ctx = self.nodes[name]
+            elif f"/{name}" in self.nodes:
+                ctx = self.nodes[f"/{name}"]
+            else:
+                raise ValueError(f"The nodelet manager {name} has not been launched")
+        if not ctx:
+            ctx = NodeContext(name=name,
+                              namespace=namespace,
+                              kind=nodetype,
+                              package=pkg,
+                              args=args,
+                              launch_filename=launch_filename,
+                              remappings=remappings,
+                              files=self._app.files,
+                              params=self.params,
+                              app=self._app)
+            self.nodes[ctx.fullname] = ctx
         model.eval(ctx)
