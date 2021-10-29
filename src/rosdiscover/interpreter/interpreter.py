@@ -7,6 +7,7 @@ import typing as t
 from loguru import logger
 import roswire
 from roswire import AppInstance, ROSVersion
+from roswire.common.launch.config import NodeConfig
 from roswire.ros1.launch.reader import ROS1LaunchFileReader
 from roswire.ros2.launch.reader import ROS2LaunchFileReader
 
@@ -88,11 +89,10 @@ class Interpreter:
         for param in config.params.values():
             self.params[param.name] = param.value
 
-        def key(x: NodeContext) -> int:
+        def key(x: NodeConfig) -> str:
             return "z" if x.typ == "nodelet" and x.args and 'manager' in x.args else "a"
         # Sort nodes so that nodelets occur after node managers
-        sorted_nodes = sorted(config.nodes,
-                              key=key)
+        sorted_nodes = sorted(config.nodes, key=key)
         assert sorted_nodes[-1].typ == "nodelet" and 'manager' not in sorted_nodes[-1].args
 
         for node in sorted_nodes:
