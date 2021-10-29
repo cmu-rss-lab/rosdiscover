@@ -90,7 +90,7 @@ class Interpreter:
 
         # Sort nodes so that nodelets occur after node managers
         sorted_nodes = sorted(config.nodes,
-                              key=lambda x: 1 if x.typ == "nodelet" and 'manager' in x.args else 0)
+                              key=lambda x: "z" if x.typ == "nodelet" and 'manager' in x.args else "a")
         assert sorted_nodes[-1].typ == "nodelet" and 'manager' not in sorted_nodes[-1].args
 
         for node in sorted_nodes:
