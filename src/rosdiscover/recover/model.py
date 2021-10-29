@@ -92,7 +92,7 @@ class RecoveredNodeModel(NodeModel):
     @classmethod
     def load(cls, config: Config, filename: str) -> "RecoveredNodeModel":
         with open(filename, "r") as f:
-            return cls.from_dict(json.load(f))
+            return cls.from_dict(config, json.load(f))
 
     @classmethod
     def from_dict(
