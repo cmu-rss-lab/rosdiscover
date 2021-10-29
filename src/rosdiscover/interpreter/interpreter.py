@@ -92,7 +92,7 @@ class Interpreter:
             if not x.args:
                 return "a"
             assert isinstance(x.args, str)
-            return "z" if x.typ == "nodelet" and 'manager' in x.args else "a"
+            return "z" if x.typ == "nodelet" and x.args.strip() == 'manager' else "a"
 
         # Sort nodes so that nodelets occur after node managers
         sorted_nodes = sorted(config.nodes, key=key)
