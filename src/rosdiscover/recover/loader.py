@@ -137,8 +137,6 @@ class SymbolicProgramLoader:
         return ServiceCaller(service, dict_["format"])
 
     def _load_provides_service(self, dict_: t.Mapping[str, t.Any]) -> ServiceProvider:
-        app_formats = self._app.describe().formats
-
         service = self._load_string(dict_["name"])
 
         if "format" in dict_:
