@@ -90,7 +90,7 @@ class Interpreter:
             self.params[param.name] = param.value
 
         def key(x: NodeConfig) -> str:
-            return "z" if x.typ == "nodelet" and x.args and 'manager' in x.args else "a"
+            return "z" if x.typ == "nodelet" and isinstance(x.args, str) and 'manager' in x.args else "a"
         # Sort nodes so that nodelets occur after node managers
         sorted_nodes = sorted(config.nodes, key=key)
         assert sorted_nodes[-1].typ == "nodelet" and 'manager' not in sorted_nodes[-1].args
