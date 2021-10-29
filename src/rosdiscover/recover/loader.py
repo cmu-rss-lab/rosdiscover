@@ -5,6 +5,9 @@ __all__ = ("SymbolicProgramLoader",)
 
 import typing as t
 
+import attr
+import roswire
+
 from .call import (
     DeleteParam,
     HasParam,
@@ -36,9 +39,17 @@ from .symbolic import (
     SymbolicValueType,
     SymbolicVariableReference,
 )
+from ..config import Config
 
 
+@attr.s
 class SymbolicProgramLoader:
+    _app: roswire.app.App = attr.ib()
+
+    @classmethod
+    def for_config(cls, config: Config) -> SymbolicProgramLoader:
+        return SymbolicProgramLoader(config.app)
+
     def _load_parameter(self, dict_: t.Mapping[str, t.Any]) -> SymbolicParameter:
         index: int = dict_["index"]
         name: str = dict_["name"]

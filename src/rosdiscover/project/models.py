@@ -77,9 +77,6 @@ class ProjectModels:
                 logger.exception(f"Static recovery failed for {package}/{node}")
                 return None
         else:
-            # TODO we need to know the sources for this node
-            # - eventually, we want this to come from CMakeLists
-            # - for now, we can manually specify these as part of the configuration
             node_info = self.config.node_sources[(package, node)]
             cmakeinfo = node_info.origin.split(':') if node_info.origin else ["<unknown>", "-1"]
 

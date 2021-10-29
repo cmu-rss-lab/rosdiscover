@@ -436,7 +436,7 @@ class NodeRecoveryTool:
         logger.debug("finished static recovery process")
 
         # load the symbolic summary from the temporary file
-        model_loader = SymbolicProgramLoader()
+        model_loader = SymbolicProgramLoader(self._app)
         json_model_file_contents = files.read(json_model_filename, binary=False)
         json_model = json.loads(json_model_file_contents)
 

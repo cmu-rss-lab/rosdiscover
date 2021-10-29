@@ -131,7 +131,7 @@ class RecoveredNodeModelDatabase:
                        f"in package [{package}] for config [{config}]")
             raise ValueError(message)
 
-        return RecoveredNodeModel.load(model_path)
+        return RecoveredNodeModel.load(config, model_path)
 
     def store(self, model: RecoveredNodeModel) -> None:
         """Stores a given node model in this database."""

@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from __future__ import annotations
+
 __all__ = ("RecoveredNodeModel",)
 
 import json
@@ -10,6 +12,8 @@ import attr
 from .loader import SymbolicProgramLoader
 from .symbolic import SymbolicProgram
 from ..interpreter import NodeModel, NodeContext
+
+from ..config import Config
 
 
 @attr.s(frozen=True, slots=True, auto_attribs=True)
@@ -86,18 +90,22 @@ class RecoveredNodeModel(NodeModel):
         return dict_
 
     @classmethod
-    def load(cls, filename: str) -> "RecoveredNodeModel":
+    def load(cls, config: Config, filename: str) -> "RecoveredNodeModel":
         with open(filename, "r") as f:
             return cls.from_dict(json.load(f))
 
     @classmethod
-    def from_dict(cls, dict_: t.Dict[str, t.Any]) -> "RecoveredNodeModel":
+    def from_dict(
+        cls,
+        config: Config,
+        dict_: t.Dict[str, t.Any],
+    ) -> "RecoveredNodeModel":
         image_sha256 = dict_["image"]["sha256"]
         node_name = dict_["node-name"]
         package_name = dict_["package"]["name"]
         package_abs_path = dict_["package"]["path"]
         source_paths = dict_["sources"]
-        program = SymbolicProgramLoader().load(dict_["program"])
+        program = SymbolicProgramLoader.for_config(config).load(dict_["program"])
         cmakeinfo = None
         if 'cmakeinfo' in dict_:
             cmakeinfo = dict_["cmakeinfo"]
