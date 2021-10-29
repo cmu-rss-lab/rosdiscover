@@ -7,6 +7,7 @@ import typing as t
 from loguru import logger
 import roswire
 from roswire import AppInstance, ROSVersion
+from roswire.common.launch.config import NodeConfig
 from roswire.ros1.launch.reader import ROS1LaunchFileReader
 from roswire.ros2.launch.reader import ROS2LaunchFileReader
 
@@ -87,7 +88,16 @@ class Interpreter:
         for param in config.params.values():
             self.params[param.name] = param.value
 
-        for node in config.nodes:
+        def key(x: NodeConfig) -> str:
+            if not x.args:
+                return "a"
+            assert isinstance(x.args, str)
+            return "z" if x.typ == "nodelet" and x.args.strip() != 'manager' else "a"
+
+        # Sort nodes so that nodelets occur after node managers
+        sorted_nodes = sorted(config.nodes, key=key)
+
+        for node in sorted_nodes:
             if not node.filename:
                 m = ("unable to determine associated launch file for "
                      f"node: {node}")
@@ -174,6 +184,7 @@ class Interpreter:
         if manager:
             logger.info(f'launching nodelet [{name}] '
                         f'inside manager [{manager}]')
+
             return self._load(pkg=pkg,
                               nodetype=nodetype,
                               name=manager,
