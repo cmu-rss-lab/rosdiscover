@@ -96,7 +96,6 @@ class Interpreter:
 
         # Sort nodes so that nodelets occur after node managers
         sorted_nodes = sorted(config.nodes, key=key)
-        assert sorted_nodes[-1].typ == "nodelet" and 'manager' not in sorted_nodes[-1].args
 
         for node in sorted_nodes:
             if not node.filename:
