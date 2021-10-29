@@ -7,6 +7,7 @@ import typing as t
 
 import attr
 import roswire
+from loguru import logger
 
 from .call import (
     DeleteParam,
@@ -136,8 +137,28 @@ class SymbolicProgramLoader:
         return ServiceCaller(service, dict_["format"])
 
     def _load_provides_service(self, dict_: t.Mapping[str, t.Any]) -> ServiceProvider:
+        app_formats = self._app.describe().formats
+
         service = self._load_string(dict_["name"])
-        return ServiceProvider(service, dict_["format"])
+
+        if "format" in dict_:
+            return ServiceProvider(service, dict_["format"])
+
+        response_format_name = dict_["response-format"]
+        request_format_name = dict_["request-format"]
+        logger.debug(
+            f"locating corresponding format for service [{service}]:\n"
+            f" - response format: {response_format_name}\n"
+            f" - request format: {request_format_name}"
+        )
+
+        if response_format_name.endswith("Response"):
+            service_format_name = response_format_name[:-8]
+            logger.debug(f"determined format for service [{service}]: {service_format_name}")
+            return ServiceProvider(service, service_format_name)
+
+        logger.warning(f"unable to determine format for service: {service}")
+        return ServiceProvider(service, "\\unknown")
 
     def _load_reads_param(self, dict_: t.Mapping[str, t.Any]) -> ReadParam:
         param = self._load_string(dict_["name"])
@@ -215,6 +236,10 @@ class SymbolicProgramLoader:
 
     def load(self, dict_: t.Mapping[str, t.Any]) -> SymbolicProgram:
         dict_ = dict_["program"]
+        # DEBUG
+        import json
+        print(f"LOADING PROGRAM: {json.dumps(dict_, indent=2)}")
+        # DEBUG
         return SymbolicProgram.build(
             dict_["entrypoint"],
             (self._load_function(d) for d in dict_["functions"])
