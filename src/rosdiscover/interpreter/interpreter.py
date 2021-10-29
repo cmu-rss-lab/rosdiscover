@@ -46,7 +46,6 @@ class Interpreter:
         self.params = ParameterServer()
         self.nodes: Dict[str, NodeContext] = {}
         self.models = ProjectModels(config, allow_recovery=True)
-        self._waiting_nodelets: Dict[str, t.List[t.Tuple[str, t.Callable[[], None]]]] = {}
 
     def open(self) -> None:
         self.models.open()
@@ -122,12 +121,6 @@ class Interpreter:
             for plugin in node_context._plugins:
                 plugin.load(self)
 
-        # Now that everything has been loaded, check that all nodelets have started
-        for manager, nodelets in self._waiting_nodelets.items():
-            if nodelets:
-                for nodelet_info in nodelets:
-                    logger.error(f"Nodelet {nodelet_info[0]} is stil waiting for manager {manager}")
-
     def _create_nodelet_manager(self,
                                 name: str,
                                 namespace: str,
@@ -146,10 +139,6 @@ class Interpreter:
                           app=self._app,
                           args='')
         self.nodes[ctx.fullname] = ctx
-        if ctx.fullname in self._waiting_nodelets:
-            for nodelet in self._waiting_nodelets[ctx.fullname]:
-                nodelet[1]()
-                del nodelet
 
     def _load_nodelet(self,
                       pkg: str,
@@ -193,22 +182,14 @@ class Interpreter:
             logger.info(f'launching nodelet [{name}] '
                         f'inside manager [{manager}]')
 
-            def load_wrapper():
-                return self._load(pkg=pkg,
-                                  nodetype=nodetype,
-                                  name=manager,
-                                  namespace=namespace,
-                                  launch_filename=launch_filename,
-                                  remappings=remappings,
-                                  args='manager'
-                                  )
-            if manager in self.nodes.keys():
-                load_wrapper()
-            else:
-                if manager in self._waiting_nodelets:
-                    self._waiting_nodelets[manager].append((name, load_wrapper))
-                else:
-                    self._waiting_nodelets[manager] = [(name, load_wrapper)]
+            return self._load(pkg=pkg,
+                              nodetype=nodetype,
+                              name=manager,
+                              namespace=namespace,
+                              launch_filename=launch_filename,
+                              remappings=remappings,
+                              args='manager'
+                              )
         else:
             logger.info(f'launching standalone nodelet [{name}]')
             return self._load(pkg=pkg,
