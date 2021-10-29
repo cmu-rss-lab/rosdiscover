@@ -234,10 +234,6 @@ class SymbolicProgramLoader:
 
     def load(self, dict_: t.Mapping[str, t.Any]) -> SymbolicProgram:
         dict_ = dict_["program"]
-        # DEBUG
-        import json
-        print(f"LOADING PROGRAM: {json.dumps(dict_, indent=2)}")
-        # DEBUG
         return SymbolicProgram.build(
             dict_["entrypoint"],
             (self._load_function(d) for d in dict_["functions"])
