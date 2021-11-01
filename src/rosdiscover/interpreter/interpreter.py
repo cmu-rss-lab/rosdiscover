@@ -274,7 +274,7 @@ class Interpreter:
             logger.info(f"using remappings: {remappings}")
 
         try:
-            model = self.models.fetch(pkg, nodetype if args.startswith("manager") else name)
+            model = self.models.fetch(pkg, nodetype if not args.startswith("manager") else name)
         except Exception:
             m = (f"failed to find model for node type [{nodetype}] "
                  f"in package [{pkg}]")
