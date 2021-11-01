@@ -253,22 +253,13 @@ class NodeRecoveryTool:
         # So, lookup via that
         # TODO: Improve this API
         nodelet_name_reference = f"{package}/{node_name}"
-        node_source_info = None
         if node_name not in cmake_info and nodelet_name_reference not in cmake_info:
             logger.info(f"CMakeLists.txt contains: {str(cmake_info.keys())}")
-            if len(cmake_info) == 1:
-                possible = list(cmake_info.keys())[0]
-                logger.warning(f"{node_name} is not mentioned explcitly in the CMakeLists.txt of '{package}. "
-                               f"Returning that it is '{possible}'")
-                node_source_info = cmake_info[possible]
-            else:
-                logger.error(f"{node_name} is not in the CMakeLists.txt of package '{package.name}")
-                raise ValueError()
-        if not node_source_info:
-            if node_name in cmake_info:
-                node_source_info = cmake_info[node_name]
-            else:
-                node_source_info = cmake_info[nodelet_name_reference]
+            raise ValueError(f"{node_name} is not in the CMakeLists.txt of package '{package.name}")
+        if node_name in cmake_info:
+            node_source_info = cmake_info[node_name]
+        else:
+            node_source_info = cmake_info[nodelet_name_reference]
         if node_source_info.language != SourceLanguage.CXX:
             raise NotImplementedError("Can only recover node information for C++ nodes")
         logger.info(f"Recovered sources for {node_name} as {str(node_source_info.sources)}")
