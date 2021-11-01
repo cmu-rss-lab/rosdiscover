@@ -243,10 +243,8 @@ class Interpreter:
             if there is no model for the given node type.
         """
         args = args.strip()
-        has_manager = False
         if nodetype == 'nodelet':
             if args.startswith('manager'):
-                has_manager = True
                 manager = args.partition(' ')[2]
                 return self._create_nodelet_manager(name, namespace, manager, launch_filename, remappings)
             elif args.startswith('standalone '):
