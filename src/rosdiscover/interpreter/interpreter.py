@@ -277,7 +277,7 @@ class Interpreter:
             model = self.models.fetch(pkg, nodetype)
         except ValueError:
             try:
-                model = self.models.fetch(pkg, nodetype)
+                model = self.models.fetch(pkg, name)
             except Exception:
                 m = (f"failed to find model for node type [{nodetype}] "
                      f"in package [{pkg}]")
