@@ -12,6 +12,7 @@ from roswire.ros1.launch.reader import ROS1LaunchFileReader
 from roswire.ros2.launch.reader import ROS2LaunchFileReader
 
 from .context import NodeContext
+from .model import PlaceholderModel
 from .summary import SystemSummary
 from .parameter import ParameterServer
 from ..config import Config
@@ -275,15 +276,13 @@ class Interpreter:
 
         try:
             model = self.models.fetch(pkg, nodetype)
-        except Exception:
-            try:
-                logger.info(f"Failed to find {nodetype}, looking for {name}")
+            if isinstance(model, PlaceholderModel) and name != nodetype:
                 model = self.models.fetch(pkg, name)
-            except Exception:
-                m = (f"failed to find model for node type [{nodetype}] "
-                     f"in package [{pkg}]")
-                logger.warning(m)
-                raise
+        except Exception:
+            m = (f"failed to find model for node type [{nodetype}] "
+                 f"in package [{pkg}]")
+            logger.warning(m)
+            raise
         ctx: t.Optional[NodeContext] = None
         if args == 'manager':
             # This is being loaded into an existing manager, so find that as the context
