@@ -260,7 +260,7 @@ class NodeRecoveryTool:
                 possible = list(cmake_info.keys())[0]
                 logger.warning(f"{node_name} is not mentioned explcitly in the CMakeLists.txt of '{package}. "
                                f"Returning that it is '{possible}'")
-                node_source_info = cmake_info[node_name]
+                node_source_info = cmake_info[possible]
             else:
                 logger.error(f"{node_name} is not in the CMakeLists.txt of package '{package.name}")
                 raise ValueError()
