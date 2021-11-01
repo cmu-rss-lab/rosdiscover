@@ -282,14 +282,15 @@ class Interpreter:
             logger.warning(m)
             raise
         ctx: t.Optional[NodeContext] = None
-        if args == 'manager':
+        if args.startswith('manager'):
             # This is being loaded into an existing manager, so find that as the context
-            if name in self.nodes:
-                ctx = self.nodes[name]
-            elif f"/{name}" in self.nodes:
-                ctx = self.nodes[f"/{name}"]
+            manager_name = args.split(" ")[1]
+            if manager_name in self.nodes:
+                ctx = self.nodes[manager_name]
+            elif f"/{manager_name}" in self.nodes:
+                ctx = self.nodes[f"/{manager_name}"]
             else:
-                raise ValueError(f"The nodelet manager {name} has not been launched")
+                raise ValueError(f"The nodelet manager {manager_name} has not been launched")
         if not ctx:
             ctx = NodeContext(name=name,
                               namespace=namespace,
