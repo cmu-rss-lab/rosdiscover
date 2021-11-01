@@ -103,8 +103,12 @@ class HandwrittenModel(NodeModel):
         return HandwrittenModel._models[package_and_name]
 
     def eval(self, context: NodeContext) -> None:
-        self._definition(context)
-        context.mark_handwritten()
+        try:
+            self._definition(context)
+            context.mark_handwritten()
+        except Exception:
+            logger.error(f'Failed to load handwritten model {context.fullname} from {context.launch_filename}')
+            raise
 
 
 def model(package: str, name: str) -> t.Any:

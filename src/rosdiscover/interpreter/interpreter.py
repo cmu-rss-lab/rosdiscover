@@ -127,10 +127,11 @@ class Interpreter:
     def _create_nodelet_manager(self,
                                 name: str,
                                 namespace: str,
+                                manager: str,
                                 launch_filename: str,
                                 remappings: t.Mapping[str, str]) -> None:
         """Creates a nodelet manager with a given name."""
-        logger.info(f'launched nodelet manager: {name}')
+        logger.info(f'launched nodelet manager: {manager} as {name}')
         ctx = NodeContext(name=name,
                           namespace=namespace,
                           kind="nodelet",
@@ -187,11 +188,11 @@ class Interpreter:
 
             return self._load(pkg=pkg,
                               nodetype=nodetype,
-                              name=manager,
+                              name=name,
                               namespace=namespace,
                               launch_filename=launch_filename,
                               remappings=remappings,
-                              args='manager'
+                              args=f'manager {manager}'
                               )
         else:
             logger.info(f'launching standalone nodelet [{name}]')
@@ -242,8 +243,9 @@ class Interpreter:
         """
         args = args.strip()
         if nodetype == 'nodelet':
-            if args == 'manager':
-                return self._create_nodelet_manager(name, namespace, launch_filename, remappings)
+            if args.startswith('manager'):
+                manager = args.partition(' ')[2]
+                return self._create_nodelet_manager(name, namespace, manager, launch_filename, remappings)
             elif args.startswith('standalone '):
                 pkg_and_nodetype = args.partition(' ')[2]
                 pkg, _, nodetype = pkg_and_nodetype.partition('/')

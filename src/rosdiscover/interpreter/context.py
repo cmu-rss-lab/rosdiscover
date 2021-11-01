@@ -215,6 +215,10 @@ class NodeContext:
     def read_file(self, fn: Union[str, 'SymbolicUnknown']) -> str:
         """Reads the contents of a text file."""
         if isinstance(fn, str):
+            if not self._files.exists(fn):
+                message = f"'{fn}' does not exist"
+                logger.error(message)
+                raise FileNotFoundError(message)
             return self._files.read(fn)
         logger.warning(f"Unable to resolve unknown parameter filename in NodeContext [{self.name}]")
         return UNKNOWN_NAME

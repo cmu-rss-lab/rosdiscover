@@ -1,16 +1,16 @@
 import yaml
+from loguru import logger
 
-from ..interpreter import model
+from ..interpreter import model, NodeContext
 
 
 @model('yocs_cmd_vel_mux', 'CmdVelMuxNodelet')
-def cmd_vel_mux(c):
+def cmd_vel_mux(c: NodeContext):
     # FIXME handle IO
     fn = c.read("~yaml_cfg_file", None)
 
-    # TODO ensure that file exists
+    logger.debug(f"Reading parameters from '{fn}'")
     yml = yaml.load(c.read_file(fn))
-
     c.pub(yml.get('publisher', 'output'), 'geometry_msgs/Twist')
     for sub_desc in yml['subscribers']:
         c.sub(sub_desc['topic'], 'geometry_msgs/Twist')
