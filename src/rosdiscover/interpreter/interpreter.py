@@ -277,6 +277,7 @@ class Interpreter:
             model = self.models.fetch(pkg, nodetype)
         except Exception:
             try:
+                logger.info(f"Failed to find {nodetype}, looking for {name}")
                 model = self.models.fetch(pkg, name)
             except Exception:
                 m = (f"failed to find model for node type [{nodetype}] "
