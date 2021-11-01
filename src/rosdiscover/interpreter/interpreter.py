@@ -274,12 +274,15 @@ class Interpreter:
             logger.info(f"using remappings: {remappings}")
 
         try:
-            model = self.models.fetch(pkg, nodetype if not args.startswith("manager") else name)
-        except Exception:
-            m = (f"failed to find model for node type [{nodetype}] "
-                 f"in package [{pkg}]")
-            logger.warning(m)
-            raise Exception(m)
+            model = self.models.fetch(pkg, nodetype)
+        except ValueError:
+            try:
+                model = self.models.fetch(pkg, nodetype)
+            except Exception:
+                m = (f"failed to find model for node type [{nodetype}] "
+                     f"in package [{pkg}]")
+                logger.warning(m)
+                raise
         ctx: t.Optional[NodeContext] = None
         if args == 'manager':
             # This is being loaded into an existing manager, so find that as the context
