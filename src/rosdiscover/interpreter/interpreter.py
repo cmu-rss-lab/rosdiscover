@@ -275,7 +275,7 @@ class Interpreter:
 
         try:
             model = self.models.fetch(pkg, nodetype)
-        except ValueError:
+        except Exception:
             try:
                 model = self.models.fetch(pkg, name)
             except Exception:
