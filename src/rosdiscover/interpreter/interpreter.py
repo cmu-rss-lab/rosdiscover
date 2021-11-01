@@ -184,7 +184,7 @@ class Interpreter:
         """
         if manager:
             logger.info(f'launching nodelet [{name}] '
-                        f'inside manager [{manager}]')
+                        f'inside manager [{manager}] from {launch_filename}')
 
             return self._load(pkg=pkg,
                               nodetype=nodetype,
@@ -242,8 +242,10 @@ class Interpreter:
             if there is no model for the given node type.
         """
         args = args.strip()
+        has_manager = False
         if nodetype == 'nodelet':
             if args.startswith('manager'):
+                has_manager=True
                 manager = args.partition(' ')[2]
                 return self._create_nodelet_manager(name, namespace, manager, launch_filename, remappings)
             elif args.startswith('standalone '):
@@ -272,7 +274,7 @@ class Interpreter:
             logger.info(f"using remappings: {remappings}")
 
         try:
-            model = self.models.fetch(pkg, nodetype)
+            model = self.models.fetch(pkg, nodetype if not has_manager else name)
         except Exception:
             m = (f"failed to find model for node type [{nodetype}] "
                  f"in package [{pkg}]")
