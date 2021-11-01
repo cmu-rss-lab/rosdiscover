@@ -291,7 +291,14 @@ class Interpreter:
                 ctx = self.nodes[f"/{manager_name}"]
             else:
                 raise ValueError(f"The nodelet manager {manager_name} has not been launched")
-        if not ctx:
+            manager_name = ctx.name
+            # Temporarily rename as nodelet name for proper namespace resolution
+            ctx.name = name
+            try:
+                model.eval(ctx)
+            finally:
+                ctx.name = manager_name
+        else:
             ctx = NodeContext(name=name,
                               namespace=namespace,
                               kind=nodetype,
@@ -303,4 +310,4 @@ class Interpreter:
                               params=self.params,
                               app=self._app)
             self.nodes[ctx.fullname] = ctx
-        model.eval(ctx)
+            model.eval(ctx)
