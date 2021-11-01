@@ -167,6 +167,8 @@ class ObstacleLayerPlugin(NavigationPlugin):
         observation_sources = move_base.read(observation_sources_param, "")
 
         for os in observation_sources.split(" "):
+            if not os:
+                continue
             os_ns = namespace_join(move_base.name, namespace_join('obstacles', os))
             topic = move_base.read(namespace_join(os_ns, 'topic'), os)
             move_base.read(namespace_join(os_ns, 'sensor_frame'), "")
