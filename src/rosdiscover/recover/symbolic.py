@@ -11,6 +11,7 @@ __all__ = (
     "SymbolicFunction",
     "SymbolicNodeHandle",
     "SymbolicNodeHandleImpl",
+    "SymbolicNodeName",
     "SymbolicParameter",
     "SymbolicProgram",
     "SymbolicStatement",
@@ -97,6 +98,11 @@ class SymbolicContext:
 
         self._vars[variable] = value
 
+    @property
+    def node_name(self) -> str:
+        """Returns the name of the associated node."""
+        return self.node.name
+
 
 class SymbolicValueType(enum.Enum):
     BOOL = "bool"
@@ -140,6 +146,18 @@ class SymbolicValue(abc.ABC):
 
 class SymbolicString(SymbolicValue, abc.ABC):
     """Represents a symbolic string value."""
+
+
+class SymbolicNodeName(SymbolicString):
+    """Symbolically refers to the name of the current node."""
+    def to_dict(self) -> t.Dict[str, t.Any]:
+        return {"kind": "node-name"}
+
+    def eval(self, context: SymbolicContext) -> t.Any:
+        return context.node_name
+
+    def is_unknown(self) -> bool:
+        return False
 
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
