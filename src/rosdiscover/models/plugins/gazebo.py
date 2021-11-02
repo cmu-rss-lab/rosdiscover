@@ -36,7 +36,8 @@ class GazeboPlugin(ModelPlugin):
             'libhector_gazebo_ros_gps.so': LibGazeboROSGpsPlugin,
             'libgazebo_ros_camera.so': LibGazeboROSCameraPlugin,
             'libgazebo_ros_openni_kinect.so': LibGazeboROSOpenniKinectPlugin,
-            'libfetch_gazebo_plugin.so': LibFetchGazeboPlugin  # Note, this should be generated
+            'libfetch_gazebo_plugin.so': LibFetchGazeboPlugin,  # Note, this should be generated
+            'libgazebo_ros_kobuki.so': LibKobukiPlugin
         }
 
         if filename not in filename_to_cls:
@@ -434,11 +435,15 @@ class LibGazeboROSOpenniKinectPlugin(GazeboPlugin):
     def load(self, interpreter: 'Interpreter') -> None:
         gazebo = interpreter.nodes['/gazebo']
 
-        gazebo.pub(self.image_topic_name, 'sensor_msgs/Image')
-        gazebo.pub(self.camera_info_topic_name, 'sensor_msgs/CameraInfo')
-        gazebo.pub(self.depth_image_topic_name, 'sensor_msgs/Image')
-        gazebo.pub(self.depth_image_camera_info_topic_name, 'sensor_msgs/CameraInfo')
-        gazebo.pub(self.point_cloud_topic_name, 'sensor_msgs/PointCloud2')
+        gazebo.pub(f"/{self.camera_name}/{self.image_topic_name}", 'sensor_msgs/Image')
+        for image_topic in [("", "sensor_msgs/Image"), ("/compressed", "sensor_msgs/CompressedImage"),
+                            ("/compressedDepth", "sensor_msgs/CompressedImage"),
+                            ("/theora", "theora_image_transport/Packet")]:
+            gazebo.pub(f"/{self.camera_name}/{self.image_topic_name}" + image_topic[0], image_topic[1])
+        gazebo.pub(f"/{self.camera_name}/{self.camera_info_topic_name}", 'sensor_msgs/CameraInfo')
+        gazebo.pub(f"/{self.camera_name}/{self.depth_image_topic_name}", 'sensor_msgs/Image')
+        gazebo.pub(f"/{self.camera_name}/{self.depth_image_camera_info_topic_name}", 'sensor_msgs/CameraInfo')
+        gazebo.pub(f"/{self.camera_name}/{self.point_cloud_topic_name}", 'sensor_msgs/PointCloud2')
 
     @classmethod
     def build_from_xml(cls, xml: ET.Element) -> 'GazeboPlugin':
@@ -486,6 +491,37 @@ class LibFetchGazeboPlugin(GazeboPlugin):
     @classmethod
     def build_from_xml(cls, xml: ET.Element) -> 'GazeboPlugin':
         return LibFetchGazeboPlugin(joint_state_topic="joint_states")
+
+
+@attr.s(frozen=True, slots=True)
+class LibKobukiPlugin(GazeboPlugin):
+    filename = "libgazebo_kobuki_plugin.so"
+    publish_tf: bool = attr.ib(default=False)
+
+    def load(self, interpreter: 'Interpreter') -> None:
+        gazebo = interpreter.nodes['/gazebo']
+        base_prefix = gazebo.read('~/base_prefix', "mobile_base")
+        gazebo.pub("joint_states", 'sensor_msgs/JointState')
+        gazebo.pub("odom", 'nav_msgs/Odometry')
+
+        gazebo.sub(f"{base_prefix}/commands/motor_power", "kobuki_msgs/MotorPower")
+        gazebo.sub(f"{base_prefix}/commands/reset_odometry", "std_msgs/Empty")
+        gazebo.sub(f"{base_prefix}/commands/velocity", "geometry_msgs/Twist")
+        gazebo.pub(f"{base_prefix}/events/cliff", 'kobuki_msgs/CliffEvent')
+        gazebo.pub(f"{base_prefix}/events/bumper", 'kobuki_msgs/BumperEvent')
+        gazebo.pub(f"{base_prefix}/sensors/imu_data", 'sensor_msgs/Imu')
+        gazebo.pub(f"{base_prefix}/sensors/core", 'kobuki_msgs/SensorState')
+
+        if self.publish_tf:
+            gazebo.pub("tf", "")
+
+    @classmethod
+    def build_from_xml(cls, xml: ET.Element) -> 'GazeboPlugin':
+        xml_publish_tf = xml.find('publish_tf')
+        if xml_publish_tf is not None:
+            assert xml_publish_tf.text
+            publish_tf = xml_publish_tf.text == 1
+        return LibKobukiPlugin(publish_tf=publish_tf)
 
 
 @attr.s(frozen=True, slots=True)

@@ -1,7 +1,8 @@
-from ..interpreter import model
+# from ..interpreter import model
 
 
-@model('map_server', 'map_server')
+# Commented out to make static node recovery be used
+# @model('map_server', 'map_server')
 def map_server(c):
     c.read('~frame_id', 'map')
     c.read('~negate', 0)

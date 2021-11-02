@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
-from ..interpreter import model
+# from ..interpreter import model
 
 M_PI = 3.14159265358979323846
 
 
-@model('amcl', 'amcl')
+# Commented out to make static node recovery be used
+# @model('amcl', 'amcl')
 def amcl(c):
     c.read('~use_map_topic', False)
     c.read('~first_map_only', False)

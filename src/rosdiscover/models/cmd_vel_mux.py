@@ -8,14 +8,16 @@ from ..interpreter import model, NodeContext
 def cmd_vel_mux(c: NodeContext):
     # FIXME handle IO
     fn = c.read("~yaml_cfg_file", None)
-
+    if not fn:
+        logger.error("Couldn't read ~yaml_cfg_file")
+        return
     logger.debug(f"Reading parameters from '{fn}'")
     yml = yaml.load(c.read_file(fn))
-    c.pub(yml.get('publisher', 'output'), 'geometry_msgs/Twist')
+    c.pub(f"~{yml.get('publisher', 'output')}", 'geometry_msgs/Twist')
     for sub_desc in yml['subscribers']:
-        c.sub(sub_desc['topic'], 'geometry_msgs/Twist')
+        c.sub(f"~{sub_desc['topic']}", 'geometry_msgs/Twist')
 
-    c.pub("active", "std_msgs/String")
+    c.pub("~active", "std_msgs/String")
 
     # dynamic reconfigure
     c.pub('~parameter_descriptions', 'dynamic_reconfigure/ConfigDescription')

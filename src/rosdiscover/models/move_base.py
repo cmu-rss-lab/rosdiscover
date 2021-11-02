@@ -40,7 +40,7 @@ def move_base(c):
         c.sub(f"~{name}/footprint", 'geometry_msgs/Polygon')
         c.pub(f"~{name}/costmap", 'nav_msgs/OccupancyGrid')
         c.pub(f"~{name}/costmap_updates", 'nav_msgs/OccupancyGridUpdate')
-        c.pub(f"~{name}/voxel_grid", 'costmap_2d/VoxelGrid')
+        # c.pub(f"~{name}/voxel_grid", 'costmap_2d/VoxelGrid')
 
         c.read(f"~{name}/global_frame", "/map")
         c.read(f"~{name}/global_frame", "base_link")
@@ -63,6 +63,7 @@ def move_base(c):
     def plugin_navfn():
         name = "NavfnROS"
         c.pub(f"~{name}/plan", "nav_msgs/Path")
+        c.provide(f"~{name}/make_plan", "nav_msgs/GetPlan")
         c.read(f"~{name}/allow_unknown", True)
         c.read(f"~{name}/planner_window_x", 0.0)
         c.read(f"~{name}/planner_window_y", 0.0)
@@ -118,8 +119,11 @@ def move_base(c):
         c.read(f"~{name}/scaling_speed", 0.25)
         c.read(f"~{name}/max_scaling_factor", 0.2)
 
-        if c.read(f"~{name}/publish_cost_grid", False):
+        if c.read(f"~{name}/publish_cost_grid", False) or c.read(f"~{name}/publish_cost_grid_pc", False):
             c.pub(f"~{name}/cost_cloud", "sensor_msgs/PointCloud2")
+
+        if c.read(f"~{name}/publish_traj_pc", False):
+            c.pub(f"~{name}/trajectory_cloud", "base_local_planner/MapGridCostPoint")
 
         c.read(f"~{name}/oscillation_reset_dist", 0.05)
         c.read(f"~{name}/prune_plan", True)
@@ -186,9 +190,9 @@ def move_base(c):
         m = f"unsupported local planner: {type_local_planner}"
         raise Exception(m)
 
-    c.provide("make_plan", 'nav_msgs/GetPlan')
-    c.provide("clear_unknown_space", 'std_srvs/Empty')
-    c.provide("clear_costmaps", 'std_srvs/Empty')
+    c.provide("~make_plan", 'nav_msgs/GetPlan')
+    # ! MELODIC c.provide("~clear_unknown_space", 'std_srvs/Empty')
+    c.provide("~clear_costmaps", 'std_srvs/Empty')
 
     # move_base/src/move_base.cpp:1054
     # load_plugin('', 'clear_costmap_recovery/ClearCostmapRecovery') [conservative_reset]
@@ -207,17 +211,17 @@ def move_base(c):
     load_recovery('aggressive')
 
     # Load navigation plugins
-    global_plugins = c.read("/global_costmap/plugins")
+    global_plugins = c.read("~global_costmap/plugins")
     if global_plugins is not None:
         assert isinstance(global_plugins, list)
         for plugin_dict in global_plugins:
             assert isinstance(plugin_dict, dict)
-            plugin = NavigationPlugin.from_dict(plugin_dict, c.name)
+            plugin = NavigationPlugin.from_dict(plugin_dict, c.name, "global_costmap")
             c.load_plugin(plugin)
 
-    local_plugins = c.read("/local_costmap/plugins")
+    local_plugins = c.read("~local_costmap/plugins")
     if isinstance(local_plugins, list):
         for plugin_dict in local_plugins:
             assert isinstance(plugin_dict, dict)
-            plugin = NavigationPlugin.from_dict(plugin_dict, c.name)
+            plugin = NavigationPlugin.from_dict(plugin_dict, c.name, "local_costmap")
             c.load_plugin(plugin)
