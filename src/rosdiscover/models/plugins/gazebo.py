@@ -435,11 +435,15 @@ class LibGazeboROSOpenniKinectPlugin(GazeboPlugin):
     def load(self, interpreter: 'Interpreter') -> None:
         gazebo = interpreter.nodes['/gazebo']
 
-        gazebo.pub(self.image_topic_name, 'sensor_msgs/Image')
-        gazebo.pub(self.camera_info_topic_name, 'sensor_msgs/CameraInfo')
-        gazebo.pub(self.depth_image_topic_name, 'sensor_msgs/Image')
-        gazebo.pub(self.depth_image_camera_info_topic_name, 'sensor_msgs/CameraInfo')
-        gazebo.pub(self.point_cloud_topic_name, 'sensor_msgs/PointCloud2')
+        gazebo.pub(f"/{self.camera_name}/{self.image_topic_name}", 'sensor_msgs/Image')
+        for image_topic in [("", "sensor_msgs/Image"), ("/compressed", "sensor_msgs/CompressedImage"),
+                            ("/compressedDepth", "sensor_msgs/CompressedImage"),
+                            ("/theora", "theora_image_transport/Packet")]:
+            gazebo.pub(f"/{self.camera_name}/{self.image_topic_name}" + image_topic[0], image_topic[1])
+        gazebo.pub(f"/{self.camera_name}/{self.camera_info_topic_name}", 'sensor_msgs/CameraInfo')
+        gazebo.pub(f"/{self.camera_name}/{self.depth_image_topic_name}", 'sensor_msgs/Image')
+        gazebo.pub(f"/{self.camera_name}/{self.depth_image_camera_info_topic_name}", 'sensor_msgs/CameraInfo')
+        gazebo.pub(f"/{self.camera_name}/{self.point_cloud_topic_name}", 'sensor_msgs/PointCloud2')
 
     @classmethod
     def build_from_xml(cls, xml: ET.Element) -> 'GazeboPlugin':
@@ -503,8 +507,8 @@ class LibKobukiPlugin(GazeboPlugin):
         gazebo.sub(f"{base_prefix}/commands/motor_power", "kobuki_msgs/MotorPower")
         gazebo.sub(f"{base_prefix}/commands/reset_odometry", "std_msgs/Empty")
         gazebo.sub(f"{base_prefix}/commands/velocity", "geometry_msgs/Twist")
-        gazebo.sub(f"{base_prefix}/events/cliff", 'kobuki_msgs/CliffEvent')
-        gazebo.sub(f"{base_prefix}/events/bumper", 'kobuki_msgs/BumperEvent')
+        gazebo.pub(f"{base_prefix}/events/cliff", 'kobuki_msgs/CliffEvent')
+        gazebo.pub(f"{base_prefix}/events/bumper", 'kobuki_msgs/BumperEvent')
         gazebo.pub(f"{base_prefix}/sensors/imu_data", 'sensor_msgs/Imu')
         gazebo.pub(f"{base_prefix}/sensors/core", 'kobuki_msgs/SensorState')
 
