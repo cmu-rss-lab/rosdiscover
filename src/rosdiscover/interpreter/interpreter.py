@@ -281,23 +281,28 @@ class Interpreter:
                  f"in package [{pkg}]")
             logger.warning(m)
             raise
-        ctx: t.Optional[NodeContext] = None
         if args.startswith('manager'):
             # This is being loaded into an existing manager, so find that as the context
             manager_name = args.split(" ")[1]
             if manager_name in self.nodes:
-                ctx = self.nodes[manager_name]
+                manager_context = self.nodes[manager_name]
             elif f"/{manager_name}" in self.nodes:
-                ctx = self.nodes[f"/{manager_name}"]
+                manager_context = self.nodes[f"/{manager_name}"]
             else:
                 raise ValueError(f"The nodelet manager {manager_name} has not been launched")
-            manager_name = ctx.name
-            # Temporarily rename as nodelet name for proper namespace resolution
-            ctx.name = name
-            try:
-                model.eval(ctx)
-            finally:
-                ctx.name = manager_name
+            # Create a context for the nodelet
+            ctx = NodeContext(name=name,
+                              namespace=namespace,
+                              kind=nodetype,
+                              package=pkg,
+                              args=args,
+                              launch_filename=launch_filename,
+                              remappings=remappings,
+                              files=self._app.files,
+                              params=self.params,
+                              app=self._app)
+            model.eval(ctx)
+            manager_context.load_nodelet(ctx)
         else:
             ctx = NodeContext(name=name,
                               namespace=namespace,
