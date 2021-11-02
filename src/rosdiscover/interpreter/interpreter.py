@@ -274,6 +274,8 @@ class Interpreter:
 
         try:
             model = self.models.fetch(pkg, nodetype)
+            # This is to handle nodelet strangness
+            # If we can't find it through node type, look for it by name
             if isinstance(model, PlaceholderModel) and name != nodetype:
                 model = self.models.fetch(pkg, name)
         except Exception:
