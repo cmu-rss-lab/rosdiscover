@@ -303,6 +303,11 @@ class Interpreter:
                               app=self._app)
             model.eval(ctx)
             manager_context.load_nodelet(ctx)
+            # Place the nodelet as a node, which is observed
+            # TODO: This needs to be rethought -- we should have a separate NodeletManagerContext
+            #       that con contain NodeletContexts. This would better map the NodeletManager/
+            #       Nodelet mapping, and would actually contain traceability between topics
+            self.nodes[ctx.fullname] = ctx
         else:
             ctx = NodeContext(name=name,
                               namespace=namespace,
