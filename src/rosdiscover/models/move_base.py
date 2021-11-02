@@ -63,6 +63,7 @@ def move_base(c):
     def plugin_navfn():
         name = "NavfnROS"
         c.pub(f"~{name}/plan", "nav_msgs/Path")
+        c.provide(f"~{name}/make_plan", "nav_msgs/GetPlan")
         c.read(f"~{name}/allow_unknown", True)
         c.read(f"~{name}/planner_window_x", 0.0)
         c.read(f"~{name}/planner_window_y", 0.0)
@@ -189,9 +190,9 @@ def move_base(c):
         m = f"unsupported local planner: {type_local_planner}"
         raise Exception(m)
 
-    c.provide("make_plan", 'nav_msgs/GetPlan')
-    c.provide("clear_unknown_space", 'std_srvs/Empty')
-    c.provide("clear_costmaps", 'std_srvs/Empty')
+    c.provide("~make_plan", 'nav_msgs/GetPlan')
+    # ! MELODIC c.provide("~clear_unknown_space", 'std_srvs/Empty')
+    c.provide("~clear_costmaps", 'std_srvs/Empty')
 
     # move_base/src/move_base.cpp:1054
     # load_plugin('', 'clear_costmap_recovery/ClearCostmapRecovery') [conservative_reset]
@@ -215,12 +216,12 @@ def move_base(c):
         assert isinstance(global_plugins, list)
         for plugin_dict in global_plugins:
             assert isinstance(plugin_dict, dict)
-            plugin = NavigationPlugin.from_dict(plugin_dict, c.name)
+            plugin = NavigationPlugin.from_dict(plugin_dict, c.name, "global_costmap")
             c.load_plugin(plugin)
 
     local_plugins = c.read("~local_costmap/plugins")
     if isinstance(local_plugins, list):
         for plugin_dict in local_plugins:
             assert isinstance(plugin_dict, dict)
-            plugin = NavigationPlugin.from_dict(plugin_dict, c.name)
+            plugin = NavigationPlugin.from_dict(plugin_dict, c.name, "local_costmap")
             c.load_plugin(plugin)
