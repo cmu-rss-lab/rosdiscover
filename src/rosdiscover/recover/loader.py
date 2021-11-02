@@ -31,6 +31,7 @@ from .symbolic import (
     SymbolicFunctionCall,
     SymbolicNodeHandle,
     SymbolicNodeHandleImpl,
+    SymbolicNodeName,
     SymbolicParameter,
     SymbolicProgram,
     SymbolicStatement,
@@ -107,6 +108,8 @@ class SymbolicProgramLoader:
             return self._load_checks_for_param(dict_)
         elif kind == "unknown":
             return SymbolicUnknown()
+        elif kind == "node-name":
+            return SymbolicNodeName()
         else:
             raise ValueError(f"failed to load value type: {kind}")
 
