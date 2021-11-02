@@ -1,18 +1,22 @@
 __all__ = ('NavigationPlugin',)
 
-from typing import Mapping, Type
 import abc
+import typing as t
+from typing import Mapping, Type
 
 import attr
 from loguru import logger
-from roswire.name import namespace_join
+from roswire.name import canonical_name, namespace_join
+
 from ...interpreter import Interpreter, ModelPlugin, NodeContext
 
 
 class NavigationPlugin(ModelPlugin):
     # e.g., {name: static_map, type: "costmap_2d::StaticLayer"}
     @classmethod
-    def from_dict(cls, dict_: Mapping[str, str], node_name: str) -> 'NavigationPlugin':
+    def from_dict(cls, dict_: Mapping[str, str],
+                  node_name: str,
+                  reference_name: t.Optional[str] = None) -> 'NavigationPlugin':
         cpp_class = dict_['type']
         plugin_name = dict_['name']
         logger.debug(f'loading navigation plugin [{plugin_name}] from file [{cpp_class}]')
@@ -25,13 +29,13 @@ class NavigationPlugin(ModelPlugin):
         }
 
         cls = cpp_to_cls[cpp_class]
-        plugin = cls.build(plugin_name, node_name)
+        plugin = cls.build(plugin_name, node_name, reference_name)
         logger.debug(f'loaded navigation plugin [{plugin_name}] from file [{cpp_class}]: {plugin}')
         return plugin
 
     @classmethod
     @abc.abstractmethod
-    def build(cls, plugin_name: str, node_name: str) -> 'NavigationPlugin':
+    def build(cls, plugin_name: str, node_name: str, reference_name: t.Optional[str]) -> 'NavigationPlugin':
         ...
 
 
@@ -56,6 +60,7 @@ class StaticLayerPlugin(NavigationPlugin):
     class_name = 'costmap_2d::StaticLayer'
     name: str = attr.ib()
     node_name: str = attr.ib()
+    reference_name: str = attr.ib()
 
     def load(self, interpreter: Interpreter) -> None:
         move_base = get_move_base(interpreter, self.node_name)
@@ -74,8 +79,8 @@ class StaticLayerPlugin(NavigationPlugin):
             move_base.sub(f'{map_topic}_updates', 'map_msgs/OccupancyGridUpdate')
 
     @classmethod
-    def build(cls, name: str, node_name: str) -> NavigationPlugin:
-        return StaticLayerPlugin(name=name, node_name=node_name)
+    def build(cls, name: str, node_name: str, reference_name: t.Optional[str]) -> NavigationPlugin:
+        return StaticLayerPlugin(name=name, node_name=node_name, reference_name=reference_name)
 
 
 @attr.s(frozen=True, slots=True)
@@ -89,6 +94,7 @@ class InflationLayerPlugin(NavigationPlugin):
     class_name = 'costmap_2d::InflationLayer'
     name: str = attr.ib()
     node_name: str = attr.ib()
+    reference_name: str = attr.ib()
 
     def load(self, interpreter: 'Interpreter') -> None:
         move_base = get_move_base(interpreter, self.node_name)
@@ -96,8 +102,8 @@ class InflationLayerPlugin(NavigationPlugin):
         move_base.read('~cost_scaling_factor', 10.0)
 
     @classmethod
-    def build(cls, name: str, node_name: str) -> NavigationPlugin:
-        return InflationLayerPlugin(name=name, node_name=node_name)
+    def build(cls, name: str, node_name: str, reference_name: t.Optional[str]) -> NavigationPlugin:
+        return InflationLayerPlugin(name=name, node_name=node_name, reference_name=reference_name)
 
 
 @attr.s(frozen=True, slots=True)
@@ -110,6 +116,7 @@ class FetchDepthLayerPlugin(NavigationPlugin):
     class_name = 'costmap_2d::FetchDepthLayer'
     name: str = attr.ib()
     node_name: str = attr.ib()
+    reference_name: str = attr.ib()
 
     def load(self, interpreter: 'Interpreter') -> None:
         move_base = get_move_base(interpreter, self.node_name)
@@ -144,8 +151,8 @@ class FetchDepthLayerPlugin(NavigationPlugin):
         move_base.sub(info_topic, 'sensor_msgs/CameraInfo')
 
     @classmethod
-    def build(cls, name: str, node_name: str) -> 'NavigationPlugin':
-        return FetchDepthLayerPlugin(name=name, node_name=node_name)
+    def build(cls, name: str, node_name: str, reference_name: t.Optional[str]) -> 'NavigationPlugin':
+        return FetchDepthLayerPlugin(name=name, node_name=node_name, reference_name=reference_name)
 
 
 @attr.s(frozen=True, slots=True)
@@ -159,22 +166,23 @@ class ObstacleLayerPlugin(NavigationPlugin):
     class_name = 'costmap_2d::ObstacleLayer'
     name: str = attr.ib()
     node_name: str = attr.ib()
+    reference_name: str = attr.ib()
 
     def load(self, interpreter: 'Interpreter') -> None:
         move_base = get_move_base(interpreter, self.node_name)
-
-        observation_sources_param = namespace_join(move_base.name, namespace_join('obstacles', 'observation_sources'))
+        top_ns = move_base.name if not self.reference_name else self.reference_name
+        observation_sources_param = canonical_name(f"/{top_ns}/{self.name}/observation_sources")
         observation_sources = move_base.read(observation_sources_param, "")
 
         for os in observation_sources.split(" "):
             if not os:
                 continue
-            os_ns = namespace_join(move_base.name, namespace_join('obstacles', os))
-            topic = move_base.read(namespace_join(os_ns, 'topic'), os)
+            os_ns = f"/{top_ns}/{self.name}/{os}"
+            topic = move_base.read(canonical_name(f"{os_ns}/topic"), os)
             move_base.read(namespace_join(os_ns, 'sensor_frame'), "")
             move_base.read(namespace_join(os_ns, 'observation_persistence'), 0.0)
             move_base.read(namespace_join(os_ns, 'expected_update_rate'), 0.0)
-            data_type = move_base.read(namespace_join(os_ns, 'data_type'), "PointCloud")
+            data_type = move_base.read(canonical_name(f"{os_ns}/data_type"), "PointCloud")
             move_base.read(namespace_join(os_ns, 'min_obstacle_height'), 0.0)
             move_base.read(namespace_join(os_ns, 'max_obstacle_height'), 2.0)
             move_base.read(namespace_join(os_ns, 'inf_is_valid'), False)
@@ -191,8 +199,8 @@ class ObstacleLayerPlugin(NavigationPlugin):
                 move_base.sub(topic, 'sensor_msgs/PointCloud')
 
     @classmethod
-    def build(cls, name: str, node_name: str) -> 'NavigationPlugin':
-        return ObstacleLayerPlugin(name=name, node_name=node_name)
+    def build(cls, name: str, node_name: str, reference_name: t.Optional[str]) -> 'NavigationPlugin':
+        return ObstacleLayerPlugin(name=name, node_name=node_name, reference_name=reference_name)
 
 
 @attr.s(frozen=True, slots=True)
@@ -203,16 +211,20 @@ class VoxelLayerPlugin(ObstacleLayerPlugin):
     class_name = "costmap_2d::VoxelLayer"
     name: str = attr.ib()
     node_name: str = attr.ib()
+    reference_name: str = attr.ib()
 
     def load(self, interpreter: 'Interpreter') -> None:
         ObstacleLayerPlugin.load(self, interpreter)
         move_base = get_move_base(interpreter, self.node_name)
-        publish_voxel = move_base.read('~/publish_voxel_map', False)
+        top_ns = move_base.name if not self.reference_name else self.reference_name
+        publish_voxel_sources_param = canonical_name(f"/{top_ns}/{self.name}/publish_voxel_map")
+        publish_voxel = move_base.read(publish_voxel_sources_param, False)
         if publish_voxel:
-            move_base.pub('voxel_grid', 'costmap_2d/VoxelGrid')
-
-        move_base.pub('clearing_endpoints', 'sensor_msgs/PointCloud')
+            publish_voxel_topic = canonical_name(f"{top_ns}/{self.name}/voxel_grid")
+            move_base.pub(publish_voxel_topic, 'costmap_2d/VoxelGrid')
+        clearing_endpoints_topic = canonical_name(f"{top_ns}/{self.name}/clearing_endpoints")
+        move_base.pub(f"~{clearing_endpoints_topic}", 'sensor_msgs/PointCloud')
 
     @classmethod
-    def build(cls, name: str, node_name: str) -> 'NavigationPlugin':
-        return VoxelLayerPlugin(name=name, node_name=node_name)
+    def build(cls, name: str, node_name: str, reference_name: t.Optional[str]) -> 'NavigationPlugin':
+        return VoxelLayerPlugin(name=name, node_name=node_name, reference_name=reference_name)
