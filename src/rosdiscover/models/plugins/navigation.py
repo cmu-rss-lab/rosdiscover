@@ -60,7 +60,7 @@ class StaticLayerPlugin(NavigationPlugin):
     class_name = 'costmap_2d::StaticLayer'
     name: str = attr.ib()
     node_name: str = attr.ib()
-    reference_name: str = attr.ib()
+    reference_name: t.Optional[str] = attr.ib()
 
     def load(self, interpreter: Interpreter) -> None:
         move_base = get_move_base(interpreter, self.node_name)
@@ -94,7 +94,7 @@ class InflationLayerPlugin(NavigationPlugin):
     class_name = 'costmap_2d::InflationLayer'
     name: str = attr.ib()
     node_name: str = attr.ib()
-    reference_name: str = attr.ib()
+    reference_name: t.Optional[str] = attr.ib()
 
     def load(self, interpreter: 'Interpreter') -> None:
         move_base = get_move_base(interpreter, self.node_name)
@@ -116,7 +116,7 @@ class FetchDepthLayerPlugin(NavigationPlugin):
     class_name = 'costmap_2d::FetchDepthLayer'
     name: str = attr.ib()
     node_name: str = attr.ib()
-    reference_name: str = attr.ib()
+    reference_name: t.Optional[str] = attr.ib()
 
     def load(self, interpreter: 'Interpreter') -> None:
         move_base = get_move_base(interpreter, self.node_name)
@@ -166,7 +166,7 @@ class ObstacleLayerPlugin(NavigationPlugin):
     class_name = 'costmap_2d::ObstacleLayer'
     name: str = attr.ib()
     node_name: str = attr.ib()
-    reference_name: str = attr.ib()
+    reference_name: t.Optional[str] = attr.ib()
 
     def load(self, interpreter: 'Interpreter') -> None:
         move_base = get_move_base(interpreter, self.node_name)
@@ -211,7 +211,7 @@ class VoxelLayerPlugin(ObstacleLayerPlugin):
     class_name = "costmap_2d::VoxelLayer"
     name: str = attr.ib()
     node_name: str = attr.ib()
-    reference_name: str = attr.ib()
+    reference_name: t.Optional[str] = attr.ib()
 
     def load(self, interpreter: 'Interpreter') -> None:
         ObstacleLayerPlugin.load(self, interpreter)
