@@ -47,6 +47,17 @@ class NodeContext:
     _writes: Set[str] = attr.ib(factory=set, repr=False)
     _plugins: List['ModelPlugin'] = attr.ib(factory=list)
 
+    def merge(self, context: 'NodeContext') -> None:
+        self._params.update(context._params)
+        self._uses.update(context._uses)
+        self._provides.update(context._provides)
+        self._subs.update(context._subs)
+        self._pubs.update(context._pubs)
+        self._action_servers.update(context._action_servers)
+        self._action_clients.update(context._action_clients)
+        self._reads.update(context._reads)
+        self._writes.update(context._writes)
+
     def __attrs_post_init__(self) -> None:
         assert rosname.name_is_legal(self.namespace)
         self.namespace = rosname.global_name(self.namespace)
@@ -282,6 +293,9 @@ class NodeContext:
             return True
         else:
             return distribution < ROSDistribution.FOXY
+
+    def load_nodelet(self, nodelet_context: 'NodeContext'):
+        self.merge(nodelet_context)
 
     def load_plugin(self, plugin: 'ModelPlugin') -> None:
         """Loads a given dynamic plugin."""
