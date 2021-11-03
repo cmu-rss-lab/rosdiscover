@@ -296,6 +296,18 @@ class NodeContext:
 
     def load_nodelet(self, nodelet_context: 'NodeContext'):
         self.merge(nodelet_context)
+        # In the recovered architecture, the nodelets themselves don't
+        # report what they publish etc.
+        # TODO: Fix this when we have NodeletManagerContexts and NodeletContexts
+        nodelet_context._params.clear()
+        nodelet_context._uses.clear()
+        nodelet_context._provides.clear()
+        nodelet_context._subs.clear()
+        nodelet_context._pubs.clear()
+        nodelet_context._action_servers.clear()
+        nodelet_context._action_clients.clear()
+        nodelet_context._reads.clear()
+        nodelet_context._writes.clear()
 
     def load_plugin(self, plugin: 'ModelPlugin') -> None:
         """Loads a given dynamic plugin."""
