@@ -187,10 +187,12 @@ class SymbolicProgramLoader:
         return HasParam(param)
 
     def _load_function_call(self, dict_: t.Mapping[str, t.Any]) -> SymbolicFunctionCall:
-        # FIXME add support for arguments both here and in C++ recovery code
+        arguments: t.Mapping[str, SymbolicValue] = {
+            arg_name: self._load_value(arg_dict) for (arg_name, arg_dict) in dict_["arguments"].items()
+        }
         return SymbolicFunctionCall(
             callee=dict_["callee"],
-            arguments={},
+            arguments=arguments,
         )
 
     def _load_statement(self, dict_: t.Mapping[str, t.Any]) -> SymbolicStatement:
