@@ -291,8 +291,10 @@ class Config:
             return self.__cmake_library_to_node_sources(package, target)
         elif isinstance(target, roswire.common.source.CMakeBinaryTarget):
             return self.__cmake_binary_to_node_sources(package, target)
-        else:
-            raise ValueError("CMakeTarget is neither a binary or library")
+        elif isinstance(target, roswire.common.source.CMakeTarget):
+            logger.warning(f"Bad target: {target.name} on line {target.cmakelists_line} in {target.cmakelists_file} "
+                           f"is in {target.language}")
+            return None
 
     def __cmake_library_to_node_sources(
         self,
