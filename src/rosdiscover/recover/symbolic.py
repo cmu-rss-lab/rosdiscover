@@ -71,7 +71,8 @@ class SymbolicContext:
         context = SymbolicContext(self.program, function, self.node)
         args = args or {}
         for arg_name, arg_val in args.items():
-            self.store(arg_name, arg_val)
+            context.store(arg_name, arg_val)
+        logger.debug(f"creating symbolic context for function call: {context}")
         return context
 
     def load(self, variable: str) -> t.Any:
@@ -82,6 +83,7 @@ class SymbolicContext:
         ValueError
             If no variable exists with the given name.
         """
+        logger.debug(f"attempting to read value of variable: {variable}")
         return self._vars[variable]
 
     def store(self, variable: str, value: t.Any) -> None:
@@ -97,6 +99,7 @@ class SymbolicContext:
             raise ValueError(f"variable already defined in this scope: {variable}")
 
         self._vars[variable] = value
+        logger.debug(f"stored symbolic variable [{variable}] value: {value}")
 
     @property
     def node_name(self) -> str:
@@ -374,6 +377,7 @@ class SymbolicFunctionCall(SymbolicStatement):
         args: t.Dict[str, t.Any] = {}
         for arg_name, arg_symbolic_value in self.arguments.items():
             args[arg_name] = arg_symbolic_value.eval(context)
+            logger.debug(f"obtained symbolic value for argument [{arg_name}]: {args[arg_name]}")
 
         function = context.program.functions[self.callee]
         context = context.for_function_call(function, args)

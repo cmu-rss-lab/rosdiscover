@@ -190,6 +190,7 @@ class SymbolicProgramLoader:
         arguments: t.Mapping[str, SymbolicValue] = {
             arg_name: self._load_value(arg_dict) for (arg_name, arg_dict) in dict_["arguments"].items()
         }
+        logger.debug(f"loading symbolic function call arguments: {arguments}")
         return SymbolicFunctionCall(
             callee=dict_["callee"],
             arguments=arguments,
