@@ -97,6 +97,10 @@ class ProjectModels:
         logger.debug(f"Handwritten {package}/{node}")
         if HandwrittenModel.exists(package, node):
             return HandwrittenModel.fetch(package, node)
+        # '*' is a placeholder for a package name. It's admittedly a hack, but it
+        # saves looking for packages that aren't on the system. It is used when
+        # we use dummy nodes for misconfiguration detection
+        # FIXME: Do something more principled.
         if HandwrittenModel.exists("*", node):
             return HandwrittenModel.fetch("*", node)
         return None
