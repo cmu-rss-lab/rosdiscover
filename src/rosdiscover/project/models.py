@@ -97,6 +97,12 @@ class ProjectModels:
         logger.debug(f"Handwritten {package}/{node}")
         if HandwrittenModel.exists(package, node):
             return HandwrittenModel.fetch(package, node)
+        # '*' is a placeholder for a package name. It's admittedly a hack, but it
+        # saves looking for packages that aren't on the system. It is used when
+        # we use dummy nodes for misconfiguration detection
+        # FIXME: Do something more principled.
+        if HandwrittenModel.exists("*", node):
+            return HandwrittenModel.fetch("*", node)
         return None
 
     def _fetch_placeholder(self, package: str, node: str) -> NodeModel:
@@ -140,14 +146,11 @@ class ProjectModels:
         if self.allow_recovery:
             model_sources.append(self._recover)
 
+        fetched_model: t.Optional[NodeModel] = None
         for model_source in model_sources:
-            try:
-                fetched_model = model_source(package, node)
-                if fetched_model:
-                    return fetched_model
-            except ValueError as ve:
-                logger.error("When trying to statically recover {package}/{node}, ecountered an error")
-                logger.exception(ve)
+            fetched_model = model_source(package, node)
+            if fetched_model:
+                return fetched_model
 
         if self.allow_placeholders:
             return self._fetch_placeholder(package, node)
