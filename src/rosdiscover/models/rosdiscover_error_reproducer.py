@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from ..interpreter import model, NodeContext
 
+
 @model('*', 'error_reproducer')
 def error_reproducer(c: NodeContext):
     topics = c.read("~topic", [])
