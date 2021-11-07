@@ -259,10 +259,10 @@ class Interpreter:
                                           remappings=remappings
                                           )
             else:
-                load = split_args[0]
+                load = split_args[0]  # noqa: F841
                 pkg_and_nodetype = split_args[1]
                 mgr = split_args[2]
-                nodelet_args = "".join(split_args[3:])
+                nodelet_args = "".join(split_args[3:])  # noqa: F841
                 pkg, _, nodetype = pkg_and_nodetype.partition('/')
                 return self._load_nodelet(pkg=pkg,
                                           nodetype=nodetype,
