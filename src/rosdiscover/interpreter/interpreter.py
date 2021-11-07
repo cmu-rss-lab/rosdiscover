@@ -282,7 +282,7 @@ class Interpreter:
             m = (f"failed to find model for node type [{nodetype}] "
                  f"in package [{pkg}]")
             logger.warning(m)
-            raise
+            return None
         if args.startswith('manager'):
             # This is being loaded into an existing manager, so find that as the context
             manager_name = args.split(" ")[1]
