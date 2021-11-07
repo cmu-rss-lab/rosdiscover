@@ -243,6 +243,7 @@ class Interpreter:
             if there is no model for the given node type.
         """
         args = args.strip()
+        split_args = args.split(" ")
         if nodetype == 'nodelet':
             if args.startswith('manager'):
                 manager = args.partition(' ')[2]
@@ -258,7 +259,10 @@ class Interpreter:
                                           remappings=remappings
                                           )
             else:
-                load, pkg_and_nodetype, mgr = args.split(' ')
+                load = split_args[0]
+                pkg_and_nodetype = split_args[1]
+                mgr = split_args[2]
+                nodelet_args = "".join(split_args[3:])
                 pkg, _, nodetype = pkg_and_nodetype.partition('/')
                 return self._load_nodelet(pkg=pkg,
                                           nodetype=nodetype,
