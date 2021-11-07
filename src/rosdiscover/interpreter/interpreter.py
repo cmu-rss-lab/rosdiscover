@@ -278,7 +278,7 @@ class Interpreter:
             # If we can't find it through node type, look for it by name
             if isinstance(model, PlaceholderModel) and name != nodetype:
                 model = self.models.fetch(pkg, name)
-        except Exception:
+        except ValueError:
             m = (f"failed to find model for node type [{nodetype}] "
                  f"in package [{pkg}]")
             logger.warning(m)
