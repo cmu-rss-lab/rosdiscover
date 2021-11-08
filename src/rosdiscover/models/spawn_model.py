@@ -80,9 +80,9 @@ def spawn_model(c):
     # load the URDF file into an XML object
     urdf_xml: t.Optional[ET.ElementTree] = None
     if args.file:
-        _load_urdf_xml_from_file(c, args.file)
+        urdf_xml = _load_urdf_xml_from_file(c, args.file)
     elif args.param:
-        _load_urdf_xml_from_parameter(c, args.param)
+        urdf_xml _load_urdf_xml_from_parameter(c, args.param)
 
     if not urdf_xml:
         logger.error("failed to load URDF XML")
