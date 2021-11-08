@@ -290,6 +290,9 @@ class Interpreter:
         if args.startswith('manager'):
             # This is being loaded into an existing manager, so find that as the context
             manager_name = args.split(" ")[1]
+            if namespace:
+                manager_name = f"{namespace}/{manager_name}"
+            manager_name = manager_name.replace('//', '/')
             if manager_name in self.nodes:
                 manager_context = self.nodes[manager_name]
             elif f"/{manager_name}" in self.nodes:
