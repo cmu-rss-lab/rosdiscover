@@ -35,7 +35,7 @@ def _load_urdf_xml_from_parameter(c, parameter_name: str) -> t.Optional[ET.Eleme
     urdf_contents = c.read(parameter_name).strip()
     logger.debug(f'parsing URDF model from parameter [{parameter_name}]:'
                  f'\n{urdf_contents}')
-    urdf_contents = _repair_urdf_contents(contents)
+    urdf_contents = _repair_urdf_contents(urdf_contents)
     return ET.fromstring(urdf_contents)
 
 
@@ -47,7 +47,7 @@ def _load_urdf_xml_from_file(c, filename: str) -> t.Optional[ET.Element]:
     logger.debug(f"loading URDF XML from file [{filename}]")
     urdf_contents = c.read_file(filename)
     logger.debug(f"loaded URDF XML contents from file [{filename}]:\n{urdf_contents}")
-    urdf_contents = _repair_urdf_contents(contents)
+    urdf_contents = _repair_urdf_contents(urdf_contents)
     logger.debug("parsing URDF XML contents")
     xml = ET.fromstring(urdf_contents)
     logger.debug("parsed UDF XML contents")
