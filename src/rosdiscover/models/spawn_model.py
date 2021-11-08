@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
+__all__ = ("spawn_model",)
+
 import argparse
+import typing as t
 import xml.etree.ElementTree as ET  # noqa
 
 from loguru import logger
@@ -8,11 +11,50 @@ from .plugins.gazebo import GazeboPlugin
 from ..interpreter import model
 
 
+def _load_urdf_xml_from_parameter(c, parameter_name: str) -> t.Optional[ET]:
+    logger.debug(f'spawning model using parameter [{parameter_name}]')
+    urdf_contents = c.read(parameter_name).strip()
+    logger.debug(f'parsing URDF model from parameter [{parameter_name}]:'
+                 f'\n{urdf_contents}')
+
+    #  Workaround to find the <robot> begin tag
+    begin_tag = "<robot>"
+    begin_tag_starts_at = urdf_contents.find(begin_tag)
+    if begin_tag_starts_at == -1:
+        begin_tag_starts_at = urdf_contents.find("<robot ")
+    if begin_tag_starts_at != -1:
+        urdf_contents = urdf_contents[begin_tag_starts_at:]
+
+    # #94 workaround to deal with inclusion of warning when xacro.py is used
+    end_tag = '</robot>'
+    end_tag_starts_at = urdf_contents.rfind(end_tag)
+    end_tag_ends_at = end_tag_starts_at + len(end_tag)
+    urdf_contents = urdf_contents[:end_tag_ends_at]
+    logger.debug("New contents are:")
+    logger.debug(urdf_contents)
+    return ET.fromstring(urdf_contents)
+
+
+def _load_urdf_xml_from_file(c, filename: str) -> t.Optional[ET]:
+    if not os.path.isabs(filename):
+        logger.error(f"unable to load URDF XML from file [{filename}]: expected absolute path")
+        return None
+
+    logger.debug(f"loading URDF XML from file [{filename}]")
+    urdf_contents = c.read_file(filename)
+    logger.debug(f"loaded URDF XML contents from file [{filename}]:\n{urdf_contents}")
+    logger.debug("parsing URDF XML contents")
+    xml = ET.fromstring(urdf_contents)
+    logger.debug("parsed UDF XML contents")
+    return xml
+
+
 @model('gazebo_ros', 'spawn_model')
 def spawn_model(c):
     parser = argparse.ArgumentParser('spawn_model')
     parser.add_argument('-urdf', action='store_true')
     parser.add_argument('-model', type=str)
+    parser.add_argument('-file', type=str)
     parser.add_argument('-param', type=str)
     parser.add_argument('-unpause', action='store_true')
     parser.add_argument('-wait', action='store_true')
@@ -34,31 +76,17 @@ def spawn_model(c):
     c.use(f'{ns_gz}/spawn_sdf_model', 'gazebo_msgs/SpawnModel')
     c.use(f'{ns_gz}/set_model_configuration', 'gazebo_msgs/SetModelConfiguration')
 
-    urdf_param_name = args.param
-    logger.debug(f'spawning model using parameter [{urdf_param_name}]')
-    urdf_contents = c.read(urdf_param_name).strip()
-    logger.debug(f'parsing URDF model from parameter [{urdf_param_name}]:'
-                 f'\n{urdf_contents}')
+    # load the URDF file into an XML object
+    urdf_xml: t.Optional[ET] = None
+    if args.file:
+        _load_urdf_xml_from_file(c, args.file)
+    elif args.param:
+        _load_urdf_xml_from_parameter(c, args.param)
 
-    with open('urdf.xml', 'w') as f:
-        f.write(urdf_contents)
+    if not urdf_xml:
+        logger.error("failed to load URDF XML")
+        return
 
-    #  Workaround to find the <robot> begin tag
-    begin_tag = "<robot>"
-    begin_tag_starts_at = urdf_contents.find(begin_tag)
-    if begin_tag_starts_at == -1:
-        begin_tag_starts_at = urdf_contents.find("<robot ")
-    if begin_tag_starts_at != -1:
-        urdf_contents = urdf_contents[begin_tag_starts_at:]
-
-    # #94 workaround to deal with inclusion of warning when xacro.py is used
-    end_tag = '</robot>'
-    end_tag_starts_at = urdf_contents.rfind(end_tag)
-    end_tag_ends_at = end_tag_starts_at + len(end_tag)
-    urdf_contents = urdf_contents[:end_tag_ends_at]
-    logger.debug("New contents are:")
-    logger.debug(urdf_contents)
-    urdf_xml = ET.fromstring(urdf_contents)
     for plugin_xml in urdf_xml.findall('.//plugin'):
         try:
             plugin = GazeboPlugin.from_xml(plugin_xml)
