@@ -30,7 +30,7 @@ def _repair_urdf_contents(contents: str) -> str:
     return contents
 
 
-def _load_urdf_xml_from_parameter(c, parameter_name: str) -> t.Optional[ET.ElementTree]:
+def _load_urdf_xml_from_parameter(c, parameter_name: str) -> t.Optional[ET.Element]:
     logger.debug(f'spawning model using parameter [{parameter_name}]')
     urdf_contents = c.read(parameter_name).strip()
     logger.debug(f'parsing URDF model from parameter [{parameter_name}]:'
@@ -39,7 +39,7 @@ def _load_urdf_xml_from_parameter(c, parameter_name: str) -> t.Optional[ET.Eleme
     return ET.fromstring(urdf_contents)
 
 
-def _load_urdf_xml_from_file(c, filename: str) -> t.Optional[ET.ElementTree]:
+def _load_urdf_xml_from_file(c, filename: str) -> t.Optional[ET.Element]:
     if not os.path.isabs(filename):
         logger.error(f"unable to load URDF XML from file [{filename}]: expected absolute path")
         return None
@@ -82,7 +82,7 @@ def spawn_model(c):
     c.use(f'{ns_gz}/set_model_configuration', 'gazebo_msgs/SetModelConfiguration')
 
     # load the URDF file into an XML object
-    urdf_xml: t.Optional[ET.ElementTree] = None
+    urdf_xml: t.Optional[ET.Element] = None
     if args.file:
         urdf_xml = _load_urdf_xml_from_file(c, args.file)
     elif args.param:
