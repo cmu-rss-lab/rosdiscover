@@ -82,7 +82,7 @@ def spawn_model(c):
     if args.file:
         urdf_xml = _load_urdf_xml_from_file(c, args.file)
     elif args.param:
-        urdf_xml _load_urdf_xml_from_parameter(c, args.param)
+        urdf_xml = _load_urdf_xml_from_parameter(c, args.param)
 
     if not urdf_xml:
         logger.error("failed to load URDF XML")
