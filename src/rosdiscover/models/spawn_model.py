@@ -2,6 +2,7 @@
 __all__ = ("spawn_model",)
 
 import argparse
+import os
 import typing as t
 import xml.etree.ElementTree as ET  # noqa
 
