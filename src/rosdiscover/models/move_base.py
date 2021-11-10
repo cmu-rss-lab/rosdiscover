@@ -21,6 +21,7 @@ def move_base(c):
     c.action_server("move_base", "move_base_msgs/MoveBaseAction")
 
     c.sub("move_base_simple/goal", "geometry_msgs/PoseStamped")
+    c.pub("~goal", "geometry_msgs/PoseStamped")
 
     c.pub("cmd_vel", "geometry_msgs/Twist")
     c.pub("~current_goal", "geometry_msgs/PoseStamped")
