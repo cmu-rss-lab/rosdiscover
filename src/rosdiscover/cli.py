@@ -32,6 +32,8 @@ def recover(args: argparse.Namespace) -> None:
         for path in args.restrict_to:
             if not os.path.isabs(path):
                 raise ValueError(f"Restricted path [{path}] should be absolute")
+        if not args.entrypoint:
+            raise ValueError("expected the name of an entrypoint to be specified")
         with NodeRecoveryTool.for_config(config) as tool:
             print(f"spun up the container: {tool}")
             model = tool.recover(
