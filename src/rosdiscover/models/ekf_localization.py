@@ -1,40 +1,39 @@
 # -*- coding: utf-8 -*-
 from ..interpreter import model, NodeContext
 
+
 @model('robot_localization', 'ekf_localization_node')
 def ekf_localization(c: NodeContext):
     c.pub("odometry/filtered", "nav_msgs/Odometry")
     c.pub("accel/filtered", "geometry_messages/AccelWithCovarianceStamped")
 
-    topicInd = 0
-    odomTopicName = f"~odom{topicInd}"
-    while c.has_param(odomTopicName):
-        c.sub(c.read(odomTopicName, "\\unknown"), "nav_msgs/Odometry")
-        topicInd += 1
-        odomTopicName = f"~odom{topicInd}"
+    topic_index = 0
+    odom_topic_name = f"~odom{topic_index}"
+    while c.has_param(odom_topic_name):
+        c.sub(c.read(odom_topic_name, "\\unknown"), "nav_msgs/Odometry")
+        topic_index += 1
+        odom_topic_name = f"~odom{topic_index}"
 
-    topicInd = 0
-    poseTopicName = f"~pose{topicInd}"
-    while c.has_param(poseTopicName):
-        c.sub(c.read(poseTopicName, "\\unknown"), "geometry_msgs/PoseWithCovarianceStamped")
-        topicInd += 1
-        poseTopicName = f"~pose{topicInd}"
+    topic_index = 0
+    pose_topic_name = f"~pose{topic_index}"
+    while c.has_param(pose_topic_name):
+        c.sub(c.read(pose_topic_name, "\\unknown"), "geometry_msgs/PoseWithCovarianceStamped")
+        topic_index += 1
+        pose_topic_name = f"~pose{topic_index}"
 
+    topic_index = 0
+    twist_topic_name = f"~twist{topic_index}"
+    while c.has_param(twist_topic_name):
+        c.sub(c.read(twist_topic_name, "\\unknown"), "geometry_msgs/TwistWithCovarianceStamped")
+        topic_index += 1
+        twist_topic_name = f"~twist{topic_index}"
 
-    topicInd = 0
-    twistTopicName = f"~twist{topicInd}"
-    while c.has_param(twistTopicName):
-        c.sub(c.read(twistTopicName, "\\unknown"), "geometry_msgs/TwistWithCovarianceStamped")
-        topicInd += 1
-        twistTopicName = f"~twist{topicInd}"
-
-    topicInd = 0
-    imuTopicName = f"~imu{topicInd}"
-    while c.has_param(imuTopicName):
-        c.sub(c.read(imuTopicName, "\\unknown"), "sensor_msgs//Imu")
-        topicInd += 1
-        imuTopicName = f"~imu{topicInd}"
-
+    topic_index = 0
+    imu_topic_name = f"~imu{topic_index}"
+    while c.has_param(imu_topic_name):
+        c.sub(c.read(imu_topic_name, "\\unknown"), "sensor_msgs//Imu")
+        topic_index += 1
+        imu_topic_name = f"~imu{topic_index}"
 
     stamped_control = c.read("~stamped_control", False)
     stamped = f"geometry_msgs::Twist{'Stamped' if stamped_control else ''}"
