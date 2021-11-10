@@ -19,8 +19,8 @@ def test_amcl():
 
 
 def test_launch():
-    workspace = Workspace('/home/chris/brass/tbot')
-    fn_launch = "/home/chris/brass/tbot/turtlebot_simulator/launch/turtlebot_in_stage.launch"
+    workspace = Workspace('/home/xxxx/brass/tbot')
+    fn_launch = "/home/xxxx/brass/tbot/turtlebot_simulator/launch/turtlebot_in_stage.launch"
     vm = VM(workspace)
     vm.launch(fn_launch)
 
@@ -31,7 +31,7 @@ def test_fake_launch():
     import rosdiscover.models.move_base
     import rosdiscover.models.stage_ros
 
-    workspace = Workspace('/home/chris/brass/tbot')
+    workspace = Workspace('/home/xxxx/brass/tbot')
     vm = VM(workspace)
     vm.load('stage_ros', 'stage_ros', 'stage_ros')
     vm.load('joint_state_publisher', 'joint_state_publisher', 'joint_state_publisher')
