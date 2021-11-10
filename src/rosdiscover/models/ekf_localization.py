@@ -42,4 +42,3 @@ def ekf_localization(c: NodeContext):
     c.provide("~set_pose", "geometry_msgs/PoseWithCovarianceStamped")
     c.provide("~toggle", "robot_localization/ToggleFilterProcessing")
     c.provide("~enable", "std_srvs/Empty")
-
