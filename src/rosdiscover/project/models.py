@@ -77,8 +77,9 @@ class ProjectModels:
                 logger.exception(f"Static recovery failed for {package}/{node}")
                 return None
         else:
+            logger.info(f"Attempting to use passed in node_sources for {package}/{node}")
             node_info = self.config.node_sources[(package, node)]
-            cmakeinfo = node_info.origin.split(':') if node_info.origin else ["<unknown>", "-1"]
+            cmake_filename_and_line = node_info.origin.split(':') if node_info.origin else ["<unknown>", "-1"]
 
             # use the recovery tool to recover the model before saving it to the database
             model = self._recovery_tool.recover(
@@ -87,8 +88,8 @@ class ProjectModels:
                 node_info.entrypoint,
                 node_info.sources,
                 node_info.restrict_to_paths,
-                cmakeinfo[0],
-                int(cmakeinfo[1])
+                cmake_filename_and_line[0],
+                int(cmake_filename_and_line[1])
             )
         self._recovered_models.store(model)
         return model
