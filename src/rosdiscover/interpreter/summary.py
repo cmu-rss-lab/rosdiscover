@@ -233,7 +233,7 @@ class NodeletSummary(NodeSummary):
         return NodeletSummary(
             name=nc.name,
             fullname=nc.fullname,
-            namespace=nc.namepsace,
+            namespace=nc.namespace,
             kind=nc.kind,
             package=nc.package,
             filename=nc.filename,
@@ -433,7 +433,7 @@ class SystemSummary(Mapping[str, NodeSummary]):
         item = self._node_to_summary.get(name, None)
         # Because nodelet managers contain nodelets include them too
         if not item:
-            items = [n.fullname for nm in self._node_to_summary.values() if isinstance(nm, NodeletManagerSummary) for
+            items = [n for nm in self._node_to_summary.values() if isinstance(nm, NodeletManagerSummary) for
                      n in nm.nodelets]
             if len(items) == 1:
                 item = items[0]
@@ -467,7 +467,7 @@ class SystemSummary(Mapping[str, NodeSummary]):
             if key not in rhs:
                 node_summaries[key] = summary
             else:
-                # rhs = rhs[key]
+                rhs = rhs[key]
                 # if isinstance(summary, NodeletSummary):
                 #     if isinstance(rhs, NodeletSummary):
                 #         assert isinstance(summary, NodeletSummary)
