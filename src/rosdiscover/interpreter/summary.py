@@ -147,7 +147,6 @@ class NodeSummary:
         namepsace = dict.get('namespace', '')
         kind = dict.get('kind', '')
         package = dict.get('package', '')
-        nodelet = dict.get('nodelet', False)
         filename = dict.get('filename', '')
         provenance = Provenance(dict.get('provenance', Provenance.PLACEHOLDER))
         reads = [(p['name'], p['dynamic']) for p in dict.get('reads', [])]
