@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import re
-import typing
-from typing import Any, List, Mapping, Optional, Set, Tuple, Union
+import typing as t
 
 import attr
 import dockerblade
@@ -14,7 +13,7 @@ from .provenance import Provenance
 from .summary import NodeSummary
 from ..core import Action, Service, Topic
 
-if typing.TYPE_CHECKING:
+if t.TYPE_CHECKING:
     from .plugin import ModelPlugin
     from ..recover.symbolic import SymbolicUnknown
 
@@ -28,24 +27,23 @@ class NodeContext:
     kind: str
     package: str
     args: str
-    remappings: Mapping[str, str]
+    remappings: t.Mapping[str, str]
     launch_filename: str
     app: "AppInstance" = attr.ib(repr=False)
     _params: ParameterServer = attr.ib(repr=False)
     _files: dockerblade.files.FileSystem = attr.ib(repr=False)
-    _nodelet: bool = attr.ib(default=False, repr=False)
     _provenance: "Provenance" = attr.ib(default=Provenance.UNKNOWN, repr=False)
-    _uses: Set[Service] = attr.ib(factory=set, repr=False)
-    _provides: Set[Service] = attr.ib(factory=set, repr=False)
-    _subs: Set[Topic] = attr.ib(factory=set, repr=False)
-    _pubs: Set[Topic] = attr.ib(factory=set, repr=False)
-    _action_servers: Set[Action] = attr.ib(factory=set, repr=False)
-    _action_clients: Set[Action] = attr.ib(factory=set, repr=False)
+    _uses: t.Set[Service] = attr.ib(factory=set, repr=False)
+    _provides: t.Set[Service] = attr.ib(factory=set, repr=False)
+    _subs: t.Set[Topic] = attr.ib(factory=set, repr=False)
+    _pubs: t.Set[Topic] = attr.ib(factory=set, repr=False)
+    _action_servers: t.Set[Action] = attr.ib(factory=set, repr=False)
+    _action_clients: t.Set[Action] = attr.ib(factory=set, repr=False)
     # The tuple is (name, dynamic) where name is the name of the parameter
     # and dynamic is whether the node reacts to updates to the parameter via reconfigure
-    _reads: Set[Tuple[str, bool]] = attr.ib(factory=set, repr=False)
-    _writes: Set[str] = attr.ib(factory=set, repr=False)
-    _plugins: List['ModelPlugin'] = attr.ib(factory=list)
+    _reads: t.Set[t.Tuple[str, bool]] = attr.ib(factory=set, repr=False)
+    _writes: t.Set[str] = attr.ib(factory=set, repr=False)
+    _plugins: t.List['ModelPlugin'] = attr.ib(factory=list)
 
     def merge(self, context: 'NodeContext') -> None:
         self._params.update(context._params)
@@ -121,7 +119,7 @@ class NodeContext:
         else:
             return rosname.namespace_join(self.namespace, name)
 
-    def resolve(self, name: Union[str, 'SymbolicUnknown']) -> str:
+    def resolve(self, name: t.Union[str, 'SymbolicUnknown']) -> str:
         """Resolves a given name within the context of this node.
 
         Returns
@@ -140,26 +138,26 @@ class NodeContext:
             logger.warning(f"Unable to resolve unknown name in NodeContext [{self.name}]")
             return UNKNOWN_NAME
 
-    def _name_str(self, name: Union[str, 'SymbolicUnknown']) -> str:
+    def _name_str(self, name: t.Union[str, 'SymbolicUnknown']) -> str:
         if isinstance(name, str):
             return name
         return "Unknown Symbol"
 
-    def provide(self, service: Union[str, 'SymbolicUnknown'], fmt: str) -> None:
+    def provide(self, service: t.Union[str, 'SymbolicUnknown'], fmt: str) -> None:
         """Instructs the node to provide a service."""
         logger.debug(f"node [{self.name}] provides service [{self._name_str(service)}] "
                      f"using format [{fmt}]")
         service_name_full = self.resolve(service)
         self._provides.add(Service(name=service_name_full, format=fmt))
 
-    def use(self, service: Union[str, 'SymbolicUnknown'], fmt: str) -> None:
+    def use(self, service: t.Union[str, 'SymbolicUnknown'], fmt: str) -> None:
         """Instructs the node to use a given service."""
         logger.debug(f"node [{self.name}] uses a service [{self._name_str(service)}] "
                      f"with format [{fmt}]")
         service_name_full = self.resolve(service)
         self._uses.add(Service(name=service_name_full, format=fmt))
 
-    def sub(self, topic_name: Union[str, 'SymbolicUnknown'], fmt: str, implicit: bool = False) -> None:
+    def sub(self, topic_name: t.Union[str, 'SymbolicUnknown'], fmt: str, implicit: bool = False) -> None:
         """Subscribes the node to a given topic.
 
         Parameters
@@ -177,7 +175,7 @@ class NodeContext:
                      f"[{self._name_str(topic_name)}] with format [{fmt}]")
         self._subs.add(Topic(name=topic_name_full, format=fmt, implicit=implicit))
 
-    def pub(self, topic_name: Union[str, 'SymbolicUnknown'], fmt: str, implicit: bool = False) -> None:
+    def pub(self, topic_name: t.Union[str, 'SymbolicUnknown'], fmt: str, implicit: bool = False) -> None:
         """Instructs the node to publish to a given topic.
 
         Parameters
@@ -196,17 +194,17 @@ class NodeContext:
         self._pubs.add(Topic(name=topic_name_full, format=fmt, implicit=implicit))
 
     def read(self,
-             param: Union[str, 'SymbolicUnknown'],
-             default: Optional[Any] = None,
+             param: t.Union[str, 'SymbolicUnknown'],
+             default: t.Optional[t.Any] = None,
              dynamic: bool = False
-             ) -> Any:
+             ) -> t.Any:
         """Obtains the value of a given parameter from the parameter server."""
         logger.debug(f"node [{self.name}] reads parameter [{self._name_str(param)}]")
         param = self.resolve(param)
         self._reads.add((param, dynamic))
         return self._params.get(param, default)
 
-    def write(self, param: Union[str, 'SymbolicUnknown'], val: Any) -> None:
+    def write(self, param: t.Union[str, 'SymbolicUnknown'], val: t.Any) -> None:
         logger.debug(f"node [{self.name}] writes [{val}] to "
                      f"parameter [{self._name_str(param)}]")
         param = self.resolve(param)
@@ -214,16 +212,16 @@ class NodeContext:
         self._params[param] = val
 
     # FIXME we _may_ want to record this interaction in our summary
-    def has_param(self, param: Union[str, 'SymbolicUnknown']) -> bool:
+    def has_param(self, param: t.Union[str, 'SymbolicUnknown']) -> bool:
         """Determines whether a given parameter has been defined."""
         logger.debug(f"node [{self.name}] checks for existence of parameter [{param}]")
         param = self.resolve(param)
         return param in self._params
 
-    def delete_param(self, param: Union[str, 'SymbolicUnknown']) -> None:
+    def delete_param(self, param: t.Union[str, 'SymbolicUnknown']) -> None:
         raise NotImplementedError("parameter deletion is not implemented")
 
-    def read_file(self, fn: Union[str, 'SymbolicUnknown']) -> str:
+    def read_file(self, fn: t.Union[str, 'SymbolicUnknown']) -> str:
         """Reads the contents of a text file."""
         if isinstance(fn, str):
             if not self._files.exists(fn):
@@ -234,11 +232,11 @@ class NodeContext:
         logger.warning(f"Unable to resolve unknown parameter filename in NodeContext [{self.name}]")
         return UNKNOWN_NAME
 
-    def parameter_keys(self, prefix: str) -> typing.Iterable[str]:
+    def parameter_keys(self, prefix: str) -> t.Iterable[str]:
         prefix = self.resolve(prefix)
         return (key for key in self._params.keys() if key.startswith(prefix))
 
-    def action_server(self, ns: Union[str, 'SymbolicUnknown'], fmt: str) -> None:
+    def action_server(self, ns: t.Union[str, 'SymbolicUnknown'], fmt: str) -> None:
         """Creates a new action server.
 
         Parameters
@@ -262,7 +260,7 @@ class NodeContext:
             self.pub(f'{ns}/feedback', f'{fmt}Feedback', implicit=True)
             self.pub(f'{ns}/result', f'{fmt}Result', implicit=True)
 
-    def action_client(self, ns: Union[str, 'SymbolicUnknown'], fmt: str) -> None:
+    def action_client(self, ns: t.Union[str, 'SymbolicUnknown'], fmt: str) -> None:
         """Creates a new action client.
 
         Parameters
@@ -294,28 +292,10 @@ class NodeContext:
         else:
             return distribution < ROSDistribution.FOXY
 
-    def load_nodelet(self, nodelet_context: 'NodeContext'):
-        self.merge(nodelet_context)
-        # In the recovered architecture, the nodelets themselves don't
-        # report what they publish etc.
-        # TODO: Fix this when we have NodeletManagerContexts and NodeletContexts
-        nodelet_context._params.clear()
-        nodelet_context._uses.clear()
-        nodelet_context._provides.clear()
-        nodelet_context._subs.clear()
-        nodelet_context._pubs.clear()
-        nodelet_context._action_servers.clear()
-        nodelet_context._action_clients.clear()
-        nodelet_context._reads.clear()
-        nodelet_context._writes.clear()
-
     def load_plugin(self, plugin: 'ModelPlugin') -> None:
         """Loads a given dynamic plugin."""
         logger.debug(f'loading plugin in node [{self.name}]: {plugin}')
         self._plugins.append(plugin)
-
-    def mark_nodelet(self) -> None:
-        self._nodelet = True
 
     def mark_placeholder(self) -> None:
         self._provenance = Provenance.PLACEHOLDER
@@ -325,3 +305,22 @@ class NodeContext:
 
     def mark_recovered(self) -> None:
         self._provenance = Provenance.RECOVERED
+
+
+@attr.s(slots=True, auto_attribs=True)
+class NodeletManagerContext(NodeContext):
+    _nodelets: t.Collection['NodeletContext'] = attr.ib(factory=set, repr=False)
+
+    def load_nodelet(self, nodelet_context: 'NodeletContext') -> None:
+        self.merge(nodelet_context)
+        # In the recovered architecture, the nodelets themselves don't
+        # report what they publish etc.
+        self._nodelets.add(nodelet_context)
+
+
+@attr.s(slots=True, auto_attribs=True)
+class NodeletContext(NodeContext):
+    _nodelet_manager: 'NodeletManagerContext' = attr.ib(default=None)
+
+    def set_nodelet_manager(self, manager: 'NodeletManagerContext') -> None:
+        self._nodelet_manager = manager

@@ -11,7 +11,7 @@ from roswire.common.launch.config import NodeConfig
 from roswire.ros1.launch.reader import ROS1LaunchFileReader
 from roswire.ros2.launch.reader import ROS2LaunchFileReader
 
-from .context import NodeContext
+from .context import NodeContext, NodeletContext, NodeletManagerContext
 from .model import PlaceholderModel
 from .summary import SystemSummary
 from .parameter import ParameterServer
@@ -27,6 +27,7 @@ class Interpreter:
     params: ParameterServer
         The simulated parameter server for this interpreter.
     """
+
     @classmethod
     @contextlib.contextmanager
     def for_config(cls,
@@ -133,16 +134,16 @@ class Interpreter:
                                 remappings: t.Mapping[str, str]) -> None:
         """Creates a nodelet manager with a given name."""
         logger.info(f'launched nodelet manager: {manager} as {name}')
-        ctx = NodeContext(name=name,
-                          namespace=namespace,
-                          kind="nodelet",
-                          package="nodelet",
-                          launch_filename=launch_filename,
-                          remappings=remappings,
-                          files=self._app.files,
-                          params=self.params,
-                          app=self._app,
-                          args='')
+        ctx = NodeletManagerContext(name=name,
+                                    namespace=namespace,
+                                    kind="nodelet",
+                                    package="nodelet",
+                                    launch_filename=launch_filename,
+                                    remappings=remappings,
+                                    files=self._app.files,
+                                    params=self.params,
+                                    app=self._app,
+                                    args='')
         self.nodes[ctx.fullname] = ctx
 
     def _load_nodelet(self,
@@ -186,15 +187,31 @@ class Interpreter:
         if manager:
             logger.info(f'launching nodelet [{name}] '
                         f'inside manager [{manager}] from {launch_filename}')
-
-            return self._load(pkg=pkg,
-                              nodetype=nodetype,
-                              name=name,
-                              namespace=namespace,
-                              launch_filename=launch_filename,
-                              remappings=remappings,
-                              args=f'manager {manager}'
-                              )
+            # This is being loaded into an existing manager, so find that as the context
+            if namespace:
+                manager_name = f"{namespace}/{manager}"
+            manager_name = manager.replace('//', '/')
+            if manager in self.nodes:
+                manager_context = self.nodes[manager_name]
+            elif f"/{manager_name}" in self.nodes:
+                manager_context = self.nodes[f"/{manager_name}"]
+            else:
+                raise ValueError(f"The nodelet manager {manager_name} has not been launched")
+            assert isinstance(manager_context, NodeletManagerContext)
+            # Create a context for the nodelet
+            ctx = NodeletContext(name=name,
+                                 namespace=namespace,
+                                 kind=nodetype,
+                                 package=pkg,
+                                 args='',
+                                 launch_filename=launch_filename,
+                                 remappings=remappings,
+                                 files=self._app.files,
+                                 params=self.params,
+                                 app=self._app)
+            model = self.fetch_model(name, nodetype, pkg)
+            model.eval(ctx)
+            manager_context.load_nodelet(ctx)
         else:
             logger.info(f'launching standalone nodelet [{name}]')
             return self._load(pkg=pkg,
@@ -276,6 +293,22 @@ class Interpreter:
         if remappings:
             logger.info(f"using remappings: {remappings}")
 
+        model = self.fetch_model(name, nodetype, pkg)
+
+        ctx = NodeContext(name=name,
+                          namespace=namespace,
+                          kind=nodetype,
+                          package=pkg,
+                          args=args,
+                          launch_filename=launch_filename,
+                          remappings=remappings,
+                          files=self._app.files,
+                          params=self.params,
+                          app=self._app)
+        self.nodes[ctx.fullname] = ctx
+        model.eval(ctx)
+
+    def fetch_model(self, name, nodetype, pkg):
         try:
             model = self.models.fetch(pkg, nodetype)
             # This is to handle nodelet strangness
@@ -287,46 +320,4 @@ class Interpreter:
                  f"in package [{pkg}]")
             logger.warning(m)
             raise
-        if args.startswith('manager'):
-            # This is being loaded into an existing manager, so find that as the context
-            manager_name = args.split(" ")[1]
-            if namespace:
-                manager_name = f"{namespace}/{manager_name}"
-            manager_name = manager_name.replace('//', '/')
-            if manager_name in self.nodes:
-                manager_context = self.nodes[manager_name]
-            elif f"/{manager_name}" in self.nodes:
-                manager_context = self.nodes[f"/{manager_name}"]
-            else:
-                raise ValueError(f"The nodelet manager {manager_name} has not been launched")
-            # Create a context for the nodelet
-            ctx = NodeContext(name=name,
-                              namespace=namespace,
-                              kind=nodetype,
-                              package=pkg,
-                              args=args,
-                              launch_filename=launch_filename,
-                              remappings=remappings,
-                              files=self._app.files,
-                              params=self.params,
-                              app=self._app)
-            model.eval(ctx)
-            manager_context.load_nodelet(ctx)
-            # Place the nodelet as a node, which is observed
-            # TODO: This needs to be rethought -- we should have a separate NodeletManagerContext
-            #       that con contain NodeletContexts. This would better map the NodeletManager/
-            #       Nodelet mapping, and would actually contain traceability between topics
-            self.nodes[ctx.fullname] = ctx
-        else:
-            ctx = NodeContext(name=name,
-                              namespace=namespace,
-                              kind=nodetype,
-                              package=pkg,
-                              args=args,
-                              launch_filename=launch_filename,
-                              remappings=remappings,
-                              files=self._app.files,
-                              params=self.params,
-                              app=self._app)
-            self.nodes[ctx.fullname] = ctx
-            model.eval(ctx)
+        return model
