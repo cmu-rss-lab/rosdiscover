@@ -4,7 +4,6 @@ __all__ = ('ModelPlugin',)
 import abc
 import typing
 
-import attr
 from loguru import logger
 
 from . import NodeContext
@@ -24,7 +23,7 @@ class ModelPlugin(abc.ABC):
 
 class DynamicPlugin(type, ModelPlugin):
     """
-    Models dynamically loaded plygins, taking in a name of the plygin that
+    Models dynamically loaded plugins, taking in a name of the plygin that
     will be recovered when the plugin is loaded
     """
 
