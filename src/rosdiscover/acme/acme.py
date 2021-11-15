@@ -21,6 +21,7 @@ from ..interpreter import NodeSummary
 
 # Constants for Acme generation
 from ..interpreter.context import Provenance
+from ..interpreter.summary import NodeletManagerSummary, NodeletSummary
 
 TOPIC_CONNECTOR = """   connector {conn_name} : TopicConnectorT = new TopicConnectorT extended with {{
     {roles}
@@ -49,6 +50,21 @@ NODE_PLACEHOLDER_COMPONENT = """   component {comp_name} : ROSNodeCompT, Placeho
         property launchedBy = "{filename}";
     }};
 """
+NODELET_COMPONENT = """   component {comp_name} : ROSNodeletCompT = new ROSNodeletCompT extended with {{
+        {ports}
+        property name = "{node_name}";
+        property node_manager = "{manager_name}";
+        property launchedBy = "{filename}";
+    }};
+"""
+
+NODELET_MANAGER = """    groups {comp_name}: ROSNodeletManagerGroup = new ROSNodeletManagerGroup extended with {{
+        {members}
+        property name = "{node_name}";
+        property launchedBy = "{filename}";
+"""
+
+
 ATTACHMENT = "  attachment {comp}.{port} to {conn}.{role};"
 SERVICE_ATTACHMENT = "  attachment {qualified_port} to {conn}.{role};"
 SUBSCRIBER_ROLE = """    role {role_name} : ROSTopicSubscriberRoleT = new ROSTopicSubscriberRoleT;
@@ -74,7 +90,7 @@ SUBSCRIBER_PORT = """     port {port_name} : TopicSubscribePortT = new TopicSubs
     }};
     """
 ADVERTISER_PORT = """     port {port_name} : TopicAdvertisePortT = new TopicAdvertisePortT extended with {{
-        property msg_type = "{msg_type}";
+        property msg_type = "{{{msg_type}}}";
         property topic = "{topic}";
     }};
     """
@@ -254,9 +270,12 @@ class AcmeGenerator:
         service_conns: Dict[str, dict] = {}
         action_conns: Dict[str, dict] = {}
         attachments_to_topic: Dict[str, List[str]] = {}
-        for c in components:
+        nodelet_manager_to_nodelet: Dict[str, List[str]]
+        for c in [c for c in components if not isinstance(c, NodeletManagerSummary)]:
             ports = []
             comp_name = self.to_acme_name(c.name)
+
+            is_nodelet = isinstance(c, NodeletSummary)
 
             for pub in [t for t in c.pubs if not t.implicit and not self._ignore(t.name)]:
                 if pub.name not in attachments_to_topic:
@@ -323,12 +342,27 @@ class AcmeGenerator:
                                    name,
                                    f"{comp_name}.{pname}",
                                    False)
-            component_template: str = NODE_COMPONENT \
-                if c.provenance != Provenance.PLACEHOLDER else NODE_PLACEHOLDER_COMPONENT
-            comp = component_template.format(comp_name=comp_name,
-                                             ports='\n'.join(ports),
-                                             node_name=c.name,
-                                             filename=c.filename)
+            if is_nodelet:
+                component_template = NODELET_COMPONENT
+                assert isinstance(c, NodeletSummary)
+                comp = component_template.format(comp_name=comp_name,
+                                                 ports='\n'.join(ports),
+                                                 node_name=c.name,
+                                                 filename=c.filename,
+                                                 manager=c.nodelet_manager)
+                if c.nodelet_manager in nodelet_manager_to_nodelet:
+                    nodelets = nodelet_manager_to_nodelet[c.nodelet_manager]
+                else:
+                    nodelets = []
+                    nodelet_manager_to_nodelet[c.nodelet_manager] = nodelets
+                nodelets += comp_name
+            else:
+                component_template: str = NODE_COMPONENT \
+                    if c.provenance != Provenance.PLACEHOLDER else NODE_PLACEHOLDER_COMPONENT
+                comp = component_template.format(comp_name=comp_name,
+                                                 ports='\n'.join(ports),
+                                                 node_name=c.name,
+                                                 filename=c.filename)
             component_strs.append(comp)
 
         acme = acme + "\n".join(component_strs)
@@ -337,6 +371,15 @@ class AcmeGenerator:
         self._process_topics(topics, connector_strs, attachments, attachments_to_topic)
         self._process_services(service_conns, attachments, connector_strs)
         self._process_actions(action_conns, attachments, connector_strs)
+
+        group_strs: List[str] = []
+        for c in [c for c in components if isinstance(c, NodeletManagerSummary)]:
+            comp_name = self.to_acme_name(c.name)
+            members = ", ".join(nodelet_manager_to_nodelet.get(c.name, []))
+            group = NODELET_MANAGER.format(comp_name=comp_name, members=members, node_name=c.name, filename=c.filename)
+            group_strs.append(group)
+
+        acme = acme + "\n".join(group_strs)
 
         acme = acme + "\n".join(connector_strs)
         acme = acme + "\n".join(attachments) + "}"
