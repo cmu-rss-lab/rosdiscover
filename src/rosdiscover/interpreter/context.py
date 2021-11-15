@@ -93,7 +93,6 @@ class NodeContext:
                            namespace=self.namespace,
                            kind=self.kind,
                            package=self.package,
-                           nodelet=self._nodelet,
                            provenance=self._provenance,
                            reads=self._reads,
                            writes=self._writes,
@@ -315,7 +314,9 @@ class NodeletManagerContext(NodeContext):
         self.merge(nodelet_context)
         # In the recovered architecture, the nodelets themselves don't
         # report what they publish etc.
-        self._nodelets.add(nodelet_context)
+        nodelets = set(self._nodelets)
+        nodelets.add(nodelet_context)
+        self.__setattr__(self, "_nodelets", nodelets)
 
 
 @attr.s(slots=True, auto_attribs=True)

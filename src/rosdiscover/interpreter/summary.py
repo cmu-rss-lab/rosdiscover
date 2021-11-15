@@ -467,7 +467,7 @@ class SystemSummary(Mapping[str, NodeSummary]):
             if key not in rhs:
                 node_summaries[key] = summary
             else:
-                rhs = rhs[key]
+                rhs_sum = rhs[key]
                 # if isinstance(summary, NodeletSummary):
                 #     if isinstance(rhs, NodeletSummary):
                 #         assert isinstance(summary, NodeletSummary)
@@ -481,12 +481,12 @@ class SystemSummary(Mapping[str, NodeSummary]):
                     if isinstance(summary, NodeletManagerSummary):
                         assert isinstance(summary, NodeletManagerSummary)
                         assert isinstance(rhs, NodeletManagerSummary)
-                        node_summaries[key] = NodeletManagerSummary.merge(summary, rhs)
+                        node_summaries[key] = NodeletManagerSummary.merge(summary, rhs_sum)
                     else:
-                        logger.error(f"{rhs.fullname} is not a nodelet manager in rhs")
+                        logger.error(f"{rhs_sum.fullname} is not a nodelet manager in rhs")
                         node_summaries[key] = summary
                 else:
-                    node_summaries[key] = NodeSummary.merge(summary, rhs)
+                    node_summaries[key] = NodeSummary.merge(summary, rhs_sum)
         for key, summary in rhs.items():
             if key not in lhs:
                 node_summaries[key] = summary
