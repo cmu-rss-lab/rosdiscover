@@ -316,7 +316,7 @@ class NodeletManagerContext(NodeContext):
         # report what they publish etc.
         nodelets = set(self._nodelets)
         nodelets.add(nodelet_context)
-        self.__setattr__(self, "_nodelets", nodelets)
+        self.__setattr__("_nodelets", nodelets)
 
 
 @attr.s(slots=True, auto_attribs=True)
