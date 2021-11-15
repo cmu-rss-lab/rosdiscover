@@ -270,7 +270,7 @@ class AcmeGenerator:
         service_conns: Dict[str, dict] = {}
         action_conns: Dict[str, dict] = {}
         attachments_to_topic: Dict[str, List[str]] = {}
-        nodelet_manager_to_nodelet: Dict[str, List[str]]
+        nodelet_manager_to_nodelet: Dict[str, List[str]] = {}
         for c in [c for c in components if not isinstance(c, NodeletManagerSummary)]:
             ports = []
             comp_name = self.to_acme_name(c.name)
