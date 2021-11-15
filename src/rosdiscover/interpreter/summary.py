@@ -18,7 +18,6 @@ class NodeSummary:
     namespace: str
     kind: str
     package: str
-    nodelet: bool
     filename: str
     # Provenance indicates where the model comes from.
     #    PLACEHOLDER indicates whether the node was not really discovered, but
@@ -53,21 +52,23 @@ class NodeSummary:
         object.__setattr__(self, 'action_clients', frozenset(self.action_clients))
 
     @classmethod
-    def merge(cls, lhs: 'NodeSummary', rhs: 'NodeSummary') -> 'NodeSummary':
-        def merge_collections(s1: Collection[Any], s2: Collection[Any]) -> Collection[Any]:
-            s: Set[Any] = set()
-            s.update(s1)
-            s.update(s2)
-            return s
+    def _merge_collections(s1: Collection[Any], s2: Collection[Any]) -> Collection[Any]:
+        s: Set[Any] = set()
+        s.update(s1)
+        s.update(s2)
+        return s
 
-        reads = merge_collections(lhs.reads, rhs.reads)
-        writes = merge_collections(lhs.writes, rhs.writes)
-        pubs = merge_collections(lhs.pubs, rhs.pubs)
-        subs = merge_collections(lhs.subs, rhs.subs)
-        uses = merge_collections(lhs.uses, rhs.uses)
-        provides = merge_collections(lhs.provides, rhs.provides)
-        actions_servers = merge_collections(lhs.action_servers, rhs.action_servers)
-        action_clients = merge_collections(lhs.action_clients, rhs.action_clients)
+    @classmethod
+    def merge(cls, lhs: 'NodeSummary', rhs: 'NodeSummary') -> 'NodeSummary':
+
+        reads = cls._merge_collections(lhs.reads, rhs.reads)
+        writes = cls._merge_collections(lhs.writes, rhs.writes)
+        pubs = cls._merge_collections(lhs.pubs, rhs.pubs)
+        subs = cls._merge_collections(lhs.subs, rhs.subs)
+        uses = cls._merge_collections(lhs.uses, rhs.uses)
+        provides = cls._merge_collections(lhs.provides, rhs.provides)
+        actions_servers = cls._merge_collections(lhs.action_servers, rhs.action_servers)
+        action_clients = cls._merge_collections(lhs.action_clients, rhs.action_clients)
 
         if lhs.name != rhs.name and lhs.name:
             logger.warning(f"Merging two nodes that are named differently: {lhs.name} & {rhs.name}")
@@ -103,7 +104,6 @@ class NodeSummary:
             namespace=namespace,
             kind=kind,
             package=package,
-            nodelet=lhs.nodelet,
             filename=filename,
             provenance=provenance,
             reads=reads,
@@ -170,7 +170,6 @@ class NodeSummary:
                            namespace=namepsace,
                            kind=kind,
                            package=package,
-                           nodelet=nodelet,
                            filename=filename,
                            provenance=provenance,
                            reads=reads,
@@ -181,6 +180,126 @@ class NodeSummary:
                            uses=uses,
                            action_servers=action_servers,
                            action_clients=action_clients)
+
+
+@attr.s(frozen=True, slots=True, auto_attribs=True)
+class NodeletSummary(NodeSummary):
+    """Summarises the architectural effects of a given node."""
+    nodelet_manager: str
+
+    @classmethod
+    def merge(cls, lhs: 'NodeletSummary', rhs: 'NodeletSummary') -> 'NodeletSummary':
+        nc = NodeSummary.merge(lhs, rhs)
+
+        if lhs.nodelet_manager != rhs.nodelet_manager:
+            logger.warning(f"{lhs.fullname} nodelet manager {rhs.fullname} retaining original nodelet manager"
+                           f" {lhs.fullname}")
+        nodelet_manager = lhs.nodelet_manager if lhs.nodelet_manager else rhs.nodelet_manager
+        return NodeletSummary(
+            name=nc.name,
+            fullname=nc.fullname,
+            namespace=nc.namepsace,
+            kind=nc.kind,
+            package=nc.package,
+            filename=nc.filename,
+            provenance=nc.provenance,
+            reads=nc.reads,
+            writes=nc.writes,
+            pubs=nc.pubs,
+            subs=nc.subs,
+            provides=nc.provides,
+            uses=nc.uses,
+            action_servers=nc.action_servers,
+            action_clients=nc.action_clients,
+            nodelet_manager=nodelet_manager
+        )
+
+    def to_dict(self) -> Dict[str, Any]:
+        dict_ = super().to_dict()
+        dict_['nodelet_manager'] = self.nodelet_manager.fullname
+        dict_['nodekind'] = 'nodelet'
+        return dict_
+
+    @classmethod
+    def from_dict(cls, dict_: Dict[str, Any]) -> 'NodeletSummary':
+        nc = NodeSummary.from_dict(dict_)
+        return NodeletSummary(
+            name=nc.name,
+            fullname=nc.fullname,
+            namespace=nc.namepsace,
+            kind=nc.kind,
+            package=nc.package,
+            filename=nc.filename,
+            provenance=nc.provenance,
+            reads=nc.reads,
+            writes=nc.writes,
+            pubs=nc.pubs,
+            subs=nc.subs,
+            provides=nc.provides,
+            uses=nc.uses,
+            action_servers=nc.action_servers,
+            action_clients=nc.action_clients,
+            nodelet_manager=dict_.get('nodelet_manager', '')
+        )
+
+
+@attr.s(frozen=True, slots=True, auto_attribs=True)
+class NodeletManagerSummary(NodeletSummary):
+    nodelets: Collection[str]
+
+    def __attrs_post_init__(self) -> None:
+        super().__attrs_post_init__()
+        object.__setattr__(self, 'nodelets', frozenset(self.writes))
+
+    @classmethod
+    def merge(cls, lhs: 'NodeletManagerSummary', rhs: 'NodeletManagerSummary') -> 'NodeletSummary':
+        nc = NodeSummary.merge(lhs, rhs)
+        nodelets = NodeSummary._merge_collections(lhs.nodelets, rhs.nodelets)
+        return NodeletManagerSummary(
+            name=nc.name,
+            fullname=nc.fullname,
+            namespace=nc.namepsace,
+            kind=nc.kind,
+            package=nc.package,
+            filename=nc.filename,
+            provenance=nc.provenance,
+            reads=nc.reads,
+            writes=nc.writes,
+            pubs=nc.pubs,
+            subs=nc.subs,
+            provides=nc.provides,
+            uses=nc.uses,
+            action_servers=nc.action_servers,
+            action_clients=nc.action_clients,
+            nodelets=nodelets
+        )
+
+    @classmethod
+    def from_dict(cls, dict_: Dict[str, Any]) -> 'NodeletManagerSummary':
+        nc = NodeSummary.from_dict(dict_)
+        return NodeletManagerSummary(
+            name=nc.name,
+            fullname=nc.fullname,
+            namespace=nc.namepsace,
+            kind=nc.kind,
+            package=nc.package,
+            filename=nc.filename,
+            provenance=nc.provenance,
+            reads=nc.reads,
+            writes=nc.writes,
+            pubs=nc.pubs,
+            subs=nc.subs,
+            provides=nc.provides,
+            uses=nc.uses,
+            action_servers=nc.action_servers,
+            action_clients=nc.action_clients,
+            nodelets=dict_.get('nodelets', [])
+        )
+
+    def to_dict(self) -> Dict[str, Any]:
+        dict_ = NodeSummary.to_dict()
+        dict_['nodekind'] = 'nodelet_manager'
+        dict_['nodelets'] = list(self.nodelets)
 
 
 @attr.s(frozen=True, slots=True, auto_attribs=True)
@@ -204,7 +323,13 @@ class SystemSummary(Mapping[str, NodeSummary]):
 
     @classmethod
     def from_dict(cls, arr: Collection[Any]) -> 'SystemSummary':
-        summaries = [NodeSummary.from_dict(s) for s in arr]
+        summaries = [NodeSummary.from_dict(s) for s in arr if 'nodekind' not in s]
+        summaries.extend(
+            NodeletManagerSummary.from_dict(s) for s in arr if s.get('nodekind', None) == 'nodelet_manager'
+        )
+        summaries.extend(
+            NodeletSummary.from_dict(s) for s in arr if s.get('nodekind', None) == 'nodelet'
+        )
         return SystemSummary(node_to_summary={summary.name: summary for summary in summaries})
 
     @property
@@ -220,7 +345,26 @@ class SystemSummary(Mapping[str, NodeSummary]):
             if key not in rhs:
                 node_summaries[key] = summary
             else:
-                node_summaries[key] = NodeSummary.merge(summary, rhs[key])
+                rhs = rhs[key]
+                if isinstance(summary, NodeletSummary):
+                    if isinstance(rhs, NodeletSummary):
+                        assert isinstance(summary, NodeletSummary)
+                        assert isinstance(rhs, NodeletSummary)
+                        node_summaries[key] = NodeletSummary.merge(summary, rhs)
+                    else:
+                        logger.error(f"{rhs.fullname} is not a nodelet in rhs")
+                        node_summaries[key] = summary
+
+                elif isinstance(summary, NodeletManagerSummary):
+                    if isinstance(summary, NodeletManagerSummary):
+                        assert isinstance(summary, NodeletManagerSummary)
+                        assert isinstance(rhs, NodeletManagerSummary)
+                        node_summaries[key] = NodeletManagerSummary.merge(summary, rhs)
+                    else:
+                        logger.error(f"{rhs.fullname} is not a nodelet manager in rhs")
+                        node_summaries[key] = summary
+                else:
+                    node_summaries[key] = NodeSummary.merge(summary, rhs)
         for key, summary in rhs.items():
             if key not in lhs:
                 node_summaries[key] = summary
