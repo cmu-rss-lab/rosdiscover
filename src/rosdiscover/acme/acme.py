@@ -5,7 +5,8 @@ from a launch file.
 
 The main class provided by this module is :class:`AcmeGenerator`
 """
-__all__ = ("AcmeGenerator", )
+__all__ = ("AcmeGenerator",)
+
 import json
 import os
 import subprocess
@@ -63,7 +64,6 @@ NODELET_MANAGER = """    groups {comp_name}: ROSNodeletManagerGroup = new ROSNod
         property name = "{node_name}";
         property launchedBy = "{filename}";
 """
-
 
 ATTACHMENT = "  attachment {comp}.{port} to {conn}.{role};"
 SERVICE_ATTACHMENT = "  attachment {qualified_port} to {conn}.{role};"
@@ -176,10 +176,10 @@ class AcmeGenerator:
         self.__to_ignore = things_to_ignore if things_to_ignore is not None else []
 
     def get_components_and_connectors(self) \
-            -> Tuple[List[NodeSummary],
-                     Dict[str, _TopicInformation],
-                     Dict[str, _ServiceInformation],
-                     Dict[str, _ActionInformation]]:
+        -> Tuple[List[NodeSummary],
+                 Dict[str, _TopicInformation],
+                 Dict[str, _ServiceInformation],
+                 Dict[str, _ActionInformation]]:
         components: List[NodeSummary] = []
         topics: Dict[str, _TopicInformation] = {}
         services: Dict[str, _ServiceInformation] = {}
@@ -343,13 +343,12 @@ class AcmeGenerator:
                                    f"{comp_name}.{pname}",
                                    False)
             if is_nodelet:
-                component_template = NODELET_COMPONENT
                 assert isinstance(c, NodeletSummary)
-                comp = component_template.format(comp_name=comp_name,
-                                                 ports='\n'.join(ports),
-                                                 node_name=c.name,
-                                                 filename=c.filename,
-                                                 manager=c.nodelet_manager)
+                comp = NODELET_COMPONENT.format(comp_name=comp_name,
+                                                ports='\n'.join(ports),
+                                                node_name=c.name,
+                                                filename=c.filename,
+                                                manager=c.nodelet_manager)
                 if c.nodelet_manager in nodelet_manager_to_nodelet:
                     nodelets = nodelet_manager_to_nodelet[c.nodelet_manager]
                 else:
