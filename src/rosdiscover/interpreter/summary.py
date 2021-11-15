@@ -221,7 +221,9 @@ class NodeletSummary(NodeSummary):
     nodelet_manager: str
 
     @classmethod
-    def merge(cls, lhs: 'NodeletSummary', rhs: 'NodeletSummary') -> 'NodeletSummary':
+    def merge(cls, lhs: 'NodeSummary', rhs: 'NodeSummary') -> 'NodeletSummary':
+        assert isinstance(lhs, NodeletSummary)
+        assert isinstance(rhs, NodeletSummary)
         nc = NodeSummary.merge(lhs, rhs)
 
         if lhs.nodelet_manager != rhs.nodelet_manager:
@@ -317,7 +319,9 @@ class NodeletManagerSummary(NodeSummary):
         object.__setattr__(self, 'nodelets', frozenset(self.writes))
 
     @classmethod
-    def merge(cls, lhs: 'NodeletManagerSummary', rhs: 'NodeletManagerSummary') -> 'NodeletManagerSummary':
+    def merge(cls, lhs: 'NodeSummary', rhs: 'NodeSummary') -> 'NodeletManagerSummary':
+        assert isinstance(lhs, NodeletManagerSummary)
+        assert isinstance(rhs, NodeletManagerSummary)
         nc = NodeSummary.merge(lhs, rhs)
         nodelets = NodeSummary._merge_collections(lhs.nodelets, rhs.nodelets)
         return NodeletManagerSummary(
