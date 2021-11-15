@@ -251,7 +251,7 @@ class NodeletSummary(NodeSummary):
 
     def to_dict(self) -> Dict[str, Any]:
         dict_ = super().to_dict()
-        dict_['nodelet_manager'] = self.nodelet_manager.fullname
+        dict_['nodelet_manager'] = self.nodelet_manager
         dict_['nodekind'] = 'nodelet'
         return dict_
 
@@ -261,7 +261,7 @@ class NodeletSummary(NodeSummary):
         return NodeletSummary(
             name=nc.name,
             fullname=nc.fullname,
-            namespace=nc.namepsace,
+            namespace=nc.namespace,
             kind=nc.kind,
             package=nc.package,
             filename=nc.filename,
@@ -327,7 +327,7 @@ class NodeletManagerSummary(NodeSummary):
         return NodeletManagerSummary(
             name=nc.name,
             fullname=nc.fullname,
-            namespace=nc.namepsace,
+            namespace=nc.namespace,
             kind=nc.kind,
             package=nc.package,
             filename=nc.filename,
@@ -349,7 +349,7 @@ class NodeletManagerSummary(NodeSummary):
         return NodeletManagerSummary(
             name=nc.name,
             fullname=nc.fullname,
-            namespace=nc.namepsace,
+            namespace=nc.namespace,
             kind=nc.kind,
             package=nc.package,
             filename=nc.filename,
@@ -366,9 +366,10 @@ class NodeletManagerSummary(NodeSummary):
         )
 
     def to_dict(self) -> Dict[str, Any]:
-        dict_ = NodeSummary.to_dict()
+        dict_ = super().to_dict()
         dict_['nodekind'] = 'nodelet_manager'
         dict_['nodelets'] = list(n.to_dict() for n in self.nodelets)
+        return dict_
 
     @property
     def pubs(self) -> Collection[Topic]:
