@@ -22,14 +22,15 @@ class ModelPlugin(abc.ABC):
         ...
 
 
-@attr.s(frozen=True, slots=True)
-class DynamicPlugin(abc.ABC):
+class DynamicPlugin(type, ModelPlugin):
     """
     Models dynamically loaded plygins, taking in a name of the plygin that
     will be recovered when the plugin is loaded
     """
 
-    name: str = attr.ib()
-
     def load(self, interpreter: 'Interpreter', context: NodeContext) -> None:
         logger.warning("Dynamic loading of plugins for {name} not implemented")
+
+
+def generate_dynamic_plugin(plugin_name: str) -> type:
+    return type(f"{plugin_name}DynamicPlugin", (DynamicPlugin), {'plugin_name': plugin_name})
