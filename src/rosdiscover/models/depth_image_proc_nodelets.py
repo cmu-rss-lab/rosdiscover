@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from ..interpreter import model
+from ..interpreter import model, NodeletContext
 
 POINTCLOUD2 = 'sensor_msgs/PointCloud2'
 MSGS_CAMERA_INFO = 'sensor_msgs/CameraInfo'
@@ -9,7 +9,7 @@ DEPTH_IMAGE_PROC_PKG = 'depth_image_proc'
 
 @model(DEPTH_IMAGE_PROC_PKG, 'convert_metric')
 def convert_metric(c):
-    c.mark_nodelet()
+    assert isinstance(c, NodeletContext), f'{DEPTH_IMAGE_PROC_PKG}/convert_metric not being loaded as a nodelet'
 
     c.sub('~image_raw', IMAGE_TOPIC_TYPE)
     c.pub('~image', IMAGE_TOPIC_TYPE)
@@ -17,7 +17,7 @@ def convert_metric(c):
 
 @model(DEPTH_IMAGE_PROC_PKG, 'disparity')
 def disparity(c):
-    c.mark_nodelet()
+    assert isinstance(c, NodeletContext), f'{DEPTH_IMAGE_PROC_PKG}/disparity not being loaded as a nodelet'
 
     c.sub('~left/image_rect', IMAGE_TOPIC_TYPE)
     c.sub('~right/camera_info', MSGS_CAMERA_INFO)
@@ -30,7 +30,7 @@ def disparity(c):
 
 @model(DEPTH_IMAGE_PROC_PKG, 'point_cloud_xyz')
 def point_cloud_xyz(c):
-    c.mark_nodelet()
+    assert isinstance(c, NodeletContext), f'{DEPTH_IMAGE_PROC_PKG}/point_cloud_xyz not being loaded as a nodelet'
 
     c.sub('~camera_info', MSGS_CAMERA_INFO)
     c.sub('~image_rect', IMAGE_TOPIC_TYPE)
@@ -42,7 +42,7 @@ def point_cloud_xyz(c):
 
 @model(DEPTH_IMAGE_PROC_PKG, 'point_cloud_xyzrgb')
 def point_cloud_xyzrgb(c):
-    c.mark_nodelet()
+    assert isinstance(c, NodeletContext), f'{DEPTH_IMAGE_PROC_PKG/point_cloud_xyzrgb} not being loaded as a nodelet'
 
     c.sub('~rgb/camera_info', MSGS_CAMERA_INFO)
     c.sub('~rgb/image_rect_color', IMAGE_TOPIC_TYPE)
@@ -55,7 +55,7 @@ def point_cloud_xyzrgb(c):
 
 @model(DEPTH_IMAGE_PROC_PKG, 'register')
 def register(c):
-    c.mark_nodelet()
+    assert isinstance(c, NodeletContext), f'{DEPTH_IMAGE_PROC_PKG}/register not being loaded as a nodelet'
 
     c.sub('~rgb/camera_info', MSGS_CAMERA_INFO)
     c.sub('~depth/camera_info', MSGS_CAMERA_INFO)

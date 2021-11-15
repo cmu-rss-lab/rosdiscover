@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from ..interpreter import model
+from ..interpreter import model, NodeletContext
 
 IMAGE_TOPIC_TYPE = 'sensor_msgs/Image'
 IMAGE_PROC_PKG = 'image_proc'
@@ -7,6 +7,8 @@ IMAGE_PROC_PKG = 'image_proc'
 
 @model(IMAGE_PROC_PKG, "image_proc")
 def image_proc(c):
+    assert isinstance(c, NodeletContext), f'{IMAGE_PROC_PKG}/image_proc not being loaded as a nodelet'
+
     c.sub('image_raw', IMAGE_TOPIC_TYPE)
     c.sub('camera_info', 'sensor_msgs/CameraInfo')
 
@@ -20,7 +22,7 @@ def image_proc(c):
 
 @model(IMAGE_PROC_PKG, "debayer")
 def debayer(c):
-    c.mark_nodelet()
+    assert isinstance(c, NodeletContext), f'{IMAGE_PROC_PKG}/debayer not being loaded as a nodelet'
     c.pub('image_mono', IMAGE_TOPIC_TYPE)
     c.pub('image_color', IMAGE_TOPIC_TYPE)
 
@@ -31,7 +33,7 @@ def debayer(c):
 
 @model(IMAGE_PROC_PKG, 'rectify')
 def rectify(c):
-    c.mark_nodelet()
+    assert isinstance(c, NodeletContext), f'{IMAGE_PROC_PKG}/rectify not being loaded as a nodelet'
 
     c.sub('image_mono', IMAGE_TOPIC_TYPE)
     c.sub('camera_info', 'sensor_msgs/CameraInfo')
@@ -44,7 +46,7 @@ def rectify(c):
 
 @model(IMAGE_PROC_PKG, 'crop_decimate')
 def crop_decimate(c):
-    c.mark_nodelet()
+    assert isinstance(c, NodeletContext), f'{IMAGE_PROC_PKG}/crop_decimate not being loaded as a nodelet'
 
     c.sub('camera/image_raw', IMAGE_TOPIC_TYPE)
     c.sub('camera/camera_info', 'sensor_msgs/CameraInfo')
@@ -64,7 +66,7 @@ def crop_decimate(c):
 
 @model(IMAGE_PROC_PKG, 'resize')
 def resize(c):
-    c.mark_nodelet()
+    assert isinstance(c, NodeletContext), f'{IMAGE_PROC_PKG}/resize not being loaded as a nodelet'
 
     c.sub('image', IMAGE_TOPIC_TYPE)
     c.sub('camera_info', 'sensor_msgs/CameraInfo')

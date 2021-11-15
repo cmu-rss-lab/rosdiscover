@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
-from ..interpreter import model, NodeContext
+from ..interpreter import model, NodeletContext
 
 
 @model("pointgrey_camera_driver", "PointGreyCameraNodelet")
-def pointgrey_camera_driver(c: NodeContext) -> None:
-    c.mark_nodelet()
-
+def pointgrey_camera_driver(c: NodeletContext) -> None:
+    assert isinstance(c, NodeletContext), 'pointgrey_camera_driver not being loaded as a nodelet'
     # How to derive dynamic parameters from:
     # https://github.com/ros-drivers/pointgrey_camera_driver/blob/1c71a654bea94f59396361cd735ef718f8f07011/pointgrey_camera_driver/src/nodelet.cpp#L270
     c.read('serial', 0)
