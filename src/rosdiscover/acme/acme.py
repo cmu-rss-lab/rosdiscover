@@ -59,7 +59,7 @@ NODELET_COMPONENT = """   component {comp_name} : ROSNodeletCompT = new ROSNodel
 """
 
 NODELET_MANAGER = """    groups {comp_name}: ROSNodeletManagerGroup = new ROSNodeletManagerGroup extended with {{
-        {members}
+        members {{{members}}}
         property name = "{node_name}";
         property launchedBy = "{filename}";
 """
@@ -90,7 +90,7 @@ SUBSCRIBER_PORT = """     port {port_name} : TopicSubscribePortT = new TopicSubs
     }};
     """
 ADVERTISER_PORT = """     port {port_name} : TopicAdvertisePortT = new TopicAdvertisePortT extended with {{
-        property msg_type = "{{{msg_type}}}";
+        property msg_type = "{msg_type}";
         property topic = "{topic}";
     }};
     """
