@@ -60,3 +60,5 @@ from . import lap_stats
 from . import rostopic
 from . import ekf_localization
 from . import rosdiscover_error_reproducer
+from . import ekf_localization
+from . import rosdiscover_error_reproducer

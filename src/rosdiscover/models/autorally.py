@@ -79,3 +79,9 @@ def autorally_controller(c: NodeContext) -> None:
 def ground_truth_republisher(c: NodeContext) -> None:
     c.pub('/ground_truth/state', 'nav_msgs/Odometry')
     c.sub('/ground_truth/state_raw', 'nav_msgs/Odometry')
+
+@model('autorally_control', 'joystickController')
+def joystick_controller(c: NodeContext) -> None:
+    c.pub("/joystick/chassisCommand", "autorally_msgs/chassisCommand")
+    c.pub("/runstop", "autorally_msgs/runstop")
+    c.sub("/joy", "sensor_msgs/Joy")
