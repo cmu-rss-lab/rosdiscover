@@ -93,7 +93,7 @@ class Observer(ABC):
             try:
                 if start_script:
                     logger.debug("Starting the container")
-                    cmd = start_script
+                    cmd = f"/bin/bash {start_script}"
                     script = instance.shell.popen(cmd)
                     time.sleep(5)
                     if script.returncode and script.returncode != 1:
