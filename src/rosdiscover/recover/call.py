@@ -76,12 +76,14 @@ class Publisher(SymbolicRosApiCall):
 class Subscriber(SymbolicRosApiCall):
     topic: SymbolicString
     format_: str
+    callback_name_: str
 
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
             "kind": "subscribes-to",
             "name": self.topic.to_dict(),
             "format": self.format_,
+            "callback-name": self.callback_name_
         }
 
     def eval(self, context: SymbolicContext) -> None:
