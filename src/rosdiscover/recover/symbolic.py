@@ -189,7 +189,7 @@ class StringLiteral(SymbolicString):
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class FloatLiteral(SymbolicFloat):
     """Represents a literal float value."""
-    value: str
+    value: float
 
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
