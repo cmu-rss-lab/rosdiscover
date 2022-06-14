@@ -72,6 +72,7 @@ class Publisher(SymbolicRosApiCall):
     def is_unknown(self) -> bool:
         return self.topic.is_unknown()
 
+
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class Publish(SymbolicRosApiCall):
     publisher: str
