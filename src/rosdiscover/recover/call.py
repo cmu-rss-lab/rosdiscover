@@ -83,11 +83,12 @@ class Publish(SymbolicRosApiCall):
         }
 
     def eval(self, context: SymbolicContext) -> None:
-        #TODO: Add analsis here later
+        # TODO: Add analsis here later
         return
 
     def is_unknown(self) -> bool:
         return self.publisher == "unknown"
+
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class RateSleep(SymbolicRosApiCall):
@@ -100,11 +101,12 @@ class RateSleep(SymbolicRosApiCall):
         }
 
     def eval(self, context: SymbolicContext) -> None:
-        #TODO: Add analsis here later
+        # TODO: Add analsis here later
         return
 
     def is_unknown(self) -> bool:
         return self.rate.is_unknown()
+
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class Subscriber(SymbolicRosApiCall):
