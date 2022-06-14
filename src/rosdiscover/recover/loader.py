@@ -26,7 +26,7 @@ from .call import (
 from .symbolic import (
     Concatenate,
     StringLiteral,
-    FloatLiteral,    
+    FloatLiteral,
     SymbolicArg,
     SymbolicAssignment,
     SymbolicCompound,
@@ -136,7 +136,7 @@ class SymbolicProgramLoader:
 
     def _load_publish(self, dict_: t.Mapping[str, t.Any]) -> Publish:
         return Publish(dict_["publisher"])
-    
+
     def _load_rate_sleep(self, dict_: t.Mapping[str, t.Any]) -> RateSleep:
         rate = self._load_float(dict_["rate"])
         return RateSleep(rate)
@@ -223,7 +223,7 @@ class SymbolicProgramLoader:
         elif kind == "publish":
             return self._load_publish(dict_)
         elif kind == "ratesleep":
-            return self._load_rate_sleep(dict_)            
+            return self._load_rate_sleep(dict_)
         elif kind == "subscribes-to":
             return self._load_subscribes_to(dict_)
         elif kind == "calls-service":
