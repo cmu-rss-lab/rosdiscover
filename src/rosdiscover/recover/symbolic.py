@@ -154,8 +154,10 @@ class SymbolicValue(abc.ABC):
 class SymbolicString(SymbolicValue, abc.ABC):
     """Represents a symbolic string value."""
 
+
 class SymbolicFloat(SymbolicValue, abc.ABC):
     """Represents a symbolic float value."""
+
 
 class SymbolicNodeName(SymbolicString):
     """Symbolically refers to the name of the current node."""
@@ -186,6 +188,7 @@ class StringLiteral(SymbolicString):
     def is_unknown(self) -> bool:
         return False
 
+
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class FloatLiteral(SymbolicFloat):
     """Represents a literal float value."""
@@ -202,6 +205,7 @@ class FloatLiteral(SymbolicFloat):
 
     def is_unknown(self) -> bool:
         return False
+
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class Concatenate(SymbolicString):
