@@ -39,7 +39,6 @@ from .symbolic import (
     SymbolicProgram,
     SymbolicStatement,
     SymbolicString,
-    SymbolicFloat,
     SymbolicUnknown,
     SymbolicValue,
     SymbolicValueType,
