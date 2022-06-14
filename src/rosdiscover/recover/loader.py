@@ -24,6 +24,7 @@ from .call import (
 from .symbolic import (
     Concatenate,
     StringLiteral,
+    FloatLiteral,    
     SymbolicArg,
     SymbolicAssignment,
     SymbolicCompound,
@@ -36,6 +37,7 @@ from .symbolic import (
     SymbolicProgram,
     SymbolicStatement,
     SymbolicString,
+    SymbolicFloat,
     SymbolicUnknown,
     SymbolicValue,
     SymbolicValueType,
@@ -65,6 +67,10 @@ class SymbolicProgramLoader:
     def _load_string_literal(self, dict_: t.Mapping[str, t.Any]) -> StringLiteral:
         assert dict_["kind"] == "string-literal"
         return StringLiteral(dict_["literal"])
+
+    def _load_float_literal(self, dict_: t.Mapping[str, t.Any]) -> FloatLiteral:
+        assert dict_["kind"] == "float-literal"
+        return FloatLiteral(dict_["literal"])
 
     def _load_arg(self, dict_: t.Mapping[str, t.Any]) -> SymbolicArg:
         assert dict_["kind"] == "arg"

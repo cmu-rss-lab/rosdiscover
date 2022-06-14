@@ -4,6 +4,7 @@ from __future__ import annotations
 __all__ = (
     "Concatenate",
     "StringLiteral",
+    "FloatLiteral",
     "SymbolicArg",
     "SymbolicAssignment",
     "SymbolicBool",
@@ -16,6 +17,7 @@ __all__ = (
     "SymbolicProgram",
     "SymbolicStatement",
     "SymbolicString",
+    "SymbolicFloat",
     "SymbolicUnknown",
 )
 
@@ -112,6 +114,7 @@ class SymbolicValueType(enum.Enum):
     INTEGER = "integer"
     NODE_HANDLE = "node-handle"
     STRING = "string"
+    FLOAT = "float"
     UNSUPPORTED = "unsupported"
 
     def __str__(self) -> str:
@@ -124,6 +127,7 @@ class SymbolicValueType(enum.Enum):
             "integer": cls.INTEGER,
             "node-handle": cls.NODE_HANDLE,
             "string": cls.STRING,
+            "float": cls.FLOAT,
             "unsupported": cls.UNSUPPORTED,
         }
         if name not in name_to_type:
@@ -150,6 +154,8 @@ class SymbolicValue(abc.ABC):
 class SymbolicString(SymbolicValue, abc.ABC):
     """Represents a symbolic string value."""
 
+class SymbolicFloat(SymbolicValue, abc.ABC):
+    """Represents a symbolic float value."""
 
 class SymbolicNodeName(SymbolicString):
     """Symbolically refers to the name of the current node."""
@@ -180,6 +186,22 @@ class StringLiteral(SymbolicString):
     def is_unknown(self) -> bool:
         return False
 
+@attr.s(frozen=True, auto_attribs=True, slots=True)
+class FloatLiteral(SymbolicFloat):
+    """Represents a literal float value."""
+    value: str
+
+    def to_dict(self) -> t.Dict[str, t.Any]:
+        return {
+            "kind": "float-literal",
+            "literal": self.value,
+        }
+
+    def eval(self, context: SymbolicContext) -> t.Any:
+        return self.value
+
+    def is_unknown(self) -> bool:
+        return False
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class Concatenate(SymbolicString):
@@ -262,6 +284,7 @@ class SymbolicArg(
     SymbolicInteger,
     SymbolicBool,
     SymbolicString,
+    SymbolicFloat,
     SymbolicValue,
 ):
     name: str
