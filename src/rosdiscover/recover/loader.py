@@ -13,6 +13,8 @@ from .call import (
     DeleteParam,
     HasParam,
     Publisher,
+    Publish,
+    RateSleep,
     ReadParam,
     ReadParamWithDefault,
     RosInit,
@@ -70,7 +72,7 @@ class SymbolicProgramLoader:
 
     def _load_float_literal(self, dict_: t.Mapping[str, t.Any]) -> FloatLiteral:
         assert dict_["kind"] == "float-literal"
-        return FloatLiteral(dict_["literal"])
+        return FloatLiteral(value=float(dict_["literal"]))
 
     def _load_arg(self, dict_: t.Mapping[str, t.Any]) -> SymbolicArg:
         assert dict_["kind"] == "arg"
@@ -132,6 +134,13 @@ class SymbolicProgramLoader:
     def _load_rosinit(self, dict_: t.Mapping[str, t.Any]) -> RosInit:
         name = self._load_string(dict_["name"])
         return RosInit(name)
+
+    def _load_publish(self, dict_: t.Mapping[str, t.Any]) -> Publish:
+        return Publish(dict_["publisher"])
+    
+    def _load_rate_sleep(self, dict_: t.Mapping[str, t.Any]) -> RateSleep:
+        rate = self._load_float(dict_["rate"])
+        return RateSleep(rate)
 
     def _load_publishes_to(self, dict_: t.Mapping[str, t.Any]) -> Publisher:
         topic = self._load_string(dict_["name"])
@@ -212,6 +221,10 @@ class SymbolicProgramLoader:
             return self._load_rosinit(dict_)
         elif kind == "publishes-to":
             return self._load_publishes_to(dict_)
+        elif kind == "publish":
+            return self._load_publish(dict_)
+        elif kind == "ratesleep":
+            return self._load_rate_sleep(dict_)            
         elif kind == "subscribes-to":
             return self._load_subscribes_to(dict_)
         elif kind == "calls-service":
