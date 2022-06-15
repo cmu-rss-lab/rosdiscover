@@ -31,7 +31,7 @@ from loguru import logger
 import attr
 
 from .symbolic import *
-from .call import Publish
+from .call import Publish, RateSleep
 from .call import Subscriber
 
 
@@ -84,6 +84,16 @@ class SymbolicProgram:
                     result.add(stmt)
 
         return result        
+
+    @property
+    def rate_sleeps(self) -> t.Set[RateSleep]:
+        result = set()
+        for func in self.functions.values():
+            for stmt in func.body:
+                if isinstance(stmt, RateSleep):
+                    result.add(stmt)
+
+        return result
 
     @property
     def subscriber_callbacks(self) -> t.Set[SymbolicFunction]:

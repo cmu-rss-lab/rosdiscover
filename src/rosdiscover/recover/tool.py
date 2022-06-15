@@ -449,5 +449,6 @@ class NodeRecoveryTool:
         logger.debug(f"publish_calls: {summary.publish_calls}")
         logger.debug(f"subscriber_callbacks: {summary.subscriber_callbacks}")
         logger.debug(f"publish_calls_in_sub_callback: {summary.publish_calls_in_sub_callback}")
+        logger.debug(f"rate_sleeps: {summary.rate_sleeps}")
 
         return summary
