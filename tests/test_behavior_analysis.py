@@ -48,7 +48,7 @@ class TestStringMethods(unittest.TestCase):
         
         self.assertSetEqual(rate_sleeps, sleeps)        
 
-    def teeeest_velocity_set(self):
+    def test_velocity_set(self):
         model = self.get_model(self.autoware_file, "astar_planner", "velocity_set")
 
         self.assert_publish_calls_in_sub_callback(model,set())
@@ -58,6 +58,7 @@ class TestStringMethods(unittest.TestCase):
         self.assert_sub_callbacks(model, 
             {
                 "VelocitySetPath::waypointsCallback", 
+                "VelocitySetPath::currentVelocityCallback",
                 "VelocitySetInfo::configCallback",
                 "VelocitySetInfo::pointsCallback",
                 "VelocitySetInfo::localizerPoseCallback",
@@ -101,10 +102,13 @@ class TestStringMethods(unittest.TestCase):
 
         self.assert_sub_callbacks(model, 
             {
-                "CmdCallBack", 
-                "controlCmdCallBack",
-                "waypointCallback",
-                "callbackFromClosestWaypoint"
+                "(anonymous namespace)::CmdCallBack", 
+                "(anonymous namespace)::controlCmdCallBack",
+                "(anonymous namespace)::waypointCallback",
+                "(anonymous namespace)::callbackFromClosestWaypoint",
+                "(anonymous namespace)::initialposeCallback",
+                "(anonymous namespace)::callbackFromPoseStamped",
+                "(anonymous namespace)::callbackFromPoseStamped"
             }
         )
 
