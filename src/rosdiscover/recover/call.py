@@ -3,12 +3,12 @@ __all__ = (
     "DeleteParam",
     "HasParam",
     "Publisher",
+    "Subscriber",
     "ReadParam",
     "ReadParamWithDefault",
     "RosInit",
     "ServiceCaller",
     "ServiceProvider",
-    "Subscriber",
     "SymbolicRosApiCall",
     "WriteParam",
 )
@@ -113,14 +113,14 @@ class RateSleep(SymbolicRosApiCall):
 class Subscriber(SymbolicRosApiCall):
     topic: SymbolicString
     format_: str
-    callback_name_: str
+    callback_name: str
 
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
             "kind": "subscribes-to",
             "name": self.topic.to_dict(),
             "format": self.format_,
-            "callback-name": self.callback_name_
+            "callback-name": self.callback_name
         }
 
     def eval(self, context: SymbolicContext) -> None:

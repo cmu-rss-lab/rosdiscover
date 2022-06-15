@@ -16,7 +16,7 @@ from roswire import CMakeBinaryTarget, CMakeTarget, ROSVersion, SourceLanguage
 
 from .loader import SymbolicProgramLoader
 from .model import CMakeListsInfo, RecoveredNodeModel
-from .symbolic import SymbolicProgram
+from .symbolic_program import SymbolicProgram
 from ..config import Config
 
 
@@ -445,4 +445,9 @@ class NodeRecoveryTool:
 
         summary = model_loader.load(json_model)
         logger.debug(f"recovered node summary: {summary}")
+
+        logger.debug(f"publish_calls: {summary.publish_calls}")
+        logger.debug(f"subscriber_callbacks: {summary.subscriber_callbacks}")
+        logger.debug(f"publish_calls_in_sub_callback: {summary.publish_calls_in_sub_callback}")
+
         return summary

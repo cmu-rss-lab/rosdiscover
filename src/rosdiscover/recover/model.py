@@ -10,7 +10,7 @@ from loguru import logger
 import attr
 
 from .loader import SymbolicProgramLoader
-from .symbolic import SymbolicProgram
+from .symbolic_program import SymbolicProgram
 from ..interpreter import NodeModel, NodeContext
 
 from ..config import Config
