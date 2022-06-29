@@ -41,6 +41,7 @@ from .symbolic import (
     SymbolicValueType,
     SymbolicVariableReference,
     SymbolicWhile,
+    SymbolicIf,
 )
 from ..config import Config
 
@@ -222,13 +223,22 @@ class SymbolicProgramLoader:
         elif kind == "compound":
             return self._load_compound(dict_)
         elif kind == "while":
-            return self._load_while(dict_)            
+            return self._load_while(dict_)
+        elif kind == "if":
+            return self._load_if(dict_)
         else:
             raise ValueError(f"unknown statement kind: {kind}")
-
+    
     def _load_while(self, dict_: t.Mapping[str, t.Any]) -> SymbolicCompound:
         assert dict_["kind"] == "while"
         return SymbolicWhile(self._load_compound(dict_["body"]), self._load_value(dict_["condition"]))
+
+    def _load_if(self, dict_: t.Mapping[str, t.Any]) -> SymbolicCompound:
+        assert dict_["kind"] == "if"
+        return SymbolicIf(
+            true_body=self._load_compound(dict_["trueBranchBody"]), 
+            false_body=self._load_compound(dict_["falseBranchBody"]), 
+            condition=self._load_value(dict_["condition"]))
     
     def _load_compound(self, dict_: t.Mapping[str, t.Any]) -> SymbolicCompound:
         assert dict_["kind"] == "compound"

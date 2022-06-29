@@ -349,6 +349,26 @@ class SymbolicCompound(t.Sequence[SymbolicStatement], SymbolicStatement):
             statement.eval(context)
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
+class SymbolicIf(SymbolicStatement):
+    """Represents a sequence of symbolic if."""
+    true_body: SymbolicCompound
+    false_body: SymbolicCompound
+    condition: SymbolicBool 
+
+    def to_dict(self) -> t.Dict[str, t.Any]:
+        return {
+            "kind": "while",
+            "trueBranchBody": [self.true_body.to_dict()],
+            "trueBranchBody": [self.false_body.to_dict()],
+            "condition": [self.condition.to_dict()],
+        }
+
+    def eval(self, context: SymbolicContext) -> None:
+        self.condition.eval(context)
+        self.true_body.eval(context)
+        self.false_body.eval(context)
+
+@attr.s(frozen=True, auto_attribs=True, slots=True)
 class SymbolicWhile(SymbolicStatement):
     """Represents a sequence of symbolic while."""
     body: SymbolicCompound
