@@ -236,10 +236,10 @@ class SymbolicProgramLoader:
     def _load_if(self, dict_: t.Mapping[str, t.Any]) -> SymbolicCompound:
         assert dict_["kind"] == "if"
         return SymbolicIf(
-            true_body=self._load_compound(dict_["trueBranchBody"]), 
-            false_body=self._load_compound(dict_["falseBranchBody"]), 
+            true_body=self._load_compound(dict_["trueBranchBody"]),
+            false_body=self._load_compound(dict_["falseBranchBody"]),
             condition=self._load_value(dict_["condition"]))
-    
+
     def _load_compound(self, dict_: t.Mapping[str, t.Any]) -> SymbolicCompound:
         assert dict_["kind"] == "compound"
         statements = [self._load_statement(d) for d in dict_["statements"]]
