@@ -354,7 +354,7 @@ class SymbolicIf(SymbolicStatement):
     """Represents a sequence of symbolic if."""
     true_body: SymbolicCompound
     false_body: SymbolicCompound
-    condition: SymbolicBool
+    condition: SymbolicValue
 
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
