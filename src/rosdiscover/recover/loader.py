@@ -40,6 +40,7 @@ from .symbolic import (
     SymbolicValue,
     SymbolicValueType,
     SymbolicVariableReference,
+    SymbolicWhile,
 )
 from ..config import Config
 
@@ -220,9 +221,15 @@ class SymbolicProgramLoader:
             return self._load_checks_for_param(dict_)
         elif kind == "compound":
             return self._load_compound(dict_)
+        elif kind == "while":
+            return self._load_while(dict_)            
         else:
             raise ValueError(f"unknown statement kind: {kind}")
 
+    def _load_while(self, dict_: t.Mapping[str, t.Any]) -> SymbolicCompound:
+        assert dict_["kind"] == "while"
+        return SymbolicWhile(self._load_compound(dict_["body"]), self._load_value(dict_["condition"]))
+    
     def _load_compound(self, dict_: t.Mapping[str, t.Any]) -> SymbolicCompound:
         assert dict_["kind"] == "compound"
         statements = [self._load_statement(d) for d in dict_["statements"]]
