@@ -229,11 +229,11 @@ class SymbolicProgramLoader:
         else:
             raise ValueError(f"unknown statement kind: {kind}")
 
-    def _load_while(self, dict_: t.Mapping[str, t.Any]) -> SymbolicCompound:
+    def _load_while(self, dict_: t.Mapping[str, t.Any]) -> SymbolicWhile:
         assert dict_["kind"] == "while"
         return SymbolicWhile(self._load_compound(dict_["body"]), self._load_value(dict_["condition"]))
 
-    def _load_if(self, dict_: t.Mapping[str, t.Any]) -> SymbolicCompound:
+    def _load_if(self, dict_: t.Mapping[str, t.Any]) -> SymbolicIf:
         assert dict_["kind"] == "if"
         return SymbolicIf(
             true_body=self._load_compound(dict_["trueBranchBody"]),
