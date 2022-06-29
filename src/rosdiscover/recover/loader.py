@@ -228,7 +228,7 @@ class SymbolicProgramLoader:
             return self._load_if(dict_)
         else:
             raise ValueError(f"unknown statement kind: {kind}")
-    
+
     def _load_while(self, dict_: t.Mapping[str, t.Any]) -> SymbolicCompound:
         assert dict_["kind"] == "while"
         return SymbolicWhile(self._load_compound(dict_["body"]), self._load_value(dict_["condition"]))
