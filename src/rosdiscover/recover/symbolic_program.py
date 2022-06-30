@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
+from ast import While
 from turtle import st
+
+from .symbolic import SymbolicWhile
 
 __all__ = (
     "Concatenate",
@@ -114,6 +117,16 @@ class SymbolicProgram:
         return result
 
     @property
+    def while_loops(self) -> t.List[SymbolicWhile]:
+        result = []
+        for func in self.functions.values():
+            for stmt in func.body:
+                if isinstance(stmt, SymbolicWhile):
+                    result.append(stmt)
+
+        return result
+
+    @property
     def publish_calls_in_sub_callback(self) -> t.Set[Publish]:
         result = set()
         for pub_call in self.publish_calls:
@@ -121,7 +134,21 @@ class SymbolicProgram:
                 if callback.body.contains(pub_call, self.functions):
                     result.add(pub_call)
 
-        return result        
+        return result
+
+
+    @property
+    def periodic_publish_calls(self) -> t.Set[Publish]:
+        result = set()
+        for pub_call in self.publish_calls:
+            for while_stmt in self.while_loops:
+                if while_stmt.body.contains(pub_call, self.functions):
+                    for rate in self.rate_sleeps:
+                        if while_stmt.body.contains(rate, self.functions):
+                            result.add(pub_call)
+
+        return result
+
 
     @property
     def unreachable_functions(self) -> t.Set[SymbolicFunction]:
