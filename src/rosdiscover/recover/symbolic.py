@@ -365,9 +365,13 @@ class SymbolicIf(SymbolicStatement):
         }
 
     def eval(self, context: SymbolicContext) -> None:
-        self.condition.eval(context)
-        self.true_body.eval(context)
-        self.false_body.eval(context)
+        if self.condition.eval(context) == True:
+            self.true_body.eval(context)
+        elif self.condition.eval(context) == False:
+            self.false_body.eval(context)
+        else: 
+            self.true_body.eval(context)
+            self.false_body.eval(context)
 
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
