@@ -379,8 +379,8 @@ class SymbolicWhile(SymbolicStatement):
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
             "kind": "while",
-            "body": [self.body.to_dict()],
-            "condition": [self.condition.to_dict()],
+            "body": self.body.to_dict(),
+            "condition": self.condition.to_dict(),
         }
 
     def eval(self, context: SymbolicContext) -> None:
