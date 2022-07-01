@@ -63,6 +63,10 @@ class SymbolicProgramLoader:
             name=name,
             type_=type_,
         )
+    
+    def _load_bool_literal(self, dict_: t.Mapping[str, t.Any]) -> BoolLiteral:
+        assert dict_["kind"] == "bool-literal"
+        return BoolLiteral(dict_["literal"])
 
     def _load_string_literal(self, dict_: t.Mapping[str, t.Any]) -> StringLiteral:
         assert dict_["kind"] == "string-literal"
@@ -98,6 +102,8 @@ class SymbolicProgramLoader:
             return self._load_arg(dict_)
         elif kind == "string-literal":
             return self._load_string_literal(dict_)
+        elif kind == "bool-literal":
+            return self._load_bool_literal(dict_)            
         elif kind == "node-handle":
             return self._load_node_handle(dict_)
         elif kind == "variable-reference":

@@ -4,6 +4,7 @@ from __future__ import annotations
 __all__ = (
     "Concatenate",
     "StringLiteral",
+    "BoolLiteral",
     "SymbolicArg",
     "SymbolicAssignment",
     "SymbolicBool",
@@ -163,6 +164,7 @@ class SymbolicNodeName(SymbolicString):
         return False
 
 
+
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class StringLiteral(SymbolicString):
     """Represents a literal string value."""
@@ -213,6 +215,22 @@ class SymbolicInteger(SymbolicValue, abc.ABC):
 class SymbolicBool(SymbolicValue, abc.ABC):
     """Represents a symbolic boolean value."""
 
+@attr.s(frozen=True, auto_attribs=True, slots=True)
+class BoolLiteral(SymbolicBool):
+    """Represents a literal string value."""
+    value: bool
+
+    def to_dict(self) -> t.Dict[str, t.Any]:
+        return {
+            "kind": "bool-literal",
+            "literal": self.value,
+        }
+
+    def eval(self, context: SymbolicContext) -> t.Any:
+        return self.value
+
+    def is_unknown(self) -> bool:
+        return False
 
 class SymbolicNodeHandle(SymbolicString, SymbolicValue, abc.ABC):
     """Represents a symbolic node handle."""
