@@ -67,7 +67,7 @@ class SymbolicProgramLoader:
             name=name,
             type_=type_,
         )
-    
+
     def _load_bool_literal(self, dict_: t.Mapping[str, t.Any]) -> BoolLiteral:
         assert dict_["kind"] == "bool-literal"
         return BoolLiteral(dict_["literal"])
