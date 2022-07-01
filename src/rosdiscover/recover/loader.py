@@ -29,6 +29,7 @@ from .symbolic import (
     Concatenate,
     StringLiteral,
     FloatLiteral,
+    BoolLiteral,
     SymbolicArg,
     SymbolicAssignment,
     SymbolicCompound,
@@ -44,6 +45,8 @@ from .symbolic import (
     SymbolicValue,
     SymbolicValueType,
     SymbolicVariableReference,
+    SymbolicWhile,
+    SymbolicIf,
 )
 from ..config import Config
 
@@ -65,6 +68,10 @@ class SymbolicProgramLoader:
             name=name,
             type_=type_,
         )
+
+    def _load_bool_literal(self, dict_: t.Mapping[str, t.Any]) -> BoolLiteral:
+        assert dict_["kind"] == "bool-literal"
+        return BoolLiteral(dict_["literal"])
 
     def _load_string_literal(self, dict_: t.Mapping[str, t.Any]) -> StringLiteral:
         assert dict_["kind"] == "string-literal"
@@ -104,6 +111,8 @@ class SymbolicProgramLoader:
             return self._load_arg(dict_)
         elif kind == "string-literal":
             return self._load_string_literal(dict_)
+        elif kind == "bool-literal":
+            return self._load_bool_literal(dict_)
         elif kind == "node-handle":
             return self._load_node_handle(dict_)
         elif kind == "variable-reference":
@@ -239,8 +248,24 @@ class SymbolicProgramLoader:
             return self._load_checks_for_param(dict_)
         elif kind == "compound":
             return self._load_compound(dict_)
+        elif kind == "while":
+            return self._load_while(dict_)
+        elif kind == "if":
+            return self._load_if(dict_)
         else:
             raise ValueError(f"unknown statement kind: {kind}")
+
+    def _load_while(self, dict_: t.Mapping[str, t.Any]) -> SymbolicWhile:
+        assert dict_["kind"] == "while"
+        return SymbolicWhile(self._load_compound(dict_["body"]), self._load_value(dict_["condition"]))
+
+    def _load_if(self, dict_: t.Mapping[str, t.Any]) -> SymbolicIf:
+        assert dict_["kind"] == "if"
+        return SymbolicIf(
+            true_body=self._load_compound(dict_["trueBranchBody"]),
+            false_body=self._load_compound(dict_["falseBranchBody"]),
+            condition=self._load_value(dict_["condition"]),
+        )
 
     def _load_compound(self, dict_: t.Mapping[str, t.Any]) -> SymbolicCompound:
         assert dict_["kind"] == "compound"

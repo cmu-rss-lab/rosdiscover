@@ -6,6 +6,7 @@ from turtle import st
 __all__ = (
     "Concatenate",
     "StringLiteral",
+    "BoolLiteral",
     "FloatLiteral",
     "SymbolicArg",
     "SymbolicAssignment",
@@ -241,6 +242,24 @@ class SymbolicBool(SymbolicValue, abc.ABC):
     """Represents a symbolic boolean value."""
 
 
+@attr.s(frozen=True, auto_attribs=True, slots=True)
+class BoolLiteral(SymbolicBool):
+    """Represents a literal string value."""
+    value: bool
+
+    def to_dict(self) -> t.Dict[str, t.Any]:
+        return {
+            "kind": "bool-literal",
+            "literal": self.value,
+        }
+
+    def eval(self, context: SymbolicContext) -> t.Any:
+        return self.value
+
+    def is_unknown(self) -> bool:
+        return False
+
+
 class SymbolicNodeHandle(SymbolicString, SymbolicValue, abc.ABC):
     """Represents a symbolic node handle."""
 
@@ -384,6 +403,52 @@ class SymbolicCompound(t.Sequence[SymbolicStatement], SymbolicStatement):
     def eval(self, context: SymbolicContext) -> None:
         for statement in self._statements:
             statement.eval(context)
+
+
+@attr.s(frozen=True, auto_attribs=True, slots=True)
+class SymbolicIf(SymbolicStatement):
+    """Represents a sequence of symbolic if."""
+    true_body: SymbolicCompound
+    false_body: SymbolicCompound
+    condition: SymbolicValue
+
+    def to_dict(self) -> t.Dict[str, t.Any]:
+        return {
+            "kind": "while",
+            "trueBranchBody": self.true_body.to_dict(),
+            "falseBranchBody": self.false_body.to_dict(),
+            "condition": self.condition.to_dict(),
+        }
+
+    def eval(self, context: SymbolicContext) -> None:
+        cond = self.condition.eval(context)
+        if isinstance(cond, bool) and self.condition.eval(context):
+            self.true_body.eval(context)
+        elif isinstance(cond, bool) and not self.condition.eval(context):
+            self.false_body.eval(context)
+        else:
+            self.true_body.eval(context)
+            self.false_body.eval(context)
+
+
+@attr.s(frozen=True, auto_attribs=True, slots=True)
+class SymbolicWhile(SymbolicStatement):
+    """Represents a sequence of symbolic while."""
+    body: SymbolicCompound
+    condition: SymbolicValue
+
+    def to_dict(self) -> t.Dict[str, t.Any]:
+        return {
+            "kind": "while",
+            "body": self.body.to_dict(),
+            "condition": self.condition.to_dict(),
+        }
+
+    def eval(self, context: SymbolicContext) -> None:
+        logger.debug("TODO: Make SymbolicWhile.eval consider multiple loop iterations.")
+        cond = self.condition.eval(context)
+        if not isinstance(cond, bool) or cond:
+            self.body.eval(context)
 
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
