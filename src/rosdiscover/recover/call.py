@@ -15,6 +15,7 @@ __all__ = (
 
 import abc
 import typing as t
+from loguru import logger
 
 import attr
 
@@ -84,7 +85,7 @@ class Publish(SymbolicRosApiCall):
         }
 
     def eval(self, context: SymbolicContext) -> None:
-        # TODO: Add analsis here later
+        logger.warning("TODO: Add analsis to Publish.eval")
         return
 
     def is_unknown(self) -> bool:
@@ -102,7 +103,7 @@ class RateSleep(SymbolicRosApiCall):
         }
 
     def eval(self, context: SymbolicContext) -> None:
-        # TODO: Add analsis here later
+        logger.warning("TODO: Add analsis to RateSleep.eval")
         return
 
     def is_unknown(self) -> bool:
