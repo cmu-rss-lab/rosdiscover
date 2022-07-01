@@ -172,7 +172,6 @@ class SymbolicNodeName(SymbolicString):
         return False
 
 
-
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class StringLiteral(SymbolicString):
     """Represents a literal string value."""
@@ -258,6 +257,7 @@ class BoolLiteral(SymbolicBool):
 
     def is_unknown(self) -> bool:
         return False
+
 
 class SymbolicNodeHandle(SymbolicString, SymbolicValue, abc.ABC):
     """Represents a symbolic node handle."""
