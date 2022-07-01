@@ -15,12 +15,14 @@ __all__ = (
 
 import abc
 import typing as t
+from loguru import logger
 
 import attr
 
 from .symbolic import (
     SymbolicBool,
     SymbolicContext,
+    SymbolicFloat,
     SymbolicStatement,
     SymbolicString,
     SymbolicValue,
@@ -70,6 +72,42 @@ class Publisher(SymbolicRosApiCall):
 
     def is_unknown(self) -> bool:
         return self.topic.is_unknown()
+
+
+@attr.s(frozen=True, auto_attribs=True, slots=True)
+class Publish(SymbolicRosApiCall):
+    publisher: str
+
+    def to_dict(self) -> t.Dict[str, t.Any]:
+        return {
+            "kind": "publish",
+            "publisher": self.publisher,
+        }
+
+    def eval(self, context: SymbolicContext) -> None:
+        logger.warning("TODO: Add analsis to Publish.eval")
+        return
+
+    def is_unknown(self) -> bool:
+        return self.publisher == "unknown"
+
+
+@attr.s(frozen=True, auto_attribs=True, slots=True)
+class RateSleep(SymbolicRosApiCall):
+    rate: SymbolicFloat
+
+    def to_dict(self) -> t.Dict[str, t.Any]:
+        return {
+            "kind": "ratesleep",
+            "rate": self.rate.to_dict(),
+        }
+
+    def eval(self, context: SymbolicContext) -> None:
+        logger.warning("TODO: Add analsis to RateSleep.eval")
+        return
+
+    def is_unknown(self) -> bool:
+        return self.rate.is_unknown()
 
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
