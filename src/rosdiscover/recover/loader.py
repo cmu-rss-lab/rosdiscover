@@ -110,7 +110,7 @@ class SymbolicProgramLoader:
         elif kind == "string-literal":
             return self._load_string_literal(dict_)
         elif kind == "bool-literal":
-            return self._load_bool_literal(dict_)            
+            return self._load_bool_literal(dict_)
         elif kind == "node-handle":
             return self._load_node_handle(dict_)
         elif kind == "variable-reference":
