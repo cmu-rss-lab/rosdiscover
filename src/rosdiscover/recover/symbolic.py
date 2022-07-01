@@ -434,7 +434,7 @@ class SymbolicWhile(SymbolicStatement):
         }
 
     def eval(self, context: SymbolicContext) -> None:
-        logger.debug(f"TODO: Make SymbolicWhile.eval consider multiple loop iterations.")
+        logger.debug("TODO: Make SymbolicWhile.eval consider multiple loop iterations.")
         cond = self.condition.eval(context)
         if self.condition.is_unknown() or cond:
             self.body.eval(context)
