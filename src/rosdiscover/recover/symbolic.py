@@ -215,6 +215,7 @@ class SymbolicInteger(SymbolicValue, abc.ABC):
 class SymbolicBool(SymbolicValue, abc.ABC):
     """Represents a symbolic boolean value."""
 
+
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class BoolLiteral(SymbolicBool):
     """Represents a literal string value."""
