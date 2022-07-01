@@ -378,9 +378,9 @@ class SymbolicIf(SymbolicStatement):
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
             "kind": "while",
-            "trueBranchBody": [self.true_body.to_dict()],
-            "falseBranchBody": [self.false_body.to_dict()],
-            "condition": [self.condition.to_dict()],
+            "trueBranchBody": self.true_body.to_dict(),
+            "falseBranchBody": self.false_body.to_dict(),
+            "condition": self.condition.to_dict(),
         }
 
     def eval(self, context: SymbolicContext) -> None:
