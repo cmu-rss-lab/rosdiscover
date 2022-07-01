@@ -27,6 +27,7 @@ from .symbolic import (
     Concatenate,
     StringLiteral,
     FloatLiteral,
+    BoolLiteral,
     SymbolicArg,
     SymbolicAssignment,
     SymbolicCompound,
