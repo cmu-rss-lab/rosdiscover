@@ -347,10 +347,16 @@ class SymbolicAssignment(SymbolicStatement):
         context.store(self.variable, concrete_value)
 
 
-@attr.s(frozen=True, auto_attribs=True, slots=True)
+@attr.s(auto_attribs=True, slots=True)
 class SymbolicCompound(t.Sequence[SymbolicStatement], SymbolicStatement):
     """Represents a sequence of symbolic statements."""
     _statements: t.Sequence[SymbolicStatement] = attr.ib(factory=list)
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self._statements == other._statements
+
+    def __hash__(self):
+        return hash((str(self.to_dict())))
 
     def contains(self, stmt: SymbolicStatement, f: t.Mapping[str, SymbolicFunction]) -> bool:
         for s in self._statements:
