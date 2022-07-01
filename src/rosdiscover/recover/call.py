@@ -85,11 +85,7 @@ class Publish(SymbolicRosApiCall):
         }
 
     def eval(self, context: SymbolicContext) -> None:
-<<<<<<< HEAD
-        # TODO: Add analsis here later
-=======
         logger.warning("TODO: Add analsis to Publish.eval")
->>>>>>> master
         return
 
     def is_unknown(self) -> bool:
@@ -107,11 +103,7 @@ class RateSleep(SymbolicRosApiCall):
         }
 
     def eval(self, context: SymbolicContext) -> None:
-<<<<<<< HEAD
-        # TODO: Add analsis here later
-=======
         logger.warning("TODO: Add analsis to RateSleep.eval")
->>>>>>> master
         return
 
     def is_unknown(self) -> bool:
