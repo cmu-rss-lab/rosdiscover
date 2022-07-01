@@ -415,7 +415,7 @@ class SymbolicIf(SymbolicStatement):
             self.true_body.eval(context)
         elif not self.condition.eval(context):
             self.false_body.eval(context)
-        else: 
+        else:
             self.true_body.eval(context)
             self.false_body.eval(context)
 
