@@ -411,9 +411,10 @@ class SymbolicIf(SymbolicStatement):
         }
 
     def eval(self, context: SymbolicContext) -> None:
-        if self.condition.eval(context):
+        cond = self.condition.eval(context)
+        if isinstance(cond, bool) and self.condition.eval(context):
             self.true_body.eval(context)
-        elif not self.condition.eval(context):
+        elif isinstance(cond, bool) and not self.condition.eval(context):
             self.false_body.eval(context)
         else:
             self.true_body.eval(context)
@@ -436,7 +437,7 @@ class SymbolicWhile(SymbolicStatement):
     def eval(self, context: SymbolicContext) -> None:
         logger.debug("TODO: Make SymbolicWhile.eval consider multiple loop iterations.")
         cond = self.condition.eval(context)
-        if self.condition.is_unknown() or cond:
+        if not isinstance(cond, bool) or cond:
             self.body.eval(context)
 
 
