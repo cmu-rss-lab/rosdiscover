@@ -384,9 +384,9 @@ class SymbolicIf(SymbolicStatement):
         }
 
     def eval(self, context: SymbolicContext) -> None:
-        if self.condition.eval(context) == True:
+        if self.condition.eval(context):
             self.true_body.eval(context)
-        elif self.condition.eval(context) == False:
+        elif not self.condition.eval(context):
             self.false_body.eval(context)
         else: 
             self.true_body.eval(context)
