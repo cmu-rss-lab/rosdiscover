@@ -225,6 +225,7 @@ class SymbolicProgramLoader:
         return SymbolicFunctionCall(
             callee=dict_["callee"],
             arguments=arguments,
+            control_dependencies = dict_["control_dependencies"],
         )
 
     def _load_statement(self, dict_: t.Mapping[str, t.Any]) -> SymbolicStatement:

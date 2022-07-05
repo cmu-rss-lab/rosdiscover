@@ -456,6 +456,7 @@ class SymbolicFunctionCall(SymbolicStatement):
     """
     callee: str
     arguments: t.Mapping[str, SymbolicValue]
+    control_dependencies: t.Dict[str, t.Any] 
 
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
