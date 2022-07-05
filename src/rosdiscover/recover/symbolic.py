@@ -267,6 +267,7 @@ class SymbolicUnknown(
     SymbolicNodeHandle,
     SymbolicInteger,
     SymbolicBool,
+    SymbolicFloat,
     SymbolicString,
     SymbolicValue,
 ):
