@@ -85,7 +85,7 @@ class SymbolicProgramLoader:
     def _load_float_literal(self, dict_: t.Mapping[str, t.Any]) -> FloatLiteral:
         if dict_["kind"] == "unknown":
             return SymbolicUnknown()
-            
+
         assert dict_["kind"] == "float-literal"
         return FloatLiteral(value=float(dict_["literal"]))
 
