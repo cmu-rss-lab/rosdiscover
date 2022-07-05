@@ -79,6 +79,9 @@ class Publish(SymbolicRosApiCall):
     publisher: str
     control_dependencies: t.Dict[str, t.Any]
 
+    def __hash__(self):
+        return hash(str(self.to_dict()))
+
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
             "kind": "publish",

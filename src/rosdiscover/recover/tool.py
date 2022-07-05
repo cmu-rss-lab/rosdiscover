@@ -451,7 +451,7 @@ class NodeRecoveryTool:
         logger.debug(f"rate_sleeps: {summary.rate_sleeps}")
         logger.debug(f"publish_calls: {summary.publish_calls}")
 
-        logger.debug(f"control_dependencies:")
+        logger.debug(f"control dependencies:")
         for p in summary.publish_calls:
             logger.debug(p.control_dependencies)
         for f in summary.function_calls:

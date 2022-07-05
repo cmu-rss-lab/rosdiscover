@@ -153,7 +153,7 @@ class SymbolicProgramLoader:
         return RosInit(name)
 
     def _load_publish(self, dict_: t.Mapping[str, t.Any]) -> Publish:
-        return Publish(dict_["publisher"])
+        return Publish(publisher=dict_["publisher"], control_dependencies=dict_["control_dependencies"])
 
     def _load_rate_sleep(self, dict_: t.Mapping[str, t.Any]) -> RateSleep:
         rate = self._load_float(dict_["rate"])

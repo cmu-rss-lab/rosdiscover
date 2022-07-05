@@ -106,21 +106,21 @@ class SymbolicProgram:
 
     @property
     def function_calls(self) -> t.Set[SymbolicFunctionCall]:
-        result = set()
+        result = list()
         for func in self.functions.values():
             for stmt in func.body:
-                if isinstance(stmt, SymbolicFunctionCall):
-                    result.add(stmt)
+                if isinstance(stmt, SymbolicFunctionCall) and stmt not in result:
+                    result.append(stmt)
 
         return result
 
     @property
     def publish_calls(self) -> t.Set[Publish]:
-        result = set()
+        result = list()
         for func in self.functions.values():
             for stmt in func.body:
-                if isinstance(stmt, Publish):
-                    result.add(stmt)
+                if isinstance(stmt, Publish) and stmt not in result:
+                    result.append(stmt)
 
         return result
 
