@@ -32,6 +32,7 @@ import attr
 
 from .symbolic import *
 from .call import Publish, RateSleep
+from .symbolic import SymbolicFunctionCall
 from .call import Subscriber
 
 
@@ -100,6 +101,16 @@ class SymbolicProgram:
         result = set()
         for sub in self.subscribers:
             result.add(self.functions[sub.callback_name])
+
+        return result
+
+    @property
+    def function_calls(self) -> t.Set[SymbolicFunctionCall]:
+        result = set()
+        for func in self.functions.values():
+            for stmt in func.body:
+                if isinstance(stmt, SymbolicFunctionCall):
+                    result.add(stmt)
 
         return result
 

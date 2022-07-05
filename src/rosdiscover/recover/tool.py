@@ -446,9 +446,15 @@ class NodeRecoveryTool:
         summary = model_loader.load(json_model)
         logger.debug(f"recovered node summary: {summary}")
 
-        logger.debug(f"publish_calls: {summary.publish_calls}")
         logger.debug(f"subscriber_callbacks: {summary.subscriber_callbacks}")
         logger.debug(f"publish_calls_in_sub_callback: {summary.publish_calls_in_sub_callback}")
         logger.debug(f"rate_sleeps: {summary.rate_sleeps}")
+        logger.debug(f"publish_calls: {summary.publish_calls}")
+
+        logger.debug(f"control_dependencies:")
+        for p in summary.publish_calls:
+            logger.debug(p.control_dependencies)
+        for f in summary.function_calls:
+            logger.debug(f.control_dependencies)
 
         return summary

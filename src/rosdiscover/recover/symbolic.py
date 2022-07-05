@@ -466,9 +466,7 @@ class SymbolicFunctionCall(SymbolicStatement):
     """
     callee: str
     arguments: t.Mapping[str, SymbolicValue]
-<<<<<<< HEAD
     control_dependencies: t.Dict[str, t.Any] 
-=======
     
     def contains(self, stmt: SymbolicStatement, f: t.Mapping[str, SymbolicFunction]) -> bool:
         if self == stmt:
@@ -476,7 +474,6 @@ class SymbolicFunctionCall(SymbolicStatement):
 
         if self.callee in f:
             return f[self.callee].body.contains(stmt, f)
->>>>>>> origin/publishing_subscribers
 
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
