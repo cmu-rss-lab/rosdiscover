@@ -155,7 +155,7 @@ class SymbolicProgramLoader:
         return Publish(dict_["publisher"])
 
     def _load_rate_sleep(self, dict_: t.Mapping[str, t.Any]) -> RateSleep:
-        rate = self._load_float_literal(dict_["rate"])
+        rate = self._load_float(dict_["rate"])
         return RateSleep(rate)
 
     def _load_publishes_to(self, dict_: t.Mapping[str, t.Any]) -> Publisher:
