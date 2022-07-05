@@ -31,6 +31,7 @@ from .symbolic import (
     SymbolicArg,
     SymbolicAssignment,
     SymbolicCompound,
+    SymbolicFloat,
     SymbolicFunction,
     SymbolicFunctionCall,
     SymbolicNodeHandle,
@@ -69,23 +70,14 @@ class SymbolicProgramLoader:
         )
 
     def _load_bool_literal(self, dict_: t.Mapping[str, t.Any]) -> BoolLiteral:
-        if dict_["kind"] == "unknown":
-            return SymbolicUnknown()
-
         assert dict_["kind"] == "bool-literal"
         return BoolLiteral(dict_["literal"])
 
     def _load_string_literal(self, dict_: t.Mapping[str, t.Any]) -> StringLiteral:
-        if dict_["kind"] == "unknown":
-            return SymbolicUnknown()
-
         assert dict_["kind"] == "string-literal"
         return StringLiteral(dict_["literal"])
 
     def _load_float_literal(self, dict_: t.Mapping[str, t.Any]) -> FloatLiteral:
-        if dict_["kind"] == "unknown":
-            return SymbolicUnknown()
-
         assert dict_["kind"] == "float-literal"
         return FloatLiteral(value=float(dict_["literal"]))
 
@@ -111,6 +103,11 @@ class SymbolicProgramLoader:
         assert isinstance(value, SymbolicString)
         return value
 
+    def _load_float(self, dict_: t.Mapping[str, t.Any]) -> SymbolicFloat:
+        value = self._load_value(dict_)
+        assert isinstance(value, SymbolicFloat)
+        return value
+
     def _load_value(self, dict_: t.Mapping[str, t.Any]) -> SymbolicValue:
         kind: str = dict_["kind"]
         if kind == "concatenate":
@@ -121,6 +118,8 @@ class SymbolicProgramLoader:
             return self._load_string_literal(dict_)
         elif kind == "bool-literal":
             return self._load_bool_literal(dict_)
+        elif kind == "float-literal":
+            return self._load_float_literal(dict_)
         elif kind == "node-handle":
             return self._load_node_handle(dict_)
         elif kind == "variable-reference":
