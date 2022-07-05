@@ -69,14 +69,23 @@ class SymbolicProgramLoader:
         )
 
     def _load_bool_literal(self, dict_: t.Mapping[str, t.Any]) -> BoolLiteral:
+        if dict_["kind"] == "unknown":
+            return SymbolicUnknown()
+
         assert dict_["kind"] == "bool-literal"
         return BoolLiteral(dict_["literal"])
 
     def _load_string_literal(self, dict_: t.Mapping[str, t.Any]) -> StringLiteral:
+        if dict_["kind"] == "unknown":
+            return SymbolicUnknown()
+
         assert dict_["kind"] == "string-literal"
         return StringLiteral(dict_["literal"])
 
     def _load_float_literal(self, dict_: t.Mapping[str, t.Any]) -> FloatLiteral:
+        if dict_["kind"] == "unknown":
+            return SymbolicUnknown()
+            
         assert dict_["kind"] == "float-literal"
         return FloatLiteral(value=float(dict_["literal"]))
 
