@@ -164,7 +164,7 @@ class SymbolicProgramLoader:
 
     def _load_subscribes_to(self, dict_: t.Mapping[str, t.Any]) -> Subscriber:
         topic = self._load_string(dict_["name"])
-        return Subscriber(topic, dict_["format"], dict_["callback"]["callee"])
+        return Subscriber(topic, dict_["format"], dict_["callback-name"])
 
     def _load_calls_service(self, dict_: t.Mapping[str, t.Any]) -> ServiceCaller:
         service = self._load_string(dict_["name"])

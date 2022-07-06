@@ -82,6 +82,7 @@ class Publish(SymbolicRosApiCall):
         return {
             "kind": "publish",
             "publisher": self.publisher,
+            "control_dependencies": self.control_dependencies,
         }
 
     def eval(self, context: SymbolicContext) -> None:
