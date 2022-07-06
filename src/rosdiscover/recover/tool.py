@@ -451,10 +451,16 @@ class NodeRecoveryTool:
         logger.debug(f"rate_sleeps: {summary.rate_sleeps}")
         logger.debug(f"publish_calls: {summary.publish_calls}")
 
-        logger.debug(f"control dependencies:")
+        conditions = set()
         for p in summary.publish_calls:
-            logger.debug(p.control_dependencies)
+            for c in p.control_dependencies:
+                if c["condition"]:
+                    conditions.add(c["condition"])
         for f in summary.function_calls:
-            logger.debug(f.control_dependencies)
+            for c in p.control_dependencies:
+                if c["condition"]:
+                    conditions.add(c["condition"])
+        cprint = "\n".join(conditions)
+        logger.debug(f"control dependencies: \n {cprint}")
 
         return summary

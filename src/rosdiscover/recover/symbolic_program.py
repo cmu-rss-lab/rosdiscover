@@ -126,11 +126,11 @@ class SymbolicProgram:
 
     @property
     def publish_calls_in_sub_callback(self) -> t.Set[Publish]:
-        result = set()
+        result = list()
         for pub_call in self.publish_calls:
             for callback in self.subscriber_callbacks:
-                if callback.body.contains(pub_call, self.functions):
-                    result.add(pub_call)
+                if callback.body.contains(pub_call, self.functions) and pub_call not in result:
+                    result.append(pub_call)
 
         return result        
 
