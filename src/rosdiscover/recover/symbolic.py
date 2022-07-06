@@ -479,6 +479,7 @@ class SymbolicFunctionCall(SymbolicStatement):
         return {
             "kind": "call",
             "callee": self.callee,
+            "control_dependencies": self.control_dependencies,
             "arguments": {
                 name: arg.to_dict() for (name, arg) in self.arguments.items()
             },
