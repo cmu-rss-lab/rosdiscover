@@ -405,7 +405,7 @@ class SymbolicIf(SymbolicStatement):
 
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
-            "kind": "while",
+            "kind": "if",
             "trueBranchBody": self.true_body.to_dict(),
             "falseBranchBody": self.false_body.to_dict(),
             "condition": self.condition.to_dict(),
