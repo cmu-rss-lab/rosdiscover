@@ -454,13 +454,18 @@ class NodeRecoveryTool:
         conditions = set()
         for p in summary.publish_calls:
             for c in p.control_dependencies:
-                if c["condition"]:
+                logger.debug(p.control_dependencies)
+                if "condition" in c:
                     conditions.add(c["condition"])
         for f in summary.function_calls:
-            for c in p.control_dependencies:
-                if c["condition"]:
+            for c in f.control_dependencies:
+                logger.debug(f.control_dependencies)
+                if "condition" in c:
                     conditions.add(c["condition"])
         cprint = "\n".join(conditions)
-        logger.debug(f"control dependencies: \n {cprint}")
+        logger.debug(f"control dependencies: \n{cprint}")
+
+        with open('./conditions.txt', 'a') as f:
+            f.write(cprint)
 
         return summary
