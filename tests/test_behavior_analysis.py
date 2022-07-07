@@ -130,5 +130,6 @@ class TestStringMethods(unittest.TestCase):
         self.assert_sub_callbacks(model, 
             set()
         )    
+
 if __name__ == '__main__':
     unittest.main()
