@@ -17,7 +17,6 @@ from .config import Config
 from .interpreter import Interpreter, SystemSummary
 from .observer import Observer
 from .recover import NodeRecoveryTool
-from .analyzer import Analyzer
 from roswire.util import Stopwatch
 
 DESC = 'discovery of ROS architectures'
