@@ -54,18 +54,6 @@ def recover(args: argparse.Namespace) -> None:
         print("saved recovered model to disk")
 
 
-def analyze(args) -> None:
-    """Analyzes a node"""
-    config = Config.from_yaml_string(args.config)
-    node_name = args.node
-    pkg_name = args.package
-    logger.info(f"analyzing architecture for image [{config.image}]")
-    with Analyzer.for_config(config) as analyzer:
-        #ros_dist = analzyer.app.description.distribution
-        #logger.info(f'Detected {ros_dist.ros} version: {ros_dist.name}')
-        analyzer.analyze(pkg_name, node_name)
-
-
 def _launch(config: Config) -> SystemSummary:
     logger.info(f"reconstructing architecture for image [{config.image}]")
     with Interpreter.for_config(config) as interpreter:
@@ -365,15 +353,6 @@ def main(args: t.Optional[t.Sequence[str]] = None) -> None:
                    '- indicates stdin.'
                    '{Config.__doc__}')
     p.set_defaults(func=observe)
-    
-    # ----------------- Analyze --------------------
-    p = subparsers.add_parser('analyze',
-                              help='analzyes architecture',
-                              formatter_class=MultiLineFormatter)
-    p.add_argument('config', type=argparse.FileType('r'), help=CONFIG_HELP)
-    p.add_argument('package', type=str, help='the name of the package to which the node belongs')
-    p.add_argument('node', type=str, help='the name of the node')
-    p.set_defaults(func=analyze)
 
     parsed_args = parser.parse_args(args)
     if 'func' in parsed_args:
