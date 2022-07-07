@@ -1,5 +1,7 @@
+# -*- coding: utf-8 -*-
+ 
+import os
 import unittest
-import subprocess
 
 from rosdiscover.acme import AcmeGenerator
 from rosdiscover.config import Config
@@ -10,10 +12,12 @@ from rosdiscover.recover.call import RateSleep
 from rosdiscover.recover.model import CMakeListsInfo, RecoveredNodeModel
 from rosdiscover.recover.analyzer import SymbolicProgramAnalyzer
 
+DIR_HERE = os.path.dirname(__file__)
+
 class TestStringMethods(unittest.TestCase):
 
-    autoware_file = "/home/tdurschm/rosdiscover-evaluation/experiments/recovery/subjects/autoware/experiment.yml"
-    turtlebot_file = "/home/tdurschm/rosdiscover-evaluation/experiments/recovery/subjects/turtlebot/experiment.yml"
+    autoware_file = os.path.join(DIR_HERE, 'configs', 'autoware.yml')
+    turtlebot_file = os.path.join(DIR_HERE, 'configs', 'turtlebot.yml')
 
     def get_model(self, config_path: str, package:str, node:str) -> RecoveredNodeModel:
         config = Config.load(config_path)

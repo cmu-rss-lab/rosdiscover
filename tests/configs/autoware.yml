@@ -1,0 +1,20 @@
+type: recovery
+subject: autoware
+image: rosdiscover-experiments/autoware:static
+docker:
+  type: custom
+  image: rosdiscover-experiments/autoware:static
+  filename: ../../../../docker/Dockerfile.autoware
+  context: ../../../../docker
+distro: kinetic
+build_command: ./catkin_make_release -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+sources:
+- /opt/ros/kinetic/setup.bash
+- /home/autoware/Autoware/ros/devel/setup.bash
+launches:
+- /root/.autoware/my_launch/my_detection.launch
+- /root/.autoware/my_launch/my_localization.launch
+- /root/.autoware/my_launch/my_map.launch
+- /root/.autoware/my_launch/my_mission_planning.launch
+- /root/.autoware/my_launch/my_motion_planning.launch
+- /root/.autoware/my_launch/my_sensing.launch
