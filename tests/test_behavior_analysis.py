@@ -8,6 +8,7 @@ from rosdiscover.observer import Observer
 from rosdiscover.recover import NodeRecoveryTool
 from rosdiscover.recover.call import RateSleep
 from rosdiscover.recover.model import CMakeListsInfo, RecoveredNodeModel
+from rosdiscover.recover.analyzer import SymbolicProgramAnalyzer
 
 class TestStringMethods(unittest.TestCase):
 
@@ -22,28 +23,28 @@ class TestStringMethods(unittest.TestCase):
 
     def assert_publish_calls(self, model, publishers):
         publish_calls = set()
-        for p in model.program.publish_calls:
+        for p in SymbolicProgramAnalyzer.publish_calls(model.program):
             publish_calls.add(p.publisher)
         
         self.assertSetEqual(publish_calls, publishers)
 
     def assert_publish_calls_in_sub_callback(self, model, publishers):
         publish_calls_in_sub_callback = set()
-        for p in model.program.publish_calls_in_sub_callback:
+        for p in SymbolicProgramAnalyzer.publish_calls_in_sub_callback(model.program):
             publish_calls_in_sub_callback.add(p.publisher)
         
         self.assertSetEqual(publish_calls_in_sub_callback, publishers)
 
     def assert_sub_callbacks(self, model, callbacks):
         sub_callback = set()
-        for c in model.program.subscriber_callbacks:
+        for c in SymbolicProgramAnalyzer.subscriber_callbacks(model.program):
             sub_callback.add(c.name)
         
         self.assertSetEqual(sub_callback, callbacks)
 
     def assert_rate_sleeps(self, model, sleeps):
         rate_sleeps = set()
-        for r in model.program.rate_sleeps:
+        for r in SymbolicProgramAnalyzer.rate_sleeps(model.program):
             rate_sleeps.add(r.rate.value)
         
         self.assertSetEqual(rate_sleeps, sleeps)        

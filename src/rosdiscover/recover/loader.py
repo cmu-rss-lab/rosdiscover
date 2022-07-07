@@ -23,9 +23,9 @@ from .call import (
     Subscriber,
     WriteParam,
 )
-from .symbolic_program import SymbolicProgram
 
 from .symbolic import (
+    SymbolicProgram,
     Concatenate,
     StringLiteral,
     FloatLiteral,
