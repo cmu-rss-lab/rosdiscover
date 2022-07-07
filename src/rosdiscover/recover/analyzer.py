@@ -85,9 +85,9 @@ class SymbolicProgramAnalyzer:
         result = set()
         for pub_call in cls.publish_calls(program):
             for while_stmt in cls.while_loops(program):
-                if while_stmt.body.contains(pub_call, cls.functions(program)):
+                if while_stmt.body.contains(pub_call, program.functions):
                     for rate in cls.rate_sleeps(program):
-                        if while_stmt.body.contains(rate, cls.functions(program)):
+                        if while_stmt.body.contains(rate, program.functions):
                             result.add(pub_call)
 
         return result
