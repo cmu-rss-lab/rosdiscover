@@ -366,7 +366,7 @@ class SymbolicAssignment(SymbolicStatement):
         context.store(self.variable, concrete_value)
 
 
-@attr.s(auto_attribs=True, slots=True)
+@attr.s(frozen=True, auto_attribs=True, slots=True)
 class SymbolicCompound(t.Sequence[SymbolicStatement], SymbolicStatement):
     """Represents a sequence of symbolic statements."""
     _statements: t.Sequence[SymbolicStatement] = attr.ib(factory=list)
@@ -437,8 +437,8 @@ class SymbolicWhile(SymbolicStatement):
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
             "kind": "while",
-            "body": [self.body.to_dict()],
-            "condition": [self.condition.to_dict()],
+            "body": self.body.to_dict(),
+            "condition": self.condition.to_dict(),
         }
 
     def eval(self, context: SymbolicContext) -> None:
