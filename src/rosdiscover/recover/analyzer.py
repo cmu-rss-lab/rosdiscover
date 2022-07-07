@@ -20,8 +20,8 @@ from .call import Subscriber
 @attr.s
 class SymbolicProgramAnalyzer:
 
-    @staticmethod
-    def subscribers(program: SymbolicProgram) -> t.Set[Subscriber]:
+    @classmethod
+    def subscribers(cls, program: SymbolicProgram) -> t.Set[Subscriber]:
         result = set()
         for func in program.functions.values():
             for stmt in func.body:
@@ -30,8 +30,8 @@ class SymbolicProgramAnalyzer:
 
         return result
 
-    @staticmethod
-    def rate_sleeps(program: SymbolicProgram) -> t.Set[RateSleep]:
+    @classmethod
+    def rate_sleeps(cls, program: SymbolicProgram) -> t.Set[RateSleep]:
         result = set()
         for func in program.functions.values():
             for stmt in func.body:
@@ -40,16 +40,16 @@ class SymbolicProgramAnalyzer:
 
         return result
 
-    @staticmethod
-    def subscriber_callbacks(program: SymbolicProgram) -> t.Set[SymbolicFunction]:
+    @classmethod
+    def subscriber_callbacks(cls, program: SymbolicProgram) -> t.Set[SymbolicFunction]:
         result = set()
-        for sub in SymbolicProgramAnalyzer.subscribers(program):
+        for sub in cls.subscribers(program):
             result.add(program.functions[sub.callback_name])
 
         return result
 
-    @staticmethod
-    def publish_calls(program: SymbolicProgram) -> t.Set[Publish]:
+    @classmethod
+    def publish_calls(cls, program: SymbolicProgram) -> t.Set[Publish]:
         result = set()
         for func in program.functions.values():
             for stmt in func.body:
@@ -58,11 +58,11 @@ class SymbolicProgramAnalyzer:
 
         return result
 
-    @staticmethod
-    def publish_calls_in_sub_callback(program: SymbolicProgram) -> t.Set[Publish]:
+    @classmethod
+    def publish_calls_in_sub_callback(cls, program: SymbolicProgram) -> t.Set[Publish]:
         result = set()
-        for pub_call in SymbolicProgramAnalyzer.publish_calls(program):
-            for callback in SymbolicProgramAnalyzer.subscriber_callbacks(program):
+        for pub_call in cls.publish_calls(program):
+            for callback in cls.subscriber_callbacks(program):
                 if callback.body.contains(pub_call, program.functions):
                     result.add(pub_call)
 
