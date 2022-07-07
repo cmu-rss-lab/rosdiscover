@@ -580,6 +580,7 @@ class SymbolicFunction:
         """Returns the names of functions that are called within this function."""
         return set(stmt.callee for stmt in self.body if isinstance(stmt, SymbolicFunctionCall))
 
+
 @attr.s(frozen=True, slots=True)
 class SymbolicProgram:
     """Provides a symbolic summary for a given program.

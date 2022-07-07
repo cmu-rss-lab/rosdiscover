@@ -7,7 +7,6 @@ __all__ = (
 
 import typing as t
 
-from loguru import logger
 import attr
 
 from .symbolic import (
@@ -16,6 +15,7 @@ from .symbolic import (
 
 from .call import Publish, RateSleep
 from .call import Subscriber
+
 
 @attr.s
 class SymbolicProgramAnalyzer:
@@ -62,3 +62,9 @@ class SymbolicProgramAnalyzer:
                     result.add(pub_call)
 
         return result
+
+SymbolicProgramAnalyzer.subscribers = staticmethod(SymbolicProgramAnalyzer.subscribers)
+SymbolicProgramAnalyzer.rate_sleeps = staticmethod(SymbolicProgramAnalyzer.rate_sleeps)
+SymbolicProgramAnalyzer.subscriber_callbacks = staticmethod(SymbolicProgramAnalyzer.subscriber_callbacks)
+SymbolicProgramAnalyzer.publish_calls = staticmethod(SymbolicProgramAnalyzer.publish_calls)
+SymbolicProgramAnalyzer.publish_cpublish_calls_in_sub_callbackalls = staticmethod(SymbolicProgramAnalyzer.publish_calls_in_sub_callback)
