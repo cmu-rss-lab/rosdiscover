@@ -83,11 +83,11 @@ class SymbolicProgramAnalyzer:
     @classmethod
     def periodic_publish_calls(cls, program: SymbolicProgram) -> t.Set[Publish]:
         result = set()
-        for pub_call in cls.publish_calls():
-            for while_stmt in cls.while_loops:
-                if while_stmt.body.contains(pub_call, cls.functions):
-                    for rate in cls.rate_sleeps:
-                        if while_stmt.body.contains(rate, cls.functions):
+        for pub_call in cls.publish_calls(program):
+            for while_stmt in cls.while_loops(program):
+                if while_stmt.body.contains(pub_call, cls.functions(program)):
+                    for rate in cls.rate_sleeps(program):
+                        if while_stmt.body.contains(rate, cls.functions(program)):
                             result.add(pub_call)
 
         return result
