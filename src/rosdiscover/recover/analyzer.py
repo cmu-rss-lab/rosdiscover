@@ -20,6 +20,7 @@ from .call import Subscriber
 @attr.s
 class SymbolicProgramAnalyzer:
 
+    @staticmethod
     def subscribers(program: SymbolicProgram) -> t.Set[Subscriber]:
         result = set()
         for func in program.functions.values():
@@ -29,6 +30,7 @@ class SymbolicProgramAnalyzer:
 
         return result
 
+    @staticmethod
     def rate_sleeps(program: SymbolicProgram) -> t.Set[RateSleep]:
         result = set()
         for func in program.functions.values():
@@ -38,6 +40,7 @@ class SymbolicProgramAnalyzer:
 
         return result
 
+    @staticmethod
     def subscriber_callbacks(program: SymbolicProgram) -> t.Set[SymbolicFunction]:
         result = set()
         for sub in SymbolicProgramAnalyzer.subscribers(program):
@@ -45,6 +48,7 @@ class SymbolicProgramAnalyzer:
 
         return result
 
+    @staticmethod
     def publish_calls(program: SymbolicProgram) -> t.Set[Publish]:
         result = set()
         for func in program.functions.values():
@@ -54,6 +58,7 @@ class SymbolicProgramAnalyzer:
 
         return result
 
+    @staticmethod
     def publish_calls_in_sub_callback(program: SymbolicProgram) -> t.Set[Publish]:
         result = set()
         for pub_call in SymbolicProgramAnalyzer.publish_calls(program):
@@ -62,9 +67,3 @@ class SymbolicProgramAnalyzer:
                     result.add(pub_call)
 
         return result
-
-SymbolicProgramAnalyzer.subscribers = staticmethod(SymbolicProgramAnalyzer.subscribers)
-SymbolicProgramAnalyzer.rate_sleeps = staticmethod(SymbolicProgramAnalyzer.rate_sleeps)
-SymbolicProgramAnalyzer.subscriber_callbacks = staticmethod(SymbolicProgramAnalyzer.subscriber_callbacks)
-SymbolicProgramAnalyzer.publish_calls = staticmethod(SymbolicProgramAnalyzer.publish_calls)
-SymbolicProgramAnalyzer.publish_calls_in_sub_callback = staticmethod(SymbolicProgramAnalyzer.publish_calls_in_sub_callback)
