@@ -463,11 +463,11 @@ class SymbolicFunctionCall(SymbolicStatement):
     callee: str
     arguments: t.Mapping[str, SymbolicValue]
 
-    def contains(self, stmt: SymbolicStatement, program_function_mapf: t.Mapping[str, SymbolicFunction]) -> bool:
+    def contains(self, stmt: SymbolicStatement, program_function_map: t.Mapping[str, SymbolicFunction]) -> bool:
         if self == stmt:
             return True
 
-        if self.callee in f:
+        if self.callee in program_function_map:
             return program_function_map[self.callee].body.contains(stmt, program_function_map)
 
         return False
