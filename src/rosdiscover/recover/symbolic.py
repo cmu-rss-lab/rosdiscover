@@ -15,11 +15,11 @@ __all__ = (
     "SymbolicNodeHandleImpl",
     "SymbolicNodeName",
     "SymbolicParameter",
+    "SymbolicProgram",
     "SymbolicStatement",
     "SymbolicString",
     "SymbolicFloat",
     "SymbolicUnknown",
-    "SymbolicProgram",
 )
 
 import abc

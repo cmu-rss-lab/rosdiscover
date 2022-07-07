@@ -23,9 +23,7 @@ from .call import (
     Subscriber,
     WriteParam,
 )
-
 from .symbolic import (
-    SymbolicProgram,
     Concatenate,
     StringLiteral,
     FloatLiteral,
@@ -40,6 +38,7 @@ from .symbolic import (
     SymbolicNodeHandleImpl,
     SymbolicNodeName,
     SymbolicParameter,
+    SymbolicProgram,
     SymbolicStatement,
     SymbolicString,
     SymbolicUnknown,
