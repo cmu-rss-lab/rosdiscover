@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
-import re
-from turtle import st
 
 __all__ = (
     "Concatenate",
@@ -25,9 +23,9 @@ __all__ = (
 
 import abc
 import enum
-import typing
 import typing as t
 
+from .symbolic import SymbolicProgram
 from loguru import logger
 import attr
 
@@ -465,7 +463,7 @@ class SymbolicFunctionCall(SymbolicStatement):
     """
     callee: str
     arguments: t.Mapping[str, SymbolicValue]
-    
+
     def contains(self, stmt: SymbolicStatement, f: t.Mapping[str, SymbolicFunction]) -> bool:
         if self == stmt:
             return True
