@@ -3,12 +3,12 @@ __all__ = (
     "DeleteParam",
     "HasParam",
     "Publisher",
-    "Subscriber",
     "ReadParam",
     "ReadParamWithDefault",
     "RosInit",
     "ServiceCaller",
     "ServiceProvider",
+    "Subscriber",
     "SymbolicRosApiCall",
     "WriteParam",
 )

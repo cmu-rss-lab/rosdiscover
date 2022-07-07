@@ -1,5 +1,7 @@
+# -*- coding: utf-8 -*-
+ 
+import os
 import unittest
-import subprocess
 
 from rosdiscover.acme import AcmeGenerator
 from rosdiscover.config import Config
@@ -8,11 +10,14 @@ from rosdiscover.observer import Observer
 from rosdiscover.recover import NodeRecoveryTool
 from rosdiscover.recover.call import RateSleep
 from rosdiscover.recover.model import CMakeListsInfo, RecoveredNodeModel
+from rosdiscover.recover.analyzer import SymbolicProgramAnalyzer
+
+DIR_HERE = os.path.dirname(__file__)
 
 class TestStringMethods(unittest.TestCase):
 
-    autoware_file = "/home/tdurschm/rosdiscover-evaluation/experiments/recovery/subjects/autoware/experiment.yml"
-    turtlebot_file = "/home/tdurschm/rosdiscover-evaluation/experiments/recovery/subjects/turtlebot/experiment.yml"
+    autoware_file = os.path.join(DIR_HERE, 'configs', 'autoware.yml')
+    turtlebot_file = os.path.join(DIR_HERE, 'configs', 'turtlebot.yml')
 
     def get_model(self, config_path: str, package:str, node:str) -> RecoveredNodeModel:
         config = Config.load(config_path)
@@ -22,28 +27,35 @@ class TestStringMethods(unittest.TestCase):
 
     def assert_publish_calls(self, model, publishers):
         publish_calls = set()
-        for p in model.program.publish_calls:
+        for p in SymbolicProgramAnalyzer.publish_calls(model.program):
             publish_calls.add(p.publisher)
         
         self.assertSetEqual(publish_calls, publishers)
 
     def assert_publish_calls_in_sub_callback(self, model, publishers):
         publish_calls_in_sub_callback = set()
-        for p in model.program.publish_calls_in_sub_callback:
+        for p in SymbolicProgramAnalyzer.publish_calls_in_sub_callback(model.program):
             publish_calls_in_sub_callback.add(p.publisher)
         
         self.assertSetEqual(publish_calls_in_sub_callback, publishers)
 
+    def assert_periodic_publish_calls(self, model, publishers):
+        periodic_publish_calls = set()
+        for p in SymbolicProgramAnalyzer.periodic_publish_calls(model.program):
+            periodic_publish_calls.add(p.publisher)
+        
+        self.assertSetEqual(periodic_publish_calls, publishers)
+
     def assert_sub_callbacks(self, model, callbacks):
         sub_callback = set()
-        for c in model.program.subscriber_callbacks:
+        for c in SymbolicProgramAnalyzer.subscriber_callbacks(model.program):
             sub_callback.add(c.name)
         
         self.assertSetEqual(sub_callback, callbacks)
 
     def assert_rate_sleeps(self, model, sleeps):
         rate_sleeps = set()
-        for r in model.program.rate_sleeps:
+        for r in SymbolicProgramAnalyzer.rate_sleeps(model.program):
             rate_sleeps.add(r.rate.value)
         
         self.assertSetEqual(rate_sleeps, sleeps)        
@@ -72,6 +84,15 @@ class TestStringMethods(unittest.TestCase):
             }
         )
 
+        self.assert_periodic_publish_calls(model,
+            {
+                "obstacle_pub",
+                "obstacle_waypoint_pub",
+                "detection_range_pub",
+                "final_waypoints_pub"
+            }
+        )
+
     def test_obj_reproj(self):
         model = self.get_model(self.autoware_file, "obj_reproj", "obj_reproj")
 
@@ -90,13 +111,10 @@ class TestStringMethods(unittest.TestCase):
             }
         )
 
+        self.assert_periodic_publish_calls(model, set())
+
     def test_wf_simulator(self):
         model = self.get_model(self.autoware_file, "waypoint_follower", "wf_simulator")
-
-        self.assert_publish_calls(
-            model,
-            {'odometry_publisher_', 'velocity_publisher_'}
-        )
 
         self.assert_rate_sleeps(model, {50.0})
 
@@ -109,6 +127,13 @@ class TestStringMethods(unittest.TestCase):
                 "(anonymous namespace)::initialposeCallback",
                 "(anonymous namespace)::callbackFromPoseStamped",
                 "(anonymous namespace)::callbackFromPoseStamped"
+            }
+        )
+
+        self.assert_periodic_publish_calls(model,
+            {
+                "odometry_publisher_",
+                "velocity_publisher_",
             }
         )
 
@@ -125,5 +150,12 @@ class TestStringMethods(unittest.TestCase):
         self.assert_sub_callbacks(model, 
             set()
         )    
+
+        self.assert_periodic_publish_calls(model,
+            {
+                "cmd_vel_pub_",
+            }
+        )
+
 if __name__ == '__main__':
     unittest.main()
