@@ -12,6 +12,7 @@ import attr
 from .symbolic import (
     SymbolicProgram,
     SymbolicFunction,
+    SymbolicFunctionCall,
     SymbolicWhile
     )
 
@@ -51,14 +52,15 @@ class SymbolicProgramAnalyzer:
         return result
 
     @classmethod
-    def publish_calls(cls, program: SymbolicProgram) -> t.Set[Publish]:
-        result = set()
+    def publish_calls(cls, program: SymbolicProgram) -> t.List[Publish]:
+        result = list()
         for func in program.functions.values():
             for stmt in func.body:
-                if isinstance(stmt, Publish):
-                    result.add(stmt)
+                if isinstance(stmt, Publish) and stmt not in result:
+                    result.append(stmt)
 
         return result
+
 
     @classmethod
     def publish_calls_in_sub_callback(cls, program: SymbolicProgram) -> t.Set[Publish]:
@@ -81,13 +83,24 @@ class SymbolicProgramAnalyzer:
         return result
 
     @classmethod
-    def periodic_publish_calls(cls, program: SymbolicProgram) -> t.Set[Publish]:
-        result = set()
+    def periodic_publish_calls(cls, program: SymbolicProgram) -> t.List[Publish]:
+        result = list()
         for pub_call in cls.publish_calls(program):
             for while_stmt in cls.while_loops(program):
                 if while_stmt.body.contains(pub_call, program.functions):
                     for rate in cls.rate_sleeps(program):
-                        if while_stmt.body.contains(rate, program.functions):
-                            result.add(pub_call)
+                        if while_stmt.body.contains(rate, program.functions) and pub_call not in result:
+                            result.append(pub_call)
+
+        return result
+
+
+    @classmethod
+    def function_calls(cls, program: SymbolicProgram) -> t.Set[SymbolicFunctionCall]:
+        result = list()
+        for func in program.functions.values():
+            for stmt in func.body:
+                if isinstance(stmt, SymbolicFunctionCall) and stmt not in result:
+                    result.append(stmt)
 
         return result
