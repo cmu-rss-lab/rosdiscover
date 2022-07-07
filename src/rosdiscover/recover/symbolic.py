@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
-import re
-from turtle import st
 
 __all__ = (
     "Concatenate",
     "StringLiteral",
+    "BoolLiteral",
     "FloatLiteral",
     "SymbolicArg",
     "SymbolicAssignment",
@@ -16,6 +15,7 @@ __all__ = (
     "SymbolicNodeHandleImpl",
     "SymbolicNodeName",
     "SymbolicParameter",
+    "SymbolicProgram",
     "SymbolicStatement",
     "SymbolicString",
     "SymbolicFloat",
@@ -241,6 +241,24 @@ class SymbolicBool(SymbolicValue, abc.ABC):
     """Represents a symbolic boolean value."""
 
 
+@attr.s(frozen=True, auto_attribs=True, slots=True)
+class BoolLiteral(SymbolicBool):
+    """Represents a literal string value."""
+    value: bool
+
+    def to_dict(self) -> t.Dict[str, t.Any]:
+        return {
+            "kind": "bool-literal",
+            "literal": self.value,
+        }
+
+    def eval(self, context: SymbolicContext) -> t.Any:
+        return self.value
+
+    def is_unknown(self) -> bool:
+        return False
+
+
 class SymbolicNodeHandle(SymbolicString, SymbolicValue, abc.ABC):
     """Represents a symbolic node handle."""
 
@@ -249,6 +267,7 @@ class SymbolicUnknown(
     SymbolicNodeHandle,
     SymbolicInteger,
     SymbolicBool,
+    SymbolicFloat,
     SymbolicString,
     SymbolicValue,
 ):
@@ -317,7 +336,7 @@ class SymbolicStatement(abc.ABC):
     def eval(self, context: SymbolicContext) -> None:
         ...
 
-    def contains(self, stmt: SymbolicStatement, f: t.Mapping[str, SymbolicFunction]) -> bool:
+    def contains(self, stmt: SymbolicStatement, program_function_map: t.Mapping[str, SymbolicFunction]) -> bool:
         return self == stmt
 
 
@@ -352,17 +371,8 @@ class SymbolicCompound(t.Sequence[SymbolicStatement], SymbolicStatement):
     """Represents a sequence of symbolic statements."""
     _statements: t.Sequence[SymbolicStatement] = attr.ib(factory=list)
 
-    def __eq__(self, other):
-        return isinstance(other, self.__class__) and self._statements == other._statements
-
-    def __hash__(self):
-        return hash((str(self.to_dict())))
-
-    def contains(self, stmt: SymbolicStatement, f: t.Mapping[str, SymbolicFunction]) -> bool:
-        for s in self._statements:
-            if s.contains(stmt, f):
-                return True
-        return self == stmt
+    def contains(self, stmt: SymbolicStatement, program_function_map: t.Mapping[str, SymbolicFunction]) -> bool:
+        return self == stmt or any(s.contains(stmt, program_function_map) for s in self._statements)
 
     def __len__(self) -> int:
         return len(self._statements)
@@ -401,16 +411,21 @@ class SymbolicIf(SymbolicStatement):
 
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
-            "kind": "while",
-            "trueBranchBody": [self.true_body.to_dict()],
-            "falseBranchBody": [self.false_body.to_dict()],
-            "condition": [self.condition.to_dict()],
+            "kind": "if",
+            "trueBranchBody": self.true_body.to_dict(),
+            "falseBranchBody": self.false_body.to_dict(),
+            "condition": self.condition.to_dict(),
         }
 
     def eval(self, context: SymbolicContext) -> None:
-        self.condition.eval(context)
-        self.true_body.eval(context)
-        self.false_body.eval(context)
+        cond = self.condition.eval(context)
+        if isinstance(cond, bool) and self.condition.eval(context):
+            self.true_body.eval(context)
+        elif isinstance(cond, bool) and not self.condition.eval(context):
+            self.false_body.eval(context)
+        else:
+            self.true_body.eval(context)
+            self.false_body.eval(context)
 
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
@@ -427,8 +442,10 @@ class SymbolicWhile(SymbolicStatement):
         }
 
     def eval(self, context: SymbolicContext) -> None:
-        self.condition.eval(context)
-        self.body.eval(context)
+        logger.debug("TODO: Make SymbolicWhile.eval consider multiple loop iterations.")
+        cond = self.condition.eval(context)
+        if not isinstance(cond, bool) or cond:
+            self.body.eval(context)
 
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
@@ -445,13 +462,15 @@ class SymbolicFunctionCall(SymbolicStatement):
     """
     callee: str
     arguments: t.Mapping[str, SymbolicValue]
-    
-    def contains(self, stmt: SymbolicStatement, f: t.Mapping[str, SymbolicFunction]) -> bool:
+
+    def contains(self, stmt: SymbolicStatement, program_function_map: t.Mapping[str, SymbolicFunction]) -> bool:
         if self == stmt:
             return True
 
-        if self.callee in f:
-            return f[self.callee].body.contains(stmt, f)
+        if self.callee in program_function_map:
+            return program_function_map[self.callee].body.contains(stmt, program_function_map)
+
+        return False
 
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
@@ -560,3 +579,82 @@ class SymbolicFunction:
     def calls(self) -> t.Set[str]:
         """Returns the names of functions that are called within this function."""
         return set(stmt.callee for stmt in self.body if isinstance(stmt, SymbolicFunctionCall))
+
+
+@attr.s(frozen=True, slots=True)
+class SymbolicProgram:
+    """Provides a symbolic summary for a given program.
+
+    Attributes
+    ----------
+    entrypoint_name: str
+        The name of the function that serves as the entry point for the
+        program.
+    functions: t.Mapping[str, SymbolicFunction]
+        The symbolic functions within this program, indexed by name.
+
+    Raises
+    ------
+    ValueError
+        If this program does not provide a "main" function.
+    """
+    entrypoint_name: str = attr.ib()
+    functions: t.Mapping[str, SymbolicFunction] = attr.ib()
+
+    @functions.validator
+    def must_have_entry_function(
+        self,
+        attribute: str,
+        value: t.Any,
+    ) -> None:
+        if self.entrypoint_name not in self.functions:
+            raise ValueError(f"failed to find definition for entrypoint function: {self.entrypoint_name}")
+
+    @classmethod
+    def build(cls, entrypoint: str, functions: t.Iterable[SymbolicFunction]) -> SymbolicProgram:
+        name_to_function = {function.name: function for function in functions}
+        if entrypoint not in name_to_function:
+            logger.warning(
+                f"The entrypoint '{entrypoint}' does not appear to reach any ROS API calls."
+                " Adding an empty placeholder function."
+            )
+            name_to_function[entrypoint] = SymbolicFunction.empty(entrypoint)
+        return SymbolicProgram(entrypoint, name_to_function)
+
+    @property
+    def unreachable_functions(self) -> t.Set[SymbolicFunction]:
+        """Returns the set of functions that are unreachable from the entrypoint of this program.
+        Unreachable functions almost always indicate incomplete control flow information
+        (due to, e.g., certain callbacks). In some cases, an architecturally relevant function may
+        truly be unreachable.
+        """
+        queue: t.List[SymbolicFunction] = [self.entrypoint]
+        reached: t.Set[SymbolicFunction] = set()
+
+        while queue:
+            function = queue.pop(0)
+            reached.add(function)
+            calls = set(self.functions[name] for name in function.calls)
+            for called_function in calls:
+                if called_function not in reached:
+                    queue.append(called_function)
+
+        unreachable = set(self.functions.values()).difference(reached)
+        return unreachable
+
+    def to_dict(self) -> t.Dict[str, t.Any]:
+        return {
+            "program": {
+                "entrypoint": self.entrypoint_name,
+                "functions": [f.to_dict() for f in self.functions.values()],
+            },
+        }
+
+    @property
+    def entrypoint(self) -> SymbolicFunction:
+        """The entrypoint for this program."""
+        return self.functions[self.entrypoint_name]
+
+    def eval(self, node: NodeContext) -> None:
+        context = SymbolicContext.create(self, node)
+        self.entrypoint.body.eval(context)

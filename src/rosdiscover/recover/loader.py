@@ -23,21 +23,22 @@ from .call import (
     Subscriber,
     WriteParam,
 )
-from .symbolic_program import SymbolicProgram
-
 from .symbolic import (
     Concatenate,
     StringLiteral,
     FloatLiteral,
+    BoolLiteral,
     SymbolicArg,
     SymbolicAssignment,
     SymbolicCompound,
+    SymbolicFloat,
     SymbolicFunction,
     SymbolicFunctionCall,
     SymbolicNodeHandle,
     SymbolicNodeHandleImpl,
     SymbolicNodeName,
     SymbolicParameter,
+    SymbolicProgram,
     SymbolicStatement,
     SymbolicString,
     SymbolicUnknown,
@@ -67,6 +68,10 @@ class SymbolicProgramLoader:
             name=name,
             type_=type_,
         )
+
+    def _load_bool_literal(self, dict_: t.Mapping[str, t.Any]) -> BoolLiteral:
+        assert dict_["kind"] == "bool-literal"
+        return BoolLiteral(dict_["literal"])
 
     def _load_string_literal(self, dict_: t.Mapping[str, t.Any]) -> StringLiteral:
         assert dict_["kind"] == "string-literal"
@@ -98,6 +103,11 @@ class SymbolicProgramLoader:
         assert isinstance(value, SymbolicString)
         return value
 
+    def _load_float(self, dict_: t.Mapping[str, t.Any]) -> SymbolicFloat:
+        value = self._load_value(dict_)
+        assert isinstance(value, SymbolicFloat)
+        return value
+
     def _load_value(self, dict_: t.Mapping[str, t.Any]) -> SymbolicValue:
         kind: str = dict_["kind"]
         if kind == "concatenate":
@@ -106,6 +116,10 @@ class SymbolicProgramLoader:
             return self._load_arg(dict_)
         elif kind == "string-literal":
             return self._load_string_literal(dict_)
+        elif kind == "bool-literal":
+            return self._load_bool_literal(dict_)
+        elif kind == "float-literal":
+            return self._load_float_literal(dict_)
         elif kind == "node-handle":
             return self._load_node_handle(dict_)
         elif kind == "variable-reference":
@@ -141,7 +155,7 @@ class SymbolicProgramLoader:
         return Publish(dict_["publisher"])
 
     def _load_rate_sleep(self, dict_: t.Mapping[str, t.Any]) -> RateSleep:
-        rate = self._load_float_literal(dict_["rate"])
+        rate = self._load_float(dict_["rate"])
         return RateSleep(rate)
 
     def _load_publishes_to(self, dict_: t.Mapping[str, t.Any]) -> Publisher:
@@ -150,7 +164,7 @@ class SymbolicProgramLoader:
 
     def _load_subscribes_to(self, dict_: t.Mapping[str, t.Any]) -> Subscriber:
         topic = self._load_string(dict_["name"])
-        return Subscriber(topic, dict_["format"], dict_["callback"]["callee"])
+        return Subscriber(topic, dict_["format"], dict_["callback-name"])
 
     def _load_calls_service(self, dict_: t.Mapping[str, t.Any]) -> ServiceCaller:
         service = self._load_string(dict_["name"])
@@ -257,7 +271,8 @@ class SymbolicProgramLoader:
         return SymbolicIf(
             true_body=self._load_compound(dict_["trueBranchBody"]),
             false_body=self._load_compound(dict_["falseBranchBody"]),
-            condition=self._load_value(dict_["condition"]))
+            condition=self._load_value(dict_["condition"]),
+        )
 
     def _load_compound(self, dict_: t.Mapping[str, t.Any]) -> SymbolicCompound:
         assert dict_["kind"] == "compound"
