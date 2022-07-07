@@ -473,6 +473,8 @@ class SymbolicFunctionCall(SymbolicStatement):
         if self.callee in f:
             return f[self.callee].body.contains(stmt, f)
 
+        return False
+
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
             "kind": "call",
