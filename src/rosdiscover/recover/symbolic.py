@@ -23,6 +23,7 @@ __all__ = (
 
 import abc
 import enum
+import typing
 import typing as t
 
 from .symbolic import SymbolicProgram

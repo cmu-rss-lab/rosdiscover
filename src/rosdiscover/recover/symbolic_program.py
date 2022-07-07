@@ -79,7 +79,7 @@ class SymbolicProgram:
                 if isinstance(stmt, Subscriber):
                     result.add(stmt)
 
-        return result        
+        return result
 
     @property
     def rate_sleeps(self) -> t.Set[RateSleep]:
@@ -117,7 +117,7 @@ class SymbolicProgram:
                 if callback.body.contains(pub_call, self.functions):
                     result.add(pub_call)
 
-        return result        
+        return result
 
     @property
     def unreachable_functions(self) -> t.Set[SymbolicFunction]:
