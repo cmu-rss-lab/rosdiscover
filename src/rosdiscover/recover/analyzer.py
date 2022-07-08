@@ -62,12 +62,12 @@ class SymbolicProgramAnalyzer:
         return result
 
     @classmethod
-    def publish_calls_in_sub_callback(cls, program: SymbolicProgram) -> t.Set[Publish]:
-        result = set()
+    def publish_calls_in_sub_callback(cls, program: SymbolicProgram) -> t.List[Publish]:
+        result = list()
         for pub_call in cls.publish_calls(program):
             for callback in cls.subscriber_callbacks(program):
-                if callback.body.contains(pub_call, program.functions):
-                    result.add(pub_call)
+                if callback.body.contains(pub_call, program.functions) and pub_call not in result:
+                    result.append(pub_call)
 
         return result
 
@@ -76,7 +76,7 @@ class SymbolicProgramAnalyzer:
         result = []
         for func in program.functions.values():
             for stmt in func.body:
-                if isinstance(stmt, SymbolicWhile):
+                if isinstance(stmt, SymbolicWhile) and stmt not in result:
                     result.append(stmt)
 
         return result
