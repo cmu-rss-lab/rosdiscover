@@ -336,7 +336,7 @@ class SymbolicStatement(abc.ABC):
     def eval(self, context: SymbolicContext) -> None:
         ...
 
-    def contains(self, stmt: SymbolicStatement, program_function_map: t.Mapping[str, SymbolicFunction]) -> bool:
+    def contains(self, stmt: SymbolicStatement, name_to_function: t.Mapping[str, SymbolicFunction]) -> bool:
         return self == stmt
 
 
@@ -371,8 +371,8 @@ class SymbolicCompound(t.Sequence[SymbolicStatement], SymbolicStatement):
     """Represents a sequence of symbolic statements."""
     _statements: t.Sequence[SymbolicStatement] = attr.ib(factory=list)
 
-    def contains(self, stmt: SymbolicStatement, program_function_map: t.Mapping[str, SymbolicFunction]) -> bool:
-        return self == stmt or any(s.contains(stmt, program_function_map) for s in self._statements)
+    def contains(self, stmt: SymbolicStatement, name_to_function: t.Mapping[str, SymbolicFunction]) -> bool:
+        return self == stmt or any(s.contains(stmt, name_to_function) for s in self._statements)
 
     def __len__(self) -> int:
         return len(self._statements)
@@ -463,12 +463,12 @@ class SymbolicFunctionCall(SymbolicStatement):
     callee: str
     arguments: t.Mapping[str, SymbolicValue]
 
-    def contains(self, stmt: SymbolicStatement, program_function_map: t.Mapping[str, SymbolicFunction]) -> bool:
+    def contains(self, stmt: SymbolicStatement, name_to_function: t.Mapping[str, SymbolicFunction]) -> bool:
         if self == stmt:
             return True
 
-        if self.callee in program_function_map:
-            return program_function_map[self.callee].body.contains(stmt, program_function_map)
+        if self.callee in name_to_function:
+            return name_to_function[self.callee].body.contains(stmt, name_to_function)
 
         return False
 
