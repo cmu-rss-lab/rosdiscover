@@ -371,8 +371,8 @@ class SymbolicCompound(t.Sequence[SymbolicStatement], SymbolicStatement):
     """Represents a sequence of symbolic statements."""
     _statements: t.Sequence[SymbolicStatement] = attr.ib(factory=list)
 
-    def contains(self, stmt: SymbolicStatement, name_to_function : t.Mapping[str, SymbolicFunction]) -> bool:
-        return self == stmt or any(s.contains(stmt, name_to_function ) for s in self._statements)
+    def contains(self, stmt: SymbolicStatement, name_to_function: t.Mapping[str, SymbolicFunction]) -> bool:
+        return self == stmt or any(s.contains(stmt, name_to_function) for s in self._statements)
 
     def __len__(self) -> int:
         return len(self._statements)
