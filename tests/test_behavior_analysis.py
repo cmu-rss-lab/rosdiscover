@@ -116,6 +116,11 @@ class TestStringMethods(unittest.TestCase):
     def test_wf_simulator(self):
         model = self.get_model(self.autoware_file, "waypoint_follower", "wf_simulator")
 
+        self.assert_publish_calls(
+            model,
+            {'odometry_publisher_', 'velocity_publisher_'}
+        )
+
         self.assert_rate_sleeps(model, {50.0})
 
         self.assert_sub_callbacks(model, 
