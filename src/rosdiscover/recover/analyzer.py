@@ -96,7 +96,7 @@ class SymbolicProgramAnalyzer:
 
 
     @classmethod
-    def function_calls(cls, program: SymbolicProgram) -> t.Set[SymbolicFunctionCall]:
+    def function_calls(cls, program: SymbolicProgram) -> t.List[SymbolicFunctionCall]:
         result = list()
         for func in program.functions.values():
             for stmt in func.body:
