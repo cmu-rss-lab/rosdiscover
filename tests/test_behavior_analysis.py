@@ -39,6 +39,13 @@ class TestStringMethods(unittest.TestCase):
         
         self.assertSetEqual(publish_calls_in_sub_callback, publishers)
 
+    def assert_periodic_publish_calls(self, model, publishers):
+        periodic_publish_calls = set()
+        for p in SymbolicProgramAnalyzer.periodic_publish_calls(model.program):
+            periodic_publish_calls.add(p.publisher)
+        
+        self.assertSetEqual(periodic_publish_calls, publishers)
+
     def assert_sub_callbacks(self, model, callbacks):
         sub_callback = set()
         for c in SymbolicProgramAnalyzer.subscriber_callbacks(model.program):
@@ -77,6 +84,15 @@ class TestStringMethods(unittest.TestCase):
             }
         )
 
+        self.assert_periodic_publish_calls(model,
+            {
+                "obstacle_pub",
+                "obstacle_waypoint_pub",
+                "detection_range_pub",
+                "final_waypoints_pub"
+            }
+        )
+
     def test_obj_reproj(self):
         model = self.get_model(self.autoware_file, "obj_reproj", "obj_reproj")
 
@@ -94,6 +110,8 @@ class TestStringMethods(unittest.TestCase):
                 "camera_info_callback"
             }
         )
+
+        self.assert_periodic_publish_calls(model, set())
 
     def test_wf_simulator(self):
         model = self.get_model(self.autoware_file, "waypoint_follower", "wf_simulator")
@@ -117,6 +135,13 @@ class TestStringMethods(unittest.TestCase):
             }
         )
 
+        self.assert_periodic_publish_calls(model,
+            {
+                "odometry_publisher_",
+                "velocity_publisher_",
+            }
+        )
+
     def test_turtlebot_move_action_server(self):
         model = self.get_model(self.turtlebot_file, "turtlebot_actions", "turtlebot_move_action_server")
 
@@ -130,6 +155,12 @@ class TestStringMethods(unittest.TestCase):
         self.assert_sub_callbacks(model, 
             set()
         )    
+
+        self.assert_periodic_publish_calls(model,
+            {
+                "cmd_vel_pub_",
+            }
+        )
 
 if __name__ == '__main__':
     unittest.main()

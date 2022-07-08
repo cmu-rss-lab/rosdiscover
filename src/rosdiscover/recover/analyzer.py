@@ -11,7 +11,9 @@ import attr
 
 from .symbolic import (
     SymbolicProgram,
-    SymbolicFunction)
+    SymbolicFunction,
+    SymbolicWhile
+)
 
 from .call import Publish, RateSleep
 from .call import Subscriber
@@ -65,5 +67,27 @@ class SymbolicProgramAnalyzer:
             for callback in cls.subscriber_callbacks(program):
                 if callback.body.contains(pub_call, program.functions):
                     result.add(pub_call)
+
+        return result
+
+    @classmethod
+    def while_loops(cls, program: SymbolicProgram) -> t.List[SymbolicWhile]:
+        result = []
+        for func in program.functions.values():
+            for stmt in func.body:
+                if isinstance(stmt, SymbolicWhile):
+                    result.append(stmt)
+
+        return result
+
+    @classmethod
+    def periodic_publish_calls(cls, program: SymbolicProgram) -> t.Set[Publish]:
+        result = set()
+        for pub_call in cls.publish_calls(program):
+            for while_stmt in cls.while_loops(program):
+                if while_stmt.body.contains(pub_call, program.functions):
+                    for rate in cls.rate_sleeps(program):
+                        if while_stmt.body.contains(rate, program.functions):
+                            result.add(pub_call)
 
         return result

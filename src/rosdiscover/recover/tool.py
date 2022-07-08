@@ -451,5 +451,7 @@ class NodeRecoveryTool:
         logger.debug(f"subscriber_callbacks: {SymbolicProgramAnalyzer.subscriber_callbacks(summary)}")
         logger.debug(f"publish_calls_in_sub_callback: {SymbolicProgramAnalyzer.publish_calls_in_sub_callback(summary)}")
         logger.debug(f"rate_sleeps: {SymbolicProgramAnalyzer.rate_sleeps(summary)}")
+        logger.debug(f"while_loops: {SymbolicProgramAnalyzer.while_loops(summary)}")
+        logger.debug(f"periodic_publish_calls: {SymbolicProgramAnalyzer.periodic_publish_calls(summary)}")
 
         return summary
