@@ -13,7 +13,7 @@ from .symbolic import (
     SymbolicProgram,
     SymbolicFunction,
     SymbolicWhile
-    )
+)
 
 from .call import Publish, RateSleep
 from .call import Subscriber
