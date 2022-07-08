@@ -44,6 +44,8 @@ class SymbolicProgramAnalyzer:
     def subscriber_callbacks(cls, program: SymbolicProgram) -> t.Set[SymbolicFunction]:
         result = set()
         for sub in cls.subscribers(program):
+            if sub.callback_name == "unknown":
+                continue
             result.add(program.functions[sub.callback_name])
 
         return result
