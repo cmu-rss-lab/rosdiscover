@@ -468,8 +468,4 @@ class NodeRecoveryTool:
         cprint = "\n".join(conditions)
         logger.debug(f"control dependencies: \n{cprint}")
 
-        with open('./conditions.txt', 'a') as f:
-            f.write(cprint)
-
-
         return summary
