@@ -14,7 +14,7 @@ from .symbolic import (
     SymbolicFunction,
     SymbolicFunctionCall,
     SymbolicWhile
-    )
+)
 
 from .call import Publish, RateSleep
 from .call import Subscriber
