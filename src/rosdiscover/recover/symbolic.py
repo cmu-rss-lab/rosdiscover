@@ -462,7 +462,7 @@ class SymbolicFunctionCall(SymbolicStatement):
     """
     callee: str
     arguments: t.Mapping[str, SymbolicValue]
-    control_dependencies: t.Dict[str, t.Dict[str, t.Any]]
+    control_dependencies: t.List[t.Dict[str, t.Any]]
 
     def contains(self, stmt: SymbolicStatement, name_to_function: t.Mapping[str, SymbolicFunction]) -> bool:
         if self == stmt:
