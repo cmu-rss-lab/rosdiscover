@@ -61,7 +61,6 @@ class SymbolicProgramAnalyzer:
 
         return result
 
-
     @classmethod
     def publish_calls_in_sub_callback(cls, program: SymbolicProgram) -> t.Set[Publish]:
         result = set()
@@ -93,7 +92,6 @@ class SymbolicProgramAnalyzer:
                             result.append(pub_call)
 
         return result
-
 
     @classmethod
     def function_calls(cls, program: SymbolicProgram) -> t.List[SymbolicFunctionCall]:
