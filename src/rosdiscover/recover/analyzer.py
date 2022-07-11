@@ -53,7 +53,7 @@ class SymbolicProgramAnalyzer:
 
     @classmethod
     def publish_calls(cls, program: SymbolicProgram) -> t.List[Publish]:
-        result = list()
+        result = []
         for func in program.functions.values():
             for stmt in func.body:
                 if isinstance(stmt, Publish) and stmt not in result:
@@ -63,7 +63,7 @@ class SymbolicProgramAnalyzer:
 
     @classmethod
     def publish_calls_in_sub_callback(cls, program: SymbolicProgram) -> t.List[Publish]:
-        result = list()
+        result = []
         for pub_call in cls.publish_calls(program):
             for callback in cls.subscriber_callbacks(program):
                 if callback.body.contains(pub_call, program.functions) and pub_call not in result:
@@ -83,7 +83,7 @@ class SymbolicProgramAnalyzer:
 
     @classmethod
     def periodic_publish_calls(cls, program: SymbolicProgram) -> t.List[Publish]:
-        result = list()
+        result = []
         for pub_call in cls.publish_calls(program):
             for while_stmt in cls.while_loops(program):
                 if while_stmt.body.contains(pub_call, program.functions):
@@ -95,7 +95,7 @@ class SymbolicProgramAnalyzer:
 
     @classmethod
     def function_calls(cls, program: SymbolicProgram) -> t.List[SymbolicFunctionCall]:
-        result = list()
+        result = []
         for func in program.functions.values():
             for stmt in func.body:
                 if isinstance(stmt, SymbolicFunctionCall) and stmt not in result:
