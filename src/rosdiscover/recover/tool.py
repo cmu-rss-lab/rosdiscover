@@ -456,16 +456,13 @@ class NodeRecoveryTool:
 
         conditions = set()
         for p in SymbolicProgramAnalyzer.publish_calls(summary):
-            for c in p.control_dependencies:
-                logger.debug(p.control_dependencies)
-                if "condition" in c:
-                    conditions.add(c["condition"])
+            conditions.add(p.path_condition)
         for f in SymbolicProgramAnalyzer.function_calls(summary):
-            for c in f.control_dependencies:
-                logger.debug(f.control_dependencies)
-                if "condition" in c:
-                    conditions.add(c["condition"])
+            conditions.add(p.path_condition)
         cprint = "\n".join(conditions)
-        logger.debug(f"control dependencies: \n{cprint}")
+        logger.debug(f"path conditions: \n{cprint}")
+        
+        with open("./conditions.txt", "a") as file:
+            file.write(cprint)
 
         return summary

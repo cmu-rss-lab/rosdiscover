@@ -77,13 +77,13 @@ class Publisher(SymbolicRosApiCall):
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class Publish(SymbolicRosApiCall):
     publisher: str
-    control_dependencies: t.List[t.Dict[str, t.Any]]
+    path_condition: t.Dict[str, t.Any]
 
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
             "kind": "publish",
             "publisher": self.publisher,
-            "control_dependencies": self.control_dependencies,
+            "path_condition": self.path_condition,
         }
 
     def eval(self, context: SymbolicContext) -> None:
