@@ -136,7 +136,9 @@ class SymbolicValueType(enum.Enum):
         return name_to_type[name]
 
 
-class SymbolicValue(abc.ABC):
+class SymbolicExpr(abc.ABC):
+    string_value: str
+
     """Represents a symbolic value in a function summary."""
     @abc.abstractmethod
     def to_dict(self) -> t.Dict[str, t.Any]:
@@ -145,6 +147,66 @@ class SymbolicValue(abc.ABC):
     @abc.abstractmethod
     def eval(self, context: SymbolicContext) -> t.Any:
         ...
+
+class NegateExpr(SymbolicExpr, abc.ABC):
+    sub_expr: SymbolicExpr
+
+    """Represents a symbolic value in a function summary."""
+    def to_dict(self) -> t.Dict[str, t.Any]:
+        return {
+            "kind": "NegateExpr",
+            "subExpr": self.lhs.toDict(),
+            "string": self.string_value,
+        }
+
+    def eval(self, context: SymbolicContext) -> t.Any:
+        return not self.sub_expr.eval(context)
+
+
+class BinaryExpr(SymbolicExpr, abc.ABC):
+    lhs: SymbolicExpr
+    rhs: SymbolicExpr
+
+    @abc.abstractmethod
+    def binary_operator(self) -> str:
+        ...
+
+    """Represents a symbolic value in a function summary."""
+    def to_dict(self) -> t.Dict[str, t.Any]:
+        return {
+            "kind": "BinaryExpr",
+            "operator": self.binary_operator(),
+            "lhs": self.lhs.toDict(),
+            "rhs": self.rhs.toDict(),
+            "string": self.string_value,
+        }
+
+
+class CompareExpr(BinaryExpr, abc.ABC):
+    
+    #TODO
+    
+    
+class AndExpr(BinaryExpr, abc.ABC):
+
+    def eval(self, context: SymbolicContext) -> t.Any:
+        return self.lhs.eval(context) and self.rhs.eval(context)
+
+    def binary_operator(self) -> str:
+        return "&&"
+
+
+class OrExpr(BinaryExpr, abc.ABC):
+
+    @abc.abstractmethod
+    def eval(self, context: SymbolicContext) -> t.Any:
+        return self.lhs.eval(context) or self.rhs.eval(context)
+
+    def binary_operator(self) -> str:
+        return "||"
+
+
+class SymbolicValue(SymbolicExpr, abc.ABC):
 
     @abc.abstractmethod
     def is_unknown(self) -> bool:
