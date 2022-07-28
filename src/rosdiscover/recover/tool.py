@@ -454,11 +454,11 @@ class NodeRecoveryTool:
         logger.debug(f"while_loops: {SymbolicProgramAnalyzer.while_loops(summary)}")
         logger.debug(f"periodic_publish_calls: {SymbolicProgramAnalyzer.periodic_publish_calls(summary)}")
 
-        conditions = set()
+        conditions = []
         for p in SymbolicProgramAnalyzer.publish_calls(summary):
-            conditions.add(p.path_condition)
+            conditions.append(p.path_condition)
         for f in SymbolicProgramAnalyzer.function_calls(summary):
-            conditions.add(p.path_condition)
+            conditions.append(p.path_condition)
         cprint = "\n".join(conditions)
         logger.debug(f"path conditions: \n{cprint}")
 
