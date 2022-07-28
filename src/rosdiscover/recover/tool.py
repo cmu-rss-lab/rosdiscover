@@ -461,7 +461,7 @@ class NodeRecoveryTool:
             conditions.add(p.path_condition)
         cprint = "\n".join(conditions)
         logger.debug(f"path conditions: \n{cprint}")
-        
+
         with open("./conditions.txt", "a") as file:
             file.write(cprint)
 
