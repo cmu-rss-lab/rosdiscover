@@ -29,6 +29,7 @@ import typing
 import typing as t
 
 from loguru import logger
+
 import attr
 
 from ..interpreter import NodeContext
@@ -138,7 +139,6 @@ class SymbolicValueType(enum.Enum):
 
 
 class SymbolicExpr(abc.ABC):
-    string_value: str
 
     """Represents a symbolic value in a function summary."""
     @abc.abstractmethod
@@ -149,6 +149,8 @@ class SymbolicExpr(abc.ABC):
     def eval(self, context: SymbolicContext) -> t.Any:
         ...
 
+
+@attr.s(auto_attribs=True, slots=True)
 class NegateExpr(SymbolicExpr, abc.ABC):
     sub_expr: SymbolicExpr
 
@@ -157,13 +159,13 @@ class NegateExpr(SymbolicExpr, abc.ABC):
         return {
             "kind": "NegateExpr",
             "subExpr": self.sub_expr.to_dict(),
-            "string": self.string_value,
         }
 
     def eval(self, context: SymbolicContext) -> t.Any:
         return not self.sub_expr.eval(context)
 
 
+@attr.s(auto_attribs=True, slots=True)
 class BinaryExpr(SymbolicExpr, abc.ABC):
     lhs: SymbolicExpr
     rhs: SymbolicExpr
@@ -179,10 +181,10 @@ class BinaryExpr(SymbolicExpr, abc.ABC):
             "operator": self.binary_operator(),
             "lhs": self.lhs.to_dict(),
             "rhs": self.rhs.to_dict(),
-            "string": self.string_value,
         }
 
 
+@attr.s(auto_attribs=True, slots=True)
 class CompareExpr(BinaryExpr, abc.ABC):
     operator: str
 
@@ -204,6 +206,7 @@ class CompareExpr(BinaryExpr, abc.ABC):
             return self.lhs.eval(context) != self.rhs.eval(context)
 
 
+@attr.s(auto_attribs=True, slots=True)
 class BinaryMathExpr(BinaryExpr, abc.ABC):
     operator: str
 
@@ -223,6 +226,7 @@ class BinaryMathExpr(BinaryExpr, abc.ABC):
             return self.lhs.eval(context) % self.rhs.eval(context)
 
 
+@attr.s(auto_attribs=True, slots=True)
 class AndExpr(BinaryExpr, abc.ABC):
 
     def eval(self, context: SymbolicContext) -> t.Any:
@@ -232,9 +236,9 @@ class AndExpr(BinaryExpr, abc.ABC):
         return "&&"
 
 
+@attr.s(auto_attribs=True, slots=True)
 class OrExpr(BinaryExpr, abc.ABC):
 
-    @abc.abstractmethod
     def eval(self, context: SymbolicContext) -> t.Any:
         return self.lhs.eval(context) or self.rhs.eval(context)
 

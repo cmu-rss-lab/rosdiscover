@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
+from colorsys import rgb_to_hsv
 
 __all__ = ("SymbolicProgramLoader",)
 
@@ -160,7 +161,7 @@ class SymbolicProgramLoader:
         elif kind == "arg":
             return self._load_arg(dict_)
         else:
-            return self._load_value(dict)
+            return self._load_value(dict_)
 
     def _load_value(self, dict_: t.Mapping[str, t.Any]) -> SymbolicValue:
         kind: str = dict_["kind"]
