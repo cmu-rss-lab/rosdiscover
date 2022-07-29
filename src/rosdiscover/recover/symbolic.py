@@ -716,6 +716,28 @@ class SymbolicVariableReference(SymbolicValue):
 
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
+class SymbolicMemberVariableReference(SymbolicVariableReference):
+    """Represents a symbolic member variable reference.
+
+
+    Attributes
+    ----------
+    base: expr
+        The expresion on which the member variable is called
+    """
+    base: SymbolicExpr
+
+    def to_dict(self) -> t.Dict[str, t.Any]:
+        result = super().to_dict()
+        result["kind"] = "memberVarRef"
+        result["base"] = self.base.to_dict()
+        return result
+
+    def to_str(self) -> str:
+        return f"{self.base.to_str()}.{self.variable}"
+
+
+@attr.s(frozen=True, auto_attribs=True, slots=True)
 class SymbolicParameter:
     """Provides the definition for a symbolic function parameter."""
     index: int

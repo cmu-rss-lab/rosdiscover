@@ -34,6 +34,7 @@ from .symbolic import (
     StringLiteral,
     FloatLiteral,
     IntLiteral,
+    SymbolicMemberVariableReference,
     ThisExpr,
     NullExpr,
     BoolLiteral,
@@ -147,6 +148,16 @@ class SymbolicProgramLoader:
         operator = dict_["operator"]
         return CompareExpr(lhs=lhs, rhs=rhs, operator=operator)
 
+    def _load_member_var_ref(self, dict_: t.Mapping[str, t.Any]) -> SymbolicMemberVariableReference:
+        assert dict_["kind"] == "memberVarRef"
+        type_ = SymbolicValueType.from_name(dict_["type"])
+        base = self._load_expr(dict_["base"])
+        return SymbolicMemberVariableReference(
+            base=base,
+            variable=dict_["variable"],
+            type_=type_,
+        )
+
     def _load_binary_expr(self, dict_: t.Mapping[str, t.Any]) -> SymbolicExpr:
         operator: str = dict_["operator"]
         if operator == "||":
@@ -162,7 +173,9 @@ class SymbolicProgramLoader:
 
     def _load_expr(self, dict_: t.Mapping[str, t.Any]) -> SymbolicExpr:
         kind: str = dict_["kind"]
-        if kind == "BinaryExpr":
+        if kind == "memberVarRef":
+            return self._load_member_var_ref(dict_)
+        elif kind == "BinaryExpr":
             return self._load_binary_expr(dict_)
         elif kind == "NegateExpr":
             return self._load_negate_expr(dict_)
