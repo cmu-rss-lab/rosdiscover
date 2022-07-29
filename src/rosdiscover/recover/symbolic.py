@@ -324,25 +324,6 @@ class FloatLiteral(SymbolicFloat):
     def to_str(self) -> str:
         return f"{self.value}"
 
-@attr.s(frozen=True, auto_attribs=True, slots=True)
-class IntLiteral(SymbolicInteger):
-    """Represents a literal integer value."""
-    value: int
-
-    def to_dict(self) -> t.Dict[str, t.Any]:
-        return {
-            "kind": "int-literal",
-            "literal": self.value,
-        }
-
-    def eval(self, context: SymbolicContext) -> t.Any:
-        return self.value
-
-    def is_unknown(self) -> bool:
-        return False
-
-    def to_str(self) -> str:
-        return f"{self.value}"
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class Concatenate(SymbolicString):
@@ -373,6 +354,27 @@ class Concatenate(SymbolicString):
 
 class SymbolicInteger(SymbolicValue, abc.ABC):
     """Represents a symbolic integer value."""
+
+
+@attr.s(frozen=True, auto_attribs=True, slots=True)
+class IntLiteral(SymbolicInteger):
+    """Represents a literal integer value."""
+    value: int
+
+    def to_dict(self) -> t.Dict[str, t.Any]:
+        return {
+            "kind": "int-literal",
+            "literal": self.value,
+        }
+
+    def eval(self, context: SymbolicContext) -> t.Any:
+        return self.value
+
+    def is_unknown(self) -> bool:
+        return False
+
+    def to_str(self) -> str:
+        return f"{self.value}"
 
 
 class SymbolicBool(SymbolicValue, abc.ABC):
