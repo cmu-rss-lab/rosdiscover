@@ -334,7 +334,7 @@ class SymbolicProgramLoader:
 
     def _load_assign(self, dict_: t.Mapping[str, t.Any]) -> SymbolicAssignment:
         assert dict_["kind"] == "assign"
-        return SymbolicAssignment(dict_["var"]["qualitifiedName"], self._load_expr(dict_["expr"]))
+        return SymbolicAssignment(dict_["var"]["qualified_name"], self._load_expr(dict_["expr"]))
 
     def _load_while(self, dict_: t.Mapping[str, t.Any]) -> SymbolicWhile:
         assert dict_["kind"] == "while"
