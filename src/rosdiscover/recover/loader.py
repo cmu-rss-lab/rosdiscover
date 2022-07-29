@@ -24,7 +24,11 @@ from .call import (
     WriteParam,
 )
 from .symbolic import (
+    BinaryMathExpr,
+    CompareExpr,
     Concatenate,
+    OrExpr,
+    AndExpr,
     StringLiteral,
     FloatLiteral,
     IntLiteral,
@@ -32,8 +36,8 @@ from .symbolic import (
     SymbolicArg,
     SymbolicAssignment,
     SymbolicCompound,
+    SymbolicExpr,
     SymbolicFloat,
-    SymbolicInteger,
     SymbolicFunction,
     SymbolicFunctionCall,
     SymbolicNodeHandle,
@@ -113,6 +117,50 @@ class SymbolicProgramLoader:
         value = self._load_value(dict_)
         assert isinstance(value, SymbolicFloat)
         return value
+
+    def _load_or_expr(self, dict_: t.Mapping[str, t.Any]) -> OrExpr:
+        lhs = self._load_expr(dict_["lhs"])
+        rhs = self._load_expr(dict_["rhs"])
+        return OrExpr(lhs=lhs, rhs=rhs)
+
+    def _load_and_expr(self, dict_: t.Mapping[str, t.Any]) -> AndExpr:
+        lhs = self._load_expr(dict_["lhs"])
+        rhs = self._load_expr(dict_["rhs"])
+        return AndExpr(lhs=lhs, rhs=rhs)
+    
+    def _load_binary_math_expr(self, dict_: t.Mapping[str, t.Any]) -> BinaryMathExpr:
+        lhs = self._load_expr(dict_["lhs"])
+        rhs = self._load_expr(dict_["rhs"])
+        operator = dict_["operator"]
+        return BinaryMathExpr(lhs=lhs, rhs=rhs, operator=operator)
+
+    def _load_compare_expr(self, dict_: t.Mapping[str, t.Any]) -> CompareExpr:
+        lhs = self._load_expr(dict_["lhs"])
+        rhs = self._load_expr(dict_["rhs"])
+        operator = dict_["operator"]
+        return CompareExpr(lhs=lhs, rhs=rhs, operator=operator)
+
+    def _load_binary_expr(self, dict_: t.Mapping[str, t.Any]) -> SymbolicExpr:
+        operator: str = dict_["operator"]
+        if operator == "||":
+            return self._load_or_expr(dict_)
+        elif operator == "&&":
+            return self._load_and_expr(dict_)
+        elif operator in ["+", "-", "/", "*", "%"]:
+            return self._load_binary_math_expr(dict_)
+        elif operator in ["<", "<=", ">", ">=", "=="]:
+            return self._load_compare_expr(dict_)
+        else:
+            raise ValueError(f"failed to load binary expression with operator: {operator}")
+            
+    def _load_expr(self, dict_: t.Mapping[str, t.Any]) -> SymbolicExpr:
+        kind: str = dict_["kind"]
+        if kind == "concatenate":
+            return self._load_concatenate(dict_)
+        elif kind == "arg":
+            return self._load_arg(dict_)
+        else:
+            return self._load_value(dict)
 
     def _load_value(self, dict_: t.Mapping[str, t.Any]) -> SymbolicValue:
         kind: str = dict_["kind"]
