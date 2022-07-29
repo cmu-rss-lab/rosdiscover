@@ -150,11 +150,17 @@ class SymbolicProgramLoader:
 
     def _load_member_var_ref(self, dict_: t.Mapping[str, t.Any]) -> SymbolicMemberVariableReference:
         assert dict_["kind"] == "memberVarRef"
-        type_ = SymbolicValueType.from_name(dict_["type"])
+
+        type_name = dict_["type"]
+        if type_name not in SymbolicValueType.name_to_type():
+            type_ = SymbolicValueType.UNSUPPORTED
+        else: 
+            type_ = SymbolicValueType.name_to_type()[type_name]
+
         base = self._load_expr(dict_["base"])
         return SymbolicMemberVariableReference(
             base=base,
-            variable=dict_["variable"],
+            variable=dict_["var"],
             type_=type_,
         )
 

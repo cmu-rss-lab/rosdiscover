@@ -122,10 +122,10 @@ class SymbolicValueType(enum.Enum):
 
     def __str__(self) -> str:
         return self.value
-
+    
     @classmethod
-    def from_name(cls, name: str) -> SymbolicValueType:
-        name_to_type = {
+    def name_to_type(cls):
+        return {
             "bool": cls.BOOL,
             "integer": cls.INTEGER,
             "node-handle": cls.NODE_HANDLE,
@@ -133,10 +133,14 @@ class SymbolicValueType(enum.Enum):
             "float": cls.FLOAT,
             "unsupported": cls.UNSUPPORTED,
         }
-        if name not in name_to_type:
+    
+    @classmethod
+    def from_name(cls, name: str) -> SymbolicValueType:
+        
+        if name not in cls.name_to_type():
             raise ValueError(f"unknown value type: {name}")
-        return name_to_type[name]
-
+        return cls.name_to_type()[name]
+    
 
 class SymbolicExpr(abc.ABC):
 
