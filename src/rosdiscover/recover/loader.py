@@ -154,13 +154,13 @@ class SymbolicProgramLoader:
         type_name = dict_["type"]
         if type_name not in SymbolicValueType.name_to_type():
             type_ = SymbolicValueType.UNSUPPORTED
-        else: 
+        else:
             type_ = SymbolicValueType.name_to_type()[type_name]
 
         base = self._load_expr(dict_["base"])
         return SymbolicMemberVariableReference(
             base=base,
-            variable=dict_["var"],
+            variable=dict_["qualified_name"],
             type_=type_,
         )
 

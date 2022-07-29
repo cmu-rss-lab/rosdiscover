@@ -122,7 +122,7 @@ class SymbolicValueType(enum.Enum):
 
     def __str__(self) -> str:
         return self.value
-    
+
     @classmethod
     def name_to_type(cls):
         return {
@@ -133,14 +133,14 @@ class SymbolicValueType(enum.Enum):
             "float": cls.FLOAT,
             "unsupported": cls.UNSUPPORTED,
         }
-    
+
     @classmethod
     def from_name(cls, name: str) -> SymbolicValueType:
-        
+
         if name not in cls.name_to_type():
             raise ValueError(f"unknown value type: {name}")
         return cls.name_to_type()[name]
-    
+
 
 class SymbolicExpr(abc.ABC):
 
