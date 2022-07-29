@@ -155,6 +155,38 @@ class SymbolicExpr(abc.ABC):
 
 
 @attr.s(auto_attribs=True, slots=True)
+class ThisExpr(SymbolicExpr, abc.ABC):
+
+    """Represents a symbolic value in a function summary."""
+    def to_dict(self) -> t.Dict[str, t.Any]:
+        return {
+            "kind": "ThisExpr",
+        }
+
+    def eval(self, context: SymbolicContext) -> t.Any:
+        return "this"
+
+    def to_str(self) -> str:
+        return "this"
+
+
+@attr.s(auto_attribs=True, slots=True)
+class NullExpr(SymbolicExpr, abc.ABC):
+
+    """Represents a symbolic value in a function summary."""
+    def to_dict(self) -> t.Dict[str, t.Any]:
+        return {
+            "kind": "NullExpr",
+        }
+
+    def eval(self, context: SymbolicContext) -> t.Any:
+        return "NULL"
+
+    def to_str(self) -> str:
+        return "NULL"
+
+
+@attr.s(auto_attribs=True, slots=True)
 class NegateExpr(SymbolicExpr, abc.ABC):
     sub_expr: SymbolicExpr
 
@@ -166,7 +198,7 @@ class NegateExpr(SymbolicExpr, abc.ABC):
         }
 
     def eval(self, context: SymbolicContext) -> t.Any:
-        return not self.sub_expr.eval(context)
+        return "not self.sub_expr.eval(context)"
 
     def to_str(self) -> str:
         return f"!{self.sub_expr.to_str()}"
@@ -509,7 +541,7 @@ class SymbolicAssignment(SymbolicStatement):
         The value of the variable, provided as a symbolic expression.
     """
     variable: str
-    value: SymbolicValue
+    value: SymbolicExpr
 
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {

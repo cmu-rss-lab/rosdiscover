@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+from rosdiscover.recover.symbolic import NegateExpr
+
 __all__ = ("SymbolicProgramLoader",)
 
 import typing as t
@@ -32,6 +34,8 @@ from .symbolic import (
     StringLiteral,
     FloatLiteral,
     IntLiteral,
+    ThisExpr,
+    NullExpr,
     BoolLiteral,
     SymbolicArg,
     SymbolicAssignment,
@@ -118,6 +122,9 @@ class SymbolicProgramLoader:
         assert isinstance(value, SymbolicFloat)
         return value
 
+    def _load_negate_expr(self, dict_: t.Mapping[str, t.Any]) -> NegateExpr:
+        return NegateExpr(self._load_expr(dict_["subExpr"]))
+
     def _load_or_expr(self, dict_: t.Mapping[str, t.Any]) -> OrExpr:
         lhs = self._load_expr(dict_["lhs"])
         rhs = self._load_expr(dict_["rhs"])
@@ -155,10 +162,14 @@ class SymbolicProgramLoader:
 
     def _load_expr(self, dict_: t.Mapping[str, t.Any]) -> SymbolicExpr:
         kind: str = dict_["kind"]
-        if kind == "concatenate":
-            return self._load_concatenate(dict_)
-        elif kind == "arg":
-            return self._load_arg(dict_)
+        if kind == "BinaryExpr":
+            return self._load_binary_expr(dict_)
+        elif kind == "NegateExpr":
+            return self._load_negate_expr(dict_)
+        elif kind == "ThisExpr":
+            return ThisExpr()
+        elif kind == "NullExpr":
+            return NullExpr()
         else:
             return self._load_value(dict_)
 
@@ -316,8 +327,14 @@ class SymbolicProgramLoader:
             return self._load_while(dict_)
         elif kind == "if":
             return self._load_if(dict_)
+        elif kind == "assign":
+            return self._load_assign(dict_)
         else:
             raise ValueError(f"unknown statement kind: {kind}")
+
+    def _load_assign(self, dict_: t.Mapping[str, t.Any]) -> SymbolicAssignment:
+        assert dict_["kind"] == "assign"
+        return SymbolicAssignment(dict_["var"]["qualitifiedName"], self._load_expr(dict_["expr"]))
 
     def _load_while(self, dict_: t.Mapping[str, t.Any]) -> SymbolicWhile:
         assert dict_["kind"] == "while"
