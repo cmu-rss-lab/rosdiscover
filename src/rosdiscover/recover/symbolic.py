@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
+from ast import operator
 
 __all__ = (
     "Concatenate",
@@ -155,7 +156,7 @@ class NegateExpr(SymbolicExpr, abc.ABC):
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
             "kind": "NegateExpr",
-            "subExpr": self.lhs.toDict(),
+            "subExpr": self.sub_expr.to_dict(),
             "string": self.string_value,
         }
 
@@ -176,17 +177,52 @@ class BinaryExpr(SymbolicExpr, abc.ABC):
         return {
             "kind": "BinaryExpr",
             "operator": self.binary_operator(),
-            "lhs": self.lhs.toDict(),
-            "rhs": self.rhs.toDict(),
+            "lhs": self.lhs.to_dict(),
+            "rhs": self.rhs.to_dict(),
             "string": self.string_value,
         }
 
 
 class CompareExpr(BinaryExpr, abc.ABC):
+    operator: str
+
+    def binary_operator(self) -> str:
+        return self.operator
     
-    #TODO
+    def eval(self, context: SymbolicContext) -> t.Any:
+        if operator == "<=":
+            return self.lhs.eval(context) <= self.rhs.eval(context)
+        elif operator == "<":
+            return self.lhs.eval(context) < self.rhs.eval(context)
+        elif operator == ">=":
+            return self.lhs.eval(context) >= self.rhs.eval(context)
+        elif operator == ">":
+            return self.lhs.eval(context) > self.rhs.eval(context)
+        elif operator == "==":
+            return self.lhs.eval(context) == self.rhs.eval(context)
+        elif operator == "!=":
+            return self.lhs.eval(context) != self.rhs.eval(context)
+
+
+class BinaryMathExpr(BinaryExpr, abc.ABC):
+    operator: str
+
+    def binary_operator(self) -> str:
+        return self.operator
     
-    
+    def eval(self, context: SymbolicContext) -> t.Any:
+        if operator == "+":
+            return self.lhs.eval(context) + self.rhs.eval(context)
+        elif operator == "-":
+            return self.lhs.eval(context) - self.rhs.eval(context)
+        elif operator == "*":
+            return self.lhs.eval(context) * self.rhs.eval(context)
+        elif operator == "/":
+            return self.lhs.eval(context) / self.rhs.eval(context)
+        elif operator == "%":
+            return self.lhs.eval(context) % self.rhs.eval(context)
+
+
 class AndExpr(BinaryExpr, abc.ABC):
 
     def eval(self, context: SymbolicContext) -> t.Any:
@@ -212,7 +248,6 @@ class SymbolicValue(SymbolicExpr, abc.ABC):
     def is_unknown(self) -> bool:
         """Returns whether or not this symbolic value is unknown."""
         ...
-
 
 class SymbolicString(SymbolicValue, abc.ABC):
     """Represents a symbolic string value."""
