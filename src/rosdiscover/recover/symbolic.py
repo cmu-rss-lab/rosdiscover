@@ -149,6 +149,9 @@ class SymbolicExpr(abc.ABC):
     def eval(self, context: SymbolicContext) -> t.Any:
         ...
 
+    @abc.abstractmethod
+    def to_str(self) -> str:
+        ...
 
 @attr.s(auto_attribs=True, slots=True)
 class NegateExpr(SymbolicExpr, abc.ABC):
@@ -163,6 +166,9 @@ class NegateExpr(SymbolicExpr, abc.ABC):
 
     def eval(self, context: SymbolicContext) -> t.Any:
         return not self.sub_expr.eval(context)
+
+    def to_str(self) -> str:
+        return f"!{self.sub_expr.to_str()}"
 
 
 @attr.s(auto_attribs=True, slots=True)
@@ -182,6 +188,9 @@ class BinaryExpr(SymbolicExpr, abc.ABC):
             "lhs": self.lhs.to_dict(),
             "rhs": self.rhs.to_dict(),
         }
+
+    def to_str(self) -> str:
+        return f"{self.lhs.to_str()} {self.binary_operator()} {self.rhs.to_str()}"
 
 
 @attr.s(auto_attribs=True, slots=True)
@@ -272,6 +281,8 @@ class SymbolicNodeName(SymbolicString):
     def is_unknown(self) -> bool:
         return False
 
+    def to_str(self) -> str:
+        return "node-name"
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class StringLiteral(SymbolicString):
@@ -290,6 +301,8 @@ class StringLiteral(SymbolicString):
     def is_unknown(self) -> bool:
         return False
 
+    def to_str(self) -> str:
+        return f"{self.value}"
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class FloatLiteral(SymbolicFloat):
@@ -308,6 +321,8 @@ class FloatLiteral(SymbolicFloat):
     def is_unknown(self) -> bool:
         return False
 
+    def to_str(self) -> str:
+        return f"{self.value}"
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class IntLiteral(SymbolicInteger):
@@ -326,6 +341,8 @@ class IntLiteral(SymbolicInteger):
     def is_unknown(self) -> bool:
         return False
 
+    def to_str(self) -> str:
+        return f"{self.value}"
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class Concatenate(SymbolicString):
@@ -351,6 +368,8 @@ class Concatenate(SymbolicString):
     def is_unknown(self) -> bool:
         return self.lhs.is_unknown() or self.rhs.is_unknown()
 
+    def to_str(self) -> str:
+        return f"{self.lhs.to_str()} {self.rhs.to_str()}"
 
 class SymbolicInteger(SymbolicValue, abc.ABC):
     """Represents a symbolic integer value."""
@@ -377,6 +396,8 @@ class BoolLiteral(SymbolicBool):
     def is_unknown(self) -> bool:
         return False
 
+    def to_str(self) -> str:
+        return f"{self.value}"
 
 class SymbolicNodeHandle(SymbolicString, SymbolicValue, abc.ABC):
     """Represents a symbolic node handle."""
@@ -401,6 +422,8 @@ class SymbolicUnknown(
     def is_unknown(self) -> bool:
         return True
 
+    def to_str(self) -> str:
+        return f"unknown"
 
 # FIXME this is the effect of a bad class hierarchy :-(
 # I'll fix this up later
@@ -419,6 +442,9 @@ class SymbolicNodeHandleImpl(SymbolicNodeHandle):
 
     def is_unknown(self) -> bool:
         return self.namespace.is_unknown()
+
+    def to_str(self) -> str:
+        return self.namespace.to_str()
 
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
@@ -443,6 +469,9 @@ class SymbolicArg(
 
     def is_unknown(self) -> bool:
         return False
+
+    def to_str(self) -> str:
+        return self.name
 
 
 class SymbolicStatement(abc.ABC):
@@ -581,7 +610,7 @@ class SymbolicFunctionCall(SymbolicStatement):
     """
     callee: str
     arguments: t.Mapping[str, SymbolicValue]
-    path_condition: t.Dict[str, t.Any]
+    path_condition: SymbolicExpr
 
     def contains(self, stmt: SymbolicStatement, name_to_function: t.Mapping[str, SymbolicFunction]) -> bool:
         if self == stmt:
@@ -599,7 +628,7 @@ class SymbolicFunctionCall(SymbolicStatement):
             "arguments": {
                 name: arg.to_dict() for (name, arg) in self.arguments.items()
             },
-            "path_condition": self.path_condition,
+            "path_condition": self.path_condition.to_dict(),
         }
 
     def eval(self, context: SymbolicContext) -> None:
@@ -640,6 +669,9 @@ class SymbolicVariableReference(SymbolicValue):
     def is_unknown(self) -> bool:
         """Warning: We do not check whether the definition of the variable is unknown."""
         return False
+
+    def to_str(self) -> str:
+        return self.variable
 
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)

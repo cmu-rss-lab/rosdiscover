@@ -456,9 +456,9 @@ class NodeRecoveryTool:
 
         conditions = []
         for p in SymbolicProgramAnalyzer.publish_calls(summary):
-            conditions.append(p.path_condition["string"])
+            conditions.append(p.path_condition.to_str())
         for f in SymbolicProgramAnalyzer.function_calls(summary):
-            conditions.append(p.path_condition["string"])
+            conditions.append(p.path_condition.to_str())
         cprint = "\n".join(conditions)
         logger.debug(f"path conditions: \n{cprint}")
 

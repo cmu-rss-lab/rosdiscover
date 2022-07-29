@@ -22,6 +22,7 @@ import attr
 from .symbolic import (
     SymbolicBool,
     SymbolicContext,
+    SymbolicExpr,
     SymbolicFloat,
     SymbolicStatement,
     SymbolicString,
@@ -77,13 +78,13 @@ class Publisher(SymbolicRosApiCall):
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class Publish(SymbolicRosApiCall):
     publisher: str
-    path_condition: t.Dict[str, t.Any]
+    path_condition: SymbolicExpr
 
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
             "kind": "publish",
             "publisher": self.publisher,
-            "path_condition": self.path_condition,
+            "path_condition": self.path_condition.to_dict(),
         }
 
     def eval(self, context: SymbolicContext) -> None:
@@ -214,6 +215,9 @@ class ReadParam(SymbolicRosApiCall, SymbolicValue):
     def is_unknown(self) -> bool:
         return self.param.is_unknown()
 
+    def to_str(self) -> str:
+        return f"ros::param::read(param={self.param.to_str()}"
+
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class ReadParamWithDefault(SymbolicRosApiCall, SymbolicValue):
@@ -236,6 +240,8 @@ class ReadParamWithDefault(SymbolicRosApiCall, SymbolicValue):
         # NOTE same comment about default
         return self.param.is_unknown()
 
+    def to_str(self) -> str:
+        return f"ros::param::read(param={self.param.to_str()}, default={self.default.to_str()}"
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class HasParam(SymbolicRosApiCall, SymbolicBool):
@@ -253,6 +259,9 @@ class HasParam(SymbolicRosApiCall, SymbolicBool):
 
     def is_unknown(self) -> bool:
         return self.param.is_unknown()
+
+    def to_str(self) -> str:
+        return f"ros::param::has(param={self.param.to_str()}"
 
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
