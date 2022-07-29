@@ -306,6 +306,24 @@ class FloatLiteral(SymbolicFloat):
 
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
+class IntLiteral(SymbolicInteger):
+    """Represents a literal integer value."""
+    value: int
+
+    def to_dict(self) -> t.Dict[str, t.Any]:
+        return {
+            "kind": "int-literal",
+            "literal": self.value,
+        }
+
+    def eval(self, context: SymbolicContext) -> t.Any:
+        return self.value
+
+    def is_unknown(self) -> bool:
+        return False
+
+
+@attr.s(frozen=True, auto_attribs=True, slots=True)
 class Concatenate(SymbolicString):
     """Represents a concatenation of two symbolic strings."""
     lhs: SymbolicString

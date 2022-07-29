@@ -27,11 +27,13 @@ from .symbolic import (
     Concatenate,
     StringLiteral,
     FloatLiteral,
+    IntLiteral,
     BoolLiteral,
     SymbolicArg,
     SymbolicAssignment,
     SymbolicCompound,
     SymbolicFloat,
+    SymbolicInteger,
     SymbolicFunction,
     SymbolicFunctionCall,
     SymbolicNodeHandle,
@@ -81,6 +83,10 @@ class SymbolicProgramLoader:
         assert dict_["kind"] == "float-literal"
         return FloatLiteral(value=float(dict_["literal"]))
 
+    def _load_int_literal(self, dict_: t.Mapping[str, t.Any]) -> IntLiteral:
+        assert dict_["kind"] == "int-literal"
+        return IntLiteral(value=int(dict_["literal"]))
+
     def _load_arg(self, dict_: t.Mapping[str, t.Any]) -> SymbolicArg:
         assert dict_["kind"] == "arg"
         return SymbolicArg(dict_["name"])
@@ -118,6 +124,8 @@ class SymbolicProgramLoader:
             return self._load_string_literal(dict_)
         elif kind == "bool-literal":
             return self._load_bool_literal(dict_)
+        elif kind == "int-literal":
+            return self._load_int_literal(dict_)
         elif kind == "float-literal":
             return self._load_float_literal(dict_)
         elif kind == "node-handle":
