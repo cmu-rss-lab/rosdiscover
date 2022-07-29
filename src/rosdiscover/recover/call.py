@@ -243,6 +243,7 @@ class ReadParamWithDefault(SymbolicRosApiCall, SymbolicValue):
     def to_str(self) -> str:
         return f"ros::param::read(param={self.param.to_str()}, default={self.default.to_str()}"
 
+
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class HasParam(SymbolicRosApiCall, SymbolicBool):
     param: SymbolicString

@@ -153,6 +153,7 @@ class SymbolicExpr(abc.ABC):
     def to_str(self) -> str:
         ...
 
+
 @attr.s(auto_attribs=True, slots=True)
 class NegateExpr(SymbolicExpr, abc.ABC):
     sub_expr: SymbolicExpr
@@ -199,7 +200,7 @@ class CompareExpr(BinaryExpr, abc.ABC):
 
     def binary_operator(self) -> str:
         return self.operator
-    
+
     def eval(self, context: SymbolicContext) -> t.Any:
         if operator == "<=":
             return self.lhs.eval(context) <= self.rhs.eval(context)
@@ -221,7 +222,7 @@ class BinaryMathExpr(BinaryExpr, abc.ABC):
 
     def binary_operator(self) -> str:
         return self.operator
-    
+
     def eval(self, context: SymbolicContext) -> t.Any:
         if operator == "+":
             return self.lhs.eval(context) + self.rhs.eval(context)
@@ -262,6 +263,7 @@ class SymbolicValue(SymbolicExpr, abc.ABC):
         """Returns whether or not this symbolic value is unknown."""
         ...
 
+
 class SymbolicString(SymbolicValue, abc.ABC):
     """Represents a symbolic string value."""
 
@@ -284,6 +286,7 @@ class SymbolicNodeName(SymbolicString):
     def to_str(self) -> str:
         return "node-name"
 
+
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class StringLiteral(SymbolicString):
     """Represents a literal string value."""
@@ -303,6 +306,7 @@ class StringLiteral(SymbolicString):
 
     def to_str(self) -> str:
         return f"{self.value}"
+
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class FloatLiteral(SymbolicFloat):
@@ -351,6 +355,7 @@ class Concatenate(SymbolicString):
 
     def to_str(self) -> str:
         return f"{self.lhs.to_str()} {self.rhs.to_str()}"
+
 
 class SymbolicInteger(SymbolicValue, abc.ABC):
     """Represents a symbolic integer value."""
@@ -401,6 +406,7 @@ class BoolLiteral(SymbolicBool):
     def to_str(self) -> str:
         return f"{self.value}"
 
+
 class SymbolicNodeHandle(SymbolicString, SymbolicValue, abc.ABC):
     """Represents a symbolic node handle."""
 
@@ -425,7 +431,8 @@ class SymbolicUnknown(
         return True
 
     def to_str(self) -> str:
-        return f"unknown"
+        return "unknown"
+
 
 # FIXME this is the effect of a bad class hierarchy :-(
 # I'll fix this up later

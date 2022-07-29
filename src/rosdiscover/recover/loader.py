@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
-from colorsys import rgb_to_hsv
 
 __all__ = ("SymbolicProgramLoader",)
 
@@ -128,7 +127,7 @@ class SymbolicProgramLoader:
         lhs = self._load_expr(dict_["lhs"])
         rhs = self._load_expr(dict_["rhs"])
         return AndExpr(lhs=lhs, rhs=rhs)
-    
+
     def _load_binary_math_expr(self, dict_: t.Mapping[str, t.Any]) -> BinaryMathExpr:
         lhs = self._load_expr(dict_["lhs"])
         rhs = self._load_expr(dict_["rhs"])
@@ -153,7 +152,7 @@ class SymbolicProgramLoader:
             return self._load_compare_expr(dict_)
         else:
             raise ValueError(f"failed to load binary expression with operator: {operator}")
-            
+
     def _load_expr(self, dict_: t.Mapping[str, t.Any]) -> SymbolicExpr:
         kind: str = dict_["kind"]
         if kind == "concatenate":
