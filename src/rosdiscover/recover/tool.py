@@ -454,18 +454,15 @@ class NodeRecoveryTool:
         logger.debug(f"while_loops: {SymbolicProgramAnalyzer.while_loops(summary)}")
         logger.debug(f"periodic_publish_calls: {SymbolicProgramAnalyzer.periodic_publish_calls(summary)}")
 
-        conditions = set()
+        conditions = []
         for p in SymbolicProgramAnalyzer.publish_calls(summary):
-            for c in p.control_dependencies:
-                logger.debug(p.control_dependencies)
-                if "condition" in c:
-                    conditions.add(c["condition"])
+            conditions.append(p.path_condition["string"])
         for f in SymbolicProgramAnalyzer.function_calls(summary):
-            for c in f.control_dependencies:
-                logger.debug(f.control_dependencies)
-                if "condition" in c:
-                    conditions.add(c["condition"])
+            conditions.append(p.path_condition["string"])
         cprint = "\n".join(conditions)
-        logger.debug(f"control dependencies: \n{cprint}")
+        logger.debug(f"path conditions: \n{cprint}")
+
+        with open("./conditions.txt", "a") as file:
+            file.write(cprint)
 
         return summary
