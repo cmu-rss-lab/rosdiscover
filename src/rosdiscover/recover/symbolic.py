@@ -250,6 +250,8 @@ class CompareExpr(BinaryExpr, abc.ABC):
             return self.lhs.eval(context) == self.rhs.eval(context)
         elif operator == "!=":
             return self.lhs.eval(context) != self.rhs.eval(context)
+        else:
+            assert False
 
 
 @attr.s(auto_attribs=True, slots=True)
@@ -270,6 +272,8 @@ class BinaryMathExpr(BinaryExpr):
             return self.lhs.eval(context) / self.rhs.eval(context)
         elif operator == "%":
             return self.lhs.eval(context) % self.rhs.eval(context)
+        else:
+            assert False
 
 
 @attr.s(auto_attribs=True, slots=True)
