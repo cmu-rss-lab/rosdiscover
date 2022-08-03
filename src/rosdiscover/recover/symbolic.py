@@ -159,7 +159,7 @@ class SymbolicExpr(abc.ABC):
 
 
 @attr.s(auto_attribs=True, slots=True)
-class ThisExpr(SymbolicExpr, abc.ABC):
+class ThisExpr(SymbolicExpr):
 
     """Represents a symbolic value in a function summary."""
     def to_dict(self) -> t.Dict[str, t.Any]:
@@ -175,7 +175,7 @@ class ThisExpr(SymbolicExpr, abc.ABC):
 
 
 @attr.s(auto_attribs=True, slots=True)
-class NullExpr(SymbolicExpr, abc.ABC):
+class NullExpr(SymbolicExpr,):
 
     """Represents a symbolic value in a function summary."""
     def to_dict(self) -> t.Dict[str, t.Any]:
@@ -253,7 +253,7 @@ class CompareExpr(BinaryExpr, abc.ABC):
 
 
 @attr.s(auto_attribs=True, slots=True)
-class BinaryMathExpr(BinaryExpr, abc.ABC):
+class BinaryMathExpr(BinaryExpr):
     operator: str
 
     def binary_operator(self) -> str:
@@ -273,7 +273,7 @@ class BinaryMathExpr(BinaryExpr, abc.ABC):
 
 
 @attr.s(auto_attribs=True, slots=True)
-class AndExpr(BinaryExpr, abc.ABC):
+class AndExpr(BinaryExpr):
 
     def eval(self, context: SymbolicContext) -> t.Any:
         return self.lhs.eval(context) and self.rhs.eval(context)
@@ -283,7 +283,7 @@ class AndExpr(BinaryExpr, abc.ABC):
 
 
 @attr.s(auto_attribs=True, slots=True)
-class OrExpr(BinaryExpr, abc.ABC):
+class OrExpr(BinaryExpr):
 
     def eval(self, context: SymbolicContext) -> t.Any:
         return self.lhs.eval(context) or self.rhs.eval(context)
