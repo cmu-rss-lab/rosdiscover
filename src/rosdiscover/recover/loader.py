@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
-from rosdiscover.recover.symbolic import NegateExpr
+from .symbolic import NegateExpr
 
 __all__ = ("SymbolicProgramLoader",)
 
