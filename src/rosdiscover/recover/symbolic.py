@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
-from ast import operator
 
 __all__ = (
     "Concatenate",
@@ -29,6 +28,7 @@ import typing
 import typing as t
 
 from loguru import logger
+from ast import operator
 
 import attr
 
