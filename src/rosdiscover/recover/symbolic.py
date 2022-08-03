@@ -655,7 +655,7 @@ class SymbolicFunctionCall(SymbolicStatement):
     """
     callee: str
     arguments: t.Mapping[str, SymbolicValue]
-    path_condition: SymbolicExpr
+    condition: SymbolicExpr
 
     def contains(self, stmt: SymbolicStatement, name_to_function: t.Mapping[str, SymbolicFunction]) -> bool:
         if self == stmt:
@@ -673,7 +673,7 @@ class SymbolicFunctionCall(SymbolicStatement):
             "arguments": {
                 name: arg.to_dict() for (name, arg) in self.arguments.items()
             },
-            "path_condition": self.path_condition.to_dict(),
+            "path_condition": self.condition.to_dict(),
         }
 
     def eval(self, context: SymbolicContext) -> None:

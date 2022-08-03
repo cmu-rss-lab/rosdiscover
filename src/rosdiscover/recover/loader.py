@@ -238,7 +238,7 @@ class SymbolicProgramLoader:
         return RosInit(name)
 
     def _load_publish(self, dict_: t.Mapping[str, t.Any]) -> Publish:
-        return Publish(publisher=dict_["publisher"], path_condition=self._load_expr(dict_["path_condition"]))
+        return Publish(publisher=dict_["publisher"], condition=self._load_expr(dict_["path_condition"]))
 
     def _load_rate_sleep(self, dict_: t.Mapping[str, t.Any]) -> RateSleep:
         rate = self._load_float(dict_["rate"])
@@ -311,7 +311,7 @@ class SymbolicProgramLoader:
         return SymbolicFunctionCall(
             callee=dict_["callee"],
             arguments=arguments,
-            path_condition=self._load_expr(dict_["path_condition"]),
+            condition=self._load_expr(dict_["path_condition"]),
         )
 
     def _load_statement(self, dict_: t.Mapping[str, t.Any]) -> SymbolicStatement:

@@ -78,13 +78,13 @@ class Publisher(SymbolicRosApiCall):
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class Publish(SymbolicRosApiCall):
     publisher: str
-    path_condition: SymbolicExpr
+    condition: SymbolicExpr
 
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
             "kind": "publish",
             "publisher": self.publisher,
-            "path_condition": self.path_condition.to_dict(),
+            "path_condition": self.condition.to_dict(),
         }
 
     def eval(self, context: SymbolicContext) -> None:
