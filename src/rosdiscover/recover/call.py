@@ -198,7 +198,7 @@ class WriteParam(SymbolicRosApiCall):
         return self.param.is_unknown()
 
 
-@attr.s(frozen=True, auto_attribs=True, slots=True)
+@attr.s(frozen=True, auto_attribs=True, slots=True, str=False)
 class ReadParam(SymbolicRosApiCall, SymbolicValue):
     param: SymbolicString
 
@@ -215,11 +215,11 @@ class ReadParam(SymbolicRosApiCall, SymbolicValue):
     def is_unknown(self) -> bool:
         return self.param.is_unknown()
 
-    def to_str(self) -> str:
-        return f"ros::param::read(param={self.param.to_str()}"
+    def __str__(self) -> str:
+        return f"ros::param::read(param={self.param}"
 
 
-@attr.s(frozen=True, auto_attribs=True, slots=True)
+@attr.s(frozen=True, auto_attribs=True, slots=True, str=False)
 class ReadParamWithDefault(SymbolicRosApiCall, SymbolicValue):
     param: SymbolicString
     default: SymbolicValue
@@ -240,11 +240,11 @@ class ReadParamWithDefault(SymbolicRosApiCall, SymbolicValue):
         # NOTE same comment about default
         return self.param.is_unknown()
 
-    def to_str(self) -> str:
-        return f"ros::param::read(param={self.param.to_str()}, default={self.default.to_str()}"
+    def __str__(self) -> str:
+        return f"ros::param::read(param={self.param}, default={self.default}"
 
 
-@attr.s(frozen=True, auto_attribs=True, slots=True)
+@attr.s(frozen=True, auto_attribs=True, slots=True, str=False)
 class HasParam(SymbolicRosApiCall, SymbolicBool):
     param: SymbolicString
 
@@ -261,8 +261,8 @@ class HasParam(SymbolicRosApiCall, SymbolicBool):
     def is_unknown(self) -> bool:
         return self.param.is_unknown()
 
-    def to_str(self) -> str:
-        return f"ros::param::has(param={self.param.to_str()}"
+    def __str__(self) -> str:
+        return f"ros::param::has(param={self.param}"
 
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)

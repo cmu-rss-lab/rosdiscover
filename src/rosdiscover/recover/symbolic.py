@@ -154,11 +154,11 @@ class SymbolicExpr(abc.ABC):
         ...
 
     @abc.abstractmethod
-    def to_str(self) -> str:
+    def __str__(self) -> str:
         ...
 
 
-@attr.s(auto_attribs=True, slots=True)
+@attr.s(auto_attribs=True, slots=True, str=False)
 class ThisExpr(SymbolicExpr):
 
     """Represents a symbolic value in a function summary."""
@@ -170,11 +170,11 @@ class ThisExpr(SymbolicExpr):
     def eval(self, context: SymbolicContext) -> t.Any:
         return "this"
 
-    def to_str(self) -> str:
+    def __str__(self) -> str:
         return "this"
 
 
-@attr.s(auto_attribs=True, slots=True)
+@attr.s(auto_attribs=True, slots=True, str=False)
 class NullExpr(SymbolicExpr,):
 
     """Represents a symbolic value in a function summary."""
@@ -186,12 +186,12 @@ class NullExpr(SymbolicExpr,):
     def eval(self, context: SymbolicContext) -> t.Any:
         return "NULL"
 
-    def to_str(self) -> str:
+    def __str__(self) -> str:
         return "NULL"
 
 
-@attr.s(auto_attribs=True, slots=True)
-class NegateExpr(SymbolicExpr, abc.ABC):
+@attr.s(auto_attribs=True, slots=True, str=False)
+class NegateExpr(SymbolicExpr):
     sub_expr: SymbolicExpr
 
     """Represents a symbolic value in a function summary."""
@@ -204,11 +204,11 @@ class NegateExpr(SymbolicExpr, abc.ABC):
     def eval(self, context: SymbolicContext) -> t.Any:
         return "not self.sub_expr.eval(context)"
 
-    def to_str(self) -> str:
-        return f"!{self.sub_expr.to_str()}"
+    def __str__(self) -> str:
+        return f"!{self.sub_expr}"
 
 
-@attr.s(auto_attribs=True, slots=True)
+@attr.s(auto_attribs=True, slots=True, str=False)
 class BinaryExpr(SymbolicExpr, abc.ABC):
     lhs: SymbolicExpr
     rhs: SymbolicExpr
@@ -226,8 +226,8 @@ class BinaryExpr(SymbolicExpr, abc.ABC):
             "rhs": self.rhs.to_dict(),
         }
 
-    def to_str(self) -> str:
-        return f"{self.lhs.to_str()} {self.binary_operator()} {self.rhs.to_str()}"
+    def __str__(self) -> str:
+        return f"{self.lhs} {self.binary_operator()} {self.rhs}"
 
 
 @attr.s(auto_attribs=True, slots=True)
@@ -319,11 +319,11 @@ class SymbolicNodeName(SymbolicString):
     def is_unknown(self) -> bool:
         return False
 
-    def to_str(self) -> str:
+    def __str__(self) -> str:
         return "node-name"
 
 
-@attr.s(frozen=True, auto_attribs=True, slots=True)
+@attr.s(frozen=True, auto_attribs=True, slots=True, str=False)
 class StringLiteral(SymbolicString):
     """Represents a literal string value."""
     value: str
@@ -340,11 +340,11 @@ class StringLiteral(SymbolicString):
     def is_unknown(self) -> bool:
         return False
 
-    def to_str(self) -> str:
+    def __str__(self) -> str:
         return f"{self.value}"
 
 
-@attr.s(frozen=True, auto_attribs=True, slots=True)
+@attr.s(frozen=True, auto_attribs=True, slots=True, str=False)
 class FloatLiteral(SymbolicFloat):
     """Represents a literal float value."""
     value: float
@@ -361,11 +361,11 @@ class FloatLiteral(SymbolicFloat):
     def is_unknown(self) -> bool:
         return False
 
-    def to_str(self) -> str:
+    def __str__(self) -> str:
         return f"{self.value}"
 
 
-@attr.s(frozen=True, auto_attribs=True, slots=True)
+@attr.s(frozen=True, auto_attribs=True, slots=True, str=False)
 class Concatenate(SymbolicString):
     """Represents a concatenation of two symbolic strings."""
     lhs: SymbolicString
@@ -389,15 +389,15 @@ class Concatenate(SymbolicString):
     def is_unknown(self) -> bool:
         return self.lhs.is_unknown() or self.rhs.is_unknown()
 
-    def to_str(self) -> str:
-        return f"{self.lhs.to_str()} {self.rhs.to_str()}"
+    def __str__(self) -> str:
+        return f"{self.lhs} {self.rhs}"
 
 
 class SymbolicInteger(SymbolicValue, abc.ABC):
     """Represents a symbolic integer value."""
 
 
-@attr.s(frozen=True, auto_attribs=True, slots=True)
+@attr.s(frozen=True, auto_attribs=True, slots=True, str=False)
 class IntLiteral(SymbolicInteger):
     """Represents a literal integer value."""
     value: int
@@ -414,7 +414,7 @@ class IntLiteral(SymbolicInteger):
     def is_unknown(self) -> bool:
         return False
 
-    def to_str(self) -> str:
+    def __str__(self) -> str:
         return f"{self.value}"
 
 
@@ -422,7 +422,7 @@ class SymbolicBool(SymbolicValue, abc.ABC):
     """Represents a symbolic boolean value."""
 
 
-@attr.s(frozen=True, auto_attribs=True, slots=True)
+@attr.s(frozen=True, auto_attribs=True, slots=True, str=False)
 class BoolLiteral(SymbolicBool):
     """Represents a literal string value."""
     value: bool
@@ -439,7 +439,7 @@ class BoolLiteral(SymbolicBool):
     def is_unknown(self) -> bool:
         return False
 
-    def to_str(self) -> str:
+    def __str__(self) -> str:
         return f"{self.value}"
 
 
@@ -466,13 +466,13 @@ class SymbolicUnknown(
     def is_unknown(self) -> bool:
         return True
 
-    def to_str(self) -> str:
+    def __str__(self) -> str:
         return "unknown"
 
 
 # FIXME this is the effect of a bad class hierarchy :-(
 # I'll fix this up later
-@attr.s(frozen=True, auto_attribs=True, slots=True)
+@attr.s(frozen=True, auto_attribs=True, slots=True, str=False)
 class SymbolicNodeHandleImpl(SymbolicNodeHandle):
     namespace: SymbolicString
 
@@ -488,11 +488,11 @@ class SymbolicNodeHandleImpl(SymbolicNodeHandle):
     def is_unknown(self) -> bool:
         return self.namespace.is_unknown()
 
-    def to_str(self) -> str:
-        return self.namespace.to_str()
+    def __str__(self) -> str:
+        return str(self.namespace)
 
 
-@attr.s(frozen=True, auto_attribs=True, slots=True)
+@attr.s(frozen=True, auto_attribs=True, slots=True, str=False)
 class SymbolicArg(
     SymbolicNodeHandle,
     SymbolicInteger,
@@ -515,7 +515,7 @@ class SymbolicArg(
     def is_unknown(self) -> bool:
         return False
 
-    def to_str(self) -> str:
+    def __str__(self) -> str:
         return self.name
 
 
@@ -687,7 +687,7 @@ class SymbolicFunctionCall(SymbolicStatement):
         function.body.eval(context)
 
 
-@attr.s(frozen=True, auto_attribs=True, slots=True)
+@attr.s(frozen=True, auto_attribs=True, slots=True, str=False)
 class SymbolicVariableReference(SymbolicValue):
     """Represents a symbolic variable reference.
 
@@ -715,11 +715,11 @@ class SymbolicVariableReference(SymbolicValue):
         """Warning: We do not check whether the definition of the variable is unknown."""
         return False
 
-    def to_str(self) -> str:
+    def __str__(self) -> str:
         return self.variable
 
 
-@attr.s(frozen=True, auto_attribs=True, slots=True)
+@attr.s(frozen=True, auto_attribs=True, slots=True, str=False)
 class SymbolicMemberVariableReference(SymbolicVariableReference):
     """Represents a symbolic member variable reference.
 
@@ -737,8 +737,8 @@ class SymbolicMemberVariableReference(SymbolicVariableReference):
         result["base"] = self.base.to_dict()
         return result
 
-    def to_str(self) -> str:
-        return f"{self.base.to_str()}.{self.variable}"
+    def __str__(self) -> str:
+        return f"{self.base}.{self.variable}"
 
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
