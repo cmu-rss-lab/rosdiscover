@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
-from .symbolic import NegateExpr
 
 __all__ = ("SymbolicProgramLoader",)
 
@@ -36,6 +35,7 @@ from .symbolic import (
     IntLiteral,
     SymbolicMemberVariableReference,
     ThisExpr,
+    NegateExpr,
     NullExpr,
     BoolLiteral,
     SymbolicArg,
