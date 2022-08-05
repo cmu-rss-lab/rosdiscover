@@ -136,14 +136,12 @@ class SymbolicValueType(enum.Enum):
 
     @classmethod
     def from_name(cls, name: str) -> SymbolicValueType:
-
         if name not in cls.name_to_type():
             raise ValueError(f"unknown value type: {name}")
         return cls.name_to_type()[name]
 
 
 class SymbolicExpr(abc.ABC):
-
     """Represents a symbolic value in a function summary."""
     @abc.abstractmethod
     def to_dict(self) -> t.Dict[str, t.Any]:
