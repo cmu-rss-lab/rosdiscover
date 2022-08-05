@@ -172,7 +172,7 @@ class ThisExpr(SymbolicExpr):
 
 
 @attr.s(auto_attribs=True, slots=True, str=False)
-class NullExpr(SymbolicExpr,):
+class NullExpr(SymbolicExpr):
 
     """Represents a symbolic value in a function summary."""
     def to_dict(self) -> t.Dict[str, t.Any]:
