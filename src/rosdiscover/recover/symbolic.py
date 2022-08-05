@@ -122,8 +122,9 @@ class SymbolicValueType(enum.Enum):
     def __str__(self) -> str:
         return self.value
 
+    @property
     @classmethod
-    def name_to_type(cls):
+    def name_to_type(cls) -> t.Dict[str, SymbolicValueType]:
         return {
             "bool": cls.BOOL,
             "integer": cls.INTEGER,
