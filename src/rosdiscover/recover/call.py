@@ -22,6 +22,7 @@ import attr
 from .symbolic import (
     SymbolicBool,
     SymbolicContext,
+    SymbolicExpr,
     SymbolicFloat,
     SymbolicStatement,
     SymbolicString,
@@ -77,13 +78,13 @@ class Publisher(SymbolicRosApiCall):
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class Publish(SymbolicRosApiCall):
     publisher: str
-    path_condition: t.Dict[str, t.Any]
+    condition: SymbolicExpr
 
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
             "kind": "publish",
             "publisher": self.publisher,
-            "path_condition": self.path_condition,
+            "path_condition": self.condition.to_dict(),
         }
 
     def eval(self, context: SymbolicContext) -> None:
@@ -197,7 +198,7 @@ class WriteParam(SymbolicRosApiCall):
         return self.param.is_unknown()
 
 
-@attr.s(frozen=True, auto_attribs=True, slots=True)
+@attr.s(frozen=True, auto_attribs=True, slots=True, str=False)
 class ReadParam(SymbolicRosApiCall, SymbolicValue):
     param: SymbolicString
 
@@ -214,8 +215,11 @@ class ReadParam(SymbolicRosApiCall, SymbolicValue):
     def is_unknown(self) -> bool:
         return self.param.is_unknown()
 
+    def __str__(self) -> str:
+        return f"ros::param::read(param={self.param})"
 
-@attr.s(frozen=True, auto_attribs=True, slots=True)
+
+@attr.s(frozen=True, auto_attribs=True, slots=True, str=False)
 class ReadParamWithDefault(SymbolicRosApiCall, SymbolicValue):
     param: SymbolicString
     default: SymbolicValue
@@ -236,8 +240,11 @@ class ReadParamWithDefault(SymbolicRosApiCall, SymbolicValue):
         # NOTE same comment about default
         return self.param.is_unknown()
 
+    def __str__(self) -> str:
+        return f"ros::param::read(param={self.param}, default={self.default})"
 
-@attr.s(frozen=True, auto_attribs=True, slots=True)
+
+@attr.s(frozen=True, auto_attribs=True, slots=True, str=False)
 class HasParam(SymbolicRosApiCall, SymbolicBool):
     param: SymbolicString
 
@@ -253,6 +260,9 @@ class HasParam(SymbolicRosApiCall, SymbolicBool):
 
     def is_unknown(self) -> bool:
         return self.param.is_unknown()
+
+    def __str__(self) -> str:
+        return f"ros::param::has(param={self.param})"
 
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)

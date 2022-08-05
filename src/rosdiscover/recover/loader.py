@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+
 __all__ = ("SymbolicProgramLoader",)
 
 import typing as t
@@ -24,13 +25,23 @@ from .call import (
     WriteParam,
 )
 from .symbolic import (
+    BinaryMathExpr,
+    CompareExpr,
     Concatenate,
+    OrExpr,
+    AndExpr,
     StringLiteral,
     FloatLiteral,
+    IntLiteral,
+    SymbolicMemberVariableReference,
+    ThisExpr,
+    NegateExpr,
+    NullExpr,
     BoolLiteral,
     SymbolicArg,
     SymbolicAssignment,
     SymbolicCompound,
+    SymbolicExpr,
     SymbolicFloat,
     SymbolicFunction,
     SymbolicFunctionCall,
@@ -81,6 +92,10 @@ class SymbolicProgramLoader:
         assert dict_["kind"] == "float-literal"
         return FloatLiteral(value=float(dict_["literal"]))
 
+    def _load_int_literal(self, dict_: t.Mapping[str, t.Any]) -> IntLiteral:
+        assert dict_["kind"] == "int-literal"
+        return IntLiteral(value=dict_["literal"])
+
     def _load_arg(self, dict_: t.Mapping[str, t.Any]) -> SymbolicArg:
         assert dict_["kind"] == "arg"
         return SymbolicArg(dict_["name"])
@@ -108,6 +123,72 @@ class SymbolicProgramLoader:
         assert isinstance(value, SymbolicFloat)
         return value
 
+    def _load_negate_expr(self, dict_: t.Mapping[str, t.Any]) -> NegateExpr:
+        return NegateExpr(self._load_expr(dict_["subExpr"]))
+
+    def _load_or_expr(self, dict_: t.Mapping[str, t.Any]) -> OrExpr:
+        lhs = self._load_expr(dict_["lhs"])
+        rhs = self._load_expr(dict_["rhs"])
+        return OrExpr(lhs=lhs, rhs=rhs)
+
+    def _load_and_expr(self, dict_: t.Mapping[str, t.Any]) -> AndExpr:
+        lhs = self._load_expr(dict_["lhs"])
+        rhs = self._load_expr(dict_["rhs"])
+        return AndExpr(lhs=lhs, rhs=rhs)
+
+    def _load_binary_math_expr(self, dict_: t.Mapping[str, t.Any]) -> BinaryMathExpr:
+        lhs = self._load_expr(dict_["lhs"])
+        rhs = self._load_expr(dict_["rhs"])
+        operator = dict_["operator"]
+        return BinaryMathExpr(lhs=lhs, rhs=rhs, operator=operator)
+
+    def _load_compare_expr(self, dict_: t.Mapping[str, t.Any]) -> CompareExpr:
+        lhs = self._load_expr(dict_["lhs"])
+        rhs = self._load_expr(dict_["rhs"])
+        operator = dict_["operator"]
+        return CompareExpr(lhs=lhs, rhs=rhs, operator=operator)
+
+    def _load_member_var_ref(self, dict_: t.Mapping[str, t.Any]) -> SymbolicMemberVariableReference:
+        assert dict_["kind"] == "memberVarRef"
+
+        type_name = dict_["type"]
+        type_ = SymbolicValueType.from_name(type_name, True)
+
+        base = self._load_expr(dict_["base"])
+        return SymbolicMemberVariableReference(
+            base=base,
+            variable=dict_["qualified_name"],
+            type_=type_,
+        )
+
+    def _load_binary_expr(self, dict_: t.Mapping[str, t.Any]) -> SymbolicExpr:
+        operator: str = dict_["operator"]
+        if operator == "||":
+            return self._load_or_expr(dict_)
+        elif operator == "&&":
+            return self._load_and_expr(dict_)
+        elif operator in ["+", "-", "/", "*", "%"]:
+            return self._load_binary_math_expr(dict_)
+        elif operator in ["<", "<=", ">", ">=", "=="]:
+            return self._load_compare_expr(dict_)
+        else:
+            raise ValueError(f"failed to load binary expression with operator: {operator}")
+
+    def _load_expr(self, dict_: t.Mapping[str, t.Any]) -> SymbolicExpr:
+        kind: str = dict_["kind"]
+        if kind == "memberVarRef":
+            return self._load_member_var_ref(dict_)
+        elif kind == "BinaryExpr":
+            return self._load_binary_expr(dict_)
+        elif kind == "NegateExpr":
+            return self._load_negate_expr(dict_)
+        elif kind == "ThisExpr":
+            return ThisExpr()
+        elif kind == "NullExpr":
+            return NullExpr()
+        else:
+            return self._load_value(dict_)
+
     def _load_value(self, dict_: t.Mapping[str, t.Any]) -> SymbolicValue:
         kind: str = dict_["kind"]
         if kind == "concatenate":
@@ -118,6 +199,8 @@ class SymbolicProgramLoader:
             return self._load_string_literal(dict_)
         elif kind == "bool-literal":
             return self._load_bool_literal(dict_)
+        elif kind == "int-literal":
+            return self._load_int_literal(dict_)
         elif kind == "float-literal":
             return self._load_float_literal(dict_)
         elif kind == "node-handle":
@@ -152,7 +235,7 @@ class SymbolicProgramLoader:
         return RosInit(name)
 
     def _load_publish(self, dict_: t.Mapping[str, t.Any]) -> Publish:
-        return Publish(publisher=dict_["publisher"], path_condition=dict_["path_condition"])
+        return Publish(publisher=dict_["publisher"], condition=self._load_expr(dict_["path_condition"]))
 
     def _load_rate_sleep(self, dict_: t.Mapping[str, t.Any]) -> RateSleep:
         rate = self._load_float(dict_["rate"])
@@ -225,7 +308,7 @@ class SymbolicProgramLoader:
         return SymbolicFunctionCall(
             callee=dict_["callee"],
             arguments=arguments,
-            path_condition=dict_["path_condition"],
+            condition=self._load_expr(dict_["path_condition"]),
         )
 
     def _load_statement(self, dict_: t.Mapping[str, t.Any]) -> SymbolicStatement:
@@ -260,8 +343,14 @@ class SymbolicProgramLoader:
             return self._load_while(dict_)
         elif kind == "if":
             return self._load_if(dict_)
+        elif kind == "assign":
+            return self._load_assign(dict_)
         else:
             raise ValueError(f"unknown statement kind: {kind}")
+
+    def _load_assign(self, dict_: t.Mapping[str, t.Any]) -> SymbolicAssignment:
+        assert dict_["kind"] == "assign"
+        return SymbolicAssignment(dict_["var"]["qualified_name"], self._load_expr(dict_["expr"]))
 
     def _load_while(self, dict_: t.Mapping[str, t.Any]) -> SymbolicWhile:
         assert dict_["kind"] == "while"
