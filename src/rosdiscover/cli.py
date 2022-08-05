@@ -12,6 +12,8 @@ import yaml
 from dockerblade.popen import Popen
 from loguru import logger
 
+from .states import StateMachineRecovery
+from .states import StateMachineSummary
 from .acme import AcmeGenerator
 from .config import Config
 from .interpreter import Interpreter, SystemSummary
@@ -51,6 +53,14 @@ def recover(args: argparse.Namespace) -> None:
         print(f"saving recovered model to disk: {args.save_to}")
         model.save(args.save_to)
         print("saved recovered model to disk")
+
+
+def _recover_states(config: Config) -> StateMachineSummary:
+    logger.info(f"reconstructing architecture for image [{config.image}]")
+    with StateMachineRecovery.for_config(config) as recovery:
+        ros_dist = recovery.app.description.distribution
+        logger.info(f'Detected {ros_dist.ros} version: {ros_dist.name}')
+        return recovery.summarise()
 
 
 def _launch(config: Config) -> SystemSummary:
