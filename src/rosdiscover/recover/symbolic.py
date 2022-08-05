@@ -122,10 +122,9 @@ class SymbolicValueType(enum.Enum):
     def __str__(self) -> str:
         return self.value
 
-    @property
     @classmethod
-    def name_to_type(cls) -> t.Dict[str, SymbolicValueType]:
-        return {
+    def from_name(cls, name: str, unknown_as_unsupported: bool = False) -> SymbolicValueType:
+        name_to_type = {
             "bool": cls.BOOL,
             "integer": cls.INTEGER,
             "node-handle": cls.NODE_HANDLE,
@@ -134,11 +133,11 @@ class SymbolicValueType(enum.Enum):
             "unsupported": cls.UNSUPPORTED,
         }
 
-    @classmethod
-    def from_name(cls, name: str) -> SymbolicValueType:
-        if name not in cls.name_to_type():
-            raise ValueError(f"unknown value type: {name}")
-        return cls.name_to_type()[name]
+        if name not in name_to_type:
+            if not unknown_as_unsupported:
+                raise ValueError(f"unknown value type: {name}")
+            return cls.UNSUPPORTED
+        return name_to_type[name]
 
 
 class SymbolicExpr(abc.ABC):

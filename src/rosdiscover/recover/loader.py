@@ -152,10 +152,7 @@ class SymbolicProgramLoader:
         assert dict_["kind"] == "memberVarRef"
 
         type_name = dict_["type"]
-        if type_name not in SymbolicValueType.name_to_type():
-            type_ = SymbolicValueType.UNSUPPORTED
-        else:
-            type_ = SymbolicValueType.name_to_type()[type_name]
+        type_ = SymbolicValueType.from_name(type_name, True)
 
         base = self._load_expr(dict_["base"])
         return SymbolicMemberVariableReference(
