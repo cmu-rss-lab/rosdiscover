@@ -94,7 +94,7 @@ class SymbolicProgramLoader:
 
     def _load_int_literal(self, dict_: t.Mapping[str, t.Any]) -> IntLiteral:
         assert dict_["kind"] == "int-literal"
-        return IntLiteral(value=int(dict_["literal"]))
+        return IntLiteral(value=dict_["literal"])
 
     def _load_arg(self, dict_: t.Mapping[str, t.Any]) -> SymbolicArg:
         assert dict_["kind"] == "arg"
