@@ -238,17 +238,17 @@ class CompareExpr(BinaryExpr, abc.ABC):
         return self.operator
 
     def eval(self, context: SymbolicContext) -> t.Any:
-        if operator == "<=":
+        if self.operator == "<=":
             return self.lhs.eval(context) <= self.rhs.eval(context)
-        elif operator == "<":
+        elif self.operator == "<":
             return self.lhs.eval(context) < self.rhs.eval(context)
-        elif operator == ">=":
+        elif self.operator == ">=":
             return self.lhs.eval(context) >= self.rhs.eval(context)
-        elif operator == ">":
+        elif self.operator == ">":
             return self.lhs.eval(context) > self.rhs.eval(context)
-        elif operator == "==":
+        elif self.operator == "==":
             return self.lhs.eval(context) == self.rhs.eval(context)
-        elif operator == "!=":
+        elif self.operator == "!=":
             return self.lhs.eval(context) != self.rhs.eval(context)
         else:
             assert False
@@ -262,15 +262,15 @@ class BinaryMathExpr(BinaryExpr):
         return self.operator
 
     def eval(self, context: SymbolicContext) -> t.Any:
-        if operator == "+":
+        if self.operator == "+":
             return self.lhs.eval(context) + self.rhs.eval(context)
-        elif operator == "-":
+        elif self.operator == "-":
             return self.lhs.eval(context) - self.rhs.eval(context)
-        elif operator == "*":
+        elif self.operator == "*":
             return self.lhs.eval(context) * self.rhs.eval(context)
-        elif operator == "/":
+        elif self.operator == "/":
             return self.lhs.eval(context) / self.rhs.eval(context)
-        elif operator == "%":
+        elif self.operator == "%":
             return self.lhs.eval(context) % self.rhs.eval(context)
         else:
             assert False
