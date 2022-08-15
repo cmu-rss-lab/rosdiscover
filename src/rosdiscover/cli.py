@@ -63,6 +63,23 @@ def _recover_states(config: Config) -> StateMachineSummary:
         return recovery.summarise()
 
 
+def _recover_states_config(args) -> StateMachineSummary:
+    config = Config.from_yaml_string(args.config)
+    return _recover_states(config)
+
+
+def recover_states(args) -> None:
+    """Simulates the architectural effects of a `roslaunch` command."""
+    summary = _recover_states_config(args)
+    output = summary.to_dict()
+
+    if args.output:
+        with open(args.output, 'w') as f:
+            yaml.dump(output, f, default_flow_style=False)
+    else:
+        print(yaml.dump(output, default_flow_style=False))
+
+
 def _launch(config: Config) -> SystemSummary:
     logger.info(f"reconstructing architecture for image [{config.image}]")
     with Interpreter.for_config(config) as interpreter:
@@ -313,6 +330,15 @@ def main(args: t.Optional[t.Sequence[str]] = None) -> None:
     p.add_argument('config', type=argparse.FileType('r'), help=CONFIG_HELP)
 
     p.set_defaults(func=rostopic_list)
+
+    # ----------------- STATES --------------------
+    p = subparsers.add_parser(
+        'states',
+        help='recovers the state machine',
+        formatter_class=MultiLineFormatter)
+    p.add_argument('--output', type=str, help="file to output YAML to")
+    p.add_argument('config', type=argparse.FileType('r'), help=CONFIG_HELP)
+    p.set_defaults(func=recover_states)
 
     # ----------------- ROSSERVICE --------------------
     p = subparsers.add_parser(
