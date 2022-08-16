@@ -142,6 +142,17 @@ class SymbolicValueType(enum.Enum):
 
 class SymbolicExpr(abc.ABC):
     """Represents a symbolic value in a function summary."""
+    
+    @abc.abstractmethod
+    def children(self) -> t.Set[SymbolicExpr]:
+        ...
+
+    def decendents(self) -> t.Set[SymbolicExpr]:
+        result: t.Set[SymbolicExpr] = set()
+        for child in self.children():
+            result = result.union(child.decendents())
+        return result
+    
     @abc.abstractmethod
     def to_dict(self) -> t.Dict[str, t.Any]:
         ...
@@ -159,6 +170,10 @@ class SymbolicExpr(abc.ABC):
 class ThisExpr(SymbolicExpr):
 
     """Represents a symbolic value in a function summary."""
+
+    def children(self) -> t.Set[SymbolicExpr]:
+        return set()
+
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
             "kind": "ThisExpr",
@@ -180,6 +195,9 @@ class NullExpr(SymbolicExpr):
             "kind": "NullExpr",
         }
 
+    def children(self) -> t.Set[SymbolicExpr]:
+        return set()
+
     def eval(self, context: SymbolicContext) -> t.Any:
         return "NULL"
 
@@ -190,6 +208,9 @@ class NullExpr(SymbolicExpr):
 @attr.s(auto_attribs=True, slots=True, str=False)
 class NegateExpr(SymbolicExpr):
     sub_expr: SymbolicExpr
+
+    def children(self) -> t.Set[SymbolicExpr]:
+        return {self.sub_expr}
 
     """Represents a symbolic value in a function summary."""
     def to_dict(self) -> t.Dict[str, t.Any]:
@@ -214,7 +235,9 @@ class BinaryExpr(SymbolicExpr, abc.ABC):
     def binary_operator(self) -> str:
         ...
 
-    """Represents a symbolic value in a function summary."""
+    def children(self) -> t.Set[SymbolicExpr]:
+        return {self.lhs, self.rhs}
+
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
             "kind": "BinaryExpr",
@@ -314,6 +337,9 @@ class SymbolicNodeName(SymbolicString):
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {"kind": "node-name"}
 
+    def children(self) -> t.Set[SymbolicExpr]:
+        return set()
+
     def eval(self, context: SymbolicContext) -> t.Any:
         return context.node_name
 
@@ -328,6 +354,9 @@ class SymbolicNodeName(SymbolicString):
 class StringLiteral(SymbolicString):
     """Represents a literal string value."""
     value: str
+
+    def children(self) -> t.Set[SymbolicExpr]:
+        return set()
 
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
@@ -350,6 +379,9 @@ class FloatLiteral(SymbolicFloat):
     """Represents a literal float value."""
     value: float
 
+    def children(self) -> t.Set[SymbolicExpr]:
+        return set()
+
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
             "kind": "float-literal",
@@ -371,6 +403,9 @@ class Concatenate(SymbolicString):
     """Represents a concatenation of two symbolic strings."""
     lhs: SymbolicString
     rhs: SymbolicString
+
+    def children(self) -> t.Set[SymbolicExpr]:
+        return {self.lhs, self.rhs}
 
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
@@ -403,6 +438,9 @@ class IntLiteral(SymbolicInteger):
     """Represents a literal integer value."""
     value: int
 
+    def children(self) -> t.Set[SymbolicExpr]:
+        return set()
+
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
             "kind": "int-literal",
@@ -427,6 +465,9 @@ class SymbolicBool(SymbolicValue, abc.ABC):
 class BoolLiteral(SymbolicBool):
     """Represents a literal string value."""
     value: bool
+
+    def children(self) -> t.Set[SymbolicExpr]:
+        return set()
 
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
@@ -461,6 +502,9 @@ class SymbolicUnknown(
     def eval(self, context: SymbolicContext) -> t.Any:
         return self
 
+    def children(self) -> t.Set[SymbolicExpr]:
+        return set()
+
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {"kind": "unknown"}
 
@@ -476,6 +520,9 @@ class SymbolicUnknown(
 @attr.s(frozen=True, auto_attribs=True, slots=True, str=False)
 class SymbolicNodeHandleImpl(SymbolicNodeHandle):
     namespace: SymbolicString
+
+    def children(self) -> t.Set[SymbolicExpr]:
+        return set()
 
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
@@ -503,6 +550,9 @@ class SymbolicArg(
     SymbolicValue,
 ):
     name: str
+
+    def children(self) -> t.Set[SymbolicExpr]:
+        return set()
 
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
@@ -702,6 +752,9 @@ class SymbolicVariableReference(SymbolicValue):
     variable: str
     type_: SymbolicValueType
 
+    def children(self) -> t.Set[SymbolicExpr]:
+        return set()
+
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
             "kind": "variable-reference",
@@ -731,6 +784,9 @@ class SymbolicMemberVariableReference(SymbolicVariableReference):
         The expresion on which the member variable is called
     """
     base: SymbolicExpr
+
+    def children(self) -> t.Set[SymbolicExpr]:
+        return {self.base}
 
     def to_dict(self) -> t.Dict[str, t.Any]:
         result = super().to_dict()

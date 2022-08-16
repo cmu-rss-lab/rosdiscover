@@ -37,6 +37,8 @@ class SymbolicRosApiCall(SymbolicStatement, abc.ABC):
         """Determines whether the target of this API call is unknown."""
         ...
 
+    def children(self) -> t.Set[SymbolicExpr]:
+        return set()
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class RosInit(SymbolicRosApiCall):
