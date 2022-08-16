@@ -11,10 +11,12 @@ import attr
 from functools import cached_property
 
 from .symbolic import (
+    SymbolicAssignment,
     SymbolicProgram,
     SymbolicFunction,
     SymbolicFunctionCall,
-    SymbolicWhile
+    SymbolicWhile,
+    SymbolicStatement
 )
 
 from .call import Publish, RateSleep
@@ -25,6 +27,36 @@ from .call import Subscriber
 class SymbolicProgramAnalyzer:
 
     program: SymbolicProgram
+
+    @cached_property
+    def assigned_vars(self) -> t.Set[str]:
+        return {a.variable for a in self.assignments}
+
+    def assignments_of_var(self, variable: str) -> t.Set[SymbolicAssignment]:
+        result = set()
+        for assign in self.assignments:
+            if assign.variable == variable:
+                result.add(assign)
+
+        return result
+
+    def func_of_stmt(self, stmt: SymbolicStatement) -> t.Set[SymbolicFunction]:
+        result = set()
+        for func in self.program.functions.values():
+            if stmt in func.body:
+                result.add(func)
+
+        return result
+
+    @cached_property
+    def assignments(self) -> t.Set[SymbolicAssignment]:
+        result = set()
+        for func in self.program.functions.values():
+            for stmt in func.body:
+                if isinstance(stmt, SymbolicAssignment):
+                    result.add(stmt)
+
+        return result
 
     @cached_property
     def subscribers(self) -> t.Set[Subscriber]:
