@@ -16,14 +16,15 @@ class StateVariable:
         return {'name': self.name,
                 'type': self.type}
 
+
 @attr.s(frozen=True, slots=True, auto_attribs=True)
 class State:
     """Describes a concrete state of a node"""
     variables: t.Dict[StateVariable, SymbolicValue]
 
     def to_dict(self):
-        vars = [{'variable': k.to_dict(), 
-                'value': v.to_dict()} for (k, v) in self.variables.keys]
+        vars = [{'variable': k.to_dict(),
+                 'value': v.to_dict()} for (k, v) in self.variables.keys]
         return {'variables': vars}
 
 
