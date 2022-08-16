@@ -457,7 +457,7 @@ class NodeRecoveryTool:
         logger.debug(f"periodic_publish_calls: {analyzer.periodic_publish_calls}")
 
         states_analyzer = SymbolicStatesAnalyzer(summary, analyzer)
-        logger.debug(f"potential_state_vars: {states_analyzer.potential_state_vars}")
+        logger.debug(f"potential_state_vars: {states_analyzer.state_vars}")
 
         conditions = []
         for p in analyzer.publish_calls:

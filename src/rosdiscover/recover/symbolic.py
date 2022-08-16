@@ -147,8 +147,10 @@ class SymbolicExpr(abc.ABC):
     def children(self) -> t.Set[SymbolicExpr]:
         ...
 
-    def decendents(self) -> t.Set[SymbolicExpr]:
+    def decendents(self, include_self: bool = False) -> t.Set[SymbolicExpr]:
         result: t.Set[SymbolicExpr] = self.children()
+        if include_self:
+            result.add(self)
         for child in self.children():
             result = result.union(child.decendents())
         return result
