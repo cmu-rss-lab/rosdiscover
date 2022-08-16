@@ -166,7 +166,7 @@ class SymbolicExpr(abc.ABC):
         ...
 
 
-@attr.s(auto_attribs=True, slots=True, str=False)
+@attr.s(auto_attribs=True, slots=True, str=False, frozen=True)
 class ThisExpr(SymbolicExpr):
 
     """Represents a symbolic value in a function summary."""
@@ -186,7 +186,7 @@ class ThisExpr(SymbolicExpr):
         return "this"
 
 
-@attr.s(auto_attribs=True, slots=True, str=False)
+@attr.s(auto_attribs=True, slots=True, str=False, frozen=True)
 class NullExpr(SymbolicExpr):
 
     """Represents a symbolic value in a function summary."""
@@ -205,7 +205,7 @@ class NullExpr(SymbolicExpr):
         return "NULL"
 
 
-@attr.s(auto_attribs=True, slots=True, str=False)
+@attr.s(auto_attribs=True, slots=True, str=False, frozen=True)
 class NegateExpr(SymbolicExpr):
     sub_expr: SymbolicExpr
 
@@ -226,7 +226,7 @@ class NegateExpr(SymbolicExpr):
         return f"!{self.sub_expr}"
 
 
-@attr.s(auto_attribs=True, slots=True, str=False)
+@attr.s(auto_attribs=True, slots=True, str=False, frozen=True)
 class BinaryExpr(SymbolicExpr, abc.ABC):
     lhs: SymbolicExpr
     rhs: SymbolicExpr
@@ -250,7 +250,7 @@ class BinaryExpr(SymbolicExpr, abc.ABC):
         return f"{self.lhs} {self.binary_operator()} {self.rhs}"
 
 
-@attr.s(auto_attribs=True, slots=True)
+@attr.s(auto_attribs=True, slots=True, frozen=True)
 class CompareExpr(BinaryExpr, abc.ABC):
     operator: str
 
@@ -274,7 +274,7 @@ class CompareExpr(BinaryExpr, abc.ABC):
             assert False
 
 
-@attr.s(auto_attribs=True, slots=True)
+@attr.s(auto_attribs=True, slots=True, frozen=True)
 class BinaryMathExpr(BinaryExpr):
     operator: str
 
@@ -296,7 +296,7 @@ class BinaryMathExpr(BinaryExpr):
             assert False
 
 
-@attr.s(auto_attribs=True, slots=True)
+@attr.s(auto_attribs=True, slots=True, frozen=True)
 class AndExpr(BinaryExpr):
 
     def eval(self, context: SymbolicContext) -> t.Any:
@@ -306,7 +306,7 @@ class AndExpr(BinaryExpr):
         return "&&"
 
 
-@attr.s(auto_attribs=True, slots=True)
+@attr.s(auto_attribs=True, slots=True, frozen=True)
 class OrExpr(BinaryExpr):
 
     def eval(self, context: SymbolicContext) -> t.Any:
@@ -898,10 +898,32 @@ class SymbolicProgram:
             name_to_function[entrypoint] = SymbolicFunction.empty(entrypoint)
         return SymbolicProgram(entrypoint, name_to_function)
 
-    def callers(self, func: SymbolicFunction) -> t.Set[SymbolicFunctionCall]:
-        result: t.Set[SymbolicFunctionCall] = set()
+    def func_of_stmt(self, stmt: SymbolicStatement) -> SymbolicFunction:
+        for func in self.functions.values():
+            if stmt in func.body:
+                return func
+        raise ValueError(f"failed to find parent function of statement: {stmt}")
+
+    def transitive_callers(self, func: SymbolicFunction) -> t.List[SymbolicFunctionCall]:
+        callers: t.List[SymbolicFunctionCall] = self.callers(func)
+        if len(callers) == 0:
+            return callers
+
+        result = callers
+        for c in callers:
+            for transitive_caller in self.transitive_callers(self.func_of_stmt(c)):
+                if transitive_caller not in callers:
+                    callers.append(transitive_caller)
+
+        return result
+
+    def callers(self, func: SymbolicFunction) -> t.List[SymbolicFunctionCall]:
+        result: t.List[SymbolicFunctionCall] = []
         for f in self.functions.values():
-            result = result.union(stmt for stmt in (f.body) if isinstance(stmt, SymbolicFunctionCall) and stmt.callee == func)
+            for c in [stmt for stmt in f.body if isinstance(stmt, SymbolicFunctionCall) and stmt.callee == func.name]:
+                if c not in result:
+                    result.append(c)
+
         return result
 
     @property

@@ -17,7 +17,7 @@ from .symbolic import (
 from .analyzer import SymbolicProgramAnalyzer
 
 
-@attr.s(auto_attribs=True) # Can't use slots with cached_property
+@attr.s(auto_attribs=True)  # Can't use slots with cached_property
 class SymbolicStatesAnalyzer:
 
     program: SymbolicProgram
@@ -27,13 +27,14 @@ class SymbolicStatesAnalyzer:
     def potential_state_vars(self) -> t.List[SymbolicVariableReference]:
         var_refs: t.List[SymbolicVariableReference] = []
         for pub in self.program_analyzer.publish_calls:
-            for expr in pub.condition.decendents():
+            print(f"Interprodedual conditon of {pub} is: {self.program_analyzer.inter_procedual_condition(pub)}")
+            for expr in self.program_analyzer.inter_procedual_condition(pub).decendents():
                 if isinstance(expr, SymbolicVariableReference) and expr.variable in self.program_analyzer.assigned_vars:
-                    pub_func = self.program_analyzer.func_of_stmt(pub)
+                    pub_func = self.program.func_of_stmt(pub)
                     assign_funcs: t.Set[SymbolicFunction] = set()
                     for assign in self.program_analyzer.assignments_of_var(expr.variable):
-                        assign_funcs = assign_funcs.union(self.program_analyzer.func_of_stmt(assign))
-                    if len(assign_funcs - pub_func) > 0:
+                        assign_funcs.add(self.program.func_of_stmt(assign))
+                    if len(assign_funcs - {pub_func}) > 0:
                         var_refs.append(expr)
         return var_refs
 

@@ -10,12 +10,13 @@ import typing as t
 import attr
 
 from .symbolic import (
+    AndExpr,
     SymbolicAssignment,
+    SymbolicExpr,
     SymbolicProgram,
     SymbolicFunction,
     SymbolicFunctionCall,
     SymbolicWhile,
-    SymbolicStatement
 )
 
 from .call import Publish, RateSleep
@@ -31,19 +32,18 @@ class SymbolicProgramAnalyzer:
     def assigned_vars(self) -> t.Set[str]:
         return {a.variable for a in self.assignments}
 
+    def inter_procedual_condition(self, publish_call: Publish) -> SymbolicExpr:
+        expr = publish_call.condition
+        transitive_callers = self.program.transitive_callers(self.program.func_of_stmt(publish_call))
+        for call in transitive_callers:
+            expr = AndExpr(expr, call.condition)
+        return expr
+
     def assignments_of_var(self, variable: str) -> t.Set[SymbolicAssignment]:
         result = set()
         for assign in self.assignments:
             if assign.variable == variable:
                 result.add(assign)
-
-        return result
-
-    def func_of_stmt(self, stmt: SymbolicStatement) -> t.Set[SymbolicFunction]:
-        result = set()
-        for func in self.program.functions.values():
-            if stmt in func.body:
-                result.add(func)
 
         return result
 
