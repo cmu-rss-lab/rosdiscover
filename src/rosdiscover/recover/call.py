@@ -40,6 +40,7 @@ class SymbolicRosApiCall(SymbolicStatement, abc.ABC):
     def children(self) -> t.Set[SymbolicExpr]:
         return set()
 
+
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class RosInit(SymbolicRosApiCall):
     name: SymbolicString

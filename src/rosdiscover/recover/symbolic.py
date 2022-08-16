@@ -142,7 +142,7 @@ class SymbolicValueType(enum.Enum):
 
 class SymbolicExpr(abc.ABC):
     """Represents a symbolic value in a function summary."""
-    
+
     @abc.abstractmethod
     def children(self) -> t.Set[SymbolicExpr]:
         ...
@@ -152,7 +152,7 @@ class SymbolicExpr(abc.ABC):
         for child in self.children():
             result = result.union(child.decendents())
         return result
-    
+
     @abc.abstractmethod
     def to_dict(self) -> t.Dict[str, t.Any]:
         ...
