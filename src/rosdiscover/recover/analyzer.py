@@ -36,7 +36,7 @@ class SymbolicProgramAnalyzer:
         expr = publish_call.condition
         transitive_callers = self.program.transitive_callers(self.program.func_of_stmt(publish_call))
         for call in transitive_callers:
-            expr = AndExpr(expr, call.condition)
+            expr = AndExpr.build(expr, call.condition)
         return expr
 
     def assignments_of_var(self, variable: str) -> t.Set[SymbolicAssignment]:

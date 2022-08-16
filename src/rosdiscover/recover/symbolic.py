@@ -148,7 +148,7 @@ class SymbolicExpr(abc.ABC):
         ...
 
     def decendents(self) -> t.Set[SymbolicExpr]:
-        result: t.Set[SymbolicExpr] = set()
+        result: t.Set[SymbolicExpr] = self.children()
         for child in self.children():
             result = result.union(child.decendents())
         return result
@@ -208,6 +208,12 @@ class NullExpr(SymbolicExpr):
 @attr.s(auto_attribs=True, slots=True, str=False, frozen=True)
 class NegateExpr(SymbolicExpr):
     sub_expr: SymbolicExpr
+
+    @classmethod
+    def build(cls, sub_expr: SymbolicExpr) -> SymbolicExpr:
+        if isinstance(sub_expr, NegateExpr):
+            return sub_expr.sub_expr
+        return NegateExpr(sub_expr)
 
     def children(self) -> t.Set[SymbolicExpr]:
         return {self.sub_expr}
@@ -299,6 +305,14 @@ class BinaryMathExpr(BinaryExpr):
 @attr.s(auto_attribs=True, slots=True, frozen=True)
 class AndExpr(BinaryExpr):
 
+    @classmethod
+    def build(cls, expr1: SymbolicExpr, expr2: SymbolicExpr) -> SymbolicExpr:
+        if isinstance(expr1, BoolLiteral) and expr1.value is True:
+            return expr2
+        if isinstance(expr2, BoolLiteral) and expr2.value is True:
+            return expr1
+        return AndExpr.build(expr1, expr2)
+
     def eval(self, context: SymbolicContext) -> t.Any:
         return self.lhs.eval(context) and self.rhs.eval(context)
 
@@ -308,6 +322,14 @@ class AndExpr(BinaryExpr):
 
 @attr.s(auto_attribs=True, slots=True, frozen=True)
 class OrExpr(BinaryExpr):
+
+    @classmethod
+    def build(cls, expr1: SymbolicExpr, expr2: SymbolicExpr) -> SymbolicExpr:
+        if isinstance(expr1, BoolLiteral) and expr1.value is False:
+            return expr2
+        if isinstance(expr2, BoolLiteral) and expr2.value is False:
+            return expr1
+        return OrExpr.build(expr1, expr2)
 
     def eval(self, context: SymbolicContext) -> t.Any:
         return self.lhs.eval(context) or self.rhs.eval(context)

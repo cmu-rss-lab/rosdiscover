@@ -131,18 +131,18 @@ class SymbolicProgramLoader:
         assert isinstance(value, SymbolicFloat)
         return value
 
-    def _load_negate_expr(self, dict_: t.Mapping[str, t.Any]) -> NegateExpr:
-        return NegateExpr(self._load_expr(dict_["subExpr"]))
+    def _load_negate_expr(self, dict_: t.Mapping[str, t.Any]) -> SymbolicExpr:
+        return NegateExpr.build(self._load_expr(dict_["subExpr"]))
 
-    def _load_or_expr(self, dict_: t.Mapping[str, t.Any]) -> OrExpr:
+    def _load_or_expr(self, dict_: t.Mapping[str, t.Any]) -> SymbolicExpr:
         lhs = self._load_expr(dict_["lhs"])
         rhs = self._load_expr(dict_["rhs"])
-        return OrExpr(lhs=lhs, rhs=rhs)
+        return OrExpr.build(lhs, rhs)
 
-    def _load_and_expr(self, dict_: t.Mapping[str, t.Any]) -> AndExpr:
+    def _load_and_expr(self, dict_: t.Mapping[str, t.Any]) -> SymbolicExpr:
         lhs = self._load_expr(dict_["lhs"])
         rhs = self._load_expr(dict_["rhs"])
-        return AndExpr(lhs=lhs, rhs=rhs)
+        return AndExpr.build(lhs, rhs)
 
     def _load_binary_math_expr(self, dict_: t.Mapping[str, t.Any]) -> BinaryMathExpr:
         lhs = self._load_expr(dict_["lhs"])
