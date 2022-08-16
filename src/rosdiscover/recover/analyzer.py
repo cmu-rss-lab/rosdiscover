@@ -23,7 +23,7 @@ from .call import Publish, RateSleep
 from .call import Subscriber
 
 
-@attr.s(auto_attribs=True, slots=True)
+@attr.s(auto_attribs=True, slots=False)
 class SymbolicProgramAnalyzer:
 
     program: SymbolicProgram

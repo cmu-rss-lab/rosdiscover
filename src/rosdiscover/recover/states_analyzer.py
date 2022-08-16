@@ -16,14 +16,14 @@ from .symbolic import (
 from .analyzer import SymbolicProgramAnalyzer
 
 
-@attr.s(auto_attribs=True, slots=True)
+@attr.s(auto_attribs=True) # Can't use slots with cached_property
 class SymbolicStatesAnalyzer:
 
     program: SymbolicProgram
     program_analyzer: SymbolicProgramAnalyzer
 
     @cached_property
-    def _pub_condition_vars(self) -> t.List[SymbolicVariableReference]:
+    def potential_state_vars(self) -> t.List[SymbolicVariableReference]:
         var_refs: t.List[SymbolicVariableReference] = []
         for pub in self.program_analyzer.publish_calls:
             for expr in pub.condition.decendents():
