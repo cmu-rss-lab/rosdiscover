@@ -78,14 +78,18 @@ class SymbolicProgramAnalyzer:
         return result
 
     @cached_property
-    def subscriber_callbacks(self) -> t.Set[SymbolicFunction]:
+    def subscriber_callbacks_map(self) -> t.Set[t.Tuple[Subscriber, SymbolicFunction]]:
         result = set()
         for sub in self.subscribers:
             if sub.callback_name == "unknown":
                 continue
-            result.add(self.program.functions[sub.callback_name])
+            result.add((sub, self.program.functions[sub.callback_name]))
 
         return result
+
+    @cached_property
+    def subscriber_callbacks(self) -> t.Set[SymbolicFunction]:
+        return set(callback for (sub, callback) in self.subscriber_callbacks_map)
 
     @cached_property
     def publish_calls(self) -> t.List[Publish]:
