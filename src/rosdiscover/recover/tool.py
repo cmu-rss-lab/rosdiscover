@@ -447,17 +447,18 @@ class NodeRecoveryTool:
         summary = model_loader.load(json_model)
         logger.debug(f"recovered node summary: {summary}")
 
-        logger.debug(f"publish_calls: {SymbolicProgramAnalyzer.publish_calls(summary)}")
-        logger.debug(f"subscriber_callbacks: {SymbolicProgramAnalyzer.subscriber_callbacks(summary)}")
-        logger.debug(f"publish_calls_in_sub_callback: {SymbolicProgramAnalyzer.publish_calls_in_sub_callback(summary)}")
-        logger.debug(f"rate_sleeps: {SymbolicProgramAnalyzer.rate_sleeps(summary)}")
-        logger.debug(f"while_loops: {SymbolicProgramAnalyzer.while_loops(summary)}")
-        logger.debug(f"periodic_publish_calls: {SymbolicProgramAnalyzer.periodic_publish_calls(summary)}")
+        analyzer = SymbolicProgramAnalyzer(summary)
+        logger.debug(f"publish_calls: {analyzer.publish_calls}")
+        logger.debug(f"subscriber_callbacks: {analyzer.subscriber_callbacks}")
+        logger.debug(f"publish_calls_in_sub_callback: {analyzer.publish_calls_in_sub_callback}")
+        logger.debug(f"rate_sleeps: {analyzer.rate_sleeps}")
+        logger.debug(f"while_loops: {analyzer.while_loops}")
+        logger.debug(f"periodic_publish_calls: {analyzer.periodic_publish_calls}")
 
         conditions = []
-        for p in SymbolicProgramAnalyzer.publish_calls(summary):
+        for p in analyzer.publish_calls:
             conditions.append(str(p.condition))
-        for f in SymbolicProgramAnalyzer.function_calls(summary):
+        for f in analyzer.function_calls:
             conditions.append(str(p.condition))
         cprint = "\n".join(conditions)
         logger.debug(f"path conditions: \n{cprint}")
