@@ -4,7 +4,7 @@ from __future__ import annotations
 __all__ = (
     "SymbolicProgramAnalyzer"
 )
-
+from functools import cached_property
 import typing as t
 
 import attr
