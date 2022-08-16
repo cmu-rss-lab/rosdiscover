@@ -461,9 +461,9 @@ class NodeRecoveryTool:
 
         conditions = []
         for p in analyzer.publish_calls:
-            conditions.append(str(p.condition))
+            conditions.append(str(analyzer.inter_procedual_condition(p)))
         for f in analyzer.function_calls:
-            conditions.append(str(p.condition))
+            conditions.append(str(f.condition))
         cprint = "\n".join(conditions)
         logger.debug(f"path conditions: \n{cprint}")
 
