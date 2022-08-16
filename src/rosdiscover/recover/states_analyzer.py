@@ -10,6 +10,7 @@ import attr
 from functools import cached_property
 
 from .symbolic import (
+    SymbolicFunction,
     SymbolicProgram,
     SymbolicVariableReference,
 )
@@ -29,14 +30,13 @@ class SymbolicStatesAnalyzer:
             for expr in pub.condition.decendents():
                 if isinstance(expr, SymbolicVariableReference) and expr.variable in self.program_analyzer.assigned_vars:
                     pub_func = self.program_analyzer.func_of_stmt(pub)
-                    var_assigns = self.program_analyzer.assignments_of_var(expr.variable)
-                    assign_funcs = {self.program_analyzer.func_of_stmt(assign) for assign in var_assigns}
+                    assign_funcs: t.Set[SymbolicFunction] = set()
+                    for assign in self.program_analyzer.assignments_of_var(expr.variable):
+                        assign_funcs = assign_funcs.union(self.program_analyzer.func_of_stmt(assign))
                     if len(assign_funcs - pub_func) > 0:
                         var_refs.append(expr)
-
         return var_refs
 
-    @cached_property
     def transitions(self) -> t.List[t.Any]:
         result: t.List[t.Any] = []
         return result

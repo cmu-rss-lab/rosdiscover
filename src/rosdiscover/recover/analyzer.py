@@ -8,7 +8,6 @@ from functools import cached_property
 import typing as t
 
 import attr
-from functools import cached_property
 
 from .symbolic import (
     SymbolicAssignment,
@@ -23,7 +22,7 @@ from .call import Publish, RateSleep
 from .call import Subscriber
 
 
-@attr.s(auto_attribs=True, slots=False)
+@attr.s(auto_attribs=True)  # Can't use slots with cached_property
 class SymbolicProgramAnalyzer:
 
     program: SymbolicProgram

@@ -898,6 +898,12 @@ class SymbolicProgram:
             name_to_function[entrypoint] = SymbolicFunction.empty(entrypoint)
         return SymbolicProgram(entrypoint, name_to_function)
 
+    def callers(self, func: SymbolicFunction) -> t.Set[SymbolicFunctionCall]:
+        result: t.Set[SymbolicFunctionCall] = set()
+        for f in self.functions.values():
+            result = result.union(stmt for stmt in (f.body) if isinstance(stmt, SymbolicFunctionCall) and stmt.callee == func)
+        return result
+
     @property
     def unreachable_functions(self) -> t.Set[SymbolicFunction]:
         """Returns the set of functions that are unreachable from the entrypoint of this program.
