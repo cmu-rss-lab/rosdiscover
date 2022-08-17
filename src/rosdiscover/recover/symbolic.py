@@ -547,12 +547,14 @@ class SymbolicAssignment(SymbolicStatement):
     """
     variable: str
     value: SymbolicExpr
+    condition: SymbolicExpr
 
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
             "kind": "assignment",
             "variable": self.variable,
             "value": self.value.to_dict(),
+            "condition": self.condition.to_dict(),
         }
 
     def eval(self, context: SymbolicContext) -> None:
