@@ -12,8 +12,6 @@ import yaml
 from dockerblade.popen import Popen
 from loguru import logger
 
-from .states import StateMachineRecovery
-from .states import StateMachineSummary
 from .acme import AcmeGenerator
 from .config import Config
 from .interpreter import Interpreter, SystemSummary
