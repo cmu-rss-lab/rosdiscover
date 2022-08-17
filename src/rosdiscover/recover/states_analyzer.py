@@ -58,7 +58,3 @@ class SymbolicStatesAnalyzer:
                 if callback.body.contains(assign, self.program.functions) and (sub, assign) not in result:
                     result.append((sub, assign))
         return result
-
-    def transitions(self) -> t.List[t.Any]:
-        result: t.List[t.Any] = []
-        return result
