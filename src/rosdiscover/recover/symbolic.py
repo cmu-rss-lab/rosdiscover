@@ -313,7 +313,7 @@ class AndExpr(BinaryExpr):
             return expr2
         if isinstance(expr2, BoolLiteral) and expr2.value is True:
             return expr1
-        return AndExpr.build(expr1, expr2)
+        return AndExpr(expr1, expr2)
 
     def eval(self, context: SymbolicContext) -> t.Any:
         return self.lhs.eval(context) and self.rhs.eval(context)
@@ -331,7 +331,7 @@ class OrExpr(BinaryExpr):
             return expr2
         if isinstance(expr2, BoolLiteral) and expr2.value is False:
             return expr1
-        return OrExpr.build(expr1, expr2)
+        return OrExpr(expr1, expr2)
 
     def eval(self, context: SymbolicContext) -> t.Any:
         return self.lhs.eval(context) or self.rhs.eval(context)
