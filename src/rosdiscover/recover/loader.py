@@ -56,6 +56,7 @@ from .symbolic import (
     SymbolicValue,
     SymbolicValueType,
     SymbolicVariableReference,
+    SymbolicEnumReference,
     SymbolicWhile,
     SymbolicIf,
 )
@@ -161,6 +162,19 @@ class SymbolicProgramLoader:
             type_=type_,
         )
 
+    def _load_enum_ref(self, dict_: t.Mapping[str, t.Any]) -> SymbolicEnumReference:
+        assert dict_["kind"] == "enum-ref"
+
+        type_name = dict_["type"]
+        type_ = SymbolicValueType.from_name(type_name, True)
+
+        value = self._load_value(dict_["value"])
+        return SymbolicEnumReference(
+            value=value,
+            variable=dict_["qualified_name"],
+            type_=type_,
+        )
+
     def _load_binary_expr(self, dict_: t.Mapping[str, t.Any]) -> SymbolicExpr:
         operator: str = dict_["operator"]
         if operator == "||":
@@ -207,6 +221,8 @@ class SymbolicProgramLoader:
             return self._load_node_handle(dict_)
         elif kind == "variable-reference":
             return self._load_variable_reference(dict_)
+        elif kind == "enum-ref":
+            return self._load_enum_ref(dict_)
         elif kind == "reads-param":
             return self._load_reads_param(dict_)
         elif kind == "reads-param-with-default":

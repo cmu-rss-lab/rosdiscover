@@ -742,6 +742,27 @@ class SymbolicMemberVariableReference(SymbolicVariableReference):
         return f"{self.base}.{self.variable}"
 
 
+@attr.s(frozen=True, auto_attribs=True, slots=True, str=False)
+class SymbolicEnumReference(SymbolicVariableReference):
+    """Represents a symbolic member variable reference.
+
+    Attributes
+    ----------
+    value: SymbolicValue
+        The value of the enum reference
+    """
+    value: SymbolicValue
+
+    def to_dict(self) -> t.Dict[str, t.Any]:
+        result = super().to_dict()
+        result["kind"] = "enum-ref"
+        result["value"] = self.value.to_dict()
+        return result
+
+    def __str__(self) -> str:
+        return f"{self.variable} := {self.value}"
+
+
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class SymbolicParameter:
     """Provides the definition for a symbolic function parameter."""
