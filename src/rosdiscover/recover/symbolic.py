@@ -607,6 +607,9 @@ class SymbolicStatement(abc.ABC):
     def contains(self, stmt: SymbolicStatement, name_to_function: t.Mapping[str, SymbolicFunction]) -> bool:
         return self == stmt
 
+    def is_ast_parent_of(self, stmt: SymbolicStatement) -> bool:
+        return self == stmt
+
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class SymbolicAssignment(SymbolicStatement):
@@ -642,6 +645,9 @@ class SymbolicCompound(t.Sequence[SymbolicStatement], SymbolicStatement):
     def contains(self, stmt: SymbolicStatement, name_to_function: t.Mapping[str, SymbolicFunction]) -> bool:
         return self == stmt or any(s.contains(stmt, name_to_function) for s in self._statements)
 
+    def is_ast_parent_of(self, stmt: SymbolicStatement) -> bool:
+        return self == stmt or any(s.is_ast_parent_of(stmt) for s in self._statements)
+
     def __len__(self) -> int:
         return len(self._statements)
 
@@ -676,6 +682,12 @@ class SymbolicIf(SymbolicStatement):
     true_body: SymbolicCompound
     false_body: SymbolicCompound
     condition: SymbolicValue
+
+    def contains(self, stmt: SymbolicStatement, name_to_function: t.Mapping[str, SymbolicFunction]) -> bool:
+        return self == stmt or self.true_body.contains(stmt, name_to_function) or self.false_body.contains(stmt, name_to_function)
+
+    def is_ast_parent_of(self, stmt: SymbolicStatement) -> bool:
+        return self == stmt or self.true_body.is_ast_parent_of(stmt) or self.false_body.is_ast_parent_of(stmt)
 
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
@@ -714,6 +726,12 @@ class SymbolicWhile(SymbolicStatement):
         cond = self.condition.eval(context)
         if not isinstance(cond, bool) or cond:
             self.body.eval(context)
+
+    def contains(self, stmt: SymbolicStatement, name_to_function: t.Mapping[str, SymbolicFunction]) -> bool:
+        return self == stmt or self.body.contains(stmt, name_to_function)
+
+    def is_ast_parent_of(self, stmt: SymbolicStatement) -> bool:
+        return self == stmt or self.body.is_ast_parent_of(stmt)
 
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
@@ -924,7 +942,7 @@ class SymbolicProgram:
 
     def func_of_stmt(self, stmt: SymbolicStatement) -> SymbolicFunction:
         for func in self.functions.values():
-            if stmt in func.body:
+            if func.body.is_ast_parent_of(stmt):
                 return func
         raise ValueError(f"failed to find parent function of statement: {stmt}")
 
