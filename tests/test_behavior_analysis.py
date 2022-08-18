@@ -8,6 +8,7 @@ from rosdiscover.config import Config
 from rosdiscover.interpreter import Interpreter, SystemSummary
 from rosdiscover.observer import Observer
 from rosdiscover.recover import NodeRecoveryTool
+from rosdiscover.recover import analyzer
 from rosdiscover.recover.call import RateSleep
 from rosdiscover.recover.model import CMakeListsInfo, RecoveredNodeModel
 from rosdiscover.recover.analyzer import SymbolicProgramAnalyzer
@@ -25,37 +26,37 @@ class TestStringMethods(unittest.TestCase):
             print(f"spun up container: {tool}")
             return tool.recover_using_cmakelists(package, node)
 
-    def assert_publish_calls(self, model, publishers):
+    def assert_publish_calls(self, analzyer: SymbolicProgramAnalyzer, publishers):
         publish_calls = set()
-        for p in SymbolicProgramAnalyzer.publish_calls(model.program):
+        for p in analzyer.publish_calls:
             publish_calls.add(p.publisher)
         
         self.assertSetEqual(publish_calls, publishers)
 
-    def assert_publish_calls_in_sub_callback(self, model, publishers):
+    def assert_publish_calls_in_sub_callback(self, analzyer: SymbolicProgramAnalyzer, publishers):
         publish_calls_in_sub_callback = set()
-        for p in SymbolicProgramAnalyzer.publish_calls_in_sub_callback(model.program):
+        for p in analzyer.publish_calls_in_sub_callback:
             publish_calls_in_sub_callback.add(p.publisher)
         
         self.assertSetEqual(publish_calls_in_sub_callback, publishers)
 
-    def assert_periodic_publish_calls(self, model, publishers):
+    def assert_periodic_publish_calls(self, analzyer: SymbolicProgramAnalyzer, publishers):
         periodic_publish_calls = set()
-        for p in SymbolicProgramAnalyzer.periodic_publish_calls(model.program):
+        for p in analzyer.periodic_publish_calls:
             periodic_publish_calls.add(p.publisher)
         
         self.assertSetEqual(periodic_publish_calls, publishers)
 
-    def assert_sub_callbacks(self, model, callbacks):
+    def assert_sub_callbacks(self, analzyer: SymbolicProgramAnalyzer, callbacks):
         sub_callback = set()
-        for c in SymbolicProgramAnalyzer.subscriber_callbacks(model.program):
+        for c in analzyer.subscriber_callbacks:
             sub_callback.add(c.name)
         
         self.assertSetEqual(sub_callback, callbacks)
 
-    def assert_rate_sleeps(self, model, sleeps):
+    def assert_rate_sleeps(self, analzyer: SymbolicProgramAnalyzer, sleeps):
         rate_sleeps = set()
-        for r in SymbolicProgramAnalyzer.rate_sleeps(model.program):
+        for r in analzyer.rate_sleeps:
             rate_sleeps.add(r.rate.value)
         
         self.assertSetEqual(rate_sleeps, sleeps)        
@@ -94,16 +95,16 @@ class TestStringMethods(unittest.TestCase):
         )
 
     def test_obj_reproj(self):
-        model = self.get_model(self.autoware_file, "obj_reproj", "obj_reproj")
+        analyzer = SymbolicProgramAnalyzer(self.get_model(self.autoware_file, "obj_reproj", "obj_reproj"))
 
         self.assert_publish_calls_in_sub_callback(
-            model,
+            analyzer,
             {'pub', 'marker_pub', 'jsk_bounding_box_pub'}
         )
 
-        self.assert_rate_sleeps(model,set())
+        self.assert_rate_sleeps(analyzer,set())
 
-        self.assert_sub_callbacks(model, 
+        self.assert_sub_callbacks(analyzer, 
             {
                 "obj_pos_xyzCallback", 
                 "projection_callback",
@@ -111,19 +112,19 @@ class TestStringMethods(unittest.TestCase):
             }
         )
 
-        self.assert_periodic_publish_calls(model, set())
+        self.assert_periodic_publish_calls(analyzer, set())
 
     def test_wf_simulator(self):
-        model = self.get_model(self.autoware_file, "waypoint_follower", "wf_simulator")
+        analyzer = SymbolicProgramAnalyzer(self.get_model(self.autoware_file, "waypoint_follower", "wf_simulator"))
 
         self.assert_publish_calls(
-            model,
+            analyzer,
             {'odometry_publisher_', 'velocity_publisher_'}
         )
 
-        self.assert_rate_sleeps(model, {50.0})
+        self.assert_rate_sleeps(analyzer, {50.0})
 
-        self.assert_sub_callbacks(model, 
+        self.assert_sub_callbacks(analyzer, 
             {
                 "(anonymous namespace)::CmdCallBack", 
                 "(anonymous namespace)::controlCmdCallBack",
@@ -135,7 +136,7 @@ class TestStringMethods(unittest.TestCase):
             }
         )
 
-        self.assert_periodic_publish_calls(model,
+        self.assert_periodic_publish_calls(analyzer,
             {
                 "odometry_publisher_",
                 "velocity_publisher_",
@@ -143,20 +144,20 @@ class TestStringMethods(unittest.TestCase):
         )
 
     def test_turtlebot_move_action_server(self):
-        model = self.get_model(self.turtlebot_file, "turtlebot_actions", "turtlebot_move_action_server")
+        analyzer = SymbolicProgramAnalyzer(self.get_model(self.turtlebot_file, "turtlebot_actions", "turtlebot_move_action_server"))
 
         self.assert_publish_calls_in_sub_callback(
-            model,
+            analyzer,
             set()
         )
 
-        self.assert_rate_sleeps(model, {25.0})
+        self.assert_rate_sleeps(analyzer, {25.0})
 
-        self.assert_sub_callbacks(model, 
+        self.assert_sub_callbacks(analyzer, 
             set()
         )    
 
-        self.assert_periodic_publish_calls(model,
+        self.assert_periodic_publish_calls(analyzer,
             {
                 "cmd_vel_pub_",
             }
