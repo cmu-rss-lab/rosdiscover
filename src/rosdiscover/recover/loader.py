@@ -101,7 +101,7 @@ class SymbolicProgramLoader:
         return SymbolicArg(dict_["name"])
 
     def _load_var_ref(self, dict_: t.Mapping[str, t.Any]) -> SymbolicVariableReference:
-        assert dict_["kind"] == "varRef"
+        assert dict_["kind"] == "var-ref"
         type_ = SymbolicValueType.from_name(dict_["type"], True)
         return SymbolicVariableReference(
             variable=dict_["qualified_name"],
@@ -219,7 +219,7 @@ class SymbolicProgramLoader:
             return self._load_reads_param(dict_)
         elif kind == "reads-param-with-default":
             return self._load_reads_param_with_default(dict_)
-        elif kind == "varRef":
+        elif kind == "var-ref":
             return self._load_var_ref(dict_)
         elif kind == "checks-for-param":
             return self._load_checks_for_param(dict_)
