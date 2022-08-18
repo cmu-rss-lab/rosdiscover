@@ -161,7 +161,7 @@ class ThisExpr(SymbolicExpr):
     """Represents a symbolic value in a function summary."""
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
-            "kind": "ThisExpr",
+            "kind": "this-expr",
         }
 
     def eval(self, context: SymbolicContext) -> t.Any:
@@ -177,7 +177,7 @@ class NullExpr(SymbolicExpr):
     """Represents a symbolic value in a function summary."""
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
-            "kind": "NullExpr",
+            "kind": "null-expr",
         }
 
     def eval(self, context: SymbolicContext) -> t.Any:
@@ -194,7 +194,7 @@ class NegateExpr(SymbolicExpr):
     """Represents a symbolic value in a function summary."""
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
-            "kind": "NegateExpr",
+            "kind": "negate-expr",
             "subExpr": self.sub_expr.to_dict(),
         }
 
@@ -217,7 +217,7 @@ class BinaryExpr(SymbolicExpr, abc.ABC):
     """Represents a symbolic value in a function summary."""
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
-            "kind": "BinaryExpr",
+            "kind": "binary-expr",
             "operator": self.binary_operator(),
             "lhs": self.lhs.to_dict(),
             "rhs": self.rhs.to_dict(),

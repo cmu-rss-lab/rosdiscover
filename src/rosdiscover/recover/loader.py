@@ -176,15 +176,15 @@ class SymbolicProgramLoader:
 
     def _load_expr(self, dict_: t.Mapping[str, t.Any]) -> SymbolicExpr:
         kind: str = dict_["kind"]
-        if kind == "memberVarRef":
+        if kind == "member-var-ref":
             return self._load_member_var_ref(dict_)
-        elif kind == "BinaryExpr":
+        elif kind == "binary-expr":
             return self._load_binary_expr(dict_)
-        elif kind == "NegateExpr":
+        elif kind == "negate-expr":
             return self._load_negate_expr(dict_)
-        elif kind == "ThisExpr":
+        elif kind == "this-expr":
             return ThisExpr()
-        elif kind == "NullExpr":
+        elif kind == "null-expr":
             return NullExpr()
         else:
             return self._load_value(dict_)
