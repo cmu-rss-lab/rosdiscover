@@ -734,7 +734,7 @@ class SymbolicMemberVariableReference(SymbolicVariableReference):
 
     def to_dict(self) -> t.Dict[str, t.Any]:
         result = super().to_dict()
-        result["kind"] = "memberVarRef"
+        result["kind"] = "member-var-ref"
         result["base"] = self.base.to_dict()
         return result
 

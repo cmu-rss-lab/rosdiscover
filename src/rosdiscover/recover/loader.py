@@ -149,7 +149,7 @@ class SymbolicProgramLoader:
         return CompareExpr(lhs=lhs, rhs=rhs, operator=operator)
 
     def _load_member_var_ref(self, dict_: t.Mapping[str, t.Any]) -> SymbolicMemberVariableReference:
-        assert dict_["kind"] == "memberVarRef"
+        assert dict_["kind"] == "member-var-ref"
 
         type_name = dict_["type"]
         type_ = SymbolicValueType.from_name(type_name, True)
