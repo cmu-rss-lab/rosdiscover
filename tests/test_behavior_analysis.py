@@ -95,7 +95,7 @@ class TestStringMethods(unittest.TestCase):
         )
 
     def test_obj_reproj(self):
-        analyzer = SymbolicProgramAnalyzer(self.get_model(self.autoware_file, "obj_reproj", "obj_reproj"))
+        analyzer = SymbolicProgramAnalyzer(self.get_model(self.autoware_file, "obj_reproj", "obj_reproj").program)
 
         self.assert_publish_calls_in_sub_callback(
             analyzer,
@@ -115,7 +115,7 @@ class TestStringMethods(unittest.TestCase):
         self.assert_periodic_publish_calls(analyzer, set())
 
     def test_wf_simulator(self):
-        analyzer = SymbolicProgramAnalyzer(self.get_model(self.autoware_file, "waypoint_follower", "wf_simulator"))
+        analyzer = SymbolicProgramAnalyzer(self.get_model(self.autoware_file, "waypoint_follower", "wf_simulator").program)
 
         self.assert_publish_calls(
             analyzer,
@@ -144,7 +144,7 @@ class TestStringMethods(unittest.TestCase):
         )
 
     def test_turtlebot_move_action_server(self):
-        analyzer = SymbolicProgramAnalyzer(self.get_model(self.turtlebot_file, "turtlebot_actions", "turtlebot_move_action_server"))
+        analyzer = SymbolicProgramAnalyzer(self.get_model(self.turtlebot_file, "turtlebot_actions", "turtlebot_move_action_server").program)
 
         self.assert_publish_calls_in_sub_callback(
             analyzer,
