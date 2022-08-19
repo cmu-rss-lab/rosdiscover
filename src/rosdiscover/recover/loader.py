@@ -100,6 +100,14 @@ class SymbolicProgramLoader:
         assert dict_["kind"] == "arg"
         return SymbolicArg(dict_["name"])
 
+    def _load_var_ref(self, dict_: t.Mapping[str, t.Any]) -> SymbolicVariableReference:
+        assert dict_["kind"] == "var-ref"
+        type_ = SymbolicValueType.from_name(dict_["type"], True)
+        return SymbolicVariableReference(
+            variable=dict_["qualified_name"],
+            type_=type_,
+        )
+
     def _load_variable_reference(self, dict_: t.Mapping[str, t.Any]) -> SymbolicVariableReference:
         assert dict_["kind"] == "variable-reference"
         type_ = SymbolicValueType.from_name(dict_["type"])
@@ -123,18 +131,18 @@ class SymbolicProgramLoader:
         assert isinstance(value, SymbolicFloat)
         return value
 
-    def _load_negate_expr(self, dict_: t.Mapping[str, t.Any]) -> NegateExpr:
-        return NegateExpr(self._load_expr(dict_["subExpr"]))
+    def _load_negate_expr(self, dict_: t.Mapping[str, t.Any]) -> SymbolicExpr:
+        return NegateExpr.build(self._load_expr(dict_["subExpr"]))
 
-    def _load_or_expr(self, dict_: t.Mapping[str, t.Any]) -> OrExpr:
+    def _load_or_expr(self, dict_: t.Mapping[str, t.Any]) -> SymbolicExpr:
         lhs = self._load_expr(dict_["lhs"])
         rhs = self._load_expr(dict_["rhs"])
-        return OrExpr(lhs=lhs, rhs=rhs)
+        return OrExpr.build(lhs, rhs)
 
-    def _load_and_expr(self, dict_: t.Mapping[str, t.Any]) -> AndExpr:
+    def _load_and_expr(self, dict_: t.Mapping[str, t.Any]) -> SymbolicExpr:
         lhs = self._load_expr(dict_["lhs"])
         rhs = self._load_expr(dict_["rhs"])
-        return AndExpr(lhs=lhs, rhs=rhs)
+        return AndExpr.build(lhs, rhs)
 
     def _load_binary_math_expr(self, dict_: t.Mapping[str, t.Any]) -> BinaryMathExpr:
         lhs = self._load_expr(dict_["lhs"])
@@ -211,6 +219,8 @@ class SymbolicProgramLoader:
             return self._load_reads_param(dict_)
         elif kind == "reads-param-with-default":
             return self._load_reads_param_with_default(dict_)
+        elif kind == "var-ref":
+            return self._load_var_ref(dict_)
         elif kind == "checks-for-param":
             return self._load_checks_for_param(dict_)
         elif kind == "unknown":

@@ -142,6 +142,19 @@ class SymbolicValueType(enum.Enum):
 
 class SymbolicExpr(abc.ABC):
     """Represents a symbolic value in a function summary."""
+
+    @abc.abstractmethod
+    def children(self) -> t.Set[SymbolicExpr]:
+        ...
+
+    def decendents(self, include_self: bool = False) -> t.Set[SymbolicExpr]:
+        result: t.Set[SymbolicExpr] = self.children()
+        if include_self:
+            result.add(self)
+        for child in self.children():
+            result = result.union(child.decendents())
+        return result
+
     @abc.abstractmethod
     def to_dict(self) -> t.Dict[str, t.Any]:
         ...
@@ -155,10 +168,14 @@ class SymbolicExpr(abc.ABC):
         ...
 
 
-@attr.s(auto_attribs=True, slots=True, str=False)
+@attr.s(auto_attribs=True, slots=True, str=False, frozen=True)
 class ThisExpr(SymbolicExpr):
 
     """Represents a symbolic value in a function summary."""
+
+    def children(self) -> t.Set[SymbolicExpr]:
+        return set()
+
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
             "kind": "ThisExpr",
@@ -171,7 +188,7 @@ class ThisExpr(SymbolicExpr):
         return "this"
 
 
-@attr.s(auto_attribs=True, slots=True, str=False)
+@attr.s(auto_attribs=True, slots=True, str=False, frozen=True)
 class NullExpr(SymbolicExpr):
 
     """Represents a symbolic value in a function summary."""
@@ -180,6 +197,9 @@ class NullExpr(SymbolicExpr):
             "kind": "NullExpr",
         }
 
+    def children(self) -> t.Set[SymbolicExpr]:
+        return set()
+
     def eval(self, context: SymbolicContext) -> t.Any:
         return "NULL"
 
@@ -187,9 +207,18 @@ class NullExpr(SymbolicExpr):
         return "NULL"
 
 
-@attr.s(auto_attribs=True, slots=True, str=False)
+@attr.s(auto_attribs=True, slots=True, str=False, frozen=True)
 class NegateExpr(SymbolicExpr):
     sub_expr: SymbolicExpr
+
+    @classmethod
+    def build(cls, sub_expr: SymbolicExpr) -> SymbolicExpr:
+        if isinstance(sub_expr, NegateExpr):
+            return sub_expr.sub_expr
+        return NegateExpr(sub_expr)
+
+    def children(self) -> t.Set[SymbolicExpr]:
+        return {self.sub_expr}
 
     """Represents a symbolic value in a function summary."""
     def to_dict(self) -> t.Dict[str, t.Any]:
@@ -205,7 +234,7 @@ class NegateExpr(SymbolicExpr):
         return f"!{self.sub_expr}"
 
 
-@attr.s(auto_attribs=True, slots=True, str=False)
+@attr.s(auto_attribs=True, slots=True, str=False, frozen=True)
 class BinaryExpr(SymbolicExpr, abc.ABC):
     lhs: SymbolicExpr
     rhs: SymbolicExpr
@@ -214,7 +243,9 @@ class BinaryExpr(SymbolicExpr, abc.ABC):
     def binary_operator(self) -> str:
         ...
 
-    """Represents a symbolic value in a function summary."""
+    def children(self) -> t.Set[SymbolicExpr]:
+        return {self.lhs, self.rhs}
+
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
             "kind": "BinaryExpr",
@@ -227,7 +258,7 @@ class BinaryExpr(SymbolicExpr, abc.ABC):
         return f"{self.lhs} {self.binary_operator()} {self.rhs}"
 
 
-@attr.s(auto_attribs=True, slots=True)
+@attr.s(auto_attribs=True, slots=True, frozen=True)
 class CompareExpr(BinaryExpr, abc.ABC):
     operator: str
 
@@ -251,7 +282,7 @@ class CompareExpr(BinaryExpr, abc.ABC):
             assert False
 
 
-@attr.s(auto_attribs=True, slots=True)
+@attr.s(auto_attribs=True, slots=True, frozen=True)
 class BinaryMathExpr(BinaryExpr):
     operator: str
 
@@ -273,8 +304,16 @@ class BinaryMathExpr(BinaryExpr):
             assert False
 
 
-@attr.s(auto_attribs=True, slots=True)
+@attr.s(auto_attribs=True, slots=True, frozen=True)
 class AndExpr(BinaryExpr):
+
+    @classmethod
+    def build(cls, expr1: SymbolicExpr, expr2: SymbolicExpr) -> SymbolicExpr:
+        if isinstance(expr1, BoolLiteral) and expr1.value is True:
+            return expr2
+        if isinstance(expr2, BoolLiteral) and expr2.value is True:
+            return expr1
+        return AndExpr(expr1, expr2)
 
     def eval(self, context: SymbolicContext) -> t.Any:
         return self.lhs.eval(context) and self.rhs.eval(context)
@@ -283,8 +322,16 @@ class AndExpr(BinaryExpr):
         return "&&"
 
 
-@attr.s(auto_attribs=True, slots=True)
+@attr.s(auto_attribs=True, slots=True, frozen=True)
 class OrExpr(BinaryExpr):
+
+    @classmethod
+    def build(cls, expr1: SymbolicExpr, expr2: SymbolicExpr) -> SymbolicExpr:
+        if isinstance(expr1, BoolLiteral) and expr1.value is False:
+            return expr2
+        if isinstance(expr2, BoolLiteral) and expr2.value is False:
+            return expr1
+        return OrExpr(expr1, expr2)
 
     def eval(self, context: SymbolicContext) -> t.Any:
         return self.lhs.eval(context) or self.rhs.eval(context)
@@ -314,6 +361,9 @@ class SymbolicNodeName(SymbolicString):
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {"kind": "node-name"}
 
+    def children(self) -> t.Set[SymbolicExpr]:
+        return set()
+
     def eval(self, context: SymbolicContext) -> t.Any:
         return context.node_name
 
@@ -328,6 +378,9 @@ class SymbolicNodeName(SymbolicString):
 class StringLiteral(SymbolicString):
     """Represents a literal string value."""
     value: str
+
+    def children(self) -> t.Set[SymbolicExpr]:
+        return set()
 
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
@@ -350,6 +403,9 @@ class FloatLiteral(SymbolicFloat):
     """Represents a literal float value."""
     value: float
 
+    def children(self) -> t.Set[SymbolicExpr]:
+        return set()
+
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
             "kind": "float-literal",
@@ -371,6 +427,9 @@ class Concatenate(SymbolicString):
     """Represents a concatenation of two symbolic strings."""
     lhs: SymbolicString
     rhs: SymbolicString
+
+    def children(self) -> t.Set[SymbolicExpr]:
+        return {self.lhs, self.rhs}
 
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
@@ -403,6 +462,9 @@ class IntLiteral(SymbolicInteger):
     """Represents a literal integer value."""
     value: int
 
+    def children(self) -> t.Set[SymbolicExpr]:
+        return set()
+
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
             "kind": "int-literal",
@@ -427,6 +489,9 @@ class SymbolicBool(SymbolicValue, abc.ABC):
 class BoolLiteral(SymbolicBool):
     """Represents a literal string value."""
     value: bool
+
+    def children(self) -> t.Set[SymbolicExpr]:
+        return set()
 
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
@@ -461,6 +526,9 @@ class SymbolicUnknown(
     def eval(self, context: SymbolicContext) -> t.Any:
         return self
 
+    def children(self) -> t.Set[SymbolicExpr]:
+        return set()
+
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {"kind": "unknown"}
 
@@ -476,6 +544,9 @@ class SymbolicUnknown(
 @attr.s(frozen=True, auto_attribs=True, slots=True, str=False)
 class SymbolicNodeHandleImpl(SymbolicNodeHandle):
     namespace: SymbolicString
+
+    def children(self) -> t.Set[SymbolicExpr]:
+        return set()
 
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
@@ -504,6 +575,9 @@ class SymbolicArg(
 ):
     name: str
 
+    def children(self) -> t.Set[SymbolicExpr]:
+        return set()
+
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
             "kind": "arg",
@@ -531,6 +605,9 @@ class SymbolicStatement(abc.ABC):
         ...
 
     def contains(self, stmt: SymbolicStatement, name_to_function: t.Mapping[str, SymbolicFunction]) -> bool:
+        return self == stmt
+
+    def is_ast_parent_of(self, stmt: SymbolicStatement) -> bool:
         return self == stmt
 
 
@@ -568,6 +645,9 @@ class SymbolicCompound(t.Sequence[SymbolicStatement], SymbolicStatement):
     def contains(self, stmt: SymbolicStatement, name_to_function: t.Mapping[str, SymbolicFunction]) -> bool:
         return self == stmt or any(s.contains(stmt, name_to_function) for s in self._statements)
 
+    def is_ast_parent_of(self, stmt: SymbolicStatement) -> bool:
+        return self == stmt or any(s.is_ast_parent_of(stmt) for s in self._statements)
+
     def __len__(self) -> int:
         return len(self._statements)
 
@@ -602,6 +682,12 @@ class SymbolicIf(SymbolicStatement):
     true_body: SymbolicCompound
     false_body: SymbolicCompound
     condition: SymbolicValue
+
+    def contains(self, stmt: SymbolicStatement, name_to_function: t.Mapping[str, SymbolicFunction]) -> bool:
+        return self == stmt or self.true_body.contains(stmt, name_to_function) or self.false_body.contains(stmt, name_to_function)
+
+    def is_ast_parent_of(self, stmt: SymbolicStatement) -> bool:
+        return self == stmt or self.true_body.is_ast_parent_of(stmt) or self.false_body.is_ast_parent_of(stmt)
 
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
@@ -640,6 +726,12 @@ class SymbolicWhile(SymbolicStatement):
         cond = self.condition.eval(context)
         if not isinstance(cond, bool) or cond:
             self.body.eval(context)
+
+    def contains(self, stmt: SymbolicStatement, name_to_function: t.Mapping[str, SymbolicFunction]) -> bool:
+        return self == stmt or self.body.contains(stmt, name_to_function)
+
+    def is_ast_parent_of(self, stmt: SymbolicStatement) -> bool:
+        return self == stmt or self.body.is_ast_parent_of(stmt)
 
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
@@ -702,6 +794,9 @@ class SymbolicVariableReference(SymbolicValue):
     variable: str
     type_: SymbolicValueType
 
+    def children(self) -> t.Set[SymbolicExpr]:
+        return set()
+
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
             "kind": "variable-reference",
@@ -731,6 +826,9 @@ class SymbolicMemberVariableReference(SymbolicVariableReference):
         The expresion on which the member variable is called
     """
     base: SymbolicExpr
+
+    def children(self) -> t.Set[SymbolicExpr]:
+        return {self.base}
 
     def to_dict(self) -> t.Dict[str, t.Any]:
         result = super().to_dict()
@@ -841,6 +939,34 @@ class SymbolicProgram:
             )
             name_to_function[entrypoint] = SymbolicFunction.empty(entrypoint)
         return SymbolicProgram(entrypoint, name_to_function)
+
+    def func_of_stmt(self, stmt: SymbolicStatement) -> SymbolicFunction:
+        for func in self.functions.values():
+            if func.body.is_ast_parent_of(stmt):
+                return func
+        raise ValueError(f"failed to find parent function of statement: {stmt}")
+
+    def transitive_callers(self, func: SymbolicFunction) -> t.List[SymbolicFunctionCall]:
+        callers: t.List[SymbolicFunctionCall] = self.callers(func)
+        if len(callers) == 0:
+            return callers
+
+        result = callers
+        for c in callers:
+            for transitive_caller in self.transitive_callers(self.func_of_stmt(c)):
+                if transitive_caller not in callers:
+                    callers.append(transitive_caller)
+
+        return result
+
+    def callers(self, func: SymbolicFunction) -> t.List[SymbolicFunctionCall]:
+        result: t.List[SymbolicFunctionCall] = []
+        for f in self.functions.values():
+            for c in [stmt for stmt in f.body if isinstance(stmt, SymbolicFunctionCall) and stmt.callee == func.name]:
+                if c not in result:
+                    result.append(c)
+
+        return result
 
     @property
     def unreachable_functions(self) -> t.Set[SymbolicFunction]:

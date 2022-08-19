@@ -18,6 +18,7 @@ from .loader import SymbolicProgramLoader
 from .model import CMakeListsInfo, RecoveredNodeModel
 from .symbolic import SymbolicProgram
 from .analyzer import SymbolicProgramAnalyzer
+from .states_analyzer import SymbolicStatesAnalyzer
 from ..config import Config
 
 
@@ -455,11 +456,15 @@ class NodeRecoveryTool:
         logger.debug(f"while_loops: {analyzer.while_loops}")
         logger.debug(f"periodic_publish_calls: {analyzer.periodic_publish_calls}")
 
+        states_analyzer = SymbolicStatesAnalyzer(summary, analyzer)
+        logger.debug(f"potential_state_vars: {states_analyzer.state_vars}")
+        logger.debug(f"sub_state_var_assigns: {states_analyzer.sub_state_var_assigns}")
+
         conditions = []
         for p in analyzer.publish_calls:
-            conditions.append(str(p.condition))
+            conditions.append(str(analyzer.inter_procedual_condition(p)))
         for f in analyzer.function_calls:
-            conditions.append(str(p.condition))
+            conditions.append(str(f.condition))
         cprint = "\n".join(conditions)
         logger.debug(f"path conditions: \n{cprint}")
 

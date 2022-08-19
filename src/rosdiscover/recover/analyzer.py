@@ -10,20 +10,52 @@ import typing as t
 import attr
 
 from .symbolic import (
+    AndExpr,
+    SymbolicAssignment,
+    SymbolicExpr,
     SymbolicProgram,
     SymbolicFunction,
     SymbolicFunctionCall,
-    SymbolicWhile
+    SymbolicWhile,
 )
 
 from .call import Publish, RateSleep
 from .call import Subscriber
 
 
-@attr.s(auto_attribs=True, slots=True)
+@attr.s(auto_attribs=True)  # Can't use slots with cached_property
 class SymbolicProgramAnalyzer:
 
     program: SymbolicProgram
+
+    @cached_property
+    def assigned_vars(self) -> t.Set[str]:
+        return {a.variable for a in self.assignments}
+
+    def inter_procedual_condition(self, publish_call: Publish) -> SymbolicExpr:
+        expr = publish_call.condition
+        transitive_callers = self.program.transitive_callers(self.program.func_of_stmt(publish_call))
+        for call in transitive_callers:
+            expr = AndExpr.build(expr, call.condition)
+        return expr
+
+    def assignments_of_var(self, variable: str) -> t.Set[SymbolicAssignment]:
+        result = set()
+        for assign in self.assignments:
+            if assign.variable == variable:
+                result.add(assign)
+
+        return result
+
+    @cached_property
+    def assignments(self) -> t.Set[SymbolicAssignment]:
+        result = set()
+        for func in self.program.functions.values():
+            for stmt in func.body:
+                if isinstance(stmt, SymbolicAssignment):
+                    result.add(stmt)
+
+        return result
 
     @cached_property
     def subscribers(self) -> t.Set[Subscriber]:
@@ -46,14 +78,18 @@ class SymbolicProgramAnalyzer:
         return result
 
     @cached_property
-    def subscriber_callbacks(self) -> t.Set[SymbolicFunction]:
+    def subscriber_callbacks_map(self) -> t.Set[t.Tuple[Subscriber, SymbolicFunction]]:
         result = set()
         for sub in self.subscribers:
             if sub.callback_name == "unknown":
                 continue
-            result.add(self.program.functions[sub.callback_name])
+            result.add((sub, self.program.functions[sub.callback_name]))
 
         return result
+
+    @cached_property
+    def subscriber_callbacks(self) -> t.Set[SymbolicFunction]:
+        return set(callback for (sub, callback) in self.subscriber_callbacks_map)
 
     @cached_property
     def publish_calls(self) -> t.List[Publish]:
