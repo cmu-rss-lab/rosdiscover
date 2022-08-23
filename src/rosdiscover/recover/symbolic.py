@@ -178,7 +178,7 @@ class ThisExpr(SymbolicExpr):
 
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
-            "kind": "ThisExpr",
+            "kind": "this-expr",
         }
 
     def eval(self, context: SymbolicContext) -> t.Any:
@@ -194,7 +194,7 @@ class NullExpr(SymbolicExpr):
     """Represents a symbolic value in a function summary."""
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
-            "kind": "NullExpr",
+            "kind": "null-expr",
         }
 
     def children(self) -> t.Set[SymbolicExpr]:
@@ -223,7 +223,7 @@ class NegateExpr(SymbolicExpr):
     """Represents a symbolic value in a function summary."""
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
-            "kind": "NegateExpr",
+            "kind": "negate-expr",
             "subExpr": self.sub_expr.to_dict(),
         }
 
@@ -248,7 +248,7 @@ class BinaryExpr(SymbolicExpr, abc.ABC):
 
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
-            "kind": "BinaryExpr",
+            "kind": "binary-expr",
             "operator": self.binary_operator(),
             "lhs": self.lhs.to_dict(),
             "rhs": self.rhs.to_dict(),
@@ -832,12 +832,33 @@ class SymbolicMemberVariableReference(SymbolicVariableReference):
 
     def to_dict(self) -> t.Dict[str, t.Any]:
         result = super().to_dict()
-        result["kind"] = "memberVarRef"
+        result["kind"] = "member-var-ref"
         result["base"] = self.base.to_dict()
         return result
 
     def __str__(self) -> str:
         return f"{self.base}.{self.variable}"
+
+
+@attr.s(frozen=True, auto_attribs=True, slots=True, str=False)
+class SymbolicEnumReference(SymbolicVariableReference):
+    """Represents a symbolic member variable reference.
+
+    Attributes
+    ----------
+    value: SymbolicValue
+        The value of the enum reference
+    """
+    value: SymbolicValue
+
+    def to_dict(self) -> t.Dict[str, t.Any]:
+        result = super().to_dict()
+        result["kind"] = "enum-ref"
+        result["value"] = self.value.to_dict()
+        return result
+
+    def __str__(self) -> str:
+        return f"{self.variable} := {self.value}"
 
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
