@@ -15,6 +15,8 @@ from .symbolic import (
     SymbolicAssignment,
     SymbolicFunction,
     SymbolicProgram,
+    SymbolicUnknown,
+    SymbolicValue,
     SymbolicVariableReference,
 )
 from .analyzer import SymbolicProgramAnalyzer
@@ -27,7 +29,7 @@ class SymbolicStatesAnalyzer:
     program_analyzer: SymbolicProgramAnalyzer
 
     @cached_property
-    def state_vars(self) -> t.List[SymbolicVariableReference]:
+    def _state_vars(self) -> t.List[SymbolicVariableReference]:
         var_refs: t.List[SymbolicVariableReference] = []
         for pub in self.program_analyzer.publish_calls:
             cond = self.program_analyzer.inter_procedual_condition(pub)
@@ -42,9 +44,27 @@ class SymbolicStatesAnalyzer:
         return var_refs
 
     @cached_property
+    def state_vars(self) -> t.List[SymbolicVariableReference]:
+        result: t.List[SymbolicVariableReference] = []
+        for var in self._state_vars:
+            if var.initial_value.is_unknown():
+                for assign in self.main_state_var_assigns:
+                    if assign.variable == var.variable:
+                        value = assign.value if isinstance(assign.value, SymbolicValue) else SymbolicUnknown()
+                        result.append(SymbolicVariableReference(
+                            variable=var.variable,
+                            type_=var.type_,
+                            initial_value=value
+                        ))
+                        continue
+            else:
+                result.append(var)
+        return result
+
+    @cached_property
     def _state_var_assigns(self) -> t.List[SymbolicAssignment]:
         result: t.List[SymbolicAssignment] = []
-        for var in self.state_vars:
+        for var in self._state_vars:
             for assign in self.program_analyzer.assignments_of_var(var.variable):
                 if assign not in result:
                     result.append(assign)
@@ -57,4 +77,12 @@ class SymbolicStatesAnalyzer:
             for (sub, callback) in self.program_analyzer.subscriber_callbacks_map:
                 if callback.body.contains(assign, self.program.functions) and (sub, assign) not in result:
                     result.append((sub, assign))
+        return result
+
+    @cached_property
+    def main_state_var_assigns(self) -> t.List[SymbolicAssignment]:
+        result: t.List[SymbolicAssignment] = []
+        for assign in self._state_var_assigns:
+            if self.program.entrypoint.body.contains(assign, self.program.functions) and assign not in result:
+                result.append(assign)
         return result
