@@ -107,6 +107,7 @@ class SymbolicProgramLoader:
         return SymbolicVariableReference(
             variable=dict_["qualified_name"],
             type_=type_,
+            initial_value=self._load_value(dict_["initialValue"]),
         )
 
     def _load_variable_reference(self, dict_: t.Mapping[str, t.Any]) -> SymbolicVariableReference:
@@ -115,6 +116,7 @@ class SymbolicProgramLoader:
         return SymbolicVariableReference(
             variable=dict_["variable"],
             type_=type_,
+            initial_value=self._load_value(dict_["initialValue"]),
         )
 
     def _load_node_handle(self, dict_: t.Mapping[str, t.Any]) -> SymbolicNodeHandle:
@@ -168,6 +170,7 @@ class SymbolicProgramLoader:
             base=base,
             variable=dict_["qualified_name"],
             type_=type_,
+            initial_value=self._load_value(dict_["initialValue"]),
         )
 
     def _load_enum_ref(self, dict_: t.Mapping[str, t.Any]) -> SymbolicEnumReference:
@@ -181,6 +184,7 @@ class SymbolicProgramLoader:
             value=value,
             variable=dict_["qualified_name"],
             type_=type_,
+            initial_value=self._load_value(dict_["initialValue"]),
         )
 
     def _load_binary_expr(self, dict_: t.Mapping[str, t.Any]) -> SymbolicExpr:

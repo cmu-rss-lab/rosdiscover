@@ -793,6 +793,7 @@ class SymbolicVariableReference(SymbolicValue):
     """
     variable: str
     type_: SymbolicValueType
+    initial_value: SymbolicValue
 
     def children(self) -> t.Set[SymbolicExpr]:
         return set()
@@ -802,6 +803,7 @@ class SymbolicVariableReference(SymbolicValue):
             "kind": "variable-reference",
             "variable": self.variable,
             "type": str(self.type_),
+            "initialValue": self.initial_value.to_dict(),
         }
 
     def eval(self, context: SymbolicContext) -> t.Any:
