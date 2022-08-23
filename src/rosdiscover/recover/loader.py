@@ -170,7 +170,7 @@ class SymbolicProgramLoader:
             base=base,
             variable=dict_["qualified_name"],
             type_=type_,
-            initial_value=self._load_value(dict_["initialValue"]),
+            initial_value=self._load_value(dict_["initial-value"]),
         )
 
     def _load_enum_ref(self, dict_: t.Mapping[str, t.Any]) -> SymbolicEnumReference:
@@ -184,7 +184,7 @@ class SymbolicProgramLoader:
             value=value,
             variable=dict_["qualified_name"],
             type_=type_,
-            initial_value=self._load_value(dict_["initialValue"]),
+            initial_value=self._load_value(dict_["initial-value"]),
         )
 
     def _load_binary_expr(self, dict_: t.Mapping[str, t.Any]) -> SymbolicExpr:
