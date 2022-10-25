@@ -53,6 +53,7 @@ def recover(args: argparse.Namespace) -> None:
         print("saved recovered model to disk")
 
 
+
 def _launch(config: Config) -> SystemSummary:
     logger.info(f"reconstructing architecture for image [{config.image}]")
     with Interpreter.for_config(config) as interpreter:
@@ -303,6 +304,7 @@ def main(args: t.Optional[t.Sequence[str]] = None) -> None:
     p.add_argument('config', type=argparse.FileType('r'), help=CONFIG_HELP)
 
     p.set_defaults(func=rostopic_list)
+
 
     # ----------------- ROSSERVICE --------------------
     p = subparsers.add_parser(
