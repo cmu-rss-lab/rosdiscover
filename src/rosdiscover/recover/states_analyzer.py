@@ -42,6 +42,14 @@ class SymbolicStatesAnalyzer:
         return var_refs
 
     @cached_property
+    def state_vars_json(self) -> t.List[t.Dict]:
+        result = []
+        for o in self.state_vars:
+            result.append(o.to_dict())
+
+        return result
+
+    @cached_property
     def _state_var_assigns(self) -> t.List[SymbolicAssignment]:
         result: t.List[SymbolicAssignment] = []
         for var in self.state_vars:

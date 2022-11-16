@@ -78,6 +78,16 @@ class SymbolicProgramAnalyzer:
         return result
 
     @cached_property
+    def rate_sleeps_json(self) -> t.List[t.Dict]:
+        result = set()
+        for func in self.program.functions.values():
+            for stmt in func.body:
+                if isinstance(stmt, RateSleep):
+                    result.add(stmt)
+
+        return result
+
+    @cached_property
     def subscriber_callbacks_map(self) -> t.Set[t.Tuple[Subscriber, SymbolicFunction]]:
         result = set()
         for sub in self.subscribers:
@@ -92,12 +102,28 @@ class SymbolicProgramAnalyzer:
         return set(callback for (sub, callback) in self.subscriber_callbacks_map)
 
     @cached_property
+    def subscriber_callbacks_json(self) -> t.List[t.Dict]:
+        result = []
+        for o in self.subscriber_callbacks:
+            result.append(o.to_dict())
+
+        return result
+
+    @cached_property
     def publish_calls(self) -> t.List[Publish]:
         result = []
         for func in self.program.functions.values():
             for stmt in func.body:
                 if isinstance(stmt, Publish) and stmt not in result:
                     result.append(stmt)
+
+        return result
+
+    @cached_property
+    def publish_calls_json(self) -> t.List[t.Dict]:
+        result = []
+        for p in self.publish_calls:
+            result.append(p.to_dict())
 
         return result
 
@@ -112,12 +138,28 @@ class SymbolicProgramAnalyzer:
         return result
 
     @cached_property
+    def publish_calls_in_sub_callback_json(self) -> t.List[t.Dict]:
+        result = []
+        for o in self.publish_calls_in_sub_callback:
+            result.append(o.to_dict())
+
+        return result
+
+    @cached_property
     def while_loops(self) -> t.List[SymbolicWhile]:
         result = []
         for func in self.program.functions.values():
             for stmt in func.body:
                 if isinstance(stmt, SymbolicWhile) and stmt not in result:
                     result.append(stmt)
+
+        return result
+
+    @cached_property
+    def while_loops_json(self) -> t.List[t.Dict]:
+        result = []
+        for o in self.while_loops:
+            result.append(o.to_dict())
 
         return result
 
@@ -132,6 +174,15 @@ class SymbolicProgramAnalyzer:
                             result.append(pub_call)
 
         return result
+
+    @cached_property
+    def periodic_publish_calls_json(self) -> t.List[t.Dict]:
+        result = []
+        for o in self.periodic_publish_calls:
+            result.append(o.to_dict())
+
+        return result
+
 
     @cached_property
     def function_calls(self) -> t.List[SymbolicFunctionCall]:
