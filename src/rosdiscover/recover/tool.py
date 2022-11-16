@@ -366,7 +366,7 @@ class NodeRecoveryTool:
             "sub_state_var_assigns" : states_analyzer.sub_state_var_assigns,
         }
         
-        with open(f"~/results/{package_name}/{node_name}.json", "w") as outfile:
+        with open(f"./results/{package_name}.{node_name}.json", "w") as outfile:
             json.dump(json_beh_model, outfile)
 
         conditions = []
