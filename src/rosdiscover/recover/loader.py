@@ -195,7 +195,7 @@ class SymbolicProgramLoader:
             return self._load_and_expr(dict_)
         elif operator in ["+", "-", "/", "*", "%"]:
             return self._load_binary_math_expr(dict_)
-        elif operator in ["<", "<=", ">", ">=", "=="]:
+        elif operator in ["<", "<=", ">", ">=", "==", "!="]:
             return self._load_compare_expr(dict_)
         else:
             raise ValueError(f"failed to load binary expression with operator: {operator}")
