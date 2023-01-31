@@ -356,14 +356,9 @@ class NodeRecoveryTool:
 
         # Data to be written
         json_beh_model = {
-            "publish_calls": analyzer.publish_calls_json,
-            "subscriber_callbacks": analyzer.subscriber_callbacks_json,
-            "publish_calls_in_sub_callback": analyzer.publish_calls_in_sub_callback_json,
-            "rate_sleeps": analyzer.rate_sleeps_json,
-            "while_loops" : analyzer.while_loops_json,
-            "periodic_publish_calls" : analyzer.periodic_publish_calls_json,
+            "periodic_behavior" : analyzer.periodic_publish_calls_json,
+            "reactive_behavior" : analyzer.reactive_behavior_json,
             "potential_state_vars" : states_analyzer.state_vars_json,
-            "sub_state_var_assigns" : "todo",
         }
         
         with open(f"./results/{package_name}.{node_name}.json", "w") as outfile:

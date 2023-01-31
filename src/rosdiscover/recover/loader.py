@@ -179,12 +179,12 @@ class SymbolicProgramLoader:
         type_name = dict_["type"]
         type_ = SymbolicValueType.from_name(type_name, True)
 
-        value = self._load_value(dict_["value"])
+        value = dict_["value"]
         return SymbolicEnumReference(
             value=value,
             variable=dict_["qualified_name"],
             type_=type_,
-            initial_value=self._load_value(dict_["initial-value"]),
+            initial_value=value,
         )
 
     def _load_binary_expr(self, dict_: t.Mapping[str, t.Any]) -> SymbolicExpr:

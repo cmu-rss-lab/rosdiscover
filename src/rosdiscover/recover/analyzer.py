@@ -135,14 +135,16 @@ class SymbolicProgramAnalyzer:
                 if callback.body.contains(pub_call, self.program.functions) and pub_call not in result:
                     result.append(pub_call)
 
+
         return result
 
     @cached_property
-    def publish_calls_in_sub_callback_json(self) -> t.List[t.Dict]:
+    def reactive_behavior_json(self) -> t.List[t.Dict]:
         result = []
-        for o in self.publish_calls_in_sub_callback:
-            result.append(o.to_dict())
-
+        for pub_call in self.publish_calls:
+            for (sub, callback) in self.subscriber_callbacks_map:
+                if callback.body.contains(pub_call, self.program.functions) and pub_call not in result:
+                    result.append({"publisher":{"variable" : pub_call.publisher}, "subscriber" : {"callback" : sub.callback_name}})
         return result
 
     @cached_property
@@ -170,6 +172,7 @@ class SymbolicProgramAnalyzer:
             for while_stmt in self.while_loops:
                 if while_stmt.body.contains(pub_call, self.program.functions):
                     for rate in self.rate_sleeps:
+                        print()
                         if while_stmt.body.contains(rate, self.program.functions) and pub_call not in result:
                             result.append(pub_call)
 
@@ -178,8 +181,12 @@ class SymbolicProgramAnalyzer:
     @cached_property
     def periodic_publish_calls_json(self) -> t.List[t.Dict]:
         result = []
-        for o in self.periodic_publish_calls:
-            result.append(o.to_dict())
+        for pub_call in self.publish_calls:
+            for while_stmt in self.while_loops:
+                if while_stmt.body.contains(pub_call, self.program.functions):
+                    for rate in self.rate_sleeps:
+                        if while_stmt.body.contains(rate, self.program.functions) and pub_call not in result:
+                            result.append({"publisher":{"variable" : pub_call.publisher}, "rate" : rate.rate.to_dict()})
 
         return result
 
