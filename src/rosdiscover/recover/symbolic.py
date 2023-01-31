@@ -605,10 +605,10 @@ class SymbolicStatement(abc.ABC):
         ...
 
     def contains(self, stmt: SymbolicStatement, name_to_function: t.Mapping[str, SymbolicFunction]) -> bool:
-        return self == stmt
+        return self == stmt or self.to_dict() == stmt.to_dict()
 
     def is_ast_parent_of(self, stmt: SymbolicStatement) -> bool:
-        return self == stmt
+        return self == stmt or self.to_dict() == stmt.to_dict()
 
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
