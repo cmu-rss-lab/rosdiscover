@@ -257,8 +257,9 @@ class SymbolicProgramLoader:
 
     def _load_assignment(self, dict_: t.Mapping[str, t.Any]) -> SymbolicAssignment:
         variable = dict_["variable"]
-        value = self._load_value(dict_["value"])
-        return SymbolicAssignment(variable, value)
+        value = self._load_expr(dict_["value"])
+        path_condition = BoolLiteral(True)
+        return SymbolicAssignment(variable, value, path_condition)
 
     def _load_rosinit(self, dict_: t.Mapping[str, t.Any]) -> RosInit:
         name = self._load_string(dict_["name"])
@@ -380,7 +381,7 @@ class SymbolicProgramLoader:
 
     def _load_assign(self, dict_: t.Mapping[str, t.Any]) -> SymbolicAssignment:
         assert dict_["kind"] == "assign"
-        return SymbolicAssignment(dict_["var"]["qualified_name"], self._load_expr(dict_["expr"]))
+        return SymbolicAssignment(dict_["var"]["qualified_name"], self._load_expr(dict_["expr"]), self._load_expr(dict_["path_condition"]))
 
     def _load_while(self, dict_: t.Mapping[str, t.Any]) -> SymbolicWhile:
         assert dict_["kind"] == "while"

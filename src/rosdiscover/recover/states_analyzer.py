@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from .call import Subscriber
-
+from .call import Publish
 __all__ = (
     "SymbolicStatesAnalyzer"
 )
@@ -13,12 +13,20 @@ from functools import cached_property
 
 from .symbolic import (
     SymbolicAssignment,
+    SymbolicExpr,
     SymbolicFunction,
     SymbolicProgram,
     SymbolicVariableReference,
 )
 from .analyzer import SymbolicProgramAnalyzer
 
+
+@attr.s(auto_attribs=True)  # Can't use slots with cached_property
+class Transition:
+    trigger: Subscriber 
+    condition: SymbolicExpr
+    state_changes: t.List[SymbolicAssignment]
+    outputs: t.List[Publish]
 
 @attr.s(auto_attribs=True)  # Can't use slots with cached_property
 class SymbolicStatesAnalyzer:
