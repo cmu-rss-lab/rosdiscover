@@ -114,7 +114,7 @@ class SymbolicProgramLoader:
         assert dict_["kind"] == "variable-reference"
         type_ = SymbolicValueType.from_name(dict_["type"])
         return SymbolicVariableReference(
-            variable=dict_["variable"],
+            variable=dict_["qualified_name"],
             type_=type_,
             initial_value=self._load_value(dict_["initial-value"]),
         )
@@ -184,7 +184,7 @@ class SymbolicProgramLoader:
             value=value,
             variable=dict_["qualified_name"],
             type_=type_,
-            initial_value=value,
+            initial_value=self._load_value(value),
         )
 
     def _load_binary_expr(self, dict_: t.Mapping[str, t.Any]) -> SymbolicExpr:

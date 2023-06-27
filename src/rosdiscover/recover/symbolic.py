@@ -803,9 +803,9 @@ class SymbolicVariableReference(SymbolicValue):
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
             "kind": "variable-reference",
-            "variable": self.variable,
+            "qualified_name": self.variable,
             "type": str(self.type_),
-            "initialValue": self.initial_value.to_dict(),
+            "initial-value": self.initial_value.to_dict(),
         }
 
     def eval(self, context: SymbolicContext) -> t.Any:
