@@ -61,7 +61,7 @@ class SymbolicStatesAnalyzer:
 
     @cached_property
     def main_state_var_assigns(self) -> t.List[SymbolicAssignment]:
-        result: t.List[t.Tuple[Subscriber, SymbolicAssignment]] = []
+        result: t.List[SymbolicAssignment] = []
         for assign in self._state_var_assigns:
             if self.program.entrypoint.body.contains(assign, self.program.functions):
                 result.append(assign)
