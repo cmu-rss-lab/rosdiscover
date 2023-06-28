@@ -52,8 +52,6 @@ def recover(args: argparse.Namespace) -> None:
         model.save(args.save_to)
         print("saved recovered model to disk")
 
-
-
 def _launch(config: Config) -> SystemSummary:
     logger.info(f"reconstructing architecture for image [{config.image}]")
     with Interpreter.for_config(config) as interpreter:
@@ -63,7 +61,6 @@ def _launch(config: Config) -> SystemSummary:
             logger.info(f"simulating launch [{fn_launch}]")
             interpreter.launch(fn_launch)
         return interpreter.summarise()
-
 
 def _launch_config(args) -> SystemSummary:
     config = Config.from_yaml_string(args.config)
