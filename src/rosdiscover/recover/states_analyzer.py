@@ -65,4 +65,4 @@ class SymbolicStatesAnalyzer:
         for assign in self._state_var_assigns:
             if self.program.entrypoint.body.contains(assign, self.program.functions):
                 result.append(assign)
-        return result        
+        return result
