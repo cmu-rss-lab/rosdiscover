@@ -49,11 +49,12 @@ class SymbolicProgramAnalyzer:
 
     @cached_property
     def assignments(self) -> t.Set[SymbolicAssignment]:
-        result = set()
+        result = []
         for func in self.program.functions.values():
             for stmt in func.body:
                 if isinstance(stmt, SymbolicAssignment):
-                    result.add(stmt)
+                    if not stmt in result:
+                        result.append(stmt)
 
         return result
 
