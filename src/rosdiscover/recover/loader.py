@@ -114,7 +114,7 @@ class SymbolicProgramLoader:
         assert dict_["kind"] == "variable-reference"
         type_ = SymbolicValueType.from_name(dict_["type"])
         return SymbolicVariableReference(
-            variable=dict_["variable"],
+            variable=dict_["qualified_name"],
             type_=type_,
             initial_value=self._load_value(dict_["initial-value"]),
         )
@@ -195,7 +195,7 @@ class SymbolicProgramLoader:
             return self._load_and_expr(dict_)
         elif operator in ["+", "-", "/", "*", "%"]:
             return self._load_binary_math_expr(dict_)
-        elif operator in ["<", "<=", ">", ">=", "=="]:
+        elif operator in ["<", "<=", ">", ">=", "==", "!="]:
             return self._load_compare_expr(dict_)
         else:
             raise ValueError(f"failed to load binary expression with operator: {operator}")
@@ -257,7 +257,7 @@ class SymbolicProgramLoader:
 
     def _load_assignment(self, dict_: t.Mapping[str, t.Any]) -> SymbolicAssignment:
         variable = dict_["variable"]
-        value = self._load_value(dict_["value"])
+        value = self._load_expr(dict_["value"])
         return SymbolicAssignment(variable, value)
 
     def _load_rosinit(self, dict_: t.Mapping[str, t.Any]) -> RosInit:
