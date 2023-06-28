@@ -479,7 +479,7 @@ class IntLiteral(SymbolicInteger):
 
     def __str__(self) -> str:
         return f"{self.value}"
-
+    
 
 class SymbolicBool(SymbolicValue, abc.ABC):
     """Represents a symbolic boolean value."""
@@ -853,7 +853,7 @@ class SymbolicEnumReference(SymbolicVariableReference):
     value: SymbolicValue
         The value of the enum reference
     """
-    value: SymbolicValue
+    value: SymbolicInteger
 
     def to_dict(self) -> t.Dict[str, t.Any]:
         result = super().to_dict()
