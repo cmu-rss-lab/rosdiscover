@@ -142,11 +142,30 @@ class SymbolicProgramAnalyzer:
     @cached_property
     def reactive_behavior_json(self) -> t.List[t.Dict]:
         result = []
+        for t in self.reactive_behavior:
+            result.append({"publisher":{"variable" : t[0]}, "subscriber" : {"callback" : t[1]}})
+        return result
+
+    @cached_property
+    def reactive_behavior(self) -> t.List[t.Tuple[str, str]]:
+        result = []
         for pub_call in self.publish_calls:
             for (sub, callback) in self.subscriber_callbacks_map:
-                if callback.body.contains(pub_call, self.program.functions) and pub_call not in result:
-                    result.append({"publisher":{"variable" : pub_call.publisher}, "subscriber" : {"callback" : sub.callback_name}})
+                if callback.body.contains(pub_call, self.program.functions) and (pub_call.publisher, sub.callback_name) not in result:
+                    result.append((pub_call.publisher, sub.callback_name))
         return result
+    
+    @cached_property
+    def reactive_behavior_map(self) -> t.Mapping[str, t.List[Publish]]:
+        result = {}
+        for pub_call in self.publish_calls:
+            for (sub, callback) in self.subscriber_callbacks_map:
+                if callback.body.contains(pub_call, self.program.functions):
+                    if sub.callback_name not in result:
+                        result[sub.callback_name] = []
+                    result[sub.callback_name].append(pub_call)
+        return result
+
 
     @cached_property
     def while_loops(self) -> t.List[SymbolicWhile]:

@@ -349,16 +349,20 @@ class NodeRecoveryTool:
         logger.debug(f"rate_sleeps: {analyzer.rate_sleeps}")
         logger.debug(f"while_loops: {analyzer.while_loops}")
         logger.debug(f"periodic_publish_calls: {analyzer.periodic_publish_calls}")
+        
 
         states_analyzer = SymbolicStatesAnalyzer(program, analyzer)
         logger.debug(f"potential_state_vars: {states_analyzer.state_vars}")
         logger.debug(f"sub_state_var_assigns: {states_analyzer.sub_state_var_assigns}")
+
+        logger.debug(f"message_transitions_json: {states_analyzer.message_transitions_json}")
 
         # Data to be written
         json_beh_model = {
             "periodic_behavior" : analyzer.periodic_publish_calls_json,
             "reactive_behavior" : analyzer.reactive_behavior_json,
             "potential_state_vars" : states_analyzer.state_vars_json,
+            "transitions" : states_analyzer.message_transitions_json,
         }
         
         with open(f"./results/{package_name}.{node_name}.json", "w") as outfile:
@@ -480,5 +484,29 @@ class NodeRecoveryTool:
 
         summary = model_loader.load(json_model)
         logger.debug(f"recovered node summary: {summary}")
+
+        analyzer = SymbolicProgramAnalyzer(summary)
+        logger.debug(f"publish_calls: {analyzer.publish_calls}")
+        logger.debug(f"subscriber_callbacks: {analyzer.subscriber_callbacks}")
+        logger.debug(f"publish_calls_in_sub_callback: {analyzer.publish_calls_in_sub_callback}")
+        logger.debug(f"rate_sleeps: {analyzer.rate_sleeps}")
+        logger.debug(f"while_loops: {analyzer.while_loops}")
+        logger.debug(f"periodic_publish_calls: {analyzer.periodic_publish_calls}")
+
+        states_analyzer = SymbolicStatesAnalyzer(summary, analyzer)
+        logger.debug(f"potential_state_vars: {states_analyzer.state_vars}")
+        logger.debug(f"sub_state_var_assigns: {states_analyzer.sub_state_var_assigns}")
+        logger.debug(f"main_state_var_assigns: {states_analyzer.main_state_var_assigns}")
+
+        conditions = []
+        for p in analyzer.publish_calls:
+            conditions.append(str(analyzer.inter_procedual_condition(p)))
+        for f in analyzer.function_calls:
+            conditions.append(str(f.condition))
+        cprint = "\n".join(conditions)
+        logger.debug(f"path conditions: \n{cprint}")
+
+        with open("./conditions.txt", "a") as file:
+            file.write(cprint)
 
         return summary
