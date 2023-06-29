@@ -15,7 +15,7 @@ from rosdiscover.recover.analyzer import SymbolicProgramAnalyzer
 
 DIR_HERE = os.path.dirname(__file__)
 
-class TestStringMethods(unittest.TestCase):
+class TestModelRecovery(unittest.TestCase):
 
     autoware_file = os.path.join(DIR_HERE, 'configs', 'autoware.yml')
     turtlebot_file = os.path.join(DIR_HERE, 'configs', 'turtlebot.yml')
@@ -62,13 +62,13 @@ class TestStringMethods(unittest.TestCase):
         self.assertSetEqual(rate_sleeps, sleeps)        
 
     def test_velocity_set(self):
-        model = self.get_model(self.autoware_file, "astar_planner", "velocity_set")
+        analyzer = SymbolicProgramAnalyzer(self.get_model(self.autoware_file, "astar_planner", "velocity_set").program)
 
-        self.assert_publish_calls_in_sub_callback(model,set())
+        self.assert_publish_calls_in_sub_callback(analyzer,set())
 
-        self.assert_rate_sleeps(model, {10.0})
+        self.assert_rate_sleeps(analyzer, {10.0})
 
-        self.assert_sub_callbacks(model, 
+        self.assert_sub_callbacks(analyzer, 
             {
                 "VelocitySetPath::waypointsCallback", 
                 "VelocitySetPath::currentVelocityCallback",
@@ -85,7 +85,7 @@ class TestStringMethods(unittest.TestCase):
             }
         )
 
-        self.assert_periodic_publish_calls(model,
+        self.assert_periodic_publish_calls(analyzer,
             {
                 "obstacle_pub",
                 "obstacle_waypoint_pub",
