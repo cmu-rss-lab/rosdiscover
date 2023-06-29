@@ -179,7 +179,7 @@ class SymbolicProgramLoader:
         type_name = dict_["type"]
         type_ = SymbolicValueType.from_name(type_name, True)
 
-        value = IntLiteral(dict_["value"])
+        value = self._load_int_literal(dict_["value"])
         return SymbolicEnumReference(
             value=value,
             variable=dict_["qualified_name"],
@@ -243,6 +243,8 @@ class SymbolicProgramLoader:
             return self._load_var_ref(dict_)
         elif kind == "checks-for-param":
             return self._load_checks_for_param(dict_)
+        elif kind == "symbolic-constant":
+            return IntLiteral(dict_["string"])
         elif kind == "unknown":
             return SymbolicUnknown()
         elif kind == "node-name":
