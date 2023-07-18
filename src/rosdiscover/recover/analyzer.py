@@ -16,6 +16,8 @@ from .symbolic import (
     SymbolicProgram,
     SymbolicFunction,
     SymbolicFunctionCall,
+    SymbolicPublisherImpl,
+    SymbolicRateImpl,
     SymbolicWhile,
 )
 
@@ -151,6 +153,41 @@ class SymbolicProgramAnalyzer:
                     result.append(stmt)
 
         return result
+    
+    @cached_property
+    def publisher_call_remaps(self) -> t.Map[str, t.List[str]]:
+        result = {}
+        for call in self.function_calls:
+            for arg_name in call.arguments:
+                if isinstance(call.arguments[arg_name], SymbolicPublisherImpl):
+                    if arg_name not in result:
+                        result[arg_name] = []
+                    result[arg_name].append(str(call.arguments[arg_name].name))
+
+        return result
+    
+    
+    @cached_property
+    def rate_call_remaps(self) -> t.Map[str, t.List[str]]:
+        result = {}
+        for call in self.function_calls:
+            for arg_name in call.arguments:
+                if isinstance(call.arguments[arg_name], SymbolicRateImpl):
+                    if arg_name not in result:
+                        result[arg_name] = []
+                    result[arg_name].append(str(call.arguments[arg_name].name))
+
+        return result
+    
+    @cached_property
+    def function_calls(self) -> t.List[SymbolicFunctionCall]:
+        result = []
+        for func in self.program.functions.values():
+            for stmt in func.body:
+                if isinstance(stmt, SymbolicFunctionCall) and stmt not in result:
+                    result.append(stmt)
+
+        return result
 
     @cached_property
     def publish_calls_json(self) -> t.List[t.Dict]:
@@ -205,10 +242,18 @@ class SymbolicProgramAnalyzer:
     def reactive_behavior_json(self) -> t.List[t.Dict]:
         result = []
         for t in self.sub_reactive_behavior:
-            result.append({"publisher":{"variable" : t[0].publisher}, "subscriber" : {"callback" : t[1]}})
+            if (t[0].publisher in self.publisher_call_remaps):
+                for pub in self.publisher_call_remaps[t[0].publisher]:
+                    result.append({"publisher":{"variable" : pub}, "subscriber" : {"callback" : t[1]}})
+            else:        
+                result.append({"publisher":{"variable" : t[0].publisher}, "subscriber" : {"callback" : t[1]}})
 
         for pub_call in self.publish_calls_in_main:
-            result.append({"publisher":{"variable" : pub_call.publisher}, "event" : "component-init"})
+            if (pub_call.publisher in self.publisher_call_remaps):
+                for pub in self.publisher_call_remaps[pub_call.publisher]:
+                    result.append({"publisher":{"variable" : pub}, "event" : "component-init"})
+            else:  
+                result.append({"publisher":{"variable" : pub_call.publisher}, "event" : "component-init"})
         return result
 
     @cached_property
@@ -291,7 +336,11 @@ class SymbolicProgramAnalyzer:
     def periodic_publish_calls_json(self) -> t.List[t.Dict]:
         result = []
         for (pub_call, rate) in self.periodic_publish_calls_and_rates:
-            result.append({"publisher":{"variable" : pub_call.publisher}, "condition" : pub_call.to_dict(), "rate" : rate.to_dict()})
+            if (pub_call.publisher in self.publisher_call_remaps):
+                for pub in self.publisher_call_remaps[pub_call.publisher]:
+                    result.append({"publisher":{"variable" : pub}, "condition" : pub_call.condition.to_dict(), "rate" : rate.to_dict()})
+            else:
+                result.append({"publisher":{"variable" : pub_call.publisher}, "condition" : pub_call.condition.to_dict(), "rate" : rate.to_dict()})
 
         return result
 
