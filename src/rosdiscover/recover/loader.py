@@ -49,6 +49,10 @@ from .symbolic import (
     SymbolicCallback,
     SymbolicNodeHandle,
     SymbolicNodeHandleImpl,
+    SymbolicPublisher,
+    SymbolicPublisherImpl,
+    SymbolicRate,
+    SymbolicRateImpl,    
     SymbolicNodeName,
     SymbolicParameter,
     SymbolicProgram,
@@ -264,6 +268,10 @@ class SymbolicProgramLoader:
             return self._load_checks_for_param(dict_)
         elif kind == "symbolic-constant":
             return IntLiteral(dict_["string"])
+        elif kind == "publisher":
+            return self._load_publisher(dict_)
+        elif kind == "rate":
+            return self._load_rate(dict)
         elif kind == "unknown":
             return SymbolicUnknown()
         elif kind == "node-name":
@@ -272,6 +280,13 @@ class SymbolicProgramLoader:
             return SymbolicUnknown()            
         else:
             raise ValueError(f"failed to load value type: {kind}")
+        
+
+    def _load_publisher(self, dict_: t.Mapping[str, t.Any]) -> SymbolicPublisher:
+        return SymbolicPublisherImpl(self._load_string(dict_["name"]))
+        
+    def _load_rate(self, dict_: t.Mapping[str, t.Any]) -> SymbolicRate:
+        return SymbolicRateImpl(self._load_string(dict_["name"]))        
 
     def _load_concatenate(self, dict_: t.Mapping[str, t.Any]) -> Concatenate:
         lhs = self._load_string(dict_["lhs"])

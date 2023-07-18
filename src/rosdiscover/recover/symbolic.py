@@ -13,6 +13,10 @@ __all__ = (
     "SymbolicFunction",
     "SymbolicNodeHandle",
     "SymbolicNodeHandleImpl",
+    "SymbolicPublisher",
+    "SymbolicPublisherImpl",
+    "SymbolicRate",
+    "SymbolicRateImpl",
     "SymbolicNodeName",
     "SymbolicParameter",
     "SymbolicProgram",
@@ -115,6 +119,8 @@ class SymbolicValueType(enum.Enum):
     BOOL = "bool"
     INTEGER = "integer"
     NODE_HANDLE = "node-handle"
+    PUBLISHER = "publisher"
+    RATE = "rate"
     STRING = "string"
     FLOAT = "float"
     UNSUPPORTED = "unsupported"
@@ -127,6 +133,8 @@ class SymbolicValueType(enum.Enum):
         name_to_type = {
             "bool": cls.BOOL,
             "integer": cls.INTEGER,
+            "publisher": cls.PUBLISHER,
+            "rate": cls.RATE,
             "node-handle": cls.NODE_HANDLE,
             "string": cls.STRING,
             "float": cls.FLOAT,
@@ -525,9 +533,16 @@ class BoolLiteral(SymbolicBool):
 class SymbolicNodeHandle(SymbolicString, SymbolicValue, abc.ABC):
     """Represents a symbolic node handle."""
 
+class SymbolicPublisher(SymbolicString, SymbolicValue, abc.ABC):
+    """Represents a symbolic node handle."""
+
+class SymbolicRate(SymbolicString, SymbolicValue, abc.ABC):
+    """Represents a symbolic node handle."""
 
 class SymbolicUnknown(
     SymbolicNodeHandle,
+    SymbolicPublisher,
+    SymbolicRate,
     SymbolicInteger,
     SymbolicBool,
     SymbolicFloat,
@@ -554,6 +569,52 @@ class SymbolicUnknown(
     def __hash__(self) -> int:
         return hash(str(self))
 
+
+@attr.s(frozen=True, auto_attribs=True, slots=True, str=False)
+class SymbolicRateImpl(SymbolicRate):
+    name: SymbolicString
+
+    def children(self) -> t.Set[SymbolicExpr]:
+        return set()
+
+    def to_dict(self) -> t.Dict[str, t.Any]:
+        return {
+            "kind": "rate",
+            "namespace": self.name.to_dict(),
+        }
+
+    def eval(self, context: SymbolicContext) -> t.Any:
+        return self.name.eval(context)
+
+    def is_unknown(self) -> bool:
+        return self.name.is_unknown()
+
+    def __str__(self) -> str:
+        return str(self.name)
+    
+    
+@attr.s(frozen=True, auto_attribs=True, slots=True, str=False)
+class SymbolicPublisherImpl(SymbolicPublisher):
+    name: SymbolicString
+
+    def children(self) -> t.Set[SymbolicExpr]:
+        return set()
+
+    def to_dict(self) -> t.Dict[str, t.Any]:
+        return {
+            "kind": "publisher",
+            "name": self.name.to_dict(),
+        }
+
+    def eval(self, context: SymbolicContext) -> t.Any:
+        return self.name.eval(context)
+
+    def is_unknown(self) -> bool:
+        return self.name.is_unknown()
+
+    def __str__(self) -> str:
+        return str(self.name)
+    
 
 # FIXME this is the effect of a bad class hierarchy :-(
 # I'll fix this up later
