@@ -116,9 +116,21 @@ class SymbolicStatesAnalyzer:
                     print(self.initial_value_assigns(expr))
                     if len(assign_funcs - {pub_func} - self.initial_value_assigns(expr)) > 0 and expr not in var_refs:
                         var_refs.append(expr)
+        result = var_refs
+        for var_ref in var_refs:
+            for assign in self.program_analyzer.assignments_of_var(var_ref.variable):
+                cond = self.program_analyzer.inter_procedual_condition_var_assign(assign)
+                for expr in cond.decendents(True):
+                    if isinstance(expr, SymbolicVariableReference) and expr.variable in self.program_analyzer.assigned_vars:
+                        assign_func = self.program.func_of_stmt(assign)
+                        assign_funcs: t.Set[SymbolicFunction] = set()
+                        for assign in self.program_analyzer.assignments_of_var(expr.variable):
+                            assign_funcs.add(self.program.func_of_stmt(assign))
+                        print(self.initial_value_assigns(expr))
+                        if len(assign_funcs - {assign_func} - self.initial_value_assigns(expr)) > 0 and expr not in var_refs:
+                            result.append(expr)
 
-        
-        return var_refs
+        return result
 
     @cached_property
     def state_vars_json(self) -> t.List[t.Dict]:

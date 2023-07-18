@@ -18,6 +18,7 @@ from .symbolic import (
     SymbolicFunctionCall,
     SymbolicPublisherImpl,
     SymbolicRateImpl,
+    SymbolicVariableReference,
     SymbolicWhile,
 )
 
@@ -34,6 +35,13 @@ class SymbolicProgramAnalyzer:
     def assigned_vars(self) -> t.Set[str]:
         return {a.variable for a in self.assignments}
 
+    def inter_procedual_condition_var_assign(self, var_assign: SymbolicAssignment) -> SymbolicExpr:
+        expr = var_assign.path_condition
+        transitive_callers = self.program.transitive_callers(self.program.func_of_stmt(var_assign))
+        for call in transitive_callers:
+            expr = AndExpr.build(expr, call.condition)
+        return expr
+    
     def inter_procedual_condition(self, publish_call: Publish) -> SymbolicExpr:
         expr = publish_call.condition
         transitive_callers = self.program.transitive_callers(self.program.func_of_stmt(publish_call))
