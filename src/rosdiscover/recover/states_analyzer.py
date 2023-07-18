@@ -20,6 +20,36 @@ from .symbolic import (
 )
 from .analyzer import SymbolicProgramAnalyzer
 
+from loguru import logger
+
+@attr.s(auto_attribs=True)  # Can't use slots with cached_property
+class PeriodicTransition:
+    interval: str 
+    condition: SymbolicExpr
+    state_changes: t.List[SymbolicAssignment]
+    outputs: t.List[Publish]
+
+    def to_dict(self) -> t.Dict[str, t.Any]:
+        state_changes_dict = []
+        for assign in self.state_changes:
+            state_changes_dict.append(
+                {"variable" : assign.variable,  
+                 "new_value" : str(assign.value)}
+            )
+
+        outputs_dict = []
+        for o in self.outputs:
+            outputs_dict.append({"publisher": {"variable" : o.publisher}})
+
+        dict_ = {
+            "type": "interval",
+            "condition" : str(self.condition),
+            "interval": f"{self.interval}Hz",
+            "state_changes": state_changes_dict,
+            "outputs": outputs_dict,
+        }
+
+        return dict_
 
 @attr.s(auto_attribs=True)  # Can't use slots with cached_property
 class MessageTransition:
@@ -75,12 +105,18 @@ class SymbolicStatesAnalyzer:
     @cached_property
     def state_vars_json(self) -> t.List[t.Dict]:
         result = []
+        logger.debug(f"Running state_vars_json")
+
         for var in self.state_vars:
             if var.initial_value.is_unknown():
-                if var.variable in self.main_state_var_assigns:
-                    print(f"GETTING INITIAL VALUE FROM MAIN: {self.main_state_var_assigns[var.variable]}. Value: {self.main_state_var_assigns[var.variable][0].value}")
+                logger.debug(f"{var} is unknown")
+                if var.variable in self.main_state_var_assigns_map:
+                    logger.debug(f"GETTING INITIAL VALUE FROM MAIN: {self.main_state_var_assigns_map[var.variable]}. Value: {self.main_state_var_assigns_map[var.variable][0].value}")
                     vardic = var.to_dict()
-                    vardic["initial-value"] = self.main_state_var_assigns[var.variable][0].value.to_dict() #TODO: FIX ME
+                    for v in self.main_state_var_assigns_map[var.variable]:
+                        if not v.value.is_unknown():
+                            vardic["initial-value"] = v.value.to_dict() #TODO: FIX ME
+                            continue
                     result.append(vardic)
                     continue
 
@@ -88,6 +124,17 @@ class SymbolicStatesAnalyzer:
 
         return result
 
+
+    @cached_property
+    def periodic_transitions(self) -> t.List[PeriodicTransition]:
+        result: t.List[PeriodicTransition] = []
+        for (pub_call, rate) in self.program_analyzer.periodic_publish_calls_and_rates:
+            #t = MessageTransition(sub, )
+            if str(pub_call.condition) is not "True":
+                result.append(PeriodicTransition(interval=str(rate), condition=pub_call.condition, state_changes=[], outputs=[]))
+
+        return result
+    
 
     @cached_property
     def message_transitions(self) -> t.List[MessageTransition]:
@@ -99,12 +146,12 @@ class SymbolicStatesAnalyzer:
                 outputs = []
                 if sub.callback_name in self.program_analyzer.reactive_behavior_map:
                     outputs = self.program_analyzer.reactive_behavior_map[sub.callback_name]
-                result.append(MessageTransition(sub, sub_state_var_assigns_[0].path_condition, sub_state_var_assigns_, outputs))
+                result.append(MessageTransition(trigger=sub, condition=sub_state_var_assigns_[0].path_condition, state_changes=sub_state_var_assigns_, outputs=outputs))
             elif sub.callback_name in self.program_analyzer.reactive_behavior_map:
                 outputs = []
                 if sub.callback_name in self.program_analyzer.reactive_behavior_map:
                     outputs = self.program_analyzer.reactive_behavior_map[sub.callback_name]
-                result.append(MessageTransition(sub, outputs[0].condition, [], outputs))             
+                result.append(MessageTransition(trigger=sub, condition=outputs[0].condition, state_changes=[], outputs=outputs))             
 
         return result
     
@@ -113,6 +160,10 @@ class SymbolicStatesAnalyzer:
         result = []
 
         for t in self.message_transitions:
+            result.append(t.to_dict())
+
+
+        for t in self.periodic_transitions:
             result.append(t.to_dict())
 
         return result
@@ -138,7 +189,7 @@ class SymbolicStatesAnalyzer:
         return result
 
     @cached_property
-    def main_state_var_assigns(self) -> t.Mapping[str, t.List[SymbolicAssignment]]:
+    def main_state_var_assigns_map(self) -> t.Mapping[str, t.List[SymbolicAssignment]]:
         result: t.Mapping[str, t.List[SymbolicAssignment]] = {}
         for assign in self._state_var_assigns:
             if self.program.entrypoint.body.contains(assign, self.program.functions):

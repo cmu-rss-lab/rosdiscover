@@ -346,23 +346,31 @@ class NodeRecoveryTool:
         logger.debug(f"publish_calls: {analyzer.publish_calls}")
         logger.debug(f"subscriber_callbacks: {analyzer.subscriber_callbacks}")
         logger.debug(f"publish_calls_in_sub_callback: {analyzer.publish_calls_in_sub_callback}")
+        logger.debug(f"publish_calls_in_main: {analyzer.publish_calls_in_main}")
+        
+
         logger.debug(f"rate_sleeps: {analyzer.rate_sleeps}")
         logger.debug(f"while_loops: {analyzer.while_loops}")
         logger.debug(f"periodic_publish_calls: {analyzer.periodic_publish_calls}")
         
 
         states_analyzer = SymbolicStatesAnalyzer(program, analyzer)
-        logger.debug(f"potential_state_vars: {states_analyzer.state_vars}")
+        logger.debug(f"potential_state_vars: {states_analyzer.state_vars_json}")
         logger.debug(f"sub_state_var_assigns: {states_analyzer.sub_state_var_assigns}")
 
         logger.debug(f"message_transitions_json: {states_analyzer.message_transitions_json}")
 
+        logger.debug(f"unclassified_publish: {analyzer.unclassified_publish_calls_json}")
+
         # Data to be written
         json_beh_model = {
+            "package" : package_name,
+            "node" : node_name,
             "periodic_behavior" : analyzer.periodic_publish_calls_json,
             "reactive_behavior" : analyzer.reactive_behavior_json,
             "potential_state_vars" : states_analyzer.state_vars_json,
             "transitions" : states_analyzer.message_transitions_json,
+            "unclassified_publish" : analyzer.unclassified_publish_calls_json,
         }
         
         with open(f"./results/{package_name}.{node_name}.json", "w") as outfile:
@@ -464,12 +472,20 @@ class NodeRecoveryTool:
         args += [' '.join(shlex.quote(p) for p in source_file_abs_paths)]
         args_s = ' '.join(args)
         logger.debug(f"running static recovery command: {args_s}")
-        outcome = shell.run(args_s, text=True, stderr=True)
-        assert isinstance(outcome.output, str)
+        attempts = 0
+        retry = True
+        while retry:
+            retry = False
+            attempts += 1
+            outcome = shell.run(args_s, text=True, stderr=True)
+            assert isinstance(outcome.output, str)
 
-        if outcome.returncode != 0:
-            logger.error(f"static recovery failed [returncode: {outcome.returncode}]: {outcome.output}")
-            raise RuntimeError("static recovery process failed")
+            if outcome.returncode != 0:
+                logger.error(f"static recovery failed [returncode: {outcome.returncode}]: {outcome.output}")
+                lastLine = outcome.output.splitlines()[-1]
+                if attempts > 1 or "Assertion" in lastLine:
+                    raise RuntimeError("static recovery process failed: " + lastLine)
+                retry = True
 
         logger.debug(f"static recovery output: {outcome.output}")
         logger.debug("finished static recovery process")
