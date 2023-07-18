@@ -16,6 +16,7 @@ from .call import (
     Publisher,
     Publish,
     RateSleep,
+    CreateTimer,
     ReadParam,
     ReadParamWithDefault,
     RosInit,
@@ -45,6 +46,7 @@ from .symbolic import (
     SymbolicFloat,
     SymbolicFunction,
     SymbolicFunctionCall,
+    SymbolicCallback,
     SymbolicNodeHandle,
     SymbolicNodeHandleImpl,
     SymbolicNodeName,
@@ -104,6 +106,14 @@ class SymbolicProgramLoader:
     def _load_var_ref(self, dict_: t.Mapping[str, t.Any]) -> SymbolicVariableReference:
         assert dict_["kind"] == "var-ref"
         type_ = SymbolicValueType.from_name(dict_["type"], True)
+        if "qualified_name" in dict_: 
+            variableName = dict_["qualified_name"]
+        else:
+            variableName = dict_["variable"]
+        if "initial-value" in dict_:
+            initial = self._load_value(dict_["initial-value"])
+        else:
+            initial = SymbolicUnknown()
         return SymbolicVariableReference(
             variable=dict_["qualified_name"],
             type_=type_,
@@ -113,10 +123,18 @@ class SymbolicProgramLoader:
     def _load_variable_reference(self, dict_: t.Mapping[str, t.Any]) -> SymbolicVariableReference:
         assert dict_["kind"] == "variable-reference"
         type_ = SymbolicValueType.from_name(dict_["type"])
+        if "qualified_name" in dict_: 
+            variableName = dict_["qualified_name"]
+        else:
+            variableName = dict_["variable"]
+        if "initial-value" in dict_:
+            initial = self._load_value(dict_["initial-value"])
+        else:
+            initial = SymbolicUnknown()
         return SymbolicVariableReference(
-            variable=dict_["qualified_name"],
+            variable=variableName,
             type_=type_,
-            initial_value=self._load_value(dict_["initial-value"]),
+            initial_value=initial,
         )
 
     def _load_node_handle(self, dict_: t.Mapping[str, t.Any]) -> SymbolicNodeHandle:
@@ -126,8 +144,9 @@ class SymbolicProgramLoader:
 
     def _load_string(self, dict_: t.Mapping[str, t.Any]) -> SymbolicString:
         value = self._load_value(dict_)
-        assert isinstance(value, SymbolicString)
-        return value
+        if isinstance(value, SymbolicString):
+            return value
+        return SymbolicUnknown()
 
     def _load_float(self, dict_: t.Mapping[str, t.Any]) -> SymbolicFloat:
         value = self._load_value(dict_)
@@ -249,6 +268,8 @@ class SymbolicProgramLoader:
             return SymbolicUnknown()
         elif kind == "node-name":
             return SymbolicNodeName()
+        elif kind == "call":
+            return SymbolicUnknown()            
         else:
             raise ValueError(f"failed to load value type: {kind}")
 
@@ -273,7 +294,15 @@ class SymbolicProgramLoader:
     def _load_rate_sleep(self, dict_: t.Mapping[str, t.Any]) -> RateSleep:
         rate = self._load_float(dict_["rate"])
         return RateSleep(rate)
+    
+    def _load_create_timer(self, dict_: t.Mapping[str, t.Any]) -> Subscriber:
+        rate = self._load_float(dict_["rate"])
+        return CreateTimer(rate, dict_["callback-name"])    
 
+    def _load_const_sleep(self, dict_: t.Mapping[str, t.Any]) -> RateSleep:
+        duration = self._load_float(dict_["duration"])
+        return RateSleep(duration)
+    
     def _load_publishes_to(self, dict_: t.Mapping[str, t.Any]) -> Publisher:
         topic = self._load_string(dict_["name"])
         return Publisher(topic, dict_["format"])
@@ -290,7 +319,7 @@ class SymbolicProgramLoader:
         service = self._load_string(dict_["name"])
 
         if "format" in dict_:
-            return ServiceProvider(service, dict_["format"])
+            return ServiceProvider(service, dict_["format"], dict_["callback-name"])
 
         response_format_name = dict_["response-format"]
         request_format_name = dict_["request-format"]
@@ -303,10 +332,10 @@ class SymbolicProgramLoader:
         if response_format_name.endswith("Response"):
             service_format_name = response_format_name[:-8]
             logger.debug(f"determined format for service [{service}]: {service_format_name}")
-            return ServiceProvider(service, service_format_name)
+            return ServiceProvider(service, service_format_name, dict_["callback-name"])
 
         logger.warning(f"unable to determine format for service: {service}")
-        return ServiceProvider(service, "\\unknown")
+        return ServiceProvider(service, "\\unknown", dict_["callback-name"])
 
     def _load_reads_param(self, dict_: t.Mapping[str, t.Any]) -> ReadParam:
         param = self._load_string(dict_["name"])
@@ -343,11 +372,22 @@ class SymbolicProgramLoader:
             arguments=arguments,
             condition=self._load_expr(dict_["path_condition"]),
         )
-
+    def _load_callback(self, dict_: t.Mapping[str, t.Any]) -> SymbolicCallback:
+        arguments: t.Mapping[str, SymbolicValue] = {
+            arg_name: self._load_value(arg_dict) for (arg_name, arg_dict) in dict_["arguments"].items()
+        }
+        logger.debug(f"loading symbolic callback arguments: {arguments}")
+        return SymbolicCallback(
+            callee=dict_["callee"],
+            arguments=arguments,
+            condition=self._load_expr(dict_["path_condition"]),
+        )
     def _load_statement(self, dict_: t.Mapping[str, t.Any]) -> SymbolicStatement:
         kind: str = dict_["kind"]
         if kind == "assignment":
             return self._load_assignment(dict_)
+        elif kind == "callback":
+            return self._load_callback(dict_)
         elif kind == "call":
             return self._load_function_call(dict_)
         elif kind == "ros-init":
@@ -358,6 +398,10 @@ class SymbolicProgramLoader:
             return self._load_publish(dict_)
         elif kind == "ratesleep":
             return self._load_rate_sleep(dict_)
+        elif kind == "createtimer":
+            return self._load_create_timer(dict_)        
+        elif kind == "constsleep":
+            return self._load_const_sleep(dict_)            
         elif kind == "subscribes-to":
             return self._load_subscribes_to(dict_)
         elif kind == "calls-service":

@@ -20,7 +20,7 @@ from .symbolic import (
 )
 
 from .call import Publish, RateSleep
-from .call import Subscriber
+from .call import Subscriber, ServiceProvider, CreateTimer
 
 
 @attr.s(auto_attribs=True)  # Can't use slots with cached_property
@@ -58,33 +58,55 @@ class SymbolicProgramAnalyzer:
 
         return result
 
+
+    @cached_property
+    def services(self) -> t.Set[ServiceProvider]:
+        result = set()
+        for func in self.program.functions.values():
+            for stmt in func.body:
+                if isinstance(stmt, ServiceProvider):
+                    result.add(stmt)
+
+        return result
+    
     @cached_property
     def subscribers(self) -> t.Set[Subscriber]:
         result = set()
         for func in self.program.functions.values():
             for stmt in func.body:
-                if isinstance(stmt, Subscriber):
+                if isinstance(stmt, Subscriber) or isinstance(stmt, ServiceProvider) :
                     result.add(stmt)
 
         return result
 
     @cached_property
-    def rate_sleeps(self) -> t.Set[RateSleep]:
+    def create_timers(self) -> t.Set[CreateTimer]:
         result = set()
         for func in self.program.functions.values():
             for stmt in func.body:
-                if isinstance(stmt, RateSleep):
+                if isinstance(stmt, CreateTimer):
                     result.add(stmt)
+
+        return result
+
+
+    @cached_property
+    def rate_sleeps(self) -> t.List[RateSleep]:
+        result = []
+        for func in self.program.functions.values():
+            for stmt in func.body:
+                if isinstance(stmt, RateSleep):
+                    result.append(stmt)
 
         return result
 
     @cached_property
     def rate_sleeps_json(self) -> t.List[t.Dict]:
-        result = set()
+        result = []
         for func in self.program.functions.values():
             for stmt in func.body:
                 if isinstance(stmt, RateSleep):
-                    result.add(stmt)
+                    result.append(stmt)
 
         return result
 
@@ -97,6 +119,16 @@ class SymbolicProgramAnalyzer:
             result.add((sub, self.program.functions[sub.callback_name]))
 
         return result
+
+    @cached_property
+    def timer_callbacks_map(self) -> t.Set[t.Tuple[CreateTimer, SymbolicFunction]]:
+        result = set()
+        for timer in self.create_timers:
+            if timer.callback_name == "unknown":
+                continue
+            result.add((timer, self.program.functions[timer.callback_name]))
+
+        return result    
 
     @cached_property
     def subscriber_callbacks(self) -> t.Set[SymbolicFunction]:
@@ -127,13 +159,43 @@ class SymbolicProgramAnalyzer:
             result.append(p.to_dict())
 
         return result
+                
+    @cached_property
+    def unclassified_publish_calls(self) -> t.List[Publish]:
+        result = []
+        for pub in self.publish_calls:
+            if pub in self.periodic_publish_calls:
+                continue
+            if pub in self.reactive_publish:
+                continue
+            if pub not in result:
+                result.append(pub)
+        return result
+
+    @cached_property
+    def unclassified_publish_calls_json(self) -> t.List[t.Dict]:
+        result = []
+        for p in self.unclassified_publish_calls:
+            result.append(p.to_dict())
+
+        return result
+    
+    @cached_property
+    def publish_calls_in_main(self) -> t.List[Publish]:
+        result = []
+        for pub_call in self.publish_calls:
+            if self.program.entrypoint.body.contains(pub_call, self.program.functions):
+                result.append(pub_call)
+
+
+        return result
 
     @cached_property
     def publish_calls_in_sub_callback(self) -> t.List[Publish]:
         result = []
         for pub_call in self.publish_calls:
             for callback in self.subscriber_callbacks:
-                if callback.body.contains(pub_call, self.program.functions) and pub_call not in result:
+                if callback.body.contains(pub_call, self.program.functions):
                     result.append(pub_call)
 
 
@@ -142,17 +204,20 @@ class SymbolicProgramAnalyzer:
     @cached_property
     def reactive_behavior_json(self) -> t.List[t.Dict]:
         result = []
-        for t in self.reactive_behavior:
-            result.append({"publisher":{"variable" : t[0]}, "subscriber" : {"callback" : t[1]}})
+        for t in self.sub_reactive_behavior:
+            result.append({"publisher":{"variable" : t[0].publisher}, "subscriber" : {"callback" : t[1]}})
+
+        for pub_call in self.publish_calls_in_main:
+            result.append({"publisher":{"variable" : pub_call.publisher}, "event" : "component-init"})
         return result
 
     @cached_property
-    def reactive_behavior(self) -> t.List[t.Tuple[str, str]]:
+    def sub_reactive_behavior(self) -> t.List[t.Tuple[Publish, str]]:
         result = []
         for pub_call in self.publish_calls:
             for (sub, callback) in self.subscriber_callbacks_map:
-                if callback.body.contains(pub_call, self.program.functions) and (pub_call.publisher, sub.callback_name) not in result:
-                    result.append((pub_call.publisher, sub.callback_name))
+                if callback.body.contains(pub_call, self.program.functions) and (pub_call, sub.callback_name) not in result:
+                    result.append((pub_call, sub.callback_name))
         return result
     
     @cached_property
@@ -165,7 +230,18 @@ class SymbolicProgramAnalyzer:
                         result[sub.callback_name] = []
                     result[sub.callback_name].append(pub_call)
         return result
+    
+    @cached_property
+    def reactive_publish(self) -> t.Set[Publish]:
+        result = set()
+        for l in self.reactive_behavior_map.values():
+            for pub_call in l:
+                result.add(pub_call) 
 
+        for pub_call in self.publish_calls_in_main:
+            result.add(pub_call)
+            
+        return result
 
     @cached_property
     def while_loops(self) -> t.List[SymbolicWhile]:
@@ -188,25 +264,34 @@ class SymbolicProgramAnalyzer:
     @cached_property
     def periodic_publish_calls(self) -> t.List[Publish]:
         result = []
+        for (pub_call, rate) in self.periodic_publish_calls_and_rates:
+            result.append(pub_call)
+
+        return result
+
+    @cached_property
+    def periodic_publish_calls_and_rates(self) -> t.List[t.Tuple(Publish, SymbolicExpr)]:
+        result = []
         for pub_call in self.publish_calls:
             for while_stmt in self.while_loops:
                 if while_stmt.body.contains(pub_call, self.program.functions):
                     for rate in self.rate_sleeps:
                         print()
                         if while_stmt.body.contains(rate, self.program.functions) and pub_call not in result:
-                            result.append(pub_call)
+                            result.append((pub_call,rate.rate))
+
+            for (timer, callback) in self.timer_callbacks_map:
+                if callback.body.contains(pub_call, self.program.functions) and pub_call not in result:
+                    result.append((pub_call, timer.rate))
+
 
         return result
 
     @cached_property
     def periodic_publish_calls_json(self) -> t.List[t.Dict]:
         result = []
-        for pub_call in self.publish_calls:
-            for while_stmt in self.while_loops:
-                if while_stmt.body.contains(pub_call, self.program.functions):
-                    for rate in self.rate_sleeps:
-                        if while_stmt.body.contains(rate, self.program.functions) and pub_call not in result:
-                            result.append({"publisher":{"variable" : pub_call.publisher}, "rate" : rate.rate.to_dict()})
+        for (pub_call, rate) in self.periodic_publish_calls_and_rates:
+            result.append({"publisher":{"variable" : pub_call.publisher}, "condition" : pub_call.to_dict(), "rate" : rate.to_dict()})
 
         return result
 

@@ -143,9 +143,15 @@ class SymbolicValueType(enum.Enum):
 class SymbolicExpr(abc.ABC):
     """Represents a symbolic value in a function summary."""
 
+    def is_unknown(self) -> bool:
+        return "unknown" in str(self)
+
     @abc.abstractmethod
     def children(self) -> t.Set[SymbolicExpr]:
         ...
+
+    def __eq__(self, other: object) -> bool:
+        return str(self) == str(other)
 
     def decendents(self, include_self: bool = False) -> t.Set[SymbolicExpr]:
         result: t.Set[SymbolicExpr] = self.children()
@@ -167,7 +173,12 @@ class SymbolicExpr(abc.ABC):
     def __str__(self) -> str:
         ...
 
+    def __eq__(self, __value: object) -> bool:
+        return str(self) == str(__value)
 
+    def __hash__(self) -> int:
+        return hash(str(self))
+    
 @attr.s(auto_attribs=True, slots=True, str=False, frozen=True)
 class ThisExpr(SymbolicExpr):
 
@@ -373,6 +384,8 @@ class SymbolicNodeName(SymbolicString):
     def __str__(self) -> str:
         return "node-name"
 
+    def __hash__(self) -> int:
+        return hash(str(self))
 
 @attr.s(frozen=True, auto_attribs=True, slots=True, str=False)
 class StringLiteral(SymbolicString):
@@ -537,6 +550,9 @@ class SymbolicUnknown(
 
     def __str__(self) -> str:
         return "unknown"
+
+    def __hash__(self) -> int:
+        return hash(str(self))
 
 
 # FIXME this is the effect of a bad class hierarchy :-(
@@ -760,6 +776,43 @@ class SymbolicFunctionCall(SymbolicStatement):
             return name_to_function[self.callee].body.contains(stmt, name_to_function)
 
         return False
+
+    def to_dict(self) -> t.Dict[str, t.Any]:
+        return {
+            "kind": "call",
+            "callee": self.callee,
+            "arguments": {
+                name: arg.to_dict() for (name, arg) in self.arguments.items()
+            },
+            "path_condition": self.condition.to_dict(),
+        }
+
+    def eval(self, context: SymbolicContext) -> None:
+        args: t.Dict[str, t.Any] = {}
+        for arg_name, arg_symbolic_value in self.arguments.items():
+            args[arg_name] = arg_symbolic_value.eval(context)
+            logger.debug(f"obtained symbolic value for argument [{arg_name}]: {args[arg_name]}")
+
+        function = context.program.functions[self.callee]
+        context = context.for_function_call(function, args)
+        function.body.eval(context)
+
+
+@attr.s(frozen=True, auto_attribs=True, slots=True)
+class SymbolicCallback(SymbolicStatement):
+    """Represents a call to a symbolic function.
+
+    Attributes
+    ----------
+    callee: str
+        The name of the function that is being called.
+    arguments: t.Mapping[str, SymbolicValue]
+        The arguments that should be used during the function call, indexed by
+        the name of the corresponding argument.
+    """
+    callee: str
+    arguments: t.Mapping[str, SymbolicValue]
+    condition: SymbolicExpr
 
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {

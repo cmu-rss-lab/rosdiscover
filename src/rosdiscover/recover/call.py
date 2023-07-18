@@ -83,6 +83,9 @@ class Publish(SymbolicRosApiCall):
     publisher: str
     condition: SymbolicExpr
 
+    def __eq__(self, other):
+        return self.publisher == other.publisher and self.condition == other.condition
+
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
             "kind": "publish",
@@ -96,11 +99,16 @@ class Publish(SymbolicRosApiCall):
 
     def is_unknown(self) -> bool:
         return self.publisher == "unknown"
+    
+    def __eq__(self, __value: object) -> bool:
+        return self.publisher == __value.publisher and self.condition == __value.condition
 
+    def __hash__(self) -> int:
+        return hash((self.publisher, self.condition))
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class RateSleep(SymbolicRosApiCall):
-    rate: SymbolicFloat
+    rate: SymbolicExpr
 
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
@@ -139,15 +147,36 @@ class Subscriber(SymbolicRosApiCall):
 
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
+class CreateTimer(SymbolicRosApiCall):
+    rate: SymbolicFloat
+    callback_name: str
+
+    def to_dict(self) -> t.Dict[str, t.Any]:
+        return {
+            "kind": "createtimer",
+            "rate": self.rate.to_dict(),
+            "callback-name": self.callback_name
+        }
+
+    def eval(self, context: SymbolicContext) -> None:
+        self.rate.eval(context)
+
+    def is_unknown(self) -> bool:
+        return self.rate.is_unknown()
+
+
+@attr.s(frozen=True, auto_attribs=True, slots=True)
 class ServiceProvider(SymbolicRosApiCall):
     service: SymbolicString
     format_: str
+    callback_name: str
 
     def to_dict(self) -> t.Dict[str, t.Any]:
         return {
             "kind": "provides-service",
             "name": self.service.to_dict(),
             "format": self.format_,
+            "callback-name": self.callback_name,
         }
 
     def eval(self, context: SymbolicContext) -> None:
