@@ -87,6 +87,21 @@ class SymbolicStatesAnalyzer:
     program: SymbolicProgram
     program_analyzer: SymbolicProgramAnalyzer
 
+    def initial_value_assigns(self, stateVar) :
+        result = set()
+        if not stateVar.initial_value.is_unknown():
+            return set()
+
+        assigns = []
+        for assign in self.program_analyzer.assignments_of_var(stateVar.variable):
+            if self.program.entrypoint.body.contains(assign, self.program.functions) and assign not in assigns:
+                assigns.append(assign)
+        
+        for v in assigns: #TODO: FIX ME
+            if not v.value.is_unknown():
+                result.add(self.program.func_of_stmt(v))
+        return result
+
     @cached_property
     def state_vars(self) -> t.List[SymbolicVariableReference]:
         var_refs: t.List[SymbolicVariableReference] = []
@@ -98,8 +113,11 @@ class SymbolicStatesAnalyzer:
                     assign_funcs: t.Set[SymbolicFunction] = set()
                     for assign in self.program_analyzer.assignments_of_var(expr.variable):
                         assign_funcs.add(self.program.func_of_stmt(assign))
-                    if len(assign_funcs - {pub_func}) > 0 and expr not in var_refs:
+                    print(self.initial_value_assigns(expr))
+                    if len(assign_funcs - {pub_func} - self.initial_value_assigns(expr)) > 0 and expr not in var_refs:
                         var_refs.append(expr)
+
+        
         return var_refs
 
     @cached_property
