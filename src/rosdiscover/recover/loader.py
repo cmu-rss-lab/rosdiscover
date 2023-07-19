@@ -315,8 +315,9 @@ class SymbolicProgramLoader:
         return CreateTimer(rate, dict_["callback-name"])    
 
     def _load_const_sleep(self, dict_: t.Mapping[str, t.Any]) -> RateSleep:
-        duration = self._load_float(dict_["duration"])
-        return RateSleep(duration)
+        duration = float(str(self._load_float(dict_["duration"])))
+        rate = dict_["rate"]
+        return RateSleep(FloatLiteral(rate/duration))
     
     def _load_publishes_to(self, dict_: t.Mapping[str, t.Any]) -> Publisher:
         topic = self._load_string(dict_["name"])
