@@ -153,6 +153,12 @@ class SymbolicStatesAnalyzer:
             result.append(var.to_dict())
 
         return result
+    
+    def is_state_condition(self, expr: SymbolicExpr):
+        for var in self.state_vars: 
+            if var in expr.decendents(True):
+                return True     
+        return False
 
 
     @cached_property
@@ -160,8 +166,9 @@ class SymbolicStatesAnalyzer:
         result: t.List[PeriodicTransition] = []
         for (pub_call, rate) in self.program_analyzer.periodic_publish_calls_and_rates:
             #t = MessageTransition(sub, )
-            if str(pub_call.condition) is not "True":
-                result.append(PeriodicTransition(interval=str(rate), condition=pub_call.condition, state_changes=[], outputs=[]))
+            cond = self.program_analyzer.inter_procedual_condition(pub_call)
+            if self.is_state_condition(cond):
+                result.append(PeriodicTransition(interval=str(rate), condition=cond, state_changes=[], outputs=[pub_call]))
 
         return result
     
@@ -169,19 +176,26 @@ class SymbolicStatesAnalyzer:
     @cached_property
     def message_transitions(self) -> t.List[MessageTransition]:
         result: t.List[MessageTransition] = []
+        
         for sub in self.program_analyzer.subscribers:
             #t = MessageTransition(sub, )
             if sub in self.sub_state_var_assigns:
                 sub_state_var_assigns_ = self.sub_state_var_assigns[sub]
-                outputs = []
                 if sub.callback_name in self.program_analyzer.reactive_behavior_map:
-                    outputs = self.program_analyzer.reactive_behavior_map[sub.callback_name]
-                result.append(MessageTransition(trigger=sub, condition=sub_state_var_assigns_[0].path_condition, state_changes=sub_state_var_assigns_, outputs=outputs))
+                    for assign in sub_state_var_assigns_:
+                        cond = self.program_analyzer.inter_procedual_condition_var_assign(assign)
+                        if self.is_state_condition(cond):
+                            outputs = self.program_analyzer.reactive_behavior_map[sub.callback_name]
+                            result.append(MessageTransition(trigger=sub, condition=cond, state_changes=sub_state_var_assigns_, outputs=outputs))
+                            continue
             elif sub.callback_name in self.program_analyzer.reactive_behavior_map:
-                outputs = []
                 if sub.callback_name in self.program_analyzer.reactive_behavior_map:
                     outputs = self.program_analyzer.reactive_behavior_map[sub.callback_name]
-                result.append(MessageTransition(trigger=sub, condition=outputs[0].condition, state_changes=[], outputs=outputs))             
+                    for output in outputs:
+                        cond = self.program_analyzer.inter_procedual_condition(output)
+                        if self.is_state_condition(cond):
+                            result.append(MessageTransition(trigger=sub, condition=cond, state_changes=[], outputs=outputs))
+                            continue
 
         return result
     
