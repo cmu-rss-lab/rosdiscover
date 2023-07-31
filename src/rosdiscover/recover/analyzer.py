@@ -329,7 +329,6 @@ class SymbolicProgramAnalyzer:
             for while_stmt in self.while_loops:
                 if while_stmt.body.contains(pub_call, self.program.functions):
                     for rate in self.rate_sleeps:
-                        print()
                         if while_stmt.body.contains(rate, self.program.functions) and pub_call not in result:
                             result.append((pub_call,rate.rate))
 
