@@ -271,7 +271,7 @@ class SymbolicProgramLoader:
         elif kind == "publisher":
             return self._load_publisher(dict_)
         elif kind == "rate":
-            return self._load_rate(dict)
+            return self._load_rate(dict_)
         elif kind == "unknown":
             return SymbolicUnknown()
         elif kind == "node-name":
@@ -286,7 +286,11 @@ class SymbolicProgramLoader:
         return SymbolicPublisherImpl(self._load_string(dict_["name"]))
         
     def _load_rate(self, dict_: t.Mapping[str, t.Any]) -> SymbolicRate:
-        return SymbolicRateImpl(self._load_string(dict_["name"]))        
+        if ("value" not in dict_ or "name" not in dict_):
+            return SymbolicRateImpl(SymbolicUnknown(), SymbolicUnknown())    
+        value = self._load_value(dict_["value"])
+        name = self._load_string(dict_["name"])
+        return SymbolicRateImpl(name, value)        
 
     def _load_concatenate(self, dict_: t.Mapping[str, t.Any]) -> Concatenate:
         lhs = self._load_string(dict_["lhs"])
@@ -315,6 +319,10 @@ class SymbolicProgramLoader:
         return CreateTimer(rate, dict_["callback-name"])    
 
     def _load_const_sleep(self, dict_: t.Mapping[str, t.Any]) -> RateSleep:
+        duration = self._load_float(dict_["duration"])
+        if duration.is_unknown():
+            return RateSleep(SymbolicUnknown())
+
         duration = float(str(self._load_float(dict_["duration"])))
         rate = dict_["rate"]
         return RateSleep(FloatLiteral(rate/duration))

@@ -573,6 +573,7 @@ class SymbolicUnknown(
 @attr.s(frozen=True, auto_attribs=True, slots=True, str=False)
 class SymbolicRateImpl(SymbolicRate):
     name: SymbolicString
+    value: SymbolicValue
 
     def children(self) -> t.Set[SymbolicExpr]:
         return set()
