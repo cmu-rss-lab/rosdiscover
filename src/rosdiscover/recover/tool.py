@@ -344,6 +344,7 @@ class NodeRecoveryTool:
 
         analyzer = SymbolicProgramAnalyzer(program)
         logger.debug(f"publish_calls: {analyzer.publish_calls}")
+        logger.debug(f"publisher_call_remaps: {analyzer.publisher_call_remaps}")
         logger.debug(f"subscriber_callbacks: {analyzer.subscriber_callbacks}")
         logger.debug(f"publish_calls_in_sub_callback: {analyzer.publish_calls_in_sub_callback}")
         logger.debug(f"publish_calls_in_main: {analyzer.publish_calls_in_main}")
@@ -483,7 +484,7 @@ class NodeRecoveryTool:
             if outcome.returncode != 0:
                 logger.error(f"static recovery failed [returncode: {outcome.returncode}]: {outcome.output}")
                 lastLine = outcome.output.splitlines()[-1]
-                if attempts > 1 or "Assertion" in lastLine:
+                if attempts > 4 or "Assertion" in lastLine:
                     raise RuntimeError("static recovery process failed: " + lastLine)
                 retry = True
 
