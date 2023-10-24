@@ -46,7 +46,7 @@ class RosInit(SymbolicRosApiCall):
     name: SymbolicString
 
     def to_dict(self) -> t.Dict[str, t.Any]:
-        return {
+        return super().to_dict() | {
             "kind": "ros-init",
             "name": self.name.to_dict(),
         }
@@ -64,7 +64,7 @@ class Publisher(SymbolicRosApiCall):
     format_: str
 
     def to_dict(self) -> t.Dict[str, t.Any]:
-        return {
+        return super().to_dict() | {
             "kind": "publishes-to",
             "name": self.topic.to_dict(),
             "format": self.format_,
@@ -87,7 +87,7 @@ class Publish(SymbolicRosApiCall):
         return self.publisher == other.publisher and self.condition == other.condition
 
     def to_dict(self) -> t.Dict[str, t.Any]:
-        return {
+        return super().to_dict() | {
             "kind": "publish",
             "publisher": self.publisher,
             "path_condition": self.condition.to_dict(),
@@ -111,7 +111,7 @@ class RateSleep(SymbolicRosApiCall):
     rate: SymbolicExpr
 
     def to_dict(self) -> t.Dict[str, t.Any]:
-        return {
+        return super().to_dict() | {
             "kind": "ratesleep",
             "rate": self.rate.to_dict(),
         }
@@ -131,7 +131,7 @@ class Subscriber(SymbolicRosApiCall):
     callback_name: str
 
     def to_dict(self) -> t.Dict[str, t.Any]:
-        return {
+        return super().to_dict() | {
             "kind": "subscribes-to",
             "name": self.topic.to_dict(),
             "format": self.format_,
@@ -152,7 +152,7 @@ class CreateTimer(SymbolicRosApiCall):
     callback_name: str
 
     def to_dict(self) -> t.Dict[str, t.Any]:
-        return {
+        return super().to_dict() | {
             "kind": "createtimer",
             "rate": self.rate.to_dict(),
             "callback-name": self.callback_name
@@ -172,7 +172,7 @@ class ServiceProvider(SymbolicRosApiCall):
     callback_name: str
 
     def to_dict(self) -> t.Dict[str, t.Any]:
-        return {
+        return super().to_dict() | {
             "kind": "provides-service",
             "name": self.service.to_dict(),
             "format": self.format_,
@@ -193,7 +193,7 @@ class ServiceCaller(SymbolicRosApiCall):
     format_: str
 
     def to_dict(self) -> t.Dict[str, t.Any]:
-        return {
+        return super().to_dict() | {
             "kind": "calls-service",
             "name": self.service.to_dict(),
             "format": self.format_,
@@ -213,7 +213,7 @@ class WriteParam(SymbolicRosApiCall):
     value: SymbolicValue
 
     def to_dict(self) -> t.Dict[str, t.Any]:
-        return {
+        return super().to_dict() | {
             "kind": "writes-to-param",
             "name": self.param.to_dict(),
             "value": self.value.to_dict(),
@@ -235,7 +235,7 @@ class ReadParam(SymbolicRosApiCall, SymbolicValue):
     param: SymbolicString
 
     def to_dict(self) -> t.Dict[str, t.Any]:
-        return {
+        return super().to_dict() | {
             "kind": "reads-param",
             "name": self.param.to_dict(),
         }
@@ -257,7 +257,7 @@ class ReadParamWithDefault(SymbolicRosApiCall, SymbolicValue):
     default: SymbolicValue
 
     def to_dict(self) -> t.Dict[str, t.Any]:
-        return {
+        return super().to_dict() | {
             "kind": "reads-param-with-default",
             "name": self.param.to_dict(),
             "default": self.default.to_dict(),
@@ -281,7 +281,7 @@ class HasParam(SymbolicRosApiCall, SymbolicBool):
     param: SymbolicString
 
     def to_dict(self) -> t.Dict[str, t.Any]:
-        return {
+        return super().to_dict() | {
             "kind": "checks-for-param",
             "name": self.param.to_dict(),
         }
@@ -302,7 +302,7 @@ class DeleteParam(SymbolicRosApiCall):
     param: SymbolicString
 
     def to_dict(self) -> t.Dict[str, t.Any]:
-        return {
+        return super().to_dict() | {
             "kind": "deletes-param",
             "name": self.param.to_dict(),
         }

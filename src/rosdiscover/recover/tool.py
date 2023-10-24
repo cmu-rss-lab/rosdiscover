@@ -342,6 +342,8 @@ class NodeRecoveryTool:
         # recover a symbolic description of the node executable
         program = self._recover(compile_commands_path, entrypoint, sources, path_restrictions)
 
+        logger.debug(f"program: {program}")
+
         analyzer = SymbolicProgramAnalyzer(program)
         logger.debug(f"publish_calls: {analyzer.publish_calls}")
         logger.debug(f"publisher_call_remaps: {analyzer.publisher_call_remaps}")
@@ -501,6 +503,7 @@ class NodeRecoveryTool:
 
         summary = model_loader.load(json_model)
         logger.debug(f"recovered node summary: {summary}")
+        logger.debug(f"recovered json_model: {json_model}")
 
         analyzer = SymbolicProgramAnalyzer(summary)
         logger.debug(f"publish_calls: {analyzer.publish_calls}")

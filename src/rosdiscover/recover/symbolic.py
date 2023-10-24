@@ -671,12 +671,15 @@ class SymbolicArg(
     def __str__(self) -> str:
         return self.name
 
-
+@attr.s(frozen=True, auto_attribs=True, slots=True)
 class SymbolicStatement(abc.ABC):
     """Represents a statement in a symbolic function summary."""
-    @abc.abstractmethod
+    source_location: str
+
     def to_dict(self) -> t.Dict[str, t.Any]:
-        ...
+        return {
+            "source-location": self.source_location,
+        }
 
     @abc.abstractmethod
     def eval(self, context: SymbolicContext) -> None:
@@ -705,7 +708,7 @@ class SymbolicAssignment(SymbolicStatement):
     path_condition: SymbolicExpr
 
     def to_dict(self) -> t.Dict[str, t.Any]:
-        return {
+        return super().to_dict() | {
             "kind": "assignment",
             "variable": self.variable,
             "value": self.value.to_dict(),
@@ -746,7 +749,7 @@ class SymbolicCompound(t.Sequence[SymbolicStatement], SymbolicStatement):
         return self._statements[at]
 
     def to_dict(self) -> t.Dict[str, t.Any]:
-        return {
+        return super().to_dict() | {
             "kind": "compound",
             "statements": [s.to_dict() for s in self._statements],
         }
@@ -770,7 +773,7 @@ class SymbolicIf(SymbolicStatement):
         return self == stmt or self.true_body.is_ast_parent_of(stmt) or self.false_body.is_ast_parent_of(stmt)
 
     def to_dict(self) -> t.Dict[str, t.Any]:
-        return {
+        return super().to_dict() | {
             "kind": "if",
             "trueBranchBody": self.true_body.to_dict(),
             "falseBranchBody": self.false_body.to_dict(),
@@ -795,7 +798,7 @@ class SymbolicWhile(SymbolicStatement):
     condition: SymbolicValue
 
     def to_dict(self) -> t.Dict[str, t.Any]:
-        return {
+        return super().to_dict() | {
             "kind": "while",
             "body": self.body.to_dict(),
             "condition": self.condition.to_dict(),
@@ -840,7 +843,7 @@ class SymbolicFunctionCall(SymbolicStatement):
         return False
 
     def to_dict(self) -> t.Dict[str, t.Any]:
-        return {
+        return super().to_dict() | {
             "kind": "call",
             "callee": self.callee,
             "arguments": {
@@ -877,7 +880,7 @@ class SymbolicCallback(SymbolicStatement):
     condition: SymbolicExpr
 
     def to_dict(self) -> t.Dict[str, t.Any]:
-        return {
+        return super().to_dict() | {
             "kind": "call",
             "callee": self.callee,
             "arguments": {

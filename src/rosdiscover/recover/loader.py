@@ -280,7 +280,11 @@ class SymbolicProgramLoader:
             return SymbolicUnknown()            
         else:
             raise ValueError(f"failed to load value type: {kind}")
-        
+
+    def _load_source_location(self, dict_: t.Mapping[str, t.Any]) -> str:
+        if "source-location" in dict_:
+            return dict_["source-location"]
+        return ""
 
     def _load_publisher(self, dict_: t.Mapping[str, t.Any]) -> SymbolicPublisher:
         return SymbolicPublisherImpl(self._load_string(dict_["name"]))
@@ -290,7 +294,10 @@ class SymbolicProgramLoader:
             return SymbolicRateImpl(SymbolicUnknown(), SymbolicUnknown())    
         value = self._load_value(dict_["value"])
         name = self._load_string(dict_["name"])
-        return SymbolicRateImpl(name, value)        
+        return SymbolicRateImpl(
+            name=name, 
+            value=value
+        )
 
     def _load_concatenate(self, dict_: t.Mapping[str, t.Any]) -> Concatenate:
         lhs = self._load_string(dict_["lhs"])
@@ -301,22 +308,41 @@ class SymbolicProgramLoader:
         variable = dict_["variable"]
         value = self._load_expr(dict_["value"])
         path_condition = BoolLiteral(True)
-        return SymbolicAssignment(variable, value, path_condition)
+        return SymbolicAssignment(
+            source_location=self._load_source_location(dict_),
+            variable=variable, 
+            value=value, 
+            path_condition=path_condition
+        )
 
     def _load_rosinit(self, dict_: t.Mapping[str, t.Any]) -> RosInit:
         name = self._load_string(dict_["name"])
-        return RosInit(name)
+        return RosInit(
+            source_location=self._load_source_location(dict_),
+            name=name
+        )
 
     def _load_publish(self, dict_: t.Mapping[str, t.Any]) -> Publish:
-        return Publish(publisher=dict_["publisher"], condition=self._load_expr(dict_["path_condition"]))
+        return Publish(
+            publisher=dict_["publisher"],
+            condition=self._load_expr(dict_["path_condition"]),
+            source_location=self._load_source_location(dict_)
+        )
 
     def _load_rate_sleep(self, dict_: t.Mapping[str, t.Any]) -> RateSleep:
         rate = self._load_float(dict_["rate"])
-        return RateSleep(rate)
+        return RateSleep(
+            source_location=self._load_source_location(dict_), 
+            rate=rate
+        )
     
     def _load_create_timer(self, dict_: t.Mapping[str, t.Any]) -> Subscriber:
         rate = self._load_float(dict_["rate"])
-        return CreateTimer(rate, dict_["callback-name"])    
+        return CreateTimer(
+            source_location=self._load_source_location(dict_),
+            rate=rate, 
+            callback_name=dict_["callback-name"]
+        )
 
     def _load_const_sleep(self, dict_: t.Mapping[str, t.Any]) -> RateSleep:
         duration = self._load_float(dict_["duration"])
@@ -325,25 +351,46 @@ class SymbolicProgramLoader:
 
         duration = float(str(self._load_float(dict_["duration"])))
         rate = dict_["rate"]
-        return RateSleep(FloatLiteral(rate/duration))
+        return RateSleep(
+            rate=FloatLiteral(rate/duration),
+            source_location=self._load_source_location(dict_)
+        )
     
     def _load_publishes_to(self, dict_: t.Mapping[str, t.Any]) -> Publisher:
         topic = self._load_string(dict_["name"])
-        return Publisher(topic, dict_["format"])
+        return Publisher(
+            source_location=self._load_source_location(dict_), 
+            topic=topic, 
+            format_=dict_["format"]
+        )
 
     def _load_subscribes_to(self, dict_: t.Mapping[str, t.Any]) -> Subscriber:
         topic = self._load_string(dict_["name"])
-        return Subscriber(topic, dict_["format"], dict_["callback-name"])
+        return Subscriber(
+            source_location=self._load_source_location(dict_),
+            topic=topic,
+            format_=dict_["format"], 
+            callback_name=dict_["callback-name"]
+        )
 
     def _load_calls_service(self, dict_: t.Mapping[str, t.Any]) -> ServiceCaller:
         service = self._load_string(dict_["name"])
-        return ServiceCaller(service, dict_["format"])
+        return ServiceCaller(
+            source_location=self._load_source_location(dict_),
+            service=service,
+            format_=dict_["format"]
+        )
 
     def _load_provides_service(self, dict_: t.Mapping[str, t.Any]) -> ServiceProvider:
         service = self._load_string(dict_["name"])
 
         if "format" in dict_:
-            return ServiceProvider(service, dict_["format"], dict_["callback-name"])
+            return ServiceProvider(
+                source_location=self._load_source_location(dict_), 
+                service=service,
+                format_=dict_["format"], 
+                callback_name=dict_["callback-name"]
+            )
 
         response_format_name = dict_["response-format"]
         request_format_name = dict_["request-format"]
@@ -356,14 +403,27 @@ class SymbolicProgramLoader:
         if response_format_name.endswith("Response"):
             service_format_name = response_format_name[:-8]
             logger.debug(f"determined format for service [{service}]: {service_format_name}")
-            return ServiceProvider(service, service_format_name, dict_["callback-name"])
+            return ServiceProvider(
+                source_location=self._load_source_location(dict_), 
+                service=service, 
+                format_=service_format_name, 
+                callback_name=dict_["callback-name"]
+            )
 
         logger.warning(f"unable to determine format for service: {service}")
-        return ServiceProvider(service, "\\unknown", dict_["callback-name"])
+        return ServiceProvider(
+            source_location=self._load_source_location(dict_), 
+            service=service, 
+            format_="\\unknown", 
+            callback_name=dict_["callback-name"]
+        )
 
     def _load_reads_param(self, dict_: t.Mapping[str, t.Any]) -> ReadParam:
         param = self._load_string(dict_["name"])
-        return ReadParam(param)
+        return ReadParam(
+            source_location=self._load_source_location(dict_), 
+            param=param
+        )
 
     def _load_reads_param_with_default(
         self,
@@ -371,20 +431,34 @@ class SymbolicProgramLoader:
     ) -> ReadParamWithDefault:
         param = self._load_string(dict_["name"])
         default = self._load_value(dict_["default"])
-        return ReadParamWithDefault(param, default)
+        return ReadParamWithDefault(
+            source_location=self._load_source_location(dict_),
+            param=param, 
+            default=default
+        )
 
     def _load_writes_to_param(self, dict_: t.Mapping[str, t.Any]) -> WriteParam:
         param = self._load_string(dict_["name"])
         value = self._load_value(dict_["value"])
-        return WriteParam(param, value)
+        return WriteParam(
+            source_location=self._load_source_location(dict_),
+            param=param,
+            value=value
+        )
 
     def _load_deletes_param(self, dict_: t.Mapping[str, t.Any]) -> DeleteParam:
         param = self._load_string(dict_["name"])
-        return DeleteParam(param)
+        return DeleteParam(
+            source_location=self._load_source_location(dict_),
+            param=param
+        )
 
     def _load_checks_for_param(self, dict_: t.Mapping[str, t.Any]) -> HasParam:
         param = self._load_string(dict_["name"])
-        return HasParam(param)
+        return HasParam(
+            source_location=self._load_source_location(dict_),
+            param=param
+            )
 
     def _load_function_call(self, dict_: t.Mapping[str, t.Any]) -> SymbolicFunctionCall:
         arguments: t.Mapping[str, SymbolicValue] = {
@@ -395,6 +469,7 @@ class SymbolicProgramLoader:
             callee=dict_["callee"],
             arguments=arguments,
             condition=self._load_expr(dict_["path_condition"]),
+            source_location=self._load_source_location(dict_)
         )
     def _load_callback(self, dict_: t.Mapping[str, t.Any]) -> SymbolicCallback:
         arguments: t.Mapping[str, SymbolicValue] = {
@@ -405,6 +480,7 @@ class SymbolicProgramLoader:
             callee=dict_["callee"],
             arguments=arguments,
             condition=self._load_expr(dict_["path_condition"]),
+            source_location=self._load_source_location(dict_),
         )
     def _load_statement(self, dict_: t.Mapping[str, t.Any]) -> SymbolicStatement:
         kind: str = dict_["kind"]
@@ -451,11 +527,20 @@ class SymbolicProgramLoader:
 
     def _load_assign(self, dict_: t.Mapping[str, t.Any]) -> SymbolicAssignment:
         assert dict_["kind"] == "assign"
-        return SymbolicAssignment(dict_["var"]["qualified_name"], self._load_expr(dict_["expr"]), self._load_expr(dict_["path_condition"]))
+        return SymbolicAssignment(
+            variable=dict_["var"]["qualified_name"], 
+            value=self._load_expr(dict_["expr"]),
+            path_condition=self._load_expr(dict_["path_condition"]),
+            source_location=self._load_source_location(dict_)
+        )
 
     def _load_while(self, dict_: t.Mapping[str, t.Any]) -> SymbolicWhile:
         assert dict_["kind"] == "while"
-        return SymbolicWhile(self._load_compound(dict_["body"]), self._load_value(dict_["condition"]))
+        return SymbolicWhile(
+            body=self._load_compound(dict_["body"]), 
+            condition=self._load_value(dict_["condition"]),
+            source_location=self._load_source_location(dict_)
+        )
 
     def _load_if(self, dict_: t.Mapping[str, t.Any]) -> SymbolicIf:
         assert dict_["kind"] == "if"
@@ -463,12 +548,16 @@ class SymbolicProgramLoader:
             true_body=self._load_compound(dict_["trueBranchBody"]),
             false_body=self._load_compound(dict_["falseBranchBody"]),
             condition=self._load_value(dict_["condition"]),
+            source_location=self._load_source_location(dict_)
         )
 
     def _load_compound(self, dict_: t.Mapping[str, t.Any]) -> SymbolicCompound:
         assert dict_["kind"] == "compound"
         statements = [self._load_statement(d) for d in dict_["statements"]]
-        return SymbolicCompound(statements)
+        return SymbolicCompound(
+            source_location=self._load_source_location(dict_),
+            statements=statements
+        )
 
     def _load_function(self, dict_: t.Mapping[str, t.Any]) -> SymbolicFunction:
         name: str = dict_["name"]

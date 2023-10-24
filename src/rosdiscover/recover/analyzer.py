@@ -156,6 +156,7 @@ class SymbolicProgramAnalyzer:
     def publish_calls(self) -> t.List[Publish]:
         result = []
         for func in self.program.functions.values():
+            print(func)
             for stmt in func.body:
                 if isinstance(stmt, Publish) and stmt not in result:
                     result.append(stmt)
