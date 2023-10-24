@@ -188,10 +188,10 @@ class SymbolicStatesAnalyzer:
             if sub in  self.sub_state_var_assigns:
                 for assign in self.sub_state_var_assigns[sub]:
                     cond = self.program_analyzer.inter_procedual_condition_var_assign(assign)
-                    if self.is_state_condition(cond) or str(cond) == "True":
-                        if cond not in r:
-                            r[cond] = {"state_changes" : set(), "outputs" : set()}
-                        r[cond]["state_changes"].add(assign)
+                    #if self.is_state_condition(cond) or str(cond) == "True":
+                    if cond not in r:
+                        r[cond] = {"state_changes" : set(), "outputs" : set()}
+                    r[cond]["state_changes"].add(assign)
             if sub.callback_name in self.program_analyzer.reactive_behavior_map:
                 for output in self.program_analyzer.reactive_behavior_map[sub.callback_name]:
                     cond = self.program_analyzer.inter_procedual_condition(output)

@@ -122,7 +122,7 @@ class TestStringMethods(unittest.TestCase):
             {'tf_broadcaster', 'odometry_publisher_', 'velocity_publisher_'}
         )
 
-        self.assert_rate_sleeps(analyzer, {50.0})
+        self.assert_rate_sleeps(analyzer, {1.0, 50.0})
 
         self.assert_sub_callbacks(analyzer, 
             {
