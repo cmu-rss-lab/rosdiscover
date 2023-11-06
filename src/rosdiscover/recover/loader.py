@@ -347,7 +347,10 @@ class SymbolicProgramLoader:
     def _load_const_sleep(self, dict_: t.Mapping[str, t.Any]) -> RateSleep:
         duration = self._load_float(dict_["duration"])
         if duration.is_unknown():
-            return RateSleep(SymbolicUnknown())
+            return RateSleep(
+                rate=SymbolicUnknown(),
+                source_location=self._load_source_location(dict_)
+            )
 
         duration = float(str(self._load_float(dict_["duration"])))
         rate = dict_["rate"]

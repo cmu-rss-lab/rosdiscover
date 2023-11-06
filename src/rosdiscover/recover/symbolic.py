@@ -92,6 +92,8 @@ class SymbolicContext:
             If no variable exists with the given name.
         """
         logger.debug(f"attempting to read value of variable: {variable}")
+        if variable not in self._vars:
+            return SymbolicUnknown()
         return self._vars[variable]
 
     def store(self, variable: str, value: t.Any) -> None:
@@ -104,7 +106,8 @@ class SymbolicContext:
             single static assignment (SSA) rules.
         """
         if variable in self._vars:
-            raise ValueError(f"variable already defined in this scope: {variable}")
+            #raise ValueError(f"variable already defined in this scope: {variable}")
+            logger.warning(f"variable already defined in this scope: {variable}")
 
         self._vars[variable] = value
         logger.debug(f"stored symbolic variable [{variable}] value: {value}")
@@ -309,7 +312,9 @@ class BinaryMathExpr(BinaryExpr):
         return self.operator
 
     def eval(self, context: SymbolicContext) -> t.Any:
-        if self.operator == "+":
+        if isinstance(self.lhs.eval(context), SymbolicUnknown) or isinstance(self.rhs.eval(context), SymbolicUnknown):
+            return SymbolicUnknown()
+        elif self.operator == "+":
             return self.lhs.eval(context) + self.rhs.eval(context)
         elif self.operator == "-":
             return self.lhs.eval(context) - self.rhs.eval(context)
@@ -1018,7 +1023,7 @@ class SymbolicFunction:
     @classmethod
     def empty(cls, name: str) -> SymbolicFunction:
         """Creates an empty function with a given name that takes no arguments."""
-        return cls.build(name, [], SymbolicCompound())
+        return cls.build(name, [], SymbolicCompound(""))
 
     @classmethod
     def build(
