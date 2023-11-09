@@ -159,7 +159,7 @@ class NodeContext:
         service_name_full = self.resolve(service)
         self._uses.add(Service(name=service_name_full, format=fmt))
 
-    def sub(self, topic_name: Union[str, 'SymbolicUnknown'], fmt: str, implicit: bool = False) -> None:
+    def sub(self, topic_name: Union[str, 'SymbolicUnknown'], fmt: str, source_location: str="<>", implicit: bool = False) -> None:
         """Subscribes the node to a given topic.
 
         Parameters
@@ -175,9 +175,9 @@ class NodeContext:
         topic_name_full = self.resolve(topic_name)
         logger.debug(f"node [{self.name}] subscribes to topic "
                      f"[{self._name_str(topic_name)}] with format [{fmt}]")
-        self._subs.add(Topic(name=topic_name_full, format=fmt, implicit=implicit))
+        self._subs.add(Topic(name=topic_name_full, format=fmt, implicit=implicit, source_location=source_location))
 
-    def pub(self, topic_name: Union[str, 'SymbolicUnknown'], fmt: str, implicit: bool = False) -> None:
+    def pub(self, topic_name: Union[str, 'SymbolicUnknown'], fmt: str, source_location: str="<>", implicit: bool = False) -> None:
         """Instructs the node to publish to a given topic.
 
         Parameters
@@ -193,7 +193,7 @@ class NodeContext:
         topic_name_full = self.resolve(topic_name)
         logger.debug(f"node [{self.name}] publishes to topic "
                      f"[{self._name_str(topic_name)}] with format [{fmt}]")
-        self._pubs.add(Topic(name=topic_name_full, format=fmt, implicit=implicit))
+        self._pubs.add(Topic(name=topic_name_full, format=fmt, implicit=implicit, source_location=source_location))
 
     def read(self,
              param: Union[str, 'SymbolicUnknown'],

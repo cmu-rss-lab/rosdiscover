@@ -23,6 +23,7 @@ class Topic:
     name: str
     format: str
     implicit: bool
+    source_location: str
 
     def to_dict(self) -> Dict[str, Any]:
-        return {'name': self.name, 'format': self.format, 'implicit': self.implicit}
+        return {'name': self.name, 'format': self.format, 'implicit': self.implicit, 'source_location': self.source_location}

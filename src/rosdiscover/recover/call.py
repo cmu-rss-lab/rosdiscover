@@ -62,17 +62,19 @@ class RosInit(SymbolicRosApiCall):
 class Publisher(SymbolicRosApiCall):
     topic: SymbolicString
     format_: str
+    source_location: str
 
     def to_dict(self) -> t.Dict[str, t.Any]:
         return super().to_dict() | {
             "kind": "publishes-to",
             "name": self.topic.to_dict(),
             "format": self.format_,
+            "source_location": self.source_location
         }
 
     def eval(self, context: SymbolicContext) -> None:
         topic = self.topic.eval(context)
-        context.node.pub(topic, self.format_)
+        context.node.pub(topic, self.format_, self.source_location)
 
     def is_unknown(self) -> bool:
         return self.topic.is_unknown()
@@ -127,6 +129,7 @@ class RateSleep(SymbolicRosApiCall):
 @attr.s(frozen=True, auto_attribs=True, slots=True)
 class Subscriber(SymbolicRosApiCall):
     topic: SymbolicString
+    source_location: str
     format_: str
     callback_name: str
 
@@ -140,7 +143,7 @@ class Subscriber(SymbolicRosApiCall):
 
     def eval(self, context: SymbolicContext) -> None:
         topic = self.topic.eval(context)
-        context.node.sub(topic, self.format_)
+        context.node.sub(topic, self.format_, self.source_location)
 
     def is_unknown(self) -> bool:
         return self.topic.is_unknown()
