@@ -372,7 +372,7 @@ class SymbolicProgramLoader:
         return Subscriber(
             source_location=self._load_source_location(dict_),
             topic=topic,
-            format_=dict_["format"], 
+            format_=dict_["format"],  
             callback_name=dict_["callback-name"]
         )
 
@@ -502,9 +502,9 @@ class SymbolicProgramLoader:
         elif kind == "ratesleep":
             return self._load_rate_sleep(dict_)
         elif kind == "createtimer":
-            return self._load_create_timer(dict_)        
+            return self._load_create_timer(dict_)
         elif kind == "constsleep":
-            return self._load_const_sleep(dict_)            
+            return self._load_const_sleep(dict_)
         elif kind == "subscribes-to":
             return self._load_subscribes_to(dict_)
         elif kind == "calls-service":
