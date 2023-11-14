@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+from ..interpreter.context import NodeContext
+
 from .call import Subscriber
 from .call import Publish
 __all__ = (
@@ -13,6 +15,7 @@ from functools import cached_property
 
 from .symbolic import (
     SymbolicAssignment,
+    SymbolicContext,
     SymbolicExpr,
     SymbolicFunction,
     SymbolicProgram,
@@ -29,7 +32,7 @@ class PeriodicTransition:
     state_changes: t.List[SymbolicAssignment]
     outputs: t.List[Publish]
 
-    def to_dict(self) -> t.Dict[str, t.Any]:
+    def to_dict(self, ctx, analyzer: SymbolicProgramAnalyzer) -> t.Dict[str, t.Any]:
         state_changes_dict = []
         for assign in self.state_changes:
             state_changes_dict.append(
@@ -39,7 +42,11 @@ class PeriodicTransition:
 
         outputs_dict = []
         for o in self.outputs:
-            outputs_dict.append({"publisher": {"variable" : o.publisher}})
+            if o.publisher in analyzer.pub_assignments:
+                topic = str(analyzer.pub_assignments[o.publisher].eval(ctx))
+            else:
+                topic = "unknown_topic"
+            outputs_dict.append({"publisher": {"variable" : o.publisher, "topic" : topic}})
 
         dict_ = {
             "type": "interval",
@@ -58,7 +65,7 @@ class MessageTransition:
     state_changes: t.List[SymbolicAssignment]
     outputs: t.List[Publish]
 
-    def to_dict(self) -> t.Dict[str, t.Any]:
+    def to_dict(self, ctx, analyzer: SymbolicProgramAnalyzer) -> t.Dict[str, t.Any]:
         state_changes_dict = []
         for assign in self.state_changes:
             state_changes_dict.append(
@@ -68,12 +75,18 @@ class MessageTransition:
 
         outputs_dict = []
         for o in self.outputs:
-            outputs_dict.append({"publisher": {"variable" : o.publisher}})
+            
+            if o.publisher in analyzer.pub_assignments:
+                topic = str(analyzer.pub_assignments[o.publisher].eval(ctx))
+            else:
+                topic = "unknown_topic"
+            outputs_dict.append({"publisher": {"variable" : o.publisher, "topic" : topic}})
 
         dict_ = {
             "type": "message",
             "condition" : str(self.condition),
             "callback": self.trigger.callback_name,
+            "topic": self.trigger.topic.eval(ctx),
             "state_changes": state_changes_dict,
             "outputs": outputs_dict,
         }
@@ -208,13 +221,24 @@ class SymbolicStatesAnalyzer:
     @cached_property
     def message_transitions_json(self) -> t.List[t.Dict]:
         result = []
+        nodeContext = NodeContext(name="name",
+                              namespace="namespace",
+                              kind="node",
+                              package="pkg",
+                              args=[],
+                              launch_filename="launch_filename",
+                              remappings={},
+                              files=[],
+                              params=[],
+                              app="self._app")
+        ctx = SymbolicContext.create(self.program, nodeContext)
 
         for t in self.message_transitions:
-            result.append(t.to_dict())
+            result.append(t.to_dict(ctx, self.program_analyzer))
 
 
         for t in self.periodic_transitions:
-            result.append(t.to_dict())
+            result.append(t.to_dict(ctx, self.program_analyzer))
 
         return result
 

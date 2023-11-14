@@ -311,6 +311,7 @@ class SymbolicProgramLoader:
         return SymbolicAssignment(
             source_location=self._load_source_location(dict_),
             variable=variable, 
+            unqualified_variable=variable,
             value=value, 
             path_condition=path_condition
         )
@@ -532,6 +533,7 @@ class SymbolicProgramLoader:
         assert dict_["kind"] == "assign"
         return SymbolicAssignment(
             variable=dict_["var"]["qualified_name"], 
+            unqualified_variable=dict_["var"]["name"], 
             value=self._load_expr(dict_["expr"]),
             path_condition=self._load_expr(dict_["path_condition"]),
             source_location=self._load_source_location(dict_)

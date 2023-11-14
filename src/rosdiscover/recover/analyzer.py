@@ -68,6 +68,14 @@ class SymbolicProgramAnalyzer:
 
         return result
 
+    @cached_property
+    def pub_assignments(self) -> t.Map[str, SymbolicExpr]:
+        result = {}
+        for assign in self.assignments:
+            if assign.unqualified_variable in self.publish_call_names:
+                result[assign.unqualified_variable] = assign.value
+            
+        return result
 
     @cached_property
     def services(self) -> t.Set[ServiceProvider]:
@@ -151,7 +159,7 @@ class SymbolicProgramAnalyzer:
             result.append(o.to_dict())
 
         return result
-
+        
     @cached_property
     def publish_calls(self) -> t.List[Publish]:
         result = []
@@ -163,6 +171,15 @@ class SymbolicProgramAnalyzer:
 
         return result
     
+    
+    @cached_property
+    def publish_call_names(self) -> t.List[str]:
+        result = []
+        for pub in self.publish_calls:
+            result.append(pub.publisher)
+
+        return result
+
     @cached_property
     def publisher_call_remaps(self) -> t.Map[str, t.List[str]]:
         result = {}

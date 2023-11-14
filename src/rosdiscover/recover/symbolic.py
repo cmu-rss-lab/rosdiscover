@@ -161,6 +161,9 @@ class SymbolicExpr(abc.ABC):
     def children(self) -> t.Set[SymbolicExpr]:
         ...
 
+    def reduce_vars(self, vars: t.List[str]):
+        return
+
     def __eq__(self, other: object) -> bool:
         return str(self) == str(other)
 
@@ -253,7 +256,7 @@ class NegateExpr(SymbolicExpr):
         return "not self.sub_expr.eval(context)"
 
     def __str__(self) -> str:
-        return f"!{self.sub_expr}"
+        return f"(!{self.sub_expr})"
 
 
 @attr.s(auto_attribs=True, slots=True, str=False, frozen=True)
@@ -264,6 +267,10 @@ class BinaryExpr(SymbolicExpr, abc.ABC):
     @abc.abstractmethod
     def binary_operator(self) -> str:
         ...
+
+    def reduce_vars(self, vars: t.List[str]):
+        self.lhs.reduce_vars(vars)
+        self.rhs.reduce_vars(vars)
 
     def children(self) -> t.Set[SymbolicExpr]:
         return {self.lhs, self.rhs}
@@ -277,7 +284,7 @@ class BinaryExpr(SymbolicExpr, abc.ABC):
         }
 
     def __str__(self) -> str:
-        return f"{self.lhs} {self.binary_operator()} {self.rhs}"
+        return f"({self.lhs} {self.binary_operator()} {self.rhs})"
 
 
 @attr.s(auto_attribs=True, slots=True, frozen=True)
@@ -709,6 +716,7 @@ class SymbolicAssignment(SymbolicStatement):
         The value of the variable, provided as a symbolic expression.
     """
     variable: str
+    unqualified_variable: str
     value: SymbolicExpr
     path_condition: SymbolicExpr
 
@@ -716,6 +724,7 @@ class SymbolicAssignment(SymbolicStatement):
         return super().to_dict() | {
             "kind": "assignment",
             "variable": self.variable,
+            "unqualified_variable": self.unqualified_variable,
             "value": self.value.to_dict(),
             "path_condition": self.path_condition.to_dict(),
         }
