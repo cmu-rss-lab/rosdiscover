@@ -32,7 +32,7 @@ class PeriodicTransition:
     state_changes: t.List[SymbolicAssignment]
     outputs: t.List[Publish]
 
-    def to_dict(self, ctx, analyzer: SymbolicProgramAnalyzer) -> t.Dict[str, t.Any]:
+    def to_dict(self, ctx, analyzer: SymbolicProgramAnalyzer, vars) -> t.Dict[str, t.Any]:
         state_changes_dict = []
         for assign in self.state_changes:
             state_changes_dict.append(
@@ -50,7 +50,7 @@ class PeriodicTransition:
 
         dict_ = {
             "type": "interval",
-            "condition" : str(self.condition),
+            "condition" : str(self.condition.reduce_vars(vars).reduce_vars(vars).reduce_vars(vars).reduce_vars(vars)),
             "interval": f"{self.interval}Hz",
             "state_changes": state_changes_dict,
             "outputs": outputs_dict,
@@ -65,7 +65,7 @@ class MessageTransition:
     state_changes: t.List[SymbolicAssignment]
     outputs: t.List[Publish]
 
-    def to_dict(self, ctx, analyzer: SymbolicProgramAnalyzer) -> t.Dict[str, t.Any]:
+    def to_dict(self, ctx, analyzer: SymbolicProgramAnalyzer, vars) -> t.Dict[str, t.Any]:
         state_changes_dict = []
         for assign in self.state_changes:
             state_changes_dict.append(
@@ -84,7 +84,7 @@ class MessageTransition:
 
         dict_ = {
             "type": "message",
-            "condition" : str(self.condition),
+            "condition" : str(self.condition.reduce_vars(vars).reduce_vars(vars).reduce_vars(vars).reduce_vars(vars)),
             "callback": self.trigger.callback_name,
             "topic": self.trigger.topic.eval(ctx),
             "state_changes": state_changes_dict,
@@ -114,6 +114,14 @@ class SymbolicStatesAnalyzer:
             if not v.value.is_unknown():
                 result.add(self.program.func_of_stmt(v))
         return result
+
+
+    @cached_property
+    def state_vars_names(self) -> t.List[str]:
+        var_names: t.List[str] = []
+        for var in self.state_vars:
+            var_names.append(var.variable)
+        return var_names
 
     @cached_property
     def state_vars(self) -> t.List[SymbolicVariableReference]:
@@ -234,11 +242,11 @@ class SymbolicStatesAnalyzer:
         ctx = SymbolicContext.create(self.program, nodeContext)
 
         for t in self.message_transitions:
-            result.append(t.to_dict(ctx, self.program_analyzer))
+            result.append(t.to_dict(ctx, self.program_analyzer, self.state_vars_names))
 
 
         for t in self.periodic_transitions:
-            result.append(t.to_dict(ctx, self.program_analyzer))
+            result.append(t.to_dict(ctx, self.program_analyzer, self.state_vars_names))
 
         return result
 

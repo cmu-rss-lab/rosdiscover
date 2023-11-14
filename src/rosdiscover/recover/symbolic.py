@@ -161,9 +161,12 @@ class SymbolicExpr(abc.ABC):
     def children(self) -> t.Set[SymbolicExpr]:
         ...
 
-    def reduce_vars(self, vars: t.List[str]):
-        return
-
+    def reduce_vars(self, vars: t.List[str]) -> SymbolicExpr:
+        return self
+    
+    def compares_with_non_state_var(self, vars: t.List[str]):
+        return False
+    
     def __eq__(self, other: object) -> bool:
         return str(self) == str(other)
 
@@ -236,6 +239,14 @@ class NullExpr(SymbolicExpr):
 class NegateExpr(SymbolicExpr):
     sub_expr: SymbolicExpr
 
+    def compares_with_non_state_var(self, vars: t.List[str]):
+        return self.sub_expr.compares_with_non_state_var(vars)
+    
+    def reduce_vars(self, vars: t.List[str]) -> SymbolicExpr:
+        if self.compares_with_non_state_var(vars):
+            return BoolLiteral(True)
+        return NegateExpr.build(self.sub_expr.reduce_vars(vars))
+
     @classmethod
     def build(cls, sub_expr: SymbolicExpr) -> SymbolicExpr:
         if isinstance(sub_expr, NegateExpr):
@@ -268,10 +279,6 @@ class BinaryExpr(SymbolicExpr, abc.ABC):
     def binary_operator(self) -> str:
         ...
 
-    def reduce_vars(self, vars: t.List[str]):
-        self.lhs.reduce_vars(vars)
-        self.rhs.reduce_vars(vars)
-
     def children(self) -> t.Set[SymbolicExpr]:
         return {self.lhs, self.rhs}
 
@@ -293,6 +300,9 @@ class CompareExpr(BinaryExpr, abc.ABC):
 
     def binary_operator(self) -> str:
         return self.operator
+
+    def compares_with_non_state_var(self, vars: t.List[str]):
+        return self.lhs.compares_with_non_state_var(vars) or self.rhs.compares_with_non_state_var(vars)
 
     def eval(self, context: SymbolicContext) -> t.Any:
         if self.operator == "<=":
@@ -338,6 +348,16 @@ class BinaryMathExpr(BinaryExpr):
 @attr.s(auto_attribs=True, slots=True, frozen=True)
 class AndExpr(BinaryExpr):
 
+    def compares_with_non_state_var(self, vars: t.List[str]):
+        return self.lhs.compares_with_non_state_var(vars) and self.rhs.compares_with_non_state_var(vars)
+
+    def reduce_vars(self, vars: t.List[str]) -> SymbolicExpr:
+        if self.lhs.reduce_vars(vars).compares_with_non_state_var(vars):
+            return self.rhs.reduce_vars(vars)
+        if self.rhs.reduce_vars(vars).compares_with_non_state_var(vars):
+            return self.lhs.reduce_vars(vars)
+        return AndExpr.build(self.lhs.reduce_vars(vars), self.rhs.reduce_vars(vars))
+
     @classmethod
     def build(cls, expr1: SymbolicExpr, expr2: SymbolicExpr) -> SymbolicExpr:
         if isinstance(expr1, BoolLiteral) and expr1.value is True:
@@ -355,6 +375,16 @@ class AndExpr(BinaryExpr):
 
 @attr.s(auto_attribs=True, slots=True, frozen=True)
 class OrExpr(BinaryExpr):
+
+    def compares_with_non_state_var(self, vars: t.List[str]):
+        return self.lhs.compares_with_non_state_var(vars) and self.rhs.compares_with_non_state_var(vars)
+
+    def reduce_vars(self, vars: t.List[str]) -> SymbolicExpr:
+        if self.lhs.reduce_vars(vars).compares_with_non_state_var(vars):
+            return self.rhs.reduce_vars(vars)
+        if self.rhs.reduce_vars(vars).compares_with_non_state_var(vars):
+            return self.lhs.reduce_vars(vars)
+        return OrExpr.build(self.lhs.reduce_vars(vars), self.rhs.reduce_vars(vars))
 
     @classmethod
     def build(cls, expr1: SymbolicExpr, expr2: SymbolicExpr) -> SymbolicExpr:
@@ -928,6 +958,9 @@ class SymbolicVariableReference(SymbolicValue):
     variable: str
     type_: SymbolicValueType
     initial_value: SymbolicValue
+        
+    def compares_with_non_state_var(self, vars: t.List[str]):
+        return self.variable not in vars
 
     def children(self) -> t.Set[SymbolicExpr]:
         return set()
@@ -994,7 +1027,7 @@ class SymbolicEnumReference(SymbolicVariableReference):
         return result
 
     def __str__(self) -> str:
-        return f"{self.variable} := {self.value}"
+        return self.variable
 
 
 @attr.s(frozen=True, auto_attribs=True, slots=True)
