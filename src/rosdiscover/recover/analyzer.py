@@ -9,6 +9,8 @@ import typing as t
 
 import attr
 
+from ..interpreter.context import NodeContext
+
 from .symbolic import (
     AndExpr,
     SymbolicAssignment,
@@ -267,12 +269,26 @@ class SymbolicProgramAnalyzer:
     @cached_property
     def reactive_behavior_json(self) -> t.List[t.Dict]:
         result = []
+
+        nodeContext = NodeContext(name="name",
+                        namespace="namespace",
+                        kind="node",
+                        package="pkg",
+                        args=[],
+                        launch_filename="launch_filename",
+                        remappings={},
+                        files=[],
+                        params=[],
+                        app="self._app")
+
         for t in self.sub_reactive_behavior:
             if (t[0].publisher in self.publisher_call_remaps):
                 for pub in self.publisher_call_remaps[t[0].publisher]:
-                    result.append({"publisher":{"variable" : pub}, "subscriber" : {"callback" : t[1]}})
-            else:        
-                result.append({"publisher":{"variable" : t[0].publisher}, "subscriber" : {"callback" : t[1]}})
+                    topic_name = str(t[2].topic.eval(nodeContext))
+                    result.append({"publisher":{"variable" : pub}, "subscriber" : {"callback" : t[1], "topic" : topic_name}})
+            else:   
+                topic_name = str(t[2].topic.eval(nodeContext))
+                result.append({"publisher":{"variable" : t[0].publisher}, "subscriber" : {"callback" : t[1], "topic" : topic_name}})
 
         for pub_call in self.publish_calls_in_main:
             if (pub_call.publisher in self.publisher_call_remaps):
@@ -283,12 +299,12 @@ class SymbolicProgramAnalyzer:
         return result
 
     @cached_property
-    def sub_reactive_behavior(self) -> t.List[t.Tuple[Publish, str]]:
+    def sub_reactive_behavior(self) -> t.List[t.Tuple[Publish, str, Subscriber]]:
         result = []
         for pub_call in self.publish_calls:
             for (sub, callback) in self.subscriber_callbacks_map:
                 if callback.body.contains(pub_call, self.program.functions) and (pub_call, sub.callback_name) not in result:
-                    result.append((pub_call, sub.callback_name))
+                    result.append((pub_call, sub.callback_name, sub))
         return result
     
     @cached_property

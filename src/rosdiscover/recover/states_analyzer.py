@@ -50,7 +50,7 @@ class PeriodicTransition:
 
         dict_ = {
             "type": "interval",
-            "condition" : str(self.condition.reduce_vars(vars).reduce_vars(vars).reduce_vars(vars).reduce_vars(vars)),
+            "condition" : str(self.condition.reduce_vars(vars)),
             "interval": f"{self.interval}Hz",
             "state_changes": state_changes_dict,
             "outputs": outputs_dict,
@@ -77,16 +77,19 @@ class MessageTransition:
         for o in self.outputs:
             
             if o.publisher in analyzer.pub_assignments:
-                topic = str(analyzer.pub_assignments[o.publisher].eval(ctx))
+                out_topic_name = str(analyzer.pub_assignments[o.publisher].eval(ctx))
             else:
-                topic = "unknown_topic"
-            outputs_dict.append({"publisher": {"variable" : o.publisher, "topic" : topic}})
+                out_topic_name = "unknown_topic"
+            outputs_dict.append({"publisher": {"variable" : o.publisher, "topic" : out_topic_name}})
 
+        in_topic_name = str(self.trigger.topic.eval(ctx))
+        if not isinstance(in_topic_name, str):
+            in_topic_name = "unknown_topic"
         dict_ = {
             "type": "message",
-            "condition" : str(self.condition.reduce_vars(vars).reduce_vars(vars).reduce_vars(vars).reduce_vars(vars)),
+            "condition" : str(self.condition.reduce_vars(vars)),
             "callback": self.trigger.callback_name,
-            "topic": self.trigger.topic.eval(ctx),
+            "topic": in_topic_name,
             "state_changes": state_changes_dict,
             "outputs": outputs_dict,
         }
@@ -187,7 +190,7 @@ class SymbolicStatesAnalyzer:
         r = {}
         for (pub_call, rate) in self.program_analyzer.periodic_publish_calls_and_rates:
             #t = MessageTransition(sub, )
-            cond = self.program_analyzer.inter_procedual_condition(pub_call)
+            cond = self.program_analyzer.inter_procedual_condition(pub_call).reduce_vars(self.state_vars_names)
             if self.is_state_condition(cond):
                 if (rate, cond) not in r:
                     r[(rate, cond)] = set()
@@ -208,14 +211,14 @@ class SymbolicStatesAnalyzer:
             r = {}
             if sub in  self.sub_state_var_assigns:
                 for assign in self.sub_state_var_assigns[sub]:
-                    cond = self.program_analyzer.inter_procedual_condition_var_assign(assign)
+                    cond = self.program_analyzer.inter_procedual_condition_var_assign(assign).reduce_vars(self.state_vars_names)
                     #if self.is_state_condition(cond) or str(cond) == "True":
                     if cond not in r:
                         r[cond] = {"state_changes" : set(), "outputs" : set()}
                     r[cond]["state_changes"].add(assign)
             if sub.callback_name in self.program_analyzer.reactive_behavior_map:
                 for output in self.program_analyzer.reactive_behavior_map[sub.callback_name]:
-                    cond = self.program_analyzer.inter_procedual_condition(output)
+                    cond = self.program_analyzer.inter_procedual_condition(output).reduce_vars(self.state_vars_names)
                     if self.is_state_condition(cond) or cond in r:
                         if cond not in r:
                             r[cond] = {"state_changes" : set(), "outputs" : set()}

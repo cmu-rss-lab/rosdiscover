@@ -300,7 +300,7 @@ class CompareExpr(BinaryExpr, abc.ABC):
 
     def binary_operator(self) -> str:
         return self.operator
-
+    
     def compares_with_non_state_var(self, vars: t.List[str]):
         return self.lhs.compares_with_non_state_var(vars) or self.rhs.compares_with_non_state_var(vars)
 
@@ -327,6 +327,9 @@ class BinaryMathExpr(BinaryExpr):
 
     def binary_operator(self) -> str:
         return self.operator
+    
+    def compares_with_non_state_var(self, vars: t.List[str]):
+        return self.lhs.compares_with_non_state_var(vars) or self.rhs.compares_with_non_state_var(vars)
 
     def eval(self, context: SymbolicContext) -> t.Any:
         if isinstance(self.lhs.eval(context), SymbolicUnknown) or isinstance(self.rhs.eval(context), SymbolicUnknown):
