@@ -79,7 +79,7 @@ class SymbolicProgramAnalyzer:
             
         return result
     
-    def pub_topic(self, ctx, pub:str) -> str:
+    def pub_topic(self, pub:str, ctx:NodeContext) -> str:
         if pub in self.pub_assignments:
             return str(self.pub_assignments[pub].eval(ctx))
         else:
