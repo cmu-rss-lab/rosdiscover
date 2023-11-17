@@ -376,7 +376,7 @@ class NodeRecoveryTool:
             "unclassified_publish" : analyzer.unclassified_publish_calls_json,
         }
         
-        with open(f"./results/{package_name}.{node_name}.json", "w") as outfile:
+        with open(f"./results/autoware-10/{package_name}.{node_name}.json", "w") as outfile:
             json.dump(json_beh_model, outfile)
 
         conditions = []

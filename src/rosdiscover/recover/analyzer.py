@@ -78,6 +78,12 @@ class SymbolicProgramAnalyzer:
                 result[assign.unqualified_variable] = assign.value
             
         return result
+    
+    def pub_topic(self, ctx, pub:str) -> str:
+        if pub in self.pub_assignments:
+            return str(self.pub_assignments[pub].eval(ctx))
+        else:
+            return "unknown_topic"
 
     @cached_property
     def services(self) -> t.Set[ServiceProvider]:
@@ -270,7 +276,7 @@ class SymbolicProgramAnalyzer:
     def reactive_behavior_json(self) -> t.List[t.Dict]:
         result = []
 
-        nodeContext = NodeContext(name="name",
+        ctx = NodeContext(name="name",
                         namespace="namespace",
                         kind="node",
                         package="pkg",
@@ -284,18 +290,19 @@ class SymbolicProgramAnalyzer:
         for t in self.sub_reactive_behavior:
             if (t[0].publisher in self.publisher_call_remaps):
                 for pub in self.publisher_call_remaps[t[0].publisher]:
-                    topic_name = str(t[2].topic.eval(nodeContext))
-                    result.append({"publisher":{"variable" : pub}, "subscriber" : {"callback" : t[1], "topic" : topic_name}})
+                    sub_topic_name = str(t[2].topic.eval(ctx))
+                    pub_topic_name = str(pub.topic.eval(ctx))
+                    result.append({"publisher":{"variable" : pub, "topic": self.pub_topic(pub, ctx)}, "subscriber" : {"callback" : t[1], "topic" : sub_topic_name}})
             else:   
-                topic_name = str(t[2].topic.eval(nodeContext))
-                result.append({"publisher":{"variable" : t[0].publisher}, "subscriber" : {"callback" : t[1], "topic" : topic_name}})
+                sub_topic_name = str(t[2].topic.eval(ctx))
+                result.append({"publisher":{"variable" : t[0].publisher, "topic": self.pub_topic(t[0].publisher, ctx)}, "subscriber" : {"callback" : t[1], "topic" : sub_topic_name}})
 
         for pub_call in self.publish_calls_in_main:
             if (pub_call.publisher in self.publisher_call_remaps):
                 for pub in self.publisher_call_remaps[pub_call.publisher]:
-                    result.append({"publisher":{"variable" : pub}, "event" : "component-init"})
+                    result.append({"publisher":{"variable" : pub, "topic": self.pub_topic(pub, ctx)}, "event" : "component-init"})
             else:  
-                result.append({"publisher":{"variable" : pub_call.publisher}, "event" : "component-init"})
+                result.append({"publisher":{"variable" : pub_call.publisher, "topic": self.pub_topic(pub_call.publisher, ctx)}, "event" : "component-init"})
         return result
 
     @cached_property
@@ -376,12 +383,24 @@ class SymbolicProgramAnalyzer:
     @cached_property
     def periodic_publish_calls_json(self) -> t.List[t.Dict]:
         result = []
+        
+        ctx = NodeContext(name="name",
+                namespace="namespace",
+                kind="node",
+                package="pkg",
+                args=[],
+                launch_filename="launch_filename",
+                remappings={},
+                files=[],
+                params=[],
+                app="self._app")
+
         for (pub_call, rate) in self.periodic_publish_calls_and_rates:
             if (pub_call.publisher in self.publisher_call_remaps):
                 for pub in self.publisher_call_remaps[pub_call.publisher]:
-                    result.append({"publisher":{"variable" : pub}, "condition" : pub_call.condition.to_dict(), "rate" : rate.to_dict()})
+                    result.append({"publisher":{"variable" : pub, "topic" : self.pub_topic(pub, ctx)}, "condition" : pub_call.condition.to_dict(), "rate" : rate.to_dict()})
             else:
-                result.append({"publisher":{"variable" : pub_call.publisher}, "condition" : pub_call.condition.to_dict(), "rate" : rate.to_dict()})
+                result.append({"publisher":{"variable" : pub_call.publisher, "topic" : self.pub_topic(pub_call.publisher, ctx)}, "condition" : pub_call.condition.to_dict(), "rate" : rate.to_dict()})
 
         return result
 

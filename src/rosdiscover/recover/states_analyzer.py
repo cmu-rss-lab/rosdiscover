@@ -42,11 +42,7 @@ class PeriodicTransition:
 
         outputs_dict = []
         for o in self.outputs:
-            if o.publisher in analyzer.pub_assignments:
-                topic = str(analyzer.pub_assignments[o.publisher].eval(ctx))
-            else:
-                topic = "unknown_topic"
-            outputs_dict.append({"publisher": {"variable" : o.publisher, "topic" : topic}})
+            outputs_dict.append({"publisher": {"variable" : o.publisher, "topic" : analyzer.pub_topic(o.publisher, ctx)}})
 
         dict_ = {
             "type": "interval",
@@ -75,12 +71,7 @@ class MessageTransition:
 
         outputs_dict = []
         for o in self.outputs:
-            
-            if o.publisher in analyzer.pub_assignments:
-                out_topic_name = str(analyzer.pub_assignments[o.publisher].eval(ctx))
-            else:
-                out_topic_name = "unknown_topic"
-            outputs_dict.append({"publisher": {"variable" : o.publisher, "topic" : out_topic_name}})
+            outputs_dict.append({"publisher": {"variable" : o.publisher, "topic" : analyzer.pub_topic(o.publisher, ctx)}})
 
         in_topic_name = str(self.trigger.topic.eval(ctx))
         if not isinstance(in_topic_name, str):
