@@ -153,9 +153,9 @@ class NodeSummary:
         provenance = Provenance(dict.get('provenance', Provenance.PLACEHOLDER))
         reads = [(p['name'], p['dynamic']) for p in dict.get('reads', [])]
         writes = dict.get('writes', [])
-        pubs = [Topic(name=t['name'], format=t['format'], implicit=t.get('implicit', False))
+        pubs = [Topic(name=t['name'], format=t['format'], implicit=t.get('implicit', False), source_location=t.get('source_location', ""))
                 for t in dict.get('pubs', [])]
-        subs = [Topic(name=t['name'], format=t['format'], implicit=t.get('implicit', False))
+        subs = [Topic(name=t['name'], format=t['format'], implicit=t.get('implicit', False), source_location=t.get('source_location', ""))
                 for t in dict.get('subs', [])]
         provides = [Service(name=s['name'], format=s['format'])
                     for s in dict.get('provides', [])]

@@ -271,6 +271,12 @@ class SymbolicProgramAnalyzer:
 
 
         return result
+    
+    def topic_name(self, obj, ctx):
+        if isinstance(obj, ServiceProvider):
+            return str(obj.service.eval(ctx))
+        else:
+            return str(obj.topic.eval(ctx))
 
     @cached_property
     def reactive_behavior_json(self) -> t.List[t.Dict]:
@@ -290,11 +296,10 @@ class SymbolicProgramAnalyzer:
         for t in self.sub_reactive_behavior:
             if (t[0].publisher in self.publisher_call_remaps):
                 for pub in self.publisher_call_remaps[t[0].publisher]:
-                    sub_topic_name = str(t[2].topic.eval(ctx))
-                    pub_topic_name = str(pub.topic.eval(ctx))
+                    sub_topic_name = self.topic_name(t[2], ctx)
                     result.append({"publisher":{"variable" : pub, "topic": self.pub_topic(pub, ctx)}, "subscriber" : {"callback" : t[1], "topic" : sub_topic_name}})
-            else:   
-                sub_topic_name = str(t[2].topic.eval(ctx))
+            else:  
+                sub_topic_name = self.topic_name(t[2], ctx)
                 result.append({"publisher":{"variable" : t[0].publisher, "topic": self.pub_topic(t[0].publisher, ctx)}, "subscriber" : {"callback" : t[1], "topic" : sub_topic_name}})
 
         for pub_call in self.publish_calls_in_main:

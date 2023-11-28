@@ -294,6 +294,16 @@ class NodeContext:
         else:
             return distribution < ROSDistribution.FOXY
 
+    def load(self, variable: str):
+        """Loads the value of a given variable.
+
+        Raises
+        ------
+        ValueError
+            If no variable exists with the given name.
+        """
+        return UNKNOWN_NAME
+    
     def load_nodelet(self, nodelet_context: 'NodeContext'):
         self.merge(nodelet_context)
         # In the recovered architecture, the nodelets themselves don't
