@@ -60,7 +60,7 @@ To install roswire from source within a virtual environment using :code:`pipenv`
 
 .. code::
 
-   $ git clone git@github.com:ChrisTimperley/rosdiscover rosdiscover
+   $ git clone git@github.com:https:cmu-rss-lab/rosdiscover rosdiscover
    $ cd rosdiscover
    $ pipenv shell
 
