@@ -180,7 +180,7 @@ The :code:`launch` command is used to simulate the effects of a sequence of
 
 .. code::
 
-   $ rosdiscover launch example/fetch.yml
+   $ pipenv run rosdiscover launch example/fetch.yml
 
 
 Docker Development Setup (for Windows 10)
