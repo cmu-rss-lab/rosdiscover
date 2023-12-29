@@ -18,7 +18,6 @@ class NodeSummary:
     namespace: str
     kind: str
     package: str
-    nodelet: bool
     filename: str
     # Provenance indicates where the model comes from.
     #    PLACEHOLDER indicates whether the node was not really discovered, but
@@ -31,43 +30,45 @@ class NodeSummary:
     #    model.
     #    RECOVERED indicates that the node was recovered through static analysis
     provenance: Provenance
-    pubs: Collection[Topic]
-    subs: Collection[Topic]
+    _pubs: Collection[Topic]
+    _subs: Collection[Topic]
     # The tuple is (name, dynamic) where name is the name of the parameter
     # and dynamic is whether the node reacts to updates to the parameter via reconfigure
-    reads: Collection[Tuple[str, bool]]
-    writes: Collection[str]
-    uses: Collection[Service]
-    provides: Collection[Service]
-    action_servers: Collection[Action]
-    action_clients: Collection[Action]
+    _reads: Collection[Tuple[str, bool]]
+    _writes: Collection[str]
+    _uses: Collection[Service]
+    _provides: Collection[Service]
+    _action_servers: Collection[Action]
+    _action_clients: Collection[Action]
 
     def __attrs_post_init__(self) -> None:
-        object.__setattr__(self, 'pubs', frozenset(self.pubs))
-        object.__setattr__(self, 'subs', frozenset(self.subs))
-        object.__setattr__(self, 'reads', frozenset(self.reads))
-        object.__setattr__(self, 'writes', frozenset(self.writes))
-        object.__setattr__(self, 'uses', frozenset(self.uses))
-        object.__setattr__(self, 'provides', frozenset(self.provides))
-        object.__setattr__(self, 'action_servers', frozenset(self.action_servers))
-        object.__setattr__(self, 'action_clients', frozenset(self.action_clients))
+        object.__setattr__(self, '_pubs', frozenset(self._pubs))
+        object.__setattr__(self, '_subs', frozenset(self._subs))
+        object.__setattr__(self, '_reads', frozenset(self._reads))
+        object.__setattr__(self, '_writes', frozenset(self._writes))
+        object.__setattr__(self, '_uses', frozenset(self._uses))
+        object.__setattr__(self, '_provides', frozenset(self._provides))
+        object.__setattr__(self, '_action_servers', frozenset(self._action_servers))
+        object.__setattr__(self, '_action_clients', frozenset(self._action_clients))
+
+    @classmethod
+    def _merge_collections(cls, s1: Collection[Any], s2: Collection[Any]) -> Collection[Any]:
+        s: Set[Any] = set()
+        s.update(s1)
+        s.update(s2)
+        return s
 
     @classmethod
     def merge(cls, lhs: 'NodeSummary', rhs: 'NodeSummary') -> 'NodeSummary':
-        def merge_collections(s1: Collection[Any], s2: Collection[Any]) -> Collection[Any]:
-            s: Set[Any] = set()
-            s.update(s1)
-            s.update(s2)
-            return s
 
-        reads = merge_collections(lhs.reads, rhs.reads)
-        writes = merge_collections(lhs.writes, rhs.writes)
-        pubs = merge_collections(lhs.pubs, rhs.pubs)
-        subs = merge_collections(lhs.subs, rhs.subs)
-        uses = merge_collections(lhs.uses, rhs.uses)
-        provides = merge_collections(lhs.provides, rhs.provides)
-        actions_servers = merge_collections(lhs.action_servers, rhs.action_servers)
-        action_clients = merge_collections(lhs.action_clients, rhs.action_clients)
+        reads = cls._merge_collections(lhs._reads, rhs._reads)
+        writes = cls._merge_collections(lhs._writes, rhs._writes)
+        pubs = cls._merge_collections(lhs._pubs, rhs._pubs)
+        subs = cls._merge_collections(lhs._subs, rhs._subs)
+        uses = cls._merge_collections(lhs._uses, rhs._uses)
+        provides = cls._merge_collections(lhs._provides, rhs._provides)
+        actions_servers = cls._merge_collections(lhs._action_servers, rhs._action_servers)
+        action_clients = cls._merge_collections(lhs._action_clients, rhs._action_clients)
 
         if lhs.name != rhs.name and lhs.name:
             logger.warning(f"Merging two nodes that are named differently: {lhs.name} & {rhs.name}")
@@ -103,7 +104,6 @@ class NodeSummary:
             namespace=namespace,
             kind=kind,
             package=package,
-            nodelet=lhs.nodelet,
             filename=filename,
             provenance=provenance,
             reads=reads,
@@ -117,23 +117,22 @@ class NodeSummary:
         )
 
     def to_dict(self) -> Dict[str, Any]:
-        pubs = [t.to_dict() for t in self.pubs]
-        subs = [t.to_dict() for t in self.subs]
-        provides = [s.to_dict() for s in self.provides]
-        uses = [s.to_dict() for s in self.uses]
-        action_servers = [a.to_dict() for a in self.action_servers]
-        action_clients = [a.to_dict() for a in self.action_clients]
-        reads = [{'name': n, 'dynamic': d} for (n, d) in self.reads]
+        pubs = [t.to_dict() for t in self._pubs]
+        subs = [t.to_dict() for t in self._subs]
+        provides = [s.to_dict() for s in self._provides]
+        uses = [s.to_dict() for s in self._uses]
+        action_servers = [a.to_dict() for a in self._action_servers]
+        action_clients = [a.to_dict() for a in self._action_clients]
+        reads = [{'name': n, 'dynamic': d} for (n, d) in self._reads]
         return {'name': self.name,
                 'fullname': self.fullname,
                 'namespace': self.namespace,
                 'kind': self.kind,
                 'package': self.package,
-                'nodelet': self.nodelet,
                 'filename': self.filename,
                 'provenance': self.provenance.value,
                 'reads': reads,
-                'writes': list(self.writes),
+                'writes': list(self._writes),
                 'provides': provides,
                 'uses': uses,
                 'action-servers': action_servers,
@@ -148,7 +147,6 @@ class NodeSummary:
         namepsace = dict.get('namespace', '')
         kind = dict.get('kind', '')
         package = dict.get('package', '')
-        nodelet = dict.get('nodelet', False)
         filename = dict.get('filename', '')
         provenance = Provenance(dict.get('provenance', Provenance.PLACEHOLDER))
         reads = [(p['name'], p['dynamic']) for p in dict.get('reads', [])]
@@ -170,7 +168,6 @@ class NodeSummary:
                            namespace=namepsace,
                            kind=kind,
                            package=package,
-                           nodelet=nodelet,
                            filename=filename,
                            provenance=provenance,
                            reads=reads,
@@ -182,6 +179,230 @@ class NodeSummary:
                            action_servers=action_servers,
                            action_clients=action_clients)
 
+    @property
+    def pubs(self) -> Collection[Topic]:
+        return self._pubs
+
+    @property
+    def subs(self) -> Collection[Topic]:
+        return self._subs
+
+    @property
+    def provides(self) -> Collection[Service]:
+        return self._provides
+
+    @property
+    def uses(self) -> Collection[Service]:
+        return self._uses
+
+    @property
+    def reads(self) -> Collection[Tuple[str, bool]]:
+        return self._reads
+
+    @property
+    def writes(self) -> Collection[str]:
+        return self._writes
+
+    @property
+    def action_clients(self) -> Collection[Action]:
+        return self._action_clients
+
+    @property
+    def action_servers(self) -> Collection[Action]:
+        return self._action_servers
+
+
+MERGE_NODELETS_TO_NODELET_MANAGERS = True
+
+
+@attr.s(frozen=True, slots=True, auto_attribs=True)
+class NodeletSummary(NodeSummary):
+    """Summarises the architectural effects of a given node."""
+    nodelet_manager: str
+
+    @classmethod
+    def merge(cls, lhs: 'NodeSummary', rhs: 'NodeSummary') -> 'NodeletSummary':
+        assert isinstance(lhs, NodeletSummary)
+        assert isinstance(rhs, NodeletSummary)
+        nc = NodeSummary.merge(lhs, rhs)
+
+        if lhs.nodelet_manager != rhs.nodelet_manager:
+            logger.warning(f"{lhs.fullname} nodelet manager {rhs.fullname} retaining original nodelet manager"
+                           f" {lhs.fullname}")
+        nodelet_manager = lhs.nodelet_manager if lhs.nodelet_manager else rhs.nodelet_manager
+        return NodeletSummary(
+            name=nc.name,
+            fullname=nc.fullname,
+            namespace=nc.namespace,
+            kind=nc.kind,
+            package=nc.package,
+            filename=nc.filename,
+            provenance=nc.provenance,
+            reads=nc.reads,
+            writes=nc.writes,
+            pubs=nc.pubs,
+            subs=nc.subs,
+            provides=nc.provides,
+            uses=nc.uses,
+            action_servers=nc.action_servers,
+            action_clients=nc.action_clients,
+            nodelet_manager=nodelet_manager
+        )
+
+    def to_dict(self) -> Dict[str, Any]:
+        dict_ = super().to_dict()
+        dict_['nodelet_manager'] = self.nodelet_manager
+        dict_['nodekind'] = 'nodelet'
+        return dict_
+
+    @classmethod
+    def from_dict(cls, dict_: Dict[str, Any]) -> 'NodeletSummary':
+        nc = NodeSummary.from_dict(dict_)
+        return NodeletSummary(
+            name=nc.name,
+            fullname=nc.fullname,
+            namespace=nc.namespace,
+            kind=nc.kind,
+            package=nc.package,
+            filename=nc.filename,
+            provenance=nc.provenance,
+            reads=nc.reads,
+            writes=nc.writes,
+            pubs=nc.pubs,
+            subs=nc.subs,
+            provides=nc.provides,
+            uses=nc.uses,
+            action_servers=nc.action_servers,
+            action_clients=nc.action_clients,
+            nodelet_manager=dict_.get('nodelet_manager', '')
+        )
+
+    @property
+    def pubs(self) -> Collection[Topic]:
+        return self._pubs if not MERGE_NODELETS_TO_NODELET_MANAGERS else {}
+
+    @property
+    def subs(self) -> Collection[Topic]:
+        return self._subs if not MERGE_NODELETS_TO_NODELET_MANAGERS else {}
+
+    @property
+    def provides(self) -> Collection[Service]:
+        return self._provides if not MERGE_NODELETS_TO_NODELET_MANAGERS else {}
+
+    @property
+    def uses(self) -> Collection[Service]:
+        return self._uses if not MERGE_NODELETS_TO_NODELET_MANAGERS else {}
+
+    @property
+    def reads(self) -> Collection[Tuple[str, bool]]:
+        return self._reads if not MERGE_NODELETS_TO_NODELET_MANAGERS else {}
+
+    @property
+    def writes(self) -> Collection[str]:
+        return self._writes if not MERGE_NODELETS_TO_NODELET_MANAGERS else {}
+
+    @property
+    def action_clients(self) -> Collection[Action]:
+        return self._action_clients if not MERGE_NODELETS_TO_NODELET_MANAGERS else {}
+
+    @property
+    def action_servers(self) -> Collection[Action]:
+        return self._action_servers if not MERGE_NODELETS_TO_NODELET_MANAGERS else {}
+
+
+@attr.s(frozen=True, slots=True, auto_attribs=True)
+class NodeletManagerSummary(NodeSummary):
+    nodelets: Collection[NodeletSummary]
+
+    def __attrs_post_init__(self) -> None:
+        super().__attrs_post_init__()
+        object.__setattr__(self, 'nodelets', frozenset(self.writes))
+
+    @classmethod
+    def merge(cls, lhs: 'NodeSummary', rhs: 'NodeSummary') -> 'NodeletManagerSummary':
+        assert isinstance(lhs, NodeletManagerSummary)
+        assert isinstance(rhs, NodeletManagerSummary)
+        nc = NodeSummary.merge(lhs, rhs)
+        nodelets = NodeSummary._merge_collections(lhs.nodelets, rhs.nodelets)
+        return NodeletManagerSummary(
+            name=nc.name,
+            fullname=nc.fullname,
+            namespace=nc.namespace,
+            kind=nc.kind,
+            package=nc.package,
+            filename=nc.filename,
+            provenance=nc.provenance,
+            reads=nc.reads,
+            writes=nc.writes,
+            pubs=nc.pubs,
+            subs=nc.subs,
+            provides=nc.provides,
+            uses=nc.uses,
+            action_servers=nc.action_servers,
+            action_clients=nc.action_clients,
+            nodelets=nodelets
+        )
+
+    @classmethod
+    def from_dict(cls, dict_: Dict[str, Any]) -> 'NodeletManagerSummary':
+        nc = NodeSummary.from_dict(dict_)
+        return NodeletManagerSummary(
+            name=nc.name,
+            fullname=nc.fullname,
+            namespace=nc.namespace,
+            kind=nc.kind,
+            package=nc.package,
+            filename=nc.filename,
+            provenance=nc.provenance,
+            reads=nc.reads,
+            writes=nc.writes,
+            pubs=nc.pubs,
+            subs=nc.subs,
+            provides=nc.provides,
+            uses=nc.uses,
+            action_servers=nc.action_servers,
+            action_clients=nc.action_clients,
+            nodelets=list(NodeletSummary.from_dict(n) for n in dict_.get('nodelets', []))
+        )
+
+    def to_dict(self) -> Dict[str, Any]:
+        dict_ = super().to_dict()
+        dict_['nodekind'] = 'nodelet_manager'
+        dict_['nodelets'] = list(n.to_dict() for n in self.nodelets)
+        return dict_
+
+    @property
+    def pubs(self) -> Collection[Topic]:
+        return list(p for n in self.nodelets for p in n.pubs) if MERGE_NODELETS_TO_NODELET_MANAGERS else {}
+
+    @property
+    def subs(self) -> Collection[Topic]:
+        return list(p for n in self.nodelets for p in n.subs) if MERGE_NODELETS_TO_NODELET_MANAGERS else {}
+
+    @property
+    def provides(self) -> Collection[Service]:
+        return list(p for n in self.nodelets for p in n.provides) if MERGE_NODELETS_TO_NODELET_MANAGERS else {}
+
+    @property
+    def uses(self) -> Collection[Service]:
+        return list(p for n in self.nodelets for p in n.uses) if MERGE_NODELETS_TO_NODELET_MANAGERS else {}
+
+    @property
+    def reads(self) -> Collection[Tuple[str, bool]]:
+        return list(p for n in self.nodelets for p in n.reads) if MERGE_NODELETS_TO_NODELET_MANAGERS else {}
+
+    @property
+    def writes(self) -> Collection[str]:
+        return list(p for n in self.nodelets for p in n.writes) if MERGE_NODELETS_TO_NODELET_MANAGERS else {}
+
+    @property
+    def action_clients(self) -> Collection[Action]:
+        return list(p for n in self.nodelets for p in n.action_clients) if MERGE_NODELETS_TO_NODELET_MANAGERS else {}
+
+    @property
+    def action_servers(self) -> Collection[Action]:
+        return list(p for n in self.nodelets for p in n.action_servers) if MERGE_NODELETS_TO_NODELET_MANAGERS else {}
+
 
 @attr.s(frozen=True, slots=True, auto_attribs=True)
 class SystemSummary(Mapping[str, NodeSummary]):
@@ -191,20 +412,46 @@ class SystemSummary(Mapping[str, NodeSummary]):
     _node_to_summary: Mapping[str, NodeSummary]
 
     def __len__(self) -> int:
-        return len(self._node_to_summary)
+        length = len(self._node_to_summary)
+        # Because nodelet managers contain nodelets include them too
+        for n in self._node_to_summary.values():
+            if isinstance(n, NodeletManagerSummary):
+                assert isinstance(n, NodeletManagerSummary)
+                length += len(n.nodelets)
+        return length
 
     def __iter__(self) -> Iterator[str]:
-        yield from self._node_to_summary
+        # Because nodelet managers contain nodelets include them too
+        for key, item in self._node_to_summary.items():
+            yield key
+            if isinstance(item, NodeletManagerSummary):
+                assert isinstance(item, NodeletManagerSummary)
+                for nodelet in item.nodelets:
+                    yield nodelet.fullname
 
     def __getitem__(self, name: str) -> NodeSummary:
-        return self._node_to_summary[name]
+        item = self._node_to_summary.get(name, None)
+        # Because nodelet managers contain nodelets include them too
+        if not item:
+            items = [n for nm in self._node_to_summary.values() if isinstance(nm, NodeletManagerSummary) for
+                     n in nm.nodelets]
+            if len(items) == 1:
+                item = items[0]
+            else:
+                raise KeyError(f'More than one nodelet with name {name}')
+        if item:
+            return item
+        raise KeyError(f"'{name}' not found in summary")
 
     def to_dict(self) -> List[Dict[str, Any]]:
         return [n.to_dict() for n in self.values()]
 
     @classmethod
     def from_dict(cls, arr: Collection[Any]) -> 'SystemSummary':
-        summaries = [NodeSummary.from_dict(s) for s in arr]
+        summaries = [NodeSummary.from_dict(s) for s in arr if 'nodekind' not in s]
+        summaries.extend(
+            NodeletManagerSummary.from_dict(s) for s in arr if s.get('nodekind', None) == 'nodelet_manager'
+        )
         return SystemSummary(node_to_summary={summary.name: summary for summary in summaries})
 
     @property
@@ -220,7 +467,26 @@ class SystemSummary(Mapping[str, NodeSummary]):
             if key not in rhs:
                 node_summaries[key] = summary
             else:
-                node_summaries[key] = NodeSummary.merge(summary, rhs[key])
+                rhs_sum = rhs[key]
+                # if isinstance(summary, NodeletSummary):
+                #     if isinstance(rhs, NodeletSummary):
+                #         assert isinstance(summary, NodeletSummary)
+                #         assert isinstance(rhs, NodeletSummary)
+                #         node_summaries[key] = NodeletSummary.merge(summary, rhs)
+                #     else:
+                #         logger.error(f"{rhs.fullname} is not a nodelet in rhs")
+                #         node_summaries[key] = summary
+
+                if isinstance(summary, NodeletManagerSummary):
+                    if isinstance(summary, NodeletManagerSummary):
+                        assert isinstance(summary, NodeletManagerSummary)
+                        assert isinstance(rhs, NodeletManagerSummary)
+                        node_summaries[key] = NodeletManagerSummary.merge(summary, rhs_sum)
+                    else:
+                        logger.error(f"{rhs_sum.fullname} is not a nodelet manager in rhs")
+                        node_summaries[key] = summary
+                else:
+                    node_summaries[key] = NodeSummary.merge(summary, rhs_sum)
         for key, summary in rhs.items():
             if key not in lhs:
                 node_summaries[key] = summary

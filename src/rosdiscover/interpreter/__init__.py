@@ -7,7 +7,7 @@ ROS commands (e.g., launching a given :code:`.launch` file via
 The main class within this module is :class:`Interpreter`, which acts as a
 model evaluator / virtual machine for a ROS architecture.
 """
-from .context import NodeContext
+from .context import NodeContext, NodeletContext, NodeletManagerContext
 from .model import model, NodeModel
 from .parameter import ParameterServer
 from .plugin import ModelPlugin
